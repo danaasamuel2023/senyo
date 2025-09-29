@@ -1,0 +1,196 @@
+// components/Footer.jsx
+'use client'
+import React from 'react';
+import Link from 'next/link';
+import { ArrowRight, Zap, Star, Flame, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  
+  const socialLinks = [
+    { platform: 'twitter', icon: Twitter, href: '#' },
+    { platform: 'instagram', icon: Instagram, href: '#' },
+    { platform: 'facebook', icon: Facebook, href: '#' },
+    { platform: 'linkedin', icon: Linkedin, href: '#' }
+  ];
+
+  const quickLinks = [
+    { name: 'Dashboard', path: '/' },
+    { name: 'Orders', path: '/orders' },
+    { name: 'Transactions', path: '/myorders' },
+    { name: 'Profile', path: '/profile' }
+  ];
+
+  const services = [
+    { name: 'MTN Data', path: '/mtnup2u', accent: 'yellow' },
+    { name: 'AirtelTigo Data', path: '/at-ishare', accent: 'blue' },
+    { name: 'Telecel Data', path: '/TELECEL', accent: 'red', badge: 'New' },
+  ];
+
+  return (
+    <footer className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-red-950/40 to-gray-950">
+      {/* Animated Background Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 h-48 w-48 animate-pulse rounded-full bg-gradient-to-br from-red-500/10 to-rose-500/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-48 w-48 animate-pulse rounded-full bg-gradient-to-br from-white/5 to-red-500/10 blur-3xl delay-700" />
+        <div className="absolute top-1/2 left-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-gradient-to-br from-red-400/5 to-white/5 blur-2xl delay-1000" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-16">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+          
+          {/* Brand Section */}
+          <div className="lg:col-span-1">
+            <div className="mb-8">
+              {/* Logo */}
+              <div className="mb-6 flex items-center space-x-3">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 shadow-2xl shadow-red-500/25">
+                  <Zap className="h-7 w-7 text-white" strokeWidth={2.5} />
+                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
+                    <Star className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                  </div>
+                </div>
+                <h2 className="bg-gradient-to-r from-red-400 via-rose-400 to-white bg-clip-text text-3xl font-black tracking-tight text-transparent">
+                  Unlimited Data GH
+                </h2>
+              </div>
+              
+              <p className="mb-8 text-lg font-medium leading-relaxed text-gray-300">
+                Where Hustlers Meet Success. Your premium data marketplace for unlimited possibilities.
+              </p>
+              
+              {/* Social Media Links */}
+              <div className="flex space-x-3">
+                {socialLinks.map(({ platform, icon: Icon, href }) => (
+                  <a 
+                    key={platform}
+                    href={href}
+                    aria-label={`Follow us on ${platform}`}
+                    className="group flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:border-red-500/50 hover:bg-red-500/10"
+                  >
+                    <Icon className="h-5 w-5 text-gray-400 transition-colors group-hover:text-red-400" strokeWidth={1.5} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Links */}
+          <div>
+            <h3 className="mb-6 flex items-center text-xl font-bold text-white">
+              <div className="mr-3 h-7 w-1.5 rounded-full bg-gradient-to-b from-red-400 to-rose-500" />
+              Quick Links
+            </h3>
+            <nav>
+              <ul className="space-y-3">
+                {quickLinks.map((link) => (
+                  <li key={link.name}>
+                    <Link 
+                      href={link.path} 
+                      className="group flex items-center font-medium text-gray-300 transition-all duration-300 hover:text-red-400"
+                    >
+                      <div className="mr-3 flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 transition-all duration-300 group-hover:bg-red-500/20">
+                        <ArrowRight className="h-3.5 w-3.5 text-red-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                      <span className="transition-transform duration-300 group-hover:translate-x-1">
+                        {link.name}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+          
+          {/* Data Services */}
+          <div>
+            <h3 className="mb-6 flex items-center text-xl font-bold text-white">
+              <div className="mr-3 h-7 w-1.5 rounded-full bg-gradient-to-b from-rose-400 to-red-500" />
+              Our Services
+            </h3>
+            <nav>
+              <ul className="space-y-3">
+                {services.map((service) => (
+                  <li key={service.name}>
+                    <Link 
+                      href={service.path} 
+                      className="group flex items-center font-medium text-gray-300 transition-all duration-300 hover:text-red-400"
+                    >
+                      <div className="mr-3 flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 transition-all duration-300 group-hover:bg-red-500/20">
+                        <ArrowRight className="h-3.5 w-3.5 text-red-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                      <span className="flex items-center transition-transform duration-300 group-hover:translate-x-1">
+                        {service.name}
+                        {service.badge && (
+                          <span className="ml-2 animate-pulse rounded-full bg-gradient-to-r from-red-500 to-rose-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg shadow-red-500/25">
+                            {service.badge}
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+
+          {/* Newsletter Section */}
+          <div>
+            <h3 className="mb-6 flex items-center text-xl font-bold text-white">
+              <div className="mr-3 h-7 w-1.5 rounded-full bg-gradient-to-b from-white to-red-400" />
+              Stay Updated
+            </h3>
+            <p className="mb-4 text-sm text-gray-300">
+              Get exclusive offers and updates straight to your inbox.
+            </p>
+            <form className="space-y-3">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-400 backdrop-blur-sm transition-all duration-300 focus:border-red-500/50 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-red-500/50"
+              />
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-gradient-to-r from-red-500 to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:from-red-600 hover:to-rose-700 hover:shadow-xl hover:shadow-red-500/30"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        {/* Bottom Section */}
+        <div className="mt-12 border-t border-white/10 pt-8">
+          <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
+            <div className="text-center md:text-left">
+              <p className="text-sm font-medium text-gray-400">
+                © {currentYear} UNLIMITED DATA GH. All rights reserved.
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-6 text-sm">
+              <Link 
+                href="/privacy" 
+                className="font-medium text-gray-400 transition-colors duration-300 hover:text-red-400"
+              >
+                Privacy Policy
+              </Link>
+              <Link 
+                href="/terms" 
+                className="font-medium text-gray-400 transition-colors duration-300 hover:text-red-400"
+              >
+                Terms of Service
+              </Link>
+              <div className="flex items-center space-x-2 text-red-400">
+                <Flame className="h-4 w-4 animate-bounce" />
+                <span className="font-bold">Keep Hustling!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
