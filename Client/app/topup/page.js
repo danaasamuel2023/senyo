@@ -107,7 +107,7 @@ export default function DepositPage() {
   // Check if API endpoint is available (optional health check)
   const checkAPIHealth = async () => {
     try {
-      const response = await fetch('https://datahustle.onrender.com/api/health', {
+      const response = await fetch('https://unlimitedata.onrender.com/api/health', {
         method: 'GET',
         mode: 'cors'
       });
@@ -139,7 +139,7 @@ export default function DepositPage() {
     
     try {
       // Fixed API endpoint - ensure this matches your actual backend route
-      const API_BASE = 'https://datahustle.onrender.com';
+      const API_BASE = 'https://unlimitedata.onrender.com';
       
       // Log for debugging
       console.log('Making deposit request to:', `${API_BASE}/api/v1/deposit`);

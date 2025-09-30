@@ -395,7 +395,7 @@ const iShareBundleSelect = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('https://datahustle.onrender.com/api/v1/data/purchase-data', {
+      const response = await fetch('https://unlimitedata.onrender.com/api/v1/data/purchase-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

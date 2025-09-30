@@ -42,7 +42,7 @@ export default function InventoryPage() {
     try {
       setLoading(true);
       const response = await fetch(
-        'https://datahustle.onrender.com/api/inventory',
+        'https://unlimitedata.onrender.com/api/inventory',
         {
           method: 'GET',
           headers: {
@@ -88,7 +88,7 @@ export default function InventoryPage() {
       setError(null);
       
       const response = await fetch(
-        `https://datahustle.onrender.com/api/inventory/${network}/toggle`,
+        `https://unlimitedata.onrender.com/api/inventory/${network}/toggle`,
         {
           method: 'PUT',
           headers: {
@@ -140,7 +140,7 @@ export default function InventoryPage() {
       setError(null);
       
       const response = await fetch(
-        `https://datahustle.onrender.com/api/inventory/${network}/toggle-geonettech`,
+        `https://unlimitedata.onrender.com/api/inventory/${network}/toggle-geonettech`,
         {
           method: 'PUT',
           headers: {

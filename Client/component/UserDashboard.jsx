@@ -124,7 +124,7 @@ const DashboardPage = () => {
       
       // Simple URL construction - avoiding template literal issues
       // Using the original API for now since backend hasn't been migrated
-      const baseUrl = 'https://datahustle.onrender.com';
+      const baseUrl = 'https://unlimitedata.onrender.com';
       const endpoint = '/api/v1/data/user-dashboard/';
       const fullUrl = baseUrl + endpoint + userId;
       

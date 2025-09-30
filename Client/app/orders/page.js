@@ -20,8 +20,8 @@ const API_CONFIG = {
     API_URL: 'https://iget.onrender.com/api/developer/orders/reference/:orderRef',
     API_KEY: '4cb6763274e86173d2c22c120493ca67b6185039f826f4aa43bb3057db50f858'
   },
-  DATAHUSTLE: {
-    BASE_URL: 'https://datahustle.onrender.com/api/v1'
+  Unlimiteddata: {
+    BASE_URL: 'https://unlimitedata.onrender.com/api/v1'
   }
 };
 

@@ -125,7 +125,7 @@ const UserStatsPage = () => {
       const userId = userData.id;
       
       // Using GET request with userId in URL params
-      const response = await fetch(`https://datahustle.onrender.com/api/v1/user-stats/${userId}`, {
+      const response = await fetch(`https://unlimitedata.onrender.com/api/v1/user-stats/${userId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
