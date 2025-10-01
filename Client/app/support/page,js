@@ -1,0 +1,967 @@
+'use client'
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  Phone, 
+  Mail, 
+  MessageSquare, 
+  Clock, 
+  MapPin, 
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  User,
+  AlertCircle,
+  CheckCircle,
+  Search,
+  FileText,
+  Video,
+  Download,
+  ExternalLink,
+  Headphones,
+  Shield,
+  Zap,
+  Globe,
+  Wifi,
+  Database,
+  ArrowRight,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  Check,
+  Loader2,
+  MessageCircle,
+  Users,
+  BookOpen,
+  TrendingUp,
+  DollarSign,
+  Package,
+  Settings,
+  RefreshCw,
+  Info,
+  X,
+  AlertTriangle,
+  ChevronRight,
+  Activity,
+  Timer,
+  Sparkles
+} from 'lucide-react';
+
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+const API_ENDPOINTS = {
+  CONTACT: '/api/v1/support/contact',
+  TICKET_STATUS: '/api/v1/support/ticket',
+  FAQ_VOTE: '/api/v1/support/faq/vote'
+};
+
+// Constants
+const NOTIFICATION_DURATION = 5000;
+const COPY_FEEDBACK_DURATION = 2000;
+
+const SupportPage = () => {
+  const router = useRouter();
+  
+  // Core State
+  const [activeTab, setActiveTab] = useState('contact');
+  const [expandedFaq, setExpandedFaq] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+    category: 'general'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  
+  // UI State
+  const [copiedItem, setCopiedItem] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [ticketStatus, setTicketStatus] = useState(null);
+  const [ticketNumber, setTicketNumber] = useState('');
+  const [checkingTicket, setCheckingTicket] = useState(false);
+  
+  // Animation State
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  // Contact Information
+  const contactInfo = useMemo(() => ({
+    whatsapp: '+233 54 430 0000',
+    phone: '+233 24 430 0000',
+    email: 'support@unlimiteddata.gh',
+    address: 'Accra, Greater Accra, Ghana',
+    hours: {
+      weekdays: '8:00 AM - 9:00 PM',
+      saturday: '9:00 AM - 6:00 PM',
+      sunday: '10:00 AM - 4:00 PM'
+    }
+  }), []);
+
+  // FAQ Data - Enhanced with more questions
+  const faqCategories = useMemo(() => [
+    {
+      category: 'Getting Started',
+      icon: <Zap className="w-5 h-5" />,
+      color: 'from-red-500 to-red-600',
+      questions: [
+        {
+          id: 1,
+          question: 'How do I create an account?',
+          answer: 'Creating an account is simple! Click the "Sign Up" button, enter your phone number and email, verify your number via SMS, and you\'re ready to start buying data bundles.',
+          helpful: 45,
+          notHelpful: 2
+        },
+        {
+          id: 2,
+          question: 'What payment methods do you accept?',
+          answer: 'We accept Mobile Money (MTN MoMo, Vodafone Cash, AirtelTigo Money), bank transfers, and card payments. All transactions are secured with 256-bit encryption.',
+          helpful: 38,
+          notHelpful: 1
+        },
+        {
+          id: 3,
+          question: 'How do I top up my wallet?',
+          answer: 'Navigate to the "Top Up" section in your dashboard, select your preferred payment method, enter the amount, and follow the payment instructions. Funds are added instantly after successful payment.',
+          helpful: 52,
+          notHelpful: 3
+        },
+        {
+          id: 4,
+          question: 'Is there a minimum top-up amount?',
+          answer: 'Yes, the minimum top-up amount is GHS 5. There is no maximum limit for top-ups.',
+          helpful: 28,
+          notHelpful: 1
+        }
+      ]
+    },
+    {
+      category: 'Data Bundles',
+      icon: <Wifi className="w-5 h-5" />,
+      color: 'from-blue-500 to-blue-600',
+      questions: [
+        {
+          id: 5,
+          question: 'How long does data delivery take?',
+          answer: 'Data delivery typically takes 5 minutes to 4 hours depending on network conditions. Orders placed after 9 PM are processed the next morning. We operate 7 days a week.',
+          helpful: 67,
+          notHelpful: 5
+        },
+        {
+          id: 6,
+          question: 'Can I buy data for someone else?',
+          answer: 'Yes! Simply enter the recipient\'s phone number when placing an order. They\'ll receive the data bundle directly, and you\'ll get a confirmation message.',
+          helpful: 29,
+          notHelpful: 0
+        },
+        {
+          id: 7,
+          question: 'What networks do you support?',
+          answer: 'We support all major networks in Ghana: MTN, AirtelTigo (AT), and Telecel (formerly Vodafone). Each network has different bundle options and pricing.',
+          helpful: 41,
+          notHelpful: 2
+        },
+        {
+          id: 8,
+          question: 'Can I schedule data delivery?',
+          answer: 'Currently, we process orders immediately. Scheduled delivery is coming soon in our next update.',
+          helpful: 15,
+          notHelpful: 8
+        }
+      ]
+    },
+    {
+      category: 'Account & Security',
+      icon: <Shield className="w-5 h-5" />,
+      color: 'from-green-500 to-green-600',
+      questions: [
+        {
+          id: 9,
+          question: 'How do I reset my password?',
+          answer: 'Click "Forgot Password" on the login page, enter your registered email or phone number, and follow the reset instructions sent to you via SMS or email.',
+          helpful: 23,
+          notHelpful: 1
+        },
+        {
+          id: 10,
+          question: 'Is my payment information secure?',
+          answer: 'Absolutely! We use bank-grade 256-bit SSL encryption, PCI DSS compliance, and never store your payment details. All transactions are processed through secure payment gateways.',
+          helpful: 55,
+          notHelpful: 0
+        },
+        {
+          id: 11,
+          question: 'How do I enable two-factor authentication?',
+          answer: 'Go to Settings > Security in your dashboard, click "Enable 2FA", and follow the setup process. You\'ll receive codes via SMS for additional security.',
+          helpful: 18,
+          notHelpful: 2
+        }
+      ]
+    },
+    {
+      category: 'Troubleshooting',
+      icon: <Settings className="w-5 h-5" />,
+      color: 'from-purple-500 to-purple-600',
+      questions: [
+        {
+          id: 12,
+          question: 'My data bundle wasn\'t delivered',
+          answer: 'First, check if the recipient number is correct. If yes, please wait up to 4 hours as delivery times vary. If still not received, contact support with your order ID.',
+          helpful: 72,
+          notHelpful: 8
+        },
+        {
+          id: 13,
+          question: 'Payment was deducted but order failed',
+          answer: 'Don\'t worry! Failed transactions are automatically refunded within 24-48 hours. If not received after 48 hours, contact support with your transaction reference.',
+          helpful: 61,
+          notHelpful: 4
+        },
+        {
+          id: 14,
+          question: 'Can\'t login to my account',
+          answer: 'Ensure you\'re using the correct email/phone number. Try resetting your password. Clear your browser cache or try a different browser. If issues persist, contact support.',
+          helpful: 34,
+          notHelpful: 3
+        }
+      ]
+    }
+  ], []);
+
+  // Help Articles
+  const helpArticles = useMemo(() => [
+    {
+      id: 1,
+      category: 'Getting Started',
+      title: 'Complete Guide to UnlimitedData GH',
+      description: 'Everything you need to know about using our platform',
+      readTime: '5 min',
+      views: 1234,
+      lastUpdated: '2 days ago',
+      icon: <BookOpen className="w-6 h-6" />
+    },
+    {
+      id: 2,
+      category: 'Video Tutorials',
+      title: 'How to Buy Data Bundles - Video Guide',
+      description: 'Step-by-step video walkthrough of purchasing data',
+      readTime: '3 min',
+      views: 876,
+      lastUpdated: '1 week ago',
+      icon: <Video className="w-6 h-6" />
+    },
+    {
+      id: 3,
+      category: 'Troubleshooting',
+      title: 'Common Issues and Solutions',
+      description: 'Quick fixes for the most common problems',
+      readTime: '4 min',
+      views: 2341,
+      lastUpdated: '3 days ago',
+      icon: <AlertTriangle className="w-6 h-6" />
+    },
+    {
+      id: 4,
+      category: 'API Documentation',
+      title: 'Developer API Guide',
+      description: 'Integrate our services into your application',
+      readTime: '10 min',
+      views: 445,
+      lastUpdated: '5 days ago',
+      icon: <Database className="w-6 h-6" />
+    }
+  ], []);
+
+  // Form Handlers
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CONTACT}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          category: 'general'
+        });
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setSubmitStatus(null), NOTIFICATION_DURATION);
+    }
+  }, [formData]);
+
+  const copyToClipboard = useCallback((text, type) => {
+    navigator.clipboard.writeText(text);
+    setCopiedItem(type);
+    setTimeout(() => setCopiedItem(null), COPY_FEEDBACK_DURATION);
+  }, []);
+
+  const checkTicketStatus = useCallback(async () => {
+    if (!ticketNumber.trim()) return;
+    
+    setCheckingTicket(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.TICKET_STATUS}/${ticketNumber}`);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setTicketStatus(data.ticket);
+      } else {
+        setTicketStatus({
+          number: ticketNumber,
+          status: 'not_found',
+          message: 'Ticket not found. Please check the number and try again.'
+        });
+      }
+    } catch (error) {
+      console.error('Ticket check error:', error);
+      setTicketStatus({
+        number: ticketNumber,
+        status: 'error',
+        message: 'Unable to check ticket status. Please try again later.'
+      });
+    } finally {
+      setCheckingTicket(false);
+    }
+  }, [ticketNumber]);
+
+  const handleFaqVote = useCallback(async (questionId, voteType) => {
+    try {
+      await fetch(`${API_BASE_URL}${API_ENDPOINTS.FAQ_VOTE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ questionId, voteType })
+      });
+    } catch (error) {
+      console.error('Vote error:', error);
+    }
+  }, []);
+
+  // Filter FAQs based on search
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery.trim()) return faqCategories;
+    
+    const query = searchQuery.toLowerCase();
+    return faqCategories.map(category => ({
+      ...category,
+      questions: category.questions.filter(q =>
+        q.question.toLowerCase().includes(query) ||
+        q.answer.toLowerCase().includes(query)
+      )
+    })).filter(category => category.questions.length > 0);
+  }, [faqCategories, searchQuery]);
+
+  // Quick Actions
+  const quickActions = useMemo(() => [
+    {
+      title: 'WhatsApp Support',
+      description: 'Chat with us instantly',
+      icon: <MessageCircle className="w-8 h-8" />,
+      gradient: 'from-green-600 to-green-700',
+      action: () => window.open(`https://wa.me/${contactInfo.whatsapp.replace(/\s/g, '')}`, '_blank')
+    },
+    {
+      title: 'Call Support',
+      description: 'Speak to an agent',
+      icon: <Phone className="w-8 h-8" />,
+      gradient: 'from-blue-600 to-blue-700',
+      action: () => window.location.href = `tel:${contactInfo.phone.replace(/\s/g, '')}`
+    },
+    {
+      title: 'Track Ticket',
+      description: 'Check ticket status',
+      icon: <FileText className="w-8 h-8" />,
+      gradient: 'from-purple-600 to-purple-700',
+      action: () => setActiveTab('ticket')
+    }
+  ], [contactInfo]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-900/20 to-red-600/20 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-800/20 to-black blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
+        <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-red-600 to-red-700 mb-6 shadow-2xl shadow-red-500/30">
+            <Headphones className="w-10 h-10 text-white" strokeWidth={2} />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+            How Can We <span className="text-red-500">Help You?</span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Get instant answers, contact support, or browse our help resources
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.action}
+              className={`group relative bg-gradient-to-br ${action.gradient} rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105`}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  {action.icon}
+                  <h3 className="text-xl font-bold text-white mb-1 mt-3">{action.title}</h3>
+                  <p className="text-white/90 text-sm">{action.description}</p>
+                </div>
+                <ArrowRight className="w-6 h-6 text-white opacity-50 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all" />
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {[
+            { id: 'contact', label: 'Contact Us', icon: <Mail className="w-4 h-4" /> },
+            { id: 'faq', label: 'FAQs', icon: <HelpCircle className="w-4 h-4" /> },
+            { id: 'resources', label: 'Help Resources', icon: <BookOpen className="w-4 h-4" /> },
+            { id: 'ticket', label: 'Support Ticket', icon: <FileText className="w-4 h-4" /> }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/30'
+                  : 'bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white border border-gray-800'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="transition-all duration-500">
+          {/* Contact Tab */}
+          {activeTab === 'contact' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Contact Form */}
+              <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                  <Send className="w-6 h-6 mr-3 text-red-500" />
+                  Send Us a Message
+                </h2>
+                
+                {submitStatus === 'success' && (
+                  <div className="mb-6 p-4 bg-green-900/50 border border-green-500 rounded-xl flex items-start">
+                    <CheckCircle className="w-5 h-5 text-green-400 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-green-400 font-semibold">Message sent successfully!</p>
+                      <p className="text-green-300 text-sm mt-1">We'll get back to you within 24 hours.</p>
+                    </div>
+                  </div>
+                )}
+
+                {submitStatus === 'error' && (
+                  <div className="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-xl flex items-start">
+                    <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-red-400 font-semibold">Failed to send message</p>
+                      <p className="text-red-300 text-sm mt-1">Please try again or contact us directly.</p>
+                    </div>
+                  </div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-400 text-sm font-medium mb-2">Your Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-gray-400 text-sm font-medium mb-2">Phone Number</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        placeholder="+233 XX XXX XXXX"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm font-medium mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm font-medium mb-2">Category</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    >
+                      <option value="general">General Inquiry</option>
+                      <option value="technical">Technical Issue</option>
+                      <option value="payment">Payment Problem</option>
+                      <option value="delivery">Delivery Issue</option>
+                      <option value="account">Account Related</option>
+                      <option value="feedback">Feedback</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm font-medium mb-2">Subject</label>
+                    <input
+                      type="text"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                      placeholder="Brief description of your issue"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm font-medium mb-2">Message</label>
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      required
+                      rows="5"
+                      className="w-full px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                      placeholder="Describe your issue in detail..."
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 mr-2" />
+                        Send Message
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-6">
+                {/* Office Hours */}
+                <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                    <Clock className="w-6 h-6 mr-3 text-red-500" />
+                    Office Hours
+                  </h3>
+                  <div className="space-y-3">
+                    {Object.entries(contactInfo.hours).map(([day, hours]) => (
+                      <div key={day} className="flex justify-between py-3 border-b border-gray-800 last:border-b-0">
+                        <span className="text-gray-400 capitalize">
+                          {day === 'weekdays' ? 'Monday - Friday' : day}
+                        </span>
+                        <span className="text-white font-semibold">{hours}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
+                  <h3 className="text-xl font-bold text-white mb-6">Contact Details</h3>
+                  <div className="space-y-4">
+                    {[
+                      { type: 'whatsapp', icon: MessageSquare, color: 'green', value: contactInfo.whatsapp },
+                      { type: 'phone', icon: Phone, color: 'blue', value: contactInfo.phone },
+                      { type: 'email', icon: Mail, color: 'red', value: contactInfo.email }
+                    ].map((item) => (
+                      <div key={item.type} className="flex items-center justify-between p-4 bg-black rounded-xl hover:bg-gray-950 transition-colors">
+                        <div className="flex items-center">
+                          <div className={`w-10 h-10 rounded-lg bg-${item.color}-600/20 flex items-center justify-center mr-4`}>
+                            <item.icon className={`w-5 h-5 text-${item.color}-500`} />
+                          </div>
+                          <div>
+                            <p className="text-gray-400 text-sm capitalize">{item.type}</p>
+                            <p className="text-white font-semibold">{item.value}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(item.value, item.type)}
+                          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                        >
+                          {copiedItem === item.type ? (
+                            <Check className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Address */}
+                    <div className="p-4 bg-black rounded-xl">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center mr-4 flex-shrink-0">
+                          <MapPin className="w-5 h-5 text-purple-500" />
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-sm">Office Location</p>
+                          <p className="text-white font-semibold">{contactInfo.address}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FAQ Tab */}
+          {activeTab === 'faq' && (
+            <div className="max-w-4xl mx-auto">
+              {/* Search FAQs */}
+              <div className="mb-8">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search FAQs..."
+                    className="w-full pl-12 pr-4 py-4 bg-gray-900 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* FAQ Categories */}
+              {filteredFaqs.length > 0 ? (
+                filteredFaqs.map((category, categoryIndex) => (
+                  <div key={categoryIndex} className="mb-8">
+                    <div className="flex items-center mb-4">
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${category.color} p-2 flex items-center justify-center mr-3`}>
+                        {React.cloneElement(category.icon, { className: 'w-6 h-6 text-white' })}
+                      </div>
+                      <h3 className="text-xl font-bold text-white">{category.category}</h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {category.questions.map((item) => (
+                        <div
+                          key={item.id}
+                          className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden hover:border-red-500/50 transition-all duration-300"
+                        >
+                          <button
+                            onClick={() => setExpandedFaq(expandedFaq === item.id ? null : item.id)}
+                            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-800/50 transition-colors"
+                          >
+                            <span className="font-semibold text-white pr-4">{item.question}</span>
+                            {expandedFaq === item.id ? (
+                              <ChevronUp className="w-5 h-5 text-red-500 flex-shrink-0" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                            )}
+                          </button>
+                          
+                          {expandedFaq === item.id && (
+                            <div className="px-6 pb-4">
+                              <p className="text-gray-400 leading-relaxed">{item.answer}</p>
+                              
+                              <div className="mt-4 flex items-center justify-between border-t border-gray-800 pt-4">
+                                <p className="text-sm text-gray-500">Was this helpful?</p>
+                                <div className="flex items-center gap-4">
+                                  <button 
+                                    onClick={() => handleFaqVote(item.id, 'helpful')}
+                                    className="flex items-center gap-1 text-gray-400 hover:text-green-500 transition-colors"
+                                  >
+                                    <ThumbsUp className="w-4 h-4" />
+                                    <span className="text-sm">{item.helpful}</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleFaqVote(item.id, 'notHelpful')}
+                                    className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  >
+                                    <ThumbsDown className="w-4 h-4" />
+                                    <span className="text-sm">{item.notHelpful}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <HelpCircle className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg">No FAQs found matching "{searchQuery}"</p>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mt-4 text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Resources Tab */}
+          {activeTab === 'resources' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {helpArticles.map(article => (
+                <div
+                  key={article.id}
+                  className="bg-gray-900 rounded-2xl p-6 border border-gray-800 hover:border-red-500/50 transition-all duration-300 cursor-pointer group"
+                  onClick={() => setSelectedArticle(article)}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-red-600/20 flex items-center justify-center">
+                      {article.icon}
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-lg">
+                      {article.category}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-red-500 transition-colors">
+                    {article.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-4">{article.description}</p>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {article.readTime}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {article.views.toLocaleString()}
+                      </span>
+                    </div>
+                    <span>{article.lastUpdated}</span>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Quick Links Card */}
+              <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-6 text-white">
+                <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+                <div className="space-y-3">
+                  <a href="#" className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
+                    <span className="flex items-center">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Mobile App
+                    </span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
+                    <span className="flex items-center">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      User Guide PDF
+                    </span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
+                    <span className="flex items-center">
+                      <Video className="w-4 h-4 mr-2" />
+                      Video Tutorials
+                    </span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Support Ticket Tab */}
+          {activeTab === 'ticket' && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                  <FileText className="w-6 h-6 mr-3 text-red-500" />
+                  Track Support Ticket
+                </h2>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-gray-400 text-sm font-medium mb-2">Ticket Number</label>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={ticketNumber}
+                        onChange={(e) => setTicketNumber(e.target.value)}
+                        placeholder="Enter ticket number (e.g., TKT-2024-001)"
+                        className="flex-1 px-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                      />
+                      <button
+                        onClick={checkTicketStatus}
+                        disabled={checkingTicket || !ticketNumber.trim()}
+                        className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      >
+                        {checkingTicket ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          'Check Status'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {ticketStatus && (
+                    <div className="p-6 bg-black rounded-xl border border-gray-800">
+                      {ticketStatus.status === 'not_found' || ticketStatus.status === 'error' ? (
+                        <div className="flex items-start space-x-3">
+                          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h3 className="text-lg font-bold text-white mb-1">Ticket Not Found</h3>
+                            <p className="text-gray-400 text-sm">{ticketStatus.message}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-white">Ticket #{ticketStatus.number}</h3>
+                            <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                              ticketStatus.status === 'open' ? 'bg-green-600/20 text-green-500' :
+                              ticketStatus.status === 'in_progress' ? 'bg-yellow-600/20 text-yellow-500' :
+                              ticketStatus.status === 'resolved' ? 'bg-blue-600/20 text-blue-500' :
+                              'bg-gray-600/20 text-gray-500'
+                            }`}>
+                              {ticketStatus.status?.replace('_', ' ').toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {ticketStatus.created && (
+                              <div className="flex justify-between py-2 border-b border-gray-800">
+                                <span className="text-gray-400">Created</span>
+                                <span className="text-white">{ticketStatus.created}</span>
+                              </div>
+                            )}
+                            {ticketStatus.lastUpdate && (
+                              <div className="flex justify-between py-2 border-b border-gray-800">
+                                <span className="text-gray-400">Last Update</span>
+                                <span className="text-white">{ticketStatus.lastUpdate}</span>
+                              </div>
+                            )}
+                            {ticketStatus.assignee && (
+                              <div className="flex justify-between py-2 border-b border-gray-800">
+                                <span className="text-gray-400">Assigned To</span>
+                                <span className="text-white">{ticketStatus.assignee}</span>
+                              </div>
+                            )}
+                            {ticketStatus.priority && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-400">Priority</span>
+                                <span className={`font-semibold ${
+                                  ticketStatus.priority === 'High' ? 'text-red-500' :
+                                  ticketStatus.priority === 'Medium' ? 'text-yellow-500' :
+                                  'text-green-500'
+                                }`}>
+                                  {ticketStatus.priority}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-6 p-4 bg-gray-900 rounded-lg">
+                            <p className="text-gray-400 text-sm">
+                              <Info className="w-4 h-4 inline mr-1" />
+                              Your ticket is being processed. You'll receive updates via email.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating Help Button */}
+      <button className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-red-600 to-red-700 rounded-full shadow-2xl shadow-red-500/30 flex items-center justify-center text-white hover:from-red-700 hover:to-red-800 transition-all duration-300 transform hover:scale-110 z-50 animate-bounce">
+        <MessageSquare className="w-6 h-6" />
+      </button>
+    </div>
+  );
+};
+
+export default SupportPage;

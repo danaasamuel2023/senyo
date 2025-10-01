@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { 
@@ -18,74 +18,85 @@ import {
   TrendingUp,
   DollarSign,
   Calendar,
-  Search
+  Search,
+  Loader2,
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  Shield,
+  Database,
+  Wifi,
+  Signal,
+  Timer,
+  CheckCheck,
+  AlertTriangle,
+  Package
 } from 'lucide-react';
+
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+const API_ENDPOINTS = {
+  TRANSACTIONS: '/api/v1/user-transactions',
+  VERIFY: '/api/v1/verify-pending-transaction'
+};
+
+// Constants
+const TRANSACTION_EXPIRY_HOURS = 5;
+const NOTIFICATION_DURATION = 5000;
+const PAGE_SIZE = 100;
 
 const TransactionsPage = () => {
   const router = useRouter();
   
-  // State variables
+  // Core state
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [authToken, setAuthToken] = useState(null);
   const [userData, setUserData] = useState(null);
+  
+  // Pagination state
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 100,
+    limit: PAGE_SIZE,
     pages: 0
   });
+  
+  // UI state
   const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [verifyingId, setVerifyingId] = useState(null);
   const [notification, setNotification] = useState({
     show: false,
     message: '',
     type: 'success'
   });
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true); // Default to dark for black theme
 
-  // Effect to check system preference for dark mode
+  // Initialize theme
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Check if user has already set a preference
       const savedDarkMode = localStorage.getItem('darkMode');
+      const prefersDark = savedDarkMode !== null 
+        ? savedDarkMode === 'true'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
       
-      if (savedDarkMode !== null) {
-        setDarkMode(savedDarkMode === 'true');
-      } else {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setDarkMode(prefersDark);
-      }
+      setDarkMode(prefersDark || true); // Force dark for black theme
+      document.documentElement.classList.toggle('dark', prefersDark || true);
     }
   }, []);
 
-  // Effect to update HTML class when dark mode changes
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    // Save preference to localStorage
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
-  // Get token and user data from localStorage when component mounts
+  // Authentication check
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('authToken');
       const userDataStr = localStorage.getItem('userData');
       
       if (!token) {
-        router.push('/login');
+        router.push('/SignIn');
         return;
       }
       
@@ -98,552 +109,547 @@ const TransactionsPage = () => {
         } catch (err) {
           console.error('Error parsing user data:', err);
           localStorage.removeItem('userData');
-          router.push('/login');
+          router.push('/SignIn');
         }
       } else {
-        router.push('/login');
+        router.push('/SignIn');
       }
     }
   }, [router]);
 
-  // Fetch transactions when component mounts or filters change
+  // Fetch transactions
+  const fetchTransactions = useCallback(async (isRefresh = false) => {
+    if (!authToken || !userData) return;
+    
+    isRefresh ? setRefreshing(true) : setLoading(true);
+    setError(null);
+    
+    try {
+      const userId = userData.id;
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString()
+      });
+      
+      if (statusFilter) params.append('status', statusFilter);
+      if (searchQuery) params.append('search', searchQuery);
+      
+      const response = await axios.get(
+        `${API_BASE_URL}${API_ENDPOINTS.TRANSACTIONS}/${userId}?${params}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+      
+      if (response.data.success) {
+        setTransactions(response.data.data.transactions || []);
+        setPagination(response.data.data.pagination || pagination);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch transactions');
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        showNotification('Session expired. Please login again.', 'error');
+        localStorage.clear();
+        router.push('/SignIn');
+      } else {
+        const errorMsg = err.response?.data?.message || err.message || 'Failed to load transactions';
+        setError(errorMsg);
+        showNotification(errorMsg, 'error');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [authToken, userData, pagination.page, pagination.limit, statusFilter, searchQuery]);
+
+  // Load transactions on mount and filter changes
   useEffect(() => {
     if (userData && authToken) {
       fetchTransactions();
     }
-  }, [authToken, userData, pagination.page, statusFilter]);
+  }, [authToken, userData, pagination.page, statusFilter, searchQuery]);
 
-  // Function to fetch transactions
-  const fetchTransactions = async () => {
-    if (!authToken || !userData) return;
-    
-    setLoading(true);
-    try {
-      const userId = userData.id;
-      let url = `https://datahustle.onrender.com/api/v1/user-transactions/${userId}?page=${pagination.page}&limit=${pagination.limit}`;
-      
-      if (statusFilter) {
-        url += `&status=${statusFilter}`;
-      }
-      
-      const response = await axios.get(url, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      
-      if (response.data.success) {
-        setTransactions(response.data.data.transactions);
-        setPagination(response.data.data.pagination);
-      } else {
-        setError('Failed to fetch transactions');
-      }
-    } catch (err) {
-      if (err.response && err.response.status === 401) {
-        // Handle token expiration
-        showNotification('Your session has expired. Please log in again.', 'error');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        router.push('/login');
-      } else {
-        setError('An error occurred while fetching transactions');
-        console.error(err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to verify pending transaction with time check
+  // Verify transaction
   const verifyTransaction = async (transactionId, createdAt) => {
     if (!authToken || !userData) return;
     
-    // Check if transaction is older than 5 hours
-    const transactionTime = new Date(createdAt);
-    const currentTime = new Date();
-    const timeDifference = (currentTime - transactionTime) / (1000 * 60 * 60); // Convert to hours
-    
-    if (timeDifference > 5) {
-      showNotification('Cannot verify this transaction. It has been pending for more than 5 hours. Please contact admin.', 'error');
+    // Check expiry
+    if (isTransactionExpired(createdAt)) {
+      showNotification('Transaction expired. Please contact support.', 'error');
       return;
     }
     
     setVerifyingId(transactionId);
+    
     try {
-      const response = await axios.post(`https://datamartbackened.onrender.com/api/v1/verify-pending-transaction/${transactionId}`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+      const response = await axios.post(
+        `${API_BASE_URL}${API_ENDPOINTS.VERIFY}/${transactionId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
         }
-      });
+      );
       
       if (response.data.success) {
         showNotification('Transaction verified successfully!', 'success');
-        // Update the transaction in the list
-        setTransactions(prevTransactions => 
-          prevTransactions.map(t => 
-            t._id === transactionId ? { ...t, status: 'completed' } : t
-          )
+        setTransactions(prev => 
+          prev.map(t => t._id === transactionId ? { ...t, status: 'completed' } : t)
         );
       } else {
-        showNotification(response.data.message || 'Verification failed', 'error');
+        throw new Error(response.data.message || 'Verification failed');
       }
     } catch (err) {
-      if (err.response && err.response.status === 401) {
-        // Handle token expiration
-        showNotification('Your session has expired. Please log in again.', 'error');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        router.push('/login');
-      } else {
-        showNotification('An error occurred during verification', 'error');
-        console.error(err);
-      }
+      const errorMsg = err.response?.data?.message || 'Verification failed. Please try again.';
+      showNotification(errorMsg, 'error');
     } finally {
       setVerifyingId(null);
     }
   };
 
-  // Check if a transaction is expired (older than 5 hours)
-  const isTransactionExpired = (createdAt) => {
+  // Utility functions
+  const isTransactionExpired = useCallback((createdAt) => {
     const transactionTime = new Date(createdAt);
     const currentTime = new Date();
-    const timeDifference = (currentTime - transactionTime) / (1000 * 60 * 60); // Convert to hours
-    return timeDifference > 5;
-  };
+    const hoursDiff = (currentTime - transactionTime) / (1000 * 60 * 60);
+    return hoursDiff > TRANSACTION_EXPIRY_HOURS;
+  }, []);
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= pagination.pages) {
-      setPagination({ ...pagination, page: newPage });
-    }
-  };
-
-  // Handle status filter change
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
-    setPagination({ ...pagination, page: 1 }); // Reset to first page when filter changes
-  };
-
-  // Show notification
-  const showNotification = (message, type) => {
-    setNotification({
-      show: true,
-      message,
-      type
-    });
-    
-    // Auto-hide notification after 5 seconds
+  const showNotification = useCallback((message, type = 'success') => {
+    setNotification({ show: true, message, type });
     setTimeout(() => {
       setNotification(prev => ({ ...prev, show: false }));
-    }, 5000);
-  };
+    }, NOTIFICATION_DURATION);
+  }, []);
 
-  // Format date
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDate = useCallback((dateString) => {
+    return new Date(dateString).toLocaleString('en-GH', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+  }, []);
 
-  // Format currency
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat('en-GH', {
       style: 'currency',
-      currency: 'GHS'
-    }).format(amount);
-  };
+      currency: 'GHS',
+      minimumFractionDigits: 2
+    }).format(amount || 0);
+  }, []);
 
-  // Get status icon and color
-  const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'completed':
-        return { 
-          icon: <CheckCircle className="w-5 h-5" />, 
-          color: 'text-emerald-600 bg-gradient-to-r from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700',
-          text: 'Completed'
-        };
-      case 'pending':
-        return { 
-          icon: <Clock className="w-5 h-5" />, 
-          color: 'text-yellow-600 bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-900/40 dark:to-yellow-800/40 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700',
-          text: 'Pending'
-        };
-      case 'failed':
-        return { 
-          icon: <XCircle className="w-5 h-5" />, 
-          color: 'text-red-600 bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 dark:text-red-400 border border-red-300 dark:border-red-700',
-          text: 'Failed'
-        };
-      default:
-        return { 
-          icon: <AlertCircle className="w-5 h-5" />, 
-          color: 'text-gray-600 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800/40 dark:to-gray-700/40 dark:text-gray-400 border border-gray-300 dark:border-gray-600',
-          text: status
-        };
-    }
-  };
+  // Status display configuration
+  const getStatusDisplay = useCallback((status) => {
+    const statusMap = {
+      completed: {
+        icon: <CheckCircle className="w-5 h-5" />,
+        color: 'text-green-400 bg-green-950/50 border-green-800',
+        text: 'Completed'
+      },
+      pending: {
+        icon: <Clock className="w-5 h-5" />,
+        color: 'text-yellow-400 bg-yellow-950/50 border-yellow-800',
+        text: 'Pending'
+      },
+      failed: {
+        icon: <XCircle className="w-5 h-5" />,
+        color: 'text-red-400 bg-red-950/50 border-red-800',
+        text: 'Failed'
+      }
+    };
+    
+    return statusMap[status] || {
+      icon: <AlertCircle className="w-5 h-5" />,
+      color: 'text-gray-400 bg-gray-800 border-gray-700',
+      text: status || 'Unknown'
+    };
+  }, []);
 
-  // Calculate transaction stats
-  const transactionStats = {
+  // Calculate statistics
+  const transactionStats = useMemo(() => ({
     total: transactions.length,
     completed: transactions.filter(t => t.status === 'completed').length,
     pending: transactions.filter(t => t.status === 'pending').length,
+    failed: transactions.filter(t => t.status === 'failed').length,
     totalAmount: transactions.reduce((sum, t) => sum + (t.status === 'completed' ? t.amount : 0), 0)
+  }), [transactions]);
+
+  // Filtered transactions
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          t.reference?.toLowerCase().includes(query) ||
+          t.type?.toLowerCase().includes(query) ||
+          t.amount?.toString().includes(query)
+        );
+      }
+      return true;
+    });
+  }, [transactions, searchQuery]);
+
+  // Page handlers
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+    }
   };
 
-  // Render a transaction card for mobile view
-  const renderTransactionCard = (transaction) => {
-    const status = getStatusDisplay(transaction.status);
-    const expired = transaction.status === 'pending' && isTransactionExpired(transaction.createdAt);
-    
-    return (
-      <div key={transaction._id} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-5 rounded-2xl shadow-xl mb-4 border border-emerald-200/50 dark:border-emerald-800/30 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <div className="font-bold text-gray-900 dark:text-white capitalize text-lg">{transaction.type}</div>
-            <div className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center mt-1">
-              <Calendar className="w-4 h-4 mr-1" />
-              {formatDate(transaction.createdAt)}
-            </div>
-          </div>
-          <div className={`flex items-center px-3 py-2 rounded-xl text-sm font-bold shadow-sm ${status.color}`}>
-            {status.icon}
-            <span className="ml-2">{status.text}</span>
-            {expired && <span className="ml-2 text-red-500 dark:text-red-400">(Expired)</span>}
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <div className="text-2xl font-black text-gray-900 dark:text-white mb-2 flex items-center">
-            <DollarSign className="w-6 h-6 mr-1 text-emerald-600" />
-            {formatCurrency(transaction.amount)}
-          </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 break-all bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
-            <span className="font-bold text-gray-700 dark:text-gray-300">Reference:</span> {transaction.reference}
-          </div>
-        </div>
-        
-        {transaction.status === 'pending' && (
-          <div className="mt-4">
-            <button
-              className={`w-full flex justify-center items-center py-4 px-6 rounded-2xl text-white font-bold text-base transition-all duration-300 shadow-lg ${
-                expired 
-                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700' 
-                  : verifyingId === transaction._id 
-                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transform hover:scale-105'
-              }`}
-              disabled={verifyingId === transaction._id || expired}
-              onClick={() => expired 
-                ? showNotification('Cannot verify this transaction. It has been pending for more than 5 hours. Please contact admin.', 'error')
-                : verifyTransaction(transaction._id, transaction.createdAt)
-              }
-            >
-              {verifyingId === transaction._id ? (
-                <div className="flex items-center">
-                  <div className="w-6 h-6 border-t-2 border-white border-solid rounded-full animate-spin mr-3"></div>
-                  Verifying...
-                </div>
-              ) : expired ? (
-                <>
-                  <AlertCircle className="w-6 h-6 mr-3" />
-                  Contact Admin
-                </>
-              ) : (
-                <>
-                  <Zap className="w-6 h-6 mr-3" />
-                  Verify Now
-                </>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
-    );
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  // Show loading spinner if data is still loading
+  const handleRefresh = () => {
+    fetchTransactions(true);
+  };
+
+  // Loading state
   if (!userData || !authToken || loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-black via-gray-950 to-black">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="w-20 h-20 rounded-full border-4 border-emerald-100 dark:border-emerald-900"></div>
-            <div className="absolute top-0 w-20 h-20 rounded-full border-4 border-transparent border-t-emerald-500 dark:border-t-emerald-400 animate-spin"></div>
-          </div>
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <div className="absolute inset-0 rounded-full border-4 border-red-900/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 border-r-red-400 animate-spin"></div>
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-red-500 to-red-600 animate-pulse flex items-center justify-center">
+              <Database className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
-            <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-transparent bg-clip-text">
-              DATAHUSTLE
-            </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading transactions...</p>
+          <h1 className="text-2xl font-black text-red-500 animate-pulse mb-2">
+            UNLIMITEDDATA GH
+          </h1>
+          <p className="text-gray-400 font-medium">Loading transactions...</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative">
+      {/* Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-900/10 to-red-600/10 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-800/10 to-black blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
-        <div className="mb-8 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 rounded-2xl shadow-2xl p-6 transform hover:scale-105 transition-all duration-300">
-          <div className="flex justify-between items-center relative">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-4 right-4">
-                <Activity className="w-8 h-8 text-white animate-pulse" />
+        <div className="mb-8 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl shadow-2xl p-6 border border-red-500/30">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Wallet className="w-7 h-7 text-white" strokeWidth={2} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-white flex items-center">
+                  Transaction History
+                </h1>
+                <p className="text-red-100 text-sm mt-1">Monitor your data purchases</p>
               </div>
             </div>
             
-            <div className="relative z-10">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" strokeWidth={2.5} />
-                </div>
-                <h1 className="text-3xl font-black text-white">Transaction History</h1>
-              </div>
-              <p className="text-white/90 text-lg font-medium">Track your DATAHUSTLE journey</p>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-3 rounded-xl bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 border border-white/20 disabled:opacity-50"
+                aria-label="Refresh"
+              >
+                <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            
-            <button 
-              onClick={toggleDarkMode} 
-              className="relative z-10 p-3 rounded-xl bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg transform hover:scale-105"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-            </button>
           </div>
         </div>
 
-        {/* Transaction Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30">
-            <div className="flex items-center">
-              <div className="bg-emerald-100 dark:bg-emerald-900/30 p-3 rounded-xl mr-3">
-                <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-gray-900 backdrop-blur-lg p-4 rounded-xl shadow-xl border border-gray-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-red-950/50 flex items-center justify-center">
+                <Package className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Total</p>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{transactionStats.total}</p>
+                <p className="text-xs font-semibold text-gray-500">Total</p>
+                <p className="text-xl font-black text-white">{transactionStats.total}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30">
-            <div className="flex items-center">
-              <div className="bg-emerald-100 dark:bg-emerald-900/30 p-3 rounded-xl mr-3">
-                <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="bg-gray-900 backdrop-blur-lg p-4 rounded-xl shadow-xl border border-gray-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-green-950/50 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Completed</p>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{transactionStats.completed}</p>
+                <p className="text-xs font-semibold text-gray-500">Completed</p>
+                <p className="text-xl font-black text-white">{transactionStats.completed}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl mr-3">
-                <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          <div className="bg-gray-900 backdrop-blur-lg p-4 rounded-xl shadow-xl border border-gray-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-950/50 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-yellow-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Pending</p>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{transactionStats.pending}</p>
+                <p className="text-xs font-semibold text-gray-500">Pending</p>
+                <p className="text-xl font-black text-white">{transactionStats.pending}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30">
-            <div className="flex items-center">
-              <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl mr-3">
-                <TrendingUp className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <div className="bg-gray-900 backdrop-blur-lg p-4 rounded-xl shadow-xl border border-gray-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-red-950/50 flex items-center justify-center">
+                <XCircle className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Total Value</p>
-                <p className="text-lg font-black text-gray-900 dark:text-white">{formatCurrency(transactionStats.totalAmount)}</p>
+                <p className="text-xs font-semibold text-gray-500">Failed</p>
+                <p className="text-xl font-black text-white">{transactionStats.failed}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gray-900 backdrop-blur-lg p-4 rounded-xl shadow-xl border border-gray-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-red-950/50 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500">Total Value</p>
+                <p className="text-lg font-black text-white">{formatCurrency(transactionStats.totalAmount)}</p>
               </div>
             </div>
           </div>
         </div>
         
         {/* Filters */}
-        <div className="mb-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 border border-emerald-200/50 dark:border-emerald-800/30">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-xl">
-                <Filter className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <select
-                className="border-2 rounded-xl py-3 px-4 bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 border-emerald-300 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300 font-medium backdrop-blur-sm"
-                value={statusFilter}
-                onChange={handleStatusChange}
-              >
-                <option value="">All Transactions</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-              </select>
+        <div className="mb-6 bg-gray-900 backdrop-blur-lg rounded-xl shadow-xl p-4 border border-gray-800">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-black border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+              />
             </div>
             
-            <button 
-              onClick={fetchTransactions} 
-              className="flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg font-bold transform hover:scale-105"
+            <select
+              className="px-4 py-3 bg-black text-white border border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+              value={statusFilter}
+              onChange={handleStatusChange}
             >
-              <RefreshCw className="w-5 h-5" />
-              <span>Refresh</span>
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            
+            <button 
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg font-semibold disabled:opacity-50"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
         </div>
         
         {/* Notification */}
         {notification.show && (
-          <div className={`mb-6 p-4 rounded-2xl flex items-center shadow-lg backdrop-blur-lg border ${
+          <div className={`mb-6 p-4 rounded-xl flex items-center shadow-lg backdrop-blur-lg border transition-all duration-300 ${
             notification.type === 'success' 
-              ? 'bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700' 
-              : 'bg-red-100/80 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700'
-          } transition-all duration-300`}>
+              ? 'bg-green-950/50 text-green-400 border-green-800' 
+              : 'bg-red-950/50 text-red-400 border-red-800'
+          }`}>
             {notification.type === 'success' ? (
-              <CheckCircle className="w-6 h-6 mr-3" />
+              <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-6 h-6 mr-3" />
+              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
             )}
             <span className="font-medium">{notification.message}</span>
           </div>
         )}
         
-        {/* Error alert */}
+        {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100/80 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-2xl flex items-center transition-all duration-300 backdrop-blur-lg border border-red-300 dark:border-red-700 shadow-lg">
-            <AlertCircle className="w-6 h-6 mr-3" />
+          <div className="mb-6 p-4 bg-red-950/50 text-red-400 rounded-xl flex items-center backdrop-blur-lg border border-red-800 shadow-lg">
+            <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
         )}
         
-        {/* Mobile view - Card layout */}
-        <div className="md:hidden">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <div className="relative w-12 h-12">
-                <div className="w-12 h-12 rounded-full border-4 border-emerald-100 dark:border-emerald-900"></div>
-                <div className="absolute top-0 w-12 h-12 rounded-full border-4 border-transparent border-t-emerald-500 dark:border-t-emerald-400 animate-spin"></div>
-              </div>
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="text-center py-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30">
-              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No transactions found</p>
-            </div>
-          ) : (
-            transactions.map(transaction => renderTransactionCard(transaction))
-          )}
-        </div>
-        
-        {/* Desktop view - Table layout */}
-        <div className="hidden md:block overflow-x-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-2xl transition-all duration-300 border border-emerald-200/50 dark:border-emerald-800/30">
-          <table className="min-w-full divide-y divide-emerald-200 dark:divide-emerald-800">
-            <thead className="bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Reference</th>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white/80 dark:bg-gray-800/80 divide-y divide-emerald-200/50 dark:divide-emerald-800/50">
-              {loading ? (
+        {/* Transactions Table/Cards */}
+        <div className="bg-gray-900 rounded-xl shadow-2xl border border-gray-800 overflow-hidden">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-800">
+              <thead className="bg-gradient-to-r from-gray-900 to-gray-950">
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center">
-                    <div className="flex justify-center">
-                      <div className="relative w-12 h-12">
-                        <div className="w-12 h-12 rounded-full border-4 border-emerald-100 dark:border-emerald-900"></div>
-                        <div className="absolute top-0 w-12 h-12 rounded-full border-4 border-transparent border-t-emerald-500 dark:border-t-emerald-400 animate-spin"></div>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Reference</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {filteredTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center">
+                        <Search className="w-12 h-12 text-gray-600 mb-4" />
+                        <p className="text-gray-400 text-lg font-medium">No transactions found</p>
+                        <p className="text-gray-600 text-sm mt-1">Try adjusting your filters</p>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
-                    <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No transactions found</p>
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((transaction) => {
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map((transaction) => {
+                    const status = getStatusDisplay(transaction.status);
+                    const expired = transaction.status === 'pending' && isTransactionExpired(transaction.createdAt);
+                    
+                    return (
+                      <tr key={transaction._id} className="hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {formatDate(transaction.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-white capitalize">
+                            {transaction.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-bold text-red-400">
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-400 font-mono truncate max-w-[200px]">
+                            {transaction.reference}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${status.color}`}>
+                            {status.icon}
+                            <span className="ml-2">{status.text}</span>
+                            {expired && <span className="ml-2 text-red-400">(Expired)</span>}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {transaction.status === 'pending' && (
+                            <button
+                              className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                expired 
+                                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                                  : verifyingId === transaction._id
+                                    ? 'bg-red-950/50 text-red-400 border border-red-800'
+                                    : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
+                              disabled={verifyingId === transaction._id || expired}
+                              onClick={() => !expired && verifyTransaction(transaction._id, transaction.createdAt)}
+                            >
+                              {verifyingId === transaction._id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Verifying...
+                                </>
+                              ) : expired ? (
+                                <>
+                                  <AlertTriangle className="w-4 h-4 mr-2" />
+                                  Expired
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCheck className="w-4 h-4 mr-2" />
+                                  Verify
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden">
+            {filteredTransactions.length === 0 ? (
+              <div className="p-10 text-center">
+                <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 font-medium">No transactions found</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {filteredTransactions.map((transaction) => {
                   const status = getStatusDisplay(transaction.status);
                   const expired = transaction.status === 'pending' && isTransactionExpired(transaction.createdAt);
                   
                   return (
-                    <tr key={transaction._id} className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-300">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
-                        {formatDate(transaction.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 capitalize font-bold">
-                        {transaction.type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-black">
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        <div className="max-w-[150px] overflow-hidden text-ellipsis">
-                          {transaction.reference}
+                    <div key={transaction._id} className="p-4 hover:bg-gray-800/50 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="font-semibold text-white capitalize">{transaction.type}</div>
+                          <div className="text-sm text-gray-400 mt-1">
+                            {formatDate(transaction.createdAt)}
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`inline-flex items-center px-3 py-2 rounded-xl text-sm font-bold shadow-sm ${status.color}`}>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold border ${status.color}`}>
                           {status.icon}
-                          <span className="ml-2">{status.text}</span>
-                          {expired && (
-                            <span className="ml-2 text-red-500 dark:text-red-400">(Expired)</span>
-                          )}
+                          <span className="ml-1">{status.text}</span>
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500 text-sm">Amount:</span>
+                          <span className="font-bold text-red-400">{formatCurrency(transaction.amount)}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {transaction.status === 'pending' && (
-                          <button
-                            className={`inline-flex items-center px-4 py-2 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 font-bold transform hover:scale-105 ${
-                              expired 
-                                ? 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500' 
-                                : 'border-emerald-500 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus:ring-emerald-500 disabled:opacity-50 shadow-sm'
-                            }`}
-                            disabled={verifyingId === transaction._id || expired}
-                            onClick={() => expired 
-                              ? showNotification('Cannot verify this transaction. It has been pending for more than 5 hours. Please contact admin.', 'error')
-                              : verifyTransaction(transaction._id, transaction.createdAt)
-                            }
-                          >
-                            {verifyingId === transaction._id ? (
-                              <div className="flex items-center">
-                                <div className="w-4 h-4 border-t-2 border-emerald-500 dark:border-emerald-400 border-solid rounded-full animate-spin mr-2"></div>
-                                Verifying...
-                              </div>
-                            ) : expired ? (
-                              <>
-                                <AlertCircle className="w-4 h-4 mr-2 text-red-500 dark:text-red-400" />
-                                Contact Admin
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="w-4 h-4 mr-2" />
-                                Verify
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                        <div className="text-xs text-gray-500 font-mono truncate">
+                          Ref: {transaction.reference}
+                        </div>
+                      </div>
+                      
+                      {transaction.status === 'pending' && (
+                        <button
+                          className={`w-full mt-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                            expired 
+                              ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                              : verifyingId === transaction._id
+                                ? 'bg-red-950/50 text-red-400 border border-red-800'
+                                : 'bg-red-600 hover:bg-red-700 text-white'
+                          }`}
+                          disabled={verifyingId === transaction._id || expired}
+                          onClick={() => !expired && verifyTransaction(transaction._id, transaction.createdAt)}
+                        >
+                          {verifyingId === transaction._id ? 'Verifying...' : expired ? 'Expired' : 'Verify Now'}
+                        </button>
+                      )}
+                    </div>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Pagination */}
@@ -652,21 +658,36 @@ const TransactionsPage = () => {
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="p-3 rounded-xl border-2 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-50 transition-all duration-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg shadow-lg transform hover:scale-105"
+              className="p-3 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             
-            <div className="text-lg font-bold text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg px-6 py-3 rounded-xl shadow-lg border border-emerald-200/50 dark:border-emerald-800/30">
-              <span className="text-emerald-600 dark:text-emerald-400">{pagination.page}</span> of <span className="text-emerald-600 dark:text-emerald-400">{pagination.pages}</span>
+            <div className="flex items-center space-x-2">
+              {[...Array(Math.min(5, pagination.pages))].map((_, idx) => {
+                const pageNum = idx + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`w-10 h-10 rounded-lg font-semibold transition-all ${
+                      pageNum === pagination.page
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
             </div>
             
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
-              className="p-3 rounded-xl border-2 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-50 transition-all duration-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg shadow-lg transform hover:scale-105"
+              className="p-3 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}
