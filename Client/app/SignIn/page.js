@@ -33,7 +33,7 @@ const Toast = ({ message, type, onClose }) => {
           ? 'bg-green-500/95 text-white border-green-400/50' 
           : type === 'error' 
             ? 'bg-red-600/95 text-white border-red-500/50' 
-            : 'bg-yellow-500/95 text-white border-yellow-400/50'
+            : 'bg-yellow-500/95 text-black border-yellow-400/50'
       }`}>
         <div className="mr-2">
           {type === 'success' ? (
@@ -89,10 +89,10 @@ export default function LoginPage() {
       }
       @keyframes pulseGlow {
         0%, 100% {
-          box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+          box-shadow: 0 0 20px rgba(255, 204, 8, 0.3);
         }
         50% {
-          box-shadow: 0 0 40px rgba(220, 38, 38, 0.5);
+          box-shadow: 0 0 40px rgba(255, 204, 8, 0.5);
         }
       }
       .pulse-glow {
@@ -179,11 +179,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden flex items-center justify-center p-4">
-      {/* Animated Background Elements - Red Theme */}
+      {/* Animated Background Elements - MTN Yellow Theme */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-600/20 to-red-800/20 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-700/20 to-black/40 blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-red-500/10 to-red-900/10 blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#FFCC08]/20 to-[#FFD700]/20 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#FFCC08]/20 to-black/40 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-[#FFD700]/10 blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Toast Notification */}
@@ -197,29 +197,29 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-red-500/30 overflow-hidden shadow-2xl pulse-glow">
+        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-[#FFCC08]/30 overflow-hidden shadow-2xl pulse-glow">
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-600 via-red-700 to-black p-6 relative overflow-hidden">
-            <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Star className="w-4 h-4 text-white animate-pulse" />
+          <div className="bg-[#FFCC08] p-6 relative overflow-hidden">
+            <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
+              <Star className="w-4 h-4 text-black animate-pulse" />
             </div>
-            <div className="absolute bottom-3 left-3 w-6 h-6 rounded-full bg-red-500/30 flex items-center justify-center">
-              <Flame className="w-3 h-3 text-red-300 animate-bounce" />
+            <div className="absolute bottom-3 left-3 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center">
+              <Flame className="w-3 h-3 text-black animate-bounce" />
             </div>
             
             <div className="relative z-10 text-center">
               {/* UnlimitedData Gh Logo */}
               <div className="flex justify-center mb-3">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-red-600/30 to-black/50 backdrop-blur-sm flex items-center justify-center border border-red-500/40 shadow-xl">
+                <div className="w-16 h-16 rounded-xl bg-black flex items-center justify-center shadow-xl">
                   <div className="text-center">
-                    <Wifi className="w-6 h-6 text-red-400 mx-auto mb-1" strokeWidth={3} />
-                    <div className="text-red-300 font-bold text-xs">DATA</div>
+                    <Wifi className="w-6 h-6 text-[#FFCC08] mx-auto mb-1" strokeWidth={3} />
+                    <div className="text-[#FFCC08] font-bold text-xs">DATA</div>
                   </div>
                 </div>
               </div>
               
-              <h1 className="text-2xl font-bold text-white mb-1">UNLIMITEDDATA GH</h1>
-              <p className="text-red-200/90 text-sm font-medium">Welcome Back</p>
+              <h1 className="text-2xl font-bold text-black mb-1">UNLIMITEDDATA GH</h1>
+              <p className="text-black text-sm font-medium">Welcome Back</p>
             </div>
           </div>
 
@@ -239,14 +239,14 @@ export default function LoginPage() {
               {/* Email Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="w-4 h-4 text-red-500" />
+                  <Mail className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input
                   type="email"
                   placeholder="Email Address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required
                   disabled={isLoading}
                 />
@@ -255,14 +255,14 @@ export default function LoginPage() {
               {/* Password Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="w-4 h-4 text-red-500" />
+                  <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-10 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required
                   disabled={isLoading}
                 />
@@ -272,9 +272,9 @@ export default function LoginPage() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-white/60 hover:text-red-300 transition-colors" />
+                    <EyeOff className="w-4 h-4 text-white/60 hover:text-[#FFCC08] transition-colors" />
                   ) : (
-                    <Eye className="w-4 h-4 text-white/60 hover:text-red-300 transition-colors" />
+                    <Eye className="w-4 h-4 text-white/60 hover:text-[#FFCC08] transition-colors" />
                   )}
                 </button>
               </div>
@@ -288,14 +288,14 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-red-500/30 rounded bg-white/10 backdrop-blur-sm accent-red-600"
+                    className="h-4 w-4 text-[#FFCC08] focus:ring-[#FFCC08] border-[#FFCC08]/30 rounded bg-white/10 backdrop-blur-sm accent-[#FFCC08]"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-white font-medium">
                     Remember me
                   </label>
                 </div>
                 <div className="text-sm">
-                  <a href="/reset" className="text-red-400 hover:text-red-300 font-medium hover:underline transition-colors">
+                  <a href="/reset" className="text-[#FFCC08] hover:text-[#FFD700] font-medium hover:underline transition-colors">
                     Forgot password?
                   </a>
                 </div>
@@ -305,7 +305,7 @@ export default function LoginPage() {
               <button
                 onClick={handleLogin}
                 disabled={isLoading || !email || !password}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 font-bold"
+                className="w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black bg-[#FFCC08] hover:bg-[#FFCC08]/90 focus:outline-none focus:ring-4 focus:ring-[#FFCC08]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 font-bold"
               >
                 {isLoading ? (
                   <>
@@ -326,20 +326,20 @@ export default function LoginPage() {
             <div className="text-center mt-4">
               <p className="text-white font-medium text-sm">
                 Don't have an account? 
-                <a href="/SignUp" className="text-red-400 hover:text-red-300 ml-1 font-bold hover:underline transition-colors">
+                <a href="/SignUp" className="text-[#FFCC08] hover:text-[#FFD700] ml-1 font-bold hover:underline transition-colors">
                   Sign Up
                 </a>
               </p>
             </div>
 
             {/* Additional Features */}
-            <div className="mt-6 p-4 bg-red-600/20 border border-red-600/40 rounded-xl backdrop-blur-sm">
+            <div className="mt-6 p-4 bg-[#FFCC08]/20 border border-[#FFCC08]/40 rounded-xl backdrop-blur-sm">
               <div className="flex items-start">
-                <div className="w-6 h-6 rounded-lg bg-red-600/30 flex items-center justify-center mr-3 flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-red-300" />
+                <div className="w-6 h-6 rounded-lg bg-[#FFCC08]/30 flex items-center justify-center mr-3 flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-red-300 mb-2">Secure Access</h4>
+                  <h4 className="text-sm font-bold text-[#FFCC08] mb-2">Secure Access</h4>
                   <div className="space-y-1 text-white text-xs font-medium">
                     <p>• Your data is encrypted and secure</p>
                     <p>• Fast and reliable service</p>

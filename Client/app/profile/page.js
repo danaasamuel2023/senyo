@@ -45,18 +45,18 @@ import {
   Wifi
 } from 'lucide-react';
 
-// Animated Logo Component
+// Animated Logo Component with MTN colors
 const AnimatedLogo = () => (
   <div className="relative inline-flex items-center">
     <div className="relative">
       <span className="text-2xl font-black text-white tracking-tight">
         <span className="inline-block animate-pulse">Unlimited</span>
-        <span className="text-red-500 inline-block">Data</span>
+        <span className="text-[#FFCC08] inline-block">Data</span>
       </span>
-      <span className="ml-2 text-sm font-bold text-red-400">GH</span>
-      <div className="absolute -inset-1 bg-red-500/20 blur-xl animate-pulse"></div>
+      <span className="ml-2 text-sm font-bold text-[#FFCC08]">GH</span>
+      <div className="absolute -inset-1 bg-[#FFCC08]/20 blur-xl animate-pulse"></div>
     </div>
-    <Wifi className="w-5 h-5 text-red-500 ml-2 animate-bounce" />
+    <Wifi className="w-5 h-5 text-[#FFCC08] ml-2 animate-bounce" />
   </div>
 );
 
@@ -118,22 +118,22 @@ const useAuth = () => {
   return { ...authState, logout };
 };
 
-// Stat card component with black/red theme
+// Stat card component with MTN theme
 const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, featured = false }) => (
   <div className={`group relative overflow-hidden ${
     featured 
-      ? 'bg-gradient-to-br from-red-950/50 to-black/50 border-red-500/50' 
+      ? 'bg-gradient-to-br from-[#FFCC08]/20 to-black/50 border-[#FFCC08]/50' 
       : 'bg-gradient-to-br from-zinc-900/90 to-black/90 border-zinc-800/50'
-    } backdrop-blur-xl rounded-2xl p-6 border hover:border-red-500/50 transition-all duration-300 hover:scale-105 hover:shadow-red-500/20 hover:shadow-2xl`}>
-    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl group-hover:bg-red-500/20 transition-opacity animate-pulse"></div>
+    } backdrop-blur-xl rounded-2xl p-6 border hover:border-[#FFCC08]/50 transition-all duration-300 hover:scale-105 hover:shadow-[#FFCC08]/20 hover:shadow-2xl`}>
+    <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl group-hover:bg-[#FFCC08]/20 transition-opacity animate-pulse"></div>
     <div className="relative">
       <div className="flex items-center justify-between mb-4">
         <div className={`w-12 h-12 ${
           featured 
-            ? 'bg-gradient-to-br from-red-600 to-red-800' 
+            ? 'bg-[#FFCC08]' 
             : 'bg-gradient-to-br from-zinc-800 to-zinc-900'
-          } rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-red-500/30 transition-all`}>
-          <Icon className={`w-6 h-6 ${featured ? 'text-white' : 'text-red-400'}`} />
+          } rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-[#FFCC08]/30 transition-all`}>
+          <Icon className={`w-6 h-6 ${featured ? 'text-black' : 'text-[#FFCC08]'}`} />
         </div>
         {trend && (
           <div className={`flex items-center ${trendValue > 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -143,19 +143,19 @@ const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, featu
         )}
       </div>
       <p className="text-zinc-500 text-sm font-medium mb-1">{title}</p>
-      <p className="text-2xl font-bold text-white group-hover:text-red-400 transition-colors">{value}</p>
+      <p className="text-2xl font-bold text-white group-hover:text-[#FFCC08] transition-colors">{value}</p>
       {subtitle && <p className="text-xs text-zinc-600 mt-2">{subtitle}</p>}
     </div>
   </div>
 );
 
-// Progress bar component with red theme
-const ProgressBar = ({ value, max = 100, height = "h-2", redTheme = true }) => (
+// Progress bar component with MTN yellow theme
+const ProgressBar = ({ value, max = 100, height = "h-2", yellowTheme = true }) => (
   <div className={`bg-zinc-900 ${height} rounded-full overflow-hidden`}>
     <div 
       className={`${
-        redTheme 
-          ? 'bg-gradient-to-r from-red-600 to-red-400' 
+        yellowTheme 
+          ? 'bg-[#FFCC08]' 
           : 'bg-gradient-to-r from-zinc-700 to-zinc-600'
         } h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden`}
       style={{ width: `${(value / max) * 100}%` }}
@@ -165,20 +165,20 @@ const ProgressBar = ({ value, max = 100, height = "h-2", redTheme = true }) => (
   </div>
 );
 
-// Achievement badge component with black/red theme
+// Achievement badge component with MTN theme
 const AchievementBadge = ({ icon: Icon, title, description, unlocked = true }) => (
   <div className={`p-4 rounded-xl border transition-all duration-300 ${
     unlocked 
-      ? 'bg-gradient-to-br from-red-950/30 to-black/30 border-red-500/30 hover:border-red-400/50 hover:shadow-lg hover:shadow-red-500/10' 
+      ? 'bg-gradient-to-br from-[#FFCC08]/10 to-black/30 border-[#FFCC08]/30 hover:border-[#FFCC08]/50 hover:shadow-lg hover:shadow-[#FFCC08]/10' 
       : 'bg-zinc-900/30 border-zinc-800/30 opacity-50'
     }`}>
     <div className="flex items-start space-x-3">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
         unlocked 
-          ? 'bg-gradient-to-br from-red-600 to-red-800 shadow-lg shadow-red-500/30' 
+          ? 'bg-[#FFCC08] shadow-lg shadow-[#FFCC08]/30' 
           : 'bg-zinc-800'
         }`}>
-        <Icon className="w-5 h-5 text-white" />
+        <Icon className={`w-5 h-5 ${unlocked ? 'text-black' : 'text-white'}`} />
       </div>
       <div className="flex-1">
         <h4 className="text-white font-semibold text-sm">{title}</h4>
@@ -310,10 +310,10 @@ function UserStatsPage() {
           </div>
           <div className="relative w-20 h-20 mx-auto mb-6">
             <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
-            <div className="absolute inset-0 border-t-4 border-red-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 border-t-4 border-[#FFCC08] rounded-full animate-spin"></div>
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Loading Dashboard</h2>
-          <p className="text-red-400">Preparing your statistics...</p>
+          <p className="text-[#FFCC08]">Preparing your statistics...</p>
         </div>
       </div>
     );
@@ -323,17 +323,17 @@ function UserStatsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-zinc-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-red-500/20 p-8">
+        <div className="max-w-md w-full bg-zinc-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#FFCC08]/20 p-8">
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-red-400" />
+            <div className="w-16 h-16 bg-[#FFCC08]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-[#FFCC08]" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Error Loading Data</h2>
             <p className="text-zinc-400 mb-6">{error}</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => fetchUserStats()}
-                className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                className="px-6 py-3 bg-[#FFCC08] text-black font-semibold rounded-xl hover:shadow-lg hover:shadow-[#FFCC08]/30 transition-all"
               >
                 <RefreshCw className="w-4 h-4 inline mr-2" />
                 Retry
@@ -360,8 +360,8 @@ function UserStatsPage() {
     <div className="min-h-screen bg-black">
       {/* Animated background pattern */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-red-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-red-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Header */}
@@ -371,16 +371,16 @@ function UserStatsPage() {
             <AnimatedLogo />
             
             <div className="flex items-center space-x-3">
-              <button className="p-2 text-zinc-500 hover:text-red-400 transition-colors">
+              <button className="p-2 text-zinc-500 hover:text-[#FFCC08] transition-colors">
                 <Bell className="w-5 h-5" />
               </button>
-              <button className="p-2 text-zinc-500 hover:text-red-400 transition-colors">
+              <button className="p-2 text-zinc-500 hover:text-[#FFCC08] transition-colors">
                 <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={() => fetchUserStats(true)}
                 disabled={refreshing}
-                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-red-500/30 transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-[#FFCC08] text-black text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-[#FFCC08]/30 transition-all disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 inline mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Sync
@@ -392,15 +392,15 @@ function UserStatsPage() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-red-950/50 via-black to-red-950/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-red-900/30 p-8 mb-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-transparent to-red-600/10"></div>
+        <div className="bg-gradient-to-r from-[#FFCC08]/20 via-black to-[#FFCC08]/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#FFCC08]/30 p-8 mb-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FFCC08]/10 via-transparent to-[#FFCC08]/10"></div>
           <div className="relative">
             <div className="flex items-center mb-2">
-              <Flame className="w-5 h-5 text-red-400 mr-2 animate-pulse" />
-              <span className="text-sm font-medium text-red-400 uppercase tracking-wider">Performance Hub</span>
+              <Flame className="w-5 h-5 text-[#FFCC08] mr-2 animate-pulse" />
+              <span className="text-sm font-medium text-[#FFCC08] uppercase tracking-wider">Performance Hub</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black text-white mb-2">
-              Analytics <span className="text-red-500">Dashboard</span>
+              Analytics <span className="text-[#FFCC08]">Dashboard</span>
             </h1>
             <p className="text-zinc-400 text-lg">Real-time insights powered by UnlimitedData GH</p>
           </div>
@@ -410,12 +410,12 @@ function UserStatsPage() {
         <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-800/50 p-8 mb-8">
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
             <div className="relative">
-              <div className="w-28 h-28 bg-gradient-to-br from-red-600 via-red-700 to-black rounded-2xl flex items-center justify-center shadow-2xl shadow-red-500/20">
-                <User className="w-14 h-14 text-white" />
+              <div className="w-28 h-28 bg-[#FFCC08] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#FFCC08]/20">
+                <User className="w-14 h-14 text-black" />
               </div>
               {userStats.orderStats.successRate >= 80 && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center border-2 border-black animate-bounce">
-                  <Crown className="w-4 h-4 text-white" />
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-[#FFCC08] to-[#FFD700] rounded-full flex items-center justify-center border-2 border-black animate-bounce">
+                  <Crown className="w-4 h-4 text-black" />
                 </div>
               )}
             </div>
@@ -424,22 +424,22 @@ function UserStatsPage() {
               <div className="flex items-center justify-center lg:justify-start gap-3 mb-2">
                 <h2 className="text-3xl font-bold text-white">{userStats.userInfo.name}</h2>
                 {isAdmin && (
-                  <span className="px-3 py-1 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-bold rounded-full animate-pulse">
+                  <span className="px-3 py-1 bg-[#FFCC08] text-black text-xs font-bold rounded-full animate-pulse">
                     ADMIN
                   </span>
                 )}
               </div>
               
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 text-sm text-zinc-500">
-                <div className="flex items-center hover:text-red-400 transition-colors">
+                <div className="flex items-center hover:text-[#FFCC08] transition-colors">
                   <Mail className="w-4 h-4 mr-2" />
                   {userStats.userInfo.email}
                 </div>
-                <div className="flex items-center hover:text-red-400 transition-colors">
+                <div className="flex items-center hover:text-[#FFCC08] transition-colors">
                   <Phone className="w-4 h-4 mr-2" />
                   {userStats.userInfo.phoneNumber}
                 </div>
-                <div className="flex items-center hover:text-red-400 transition-colors">
+                <div className="flex items-center hover:text-[#FFCC08] transition-colors">
                   <Calendar className="w-4 h-4 mr-2" />
                   Since {formatDate(userStats.userInfo.registrationDate)}
                 </div>
@@ -447,17 +447,17 @@ function UserStatsPage() {
               
               {derivedStats && (
                 <div className="flex flex-wrap gap-4 mt-6">
-                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-red-500/50 transition-all">
+                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-[#FFCC08]/50 transition-all">
                     <p className="text-xs text-zinc-500 mb-1">Performance</p>
-                    <p className="text-lg font-bold text-red-400">{derivedStats.performanceScore}%</p>
+                    <p className="text-lg font-bold text-[#FFCC08]">{derivedStats.performanceScore}%</p>
                   </div>
-                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-red-500/50 transition-all">
+                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-[#FFCC08]/50 transition-all">
                     <p className="text-xs text-zinc-500 mb-1">Level</p>
-                    <p className="text-lg font-bold text-red-400">{derivedStats.engagementLevel}</p>
+                    <p className="text-lg font-bold text-[#FFCC08]">{derivedStats.engagementLevel}</p>
                   </div>
-                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-red-500/50 transition-all">
+                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-[#FFCC08]/50 transition-all">
                     <p className="text-xs text-zinc-500 mb-1">Daily Avg</p>
-                    <p className="text-lg font-bold text-red-400">{derivedStats.dailyAverage}</p>
+                    <p className="text-lg font-bold text-[#FFCC08]">{derivedStats.dailyAverage}</p>
                   </div>
                 </div>
               )}
@@ -473,7 +473,7 @@ function UserStatsPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
                 activeTab === tab
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/30'
+                  ? 'bg-[#FFCC08] text-black shadow-lg shadow-[#FFCC08]/30'
                   : 'bg-zinc-900/50 text-zinc-500 hover:text-white hover:bg-zinc-800/50 border border-zinc-800'
               }`}
             >
@@ -521,7 +521,7 @@ function UserStatsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl p-6 border border-zinc-800/50">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                <Rocket className="w-6 h-6 text-red-400 mr-2" />
+                <Rocket className="w-6 h-6 text-[#FFCC08] mr-2" />
                 Order Distribution
               </h3>
               <div className="space-y-4">
@@ -537,24 +537,24 @@ function UserStatsPage() {
                     <span className="text-zinc-500">Pending</span>
                     <span className="text-white font-medium">{userStats.orderStats.totalOrders - userStats.orderStats.successfulOrders}</span>
                   </div>
-                  <ProgressBar value={userStats.orderStats.totalOrders - userStats.orderStats.successfulOrders} max={userStats.orderStats.totalOrders} redTheme={false} />
+                  <ProgressBar value={userStats.orderStats.totalOrders - userStats.orderStats.successfulOrders} max={userStats.orderStats.totalOrders} yellowTheme={false} />
                 </div>
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl p-6 border border-zinc-800/50">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                <Lightning className="w-6 h-6 text-red-400 mr-2" />
+                <Lightning className="w-6 h-6 text-[#FFCC08] mr-2" />
                 Performance Metrics
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-black/50 rounded-xl border border-zinc-800 hover:border-red-500/50 transition-all">
-                  <Activity className="w-6 h-6 text-red-400 mb-2" />
+                <div className="p-4 bg-black/50 rounded-xl border border-zinc-800 hover:border-[#FFCC08]/50 transition-all">
+                  <Activity className="w-6 h-6 text-[#FFCC08] mb-2" />
                   <p className="text-2xl font-bold text-white">{derivedStats?.dailyAverage || 0}</p>
                   <p className="text-xs text-zinc-500">Daily avg orders</p>
                 </div>
-                <div className="p-4 bg-black/50 rounded-xl border border-zinc-800 hover:border-red-500/50 transition-all">
-                  <Target className="w-6 h-6 text-red-400 mb-2" />
+                <div className="p-4 bg-black/50 rounded-xl border border-zinc-800 hover:border-[#FFCC08]/50 transition-all">
+                  <Target className="w-6 h-6 text-[#FFCC08] mb-2" />
                   <p className="text-2xl font-bold text-white">{derivedStats?.completionRate || 0}%</p>
                   <p className="text-xs text-zinc-500">Completion rate</p>
                 </div>
@@ -566,7 +566,7 @@ function UserStatsPage() {
         {activeTab === 'financial' && (
           <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-zinc-800/50">
             <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-              <Gem className="w-7 h-7 text-red-400 mr-3" />
+              <Gem className="w-7 h-7 text-[#FFCC08] mr-3" />
               Financial Overview
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -575,8 +575,8 @@ function UserStatsPage() {
                 <p className="text-zinc-500 text-sm mb-1">Current Balance</p>
                 <p className="text-3xl font-bold text-white">{formatCurrency(userStats.userInfo.walletBalance)}</p>
               </div>
-              <div className="p-6 bg-gradient-to-br from-red-950/30 to-black/30 rounded-xl border border-red-900/30 hover:border-red-500/50 transition-all group">
-                <CreditCard className="w-8 h-8 text-red-400 mb-3 group-hover:animate-bounce" />
+              <div className="p-6 bg-gradient-to-br from-[#FFCC08]/10 to-black/30 rounded-xl border border-[#FFCC08]/30 hover:border-[#FFCC08]/50 transition-all group">
+                <CreditCard className="w-8 h-8 text-[#FFCC08] mb-3 group-hover:animate-bounce" />
                 <p className="text-zinc-500 text-sm mb-1">Total Deposits</p>
                 <p className="text-3xl font-bold text-white">{formatCurrency(userStats.depositStats.totalAmount)}</p>
                 <p className="text-xs text-zinc-600 mt-1">{userStats.depositStats.numberOfDeposits} transactions</p>
@@ -635,9 +635,9 @@ function UserStatsPage() {
 
         {/* Admin Ranking Section */}
         {isAdmin && userStats.ranking && (
-          <div className="mt-8 bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-red-500/30">
+          <div className="mt-8 bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-[#FFCC08]/30">
             <div className="flex items-center mb-6">
-              <Award className="w-8 h-8 text-red-400 mr-3 animate-pulse" />
+              <Award className="w-8 h-8 text-[#FFCC08] mr-3 animate-pulse" />
               <div>
                 <h3 className="text-2xl font-bold text-white">Leaderboard Ranking</h3>
                 <p className="text-zinc-500 text-sm">Administrator access only</p>
@@ -645,8 +645,8 @@ function UserStatsPage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-6 bg-gradient-to-br from-red-950/30 to-black/30 rounded-xl border border-red-500/30">
-                <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600 mb-2">
+              <div className="text-center p-6 bg-gradient-to-br from-[#FFCC08]/20 to-black/30 rounded-xl border border-[#FFCC08]/30">
+                <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFCC08] to-[#FFD700] mb-2">
                   #{userStats.ranking.position}
                 </div>
                 <p className="text-zinc-500">Global Position</p>
@@ -662,7 +662,7 @@ function UserStatsPage() {
                   <ProgressBar value={100 - userStats.ranking.percentile} />
                 </div>
                 
-                <div className="p-4 bg-gradient-to-r from-red-950/20 to-black/20 rounded-xl border border-red-900/20">
+                <div className="p-4 bg-gradient-to-r from-[#FFCC08]/10 to-black/20 rounded-xl border border-[#FFCC08]/20">
                   <p className="text-zinc-400 text-sm leading-relaxed">
                     {userStats.ranking.position <= 10 ? 
                       "🏆 Elite tier! This account represents the pinnacle of UnlimitedData GH platform engagement." :

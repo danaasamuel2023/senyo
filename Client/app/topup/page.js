@@ -569,7 +569,7 @@ export default function DepositPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">MoMo Number:</span>
                         <div className="flex items-center space-x-2">
-                          <span className="font-bold text-gray-900">0597760914</span>
+                          <span className="font-bold text-gray-900">0204120633</span>
                           <button 
                             onClick={copyMomoNumber}
                             className="p-1 rounded hover:bg-white/50 transition-colors"
@@ -580,7 +580,7 @@ export default function DepositPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">Name:</span>
-                        <span className="font-bold text-gray-900">KOJO Frimpong</span>
+                        <span className="font-bold text-gray-900">SUNU MANFRED</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">Amount:</span>

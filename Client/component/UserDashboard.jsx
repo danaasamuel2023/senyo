@@ -25,11 +25,11 @@ const NETWORKS = [
     name: 'MTN', 
     fullName: 'MTN Ghana',
     tagline: 'Everywhere you go',
-    gradient: 'from-yellow-400 to-yellow-600',
-    bgGradient: 'from-yellow-500/20 to-amber-600/20',
+    gradient: 'from-[#FFCC08] to-yellow-500',
+    bgGradient: 'from-[#FFCC08]/20 to-yellow-500/20',
     logoSvg: (
       <svg viewBox="0 0 100 60" className="w-full h-full">
-        <ellipse cx="50" cy="30" rx="45" ry="25" fill="#FFCC00"/>
+        <ellipse cx="50" cy="30" rx="45" ry="25" fill="#FFCC08"/>
         <text x="50" y="38" textAnchor="middle" className="fill-black font-bold text-2xl">MTN</text>
       </svg>
     ),
@@ -69,11 +69,11 @@ const NETWORKS = [
 ];
 
 const QUICK_ACTIONS = [
-  { icon: Package, label: 'New Order', path: '/datamart', gradient: 'from-red-600 to-red-800' },
+  { icon: Package, label: 'New Order', path: '/datamart', gradient: 'from-[#FFCC08] to-yellow-600' },
   { icon: BarChart2, label: 'Analytics', path: '/reports', gradient: 'from-gray-700 to-gray-900' },
-  { icon: Clock, label: 'History', path: '/orders', gradient: 'from-red-700 to-red-900' },
+  { icon: Clock, label: 'History', path: '/orders', gradient: 'from-yellow-600 to-yellow-700' },
   { icon: CreditCard, label: 'Top Up', path: '/topup', gradient: 'from-black to-gray-800' },
-  { icon: Shield, label: 'Support', path: '/support', gradient: 'from-red-600 to-red-800' },
+  { icon: Shield, label: 'Support', path: '/support', gradient: 'from-[#FFCC08] to-yellow-600' },
   { icon: User, label: 'Profile', path: '/profile', gradient: 'from-gray-800 to-black' }
 ];
 
@@ -104,9 +104,9 @@ const DashboardPage = () => {
   // Memoized Values
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Good morning', icon: '🌅' };
-    if (hour < 18) return { text: 'Good afternoon', icon: '☀️' };
-    return { text: 'Good evening', icon: '🌙' };
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   }, []);
 
   // Utility Functions
@@ -318,24 +318,24 @@ const DashboardPage = () => {
     return () => clearInterval(refreshInterval);
   }, [router, fetchDashboardData, handleAuthenticationError]);
 
-  // Loading State
+  // Loading State with MTN colors
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
         <div className="text-center">
           <div className="relative w-24 h-24 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-red-900/20"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 border-r-red-400 animate-spin"></div>
-            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-red-500 to-red-600 animate-pulse flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white animate-bounce" strokeWidth={2.5} />
+            <div className="absolute inset-0 rounded-full border-4 border-[#FFCC08]/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FFCC08] border-r-yellow-500 animate-spin"></div>
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 animate-pulse flex items-center justify-center">
+              <Zap className="w-6 h-6 text-black animate-bounce" strokeWidth={2.5} />
             </div>
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-2xl font-bold text-red-500 animate-pulse">
+            <h1 className="text-2xl font-bold text-[#FFCC08] animate-pulse">
               UNLIMITEDDATA GH
             </h1>
-            <div className="flex items-center justify-center space-x-2 text-red-400">
+            <div className="flex items-center justify-center space-x-2 text-yellow-400">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm font-medium">Initializing dashboard...</span>
               <Sparkles className="w-4 h-4 animate-pulse" />
@@ -348,31 +348,31 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
-      {/* Premium Animated Background */}
+      {/* Premium Animated Background with MTN Yellow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-900/10 to-red-600/10 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-800/10 to-black blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-red-950/5 to-transparent blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-yellow-600/10 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/10 to-black blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-transparent blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
         
-        {/* Error Notification - Enhanced */}
+        {/* Error Notification - MTN Enhanced */}
         {error && (
           <div className="mb-4 animate-slideInDown">
-            <div className="bg-red-950/50 backdrop-blur-xl border border-red-500/30 rounded-2xl p-4 shadow-2xl">
+            <div className="bg-yellow-950/30 backdrop-blur-xl border border-[#FFCC08]/30 rounded-2xl p-4 shadow-2xl">
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-red-400" />
+                  <div className="w-10 h-10 rounded-lg bg-[#FFCC08]/20 flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-[#FFCC08]" />
                   </div>
                 </div>
                 <div className="flex-grow">
-                  <p className="text-sm font-semibold text-red-300">Connection Notice</p>
-                  <p className="text-sm text-red-200/80 mt-1">{error}</p>
+                  <p className="text-sm font-semibold text-yellow-300">Connection Notice</p>
+                  <p className="text-sm text-yellow-200/80 mt-1">{error}</p>
                   <button
                     onClick={handleRefresh}
-                    className="mt-3 inline-flex items-center space-x-2 text-sm text-red-400 hover:text-red-300 font-medium transition-colors"
+                    className="mt-3 inline-flex items-center space-x-2 text-sm text-[#FFCC08] hover:text-yellow-300 font-medium transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Try Again</span>
@@ -380,7 +380,7 @@ const DashboardPage = () => {
                 </div>
                 <button
                   onClick={() => setError(null)}
-                  className="flex-shrink-0 text-red-400/60 hover:text-red-300 transition-colors"
+                  className="flex-shrink-0 text-yellow-400/60 hover:text-yellow-300 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -389,17 +389,17 @@ const DashboardPage = () => {
           </div>
         )}
         
-        {/* Data Delivery Notice - Enhanced Dark Theme */}
+        {/* Data Delivery Notice - MTN Enhanced Dark Theme */}
         {showNotice && (
           <div className="mb-6 animate-slideInDown">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-1 shadow-2xl">
+            <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-1 shadow-2xl">
               <div className="bg-gray-950 rounded-xl p-5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-950/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FFCC08]/20 to-transparent"></div>
                 <div className="relative z-10">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-xl bg-red-500/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                        <Timer className="w-6 h-6 text-red-400" strokeWidth={2.5} />
+                      <div className="w-12 h-12 rounded-xl bg-[#FFCC08]/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                        <Timer className="w-6 h-6 text-[#FFCC08]" strokeWidth={2.5} />
                       </div>
                     </div>
                     
@@ -407,31 +407,31 @@ const DashboardPage = () => {
                       <div className="flex items-start justify-between">
                         <div className="space-y-3">
                           <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                            <Info className="w-5 h-5 text-red-400" />
+                            <Info className="w-5 h-5 text-[#FFCC08]" />
                             <span>Service Information</span>
                           </h3>
                           
                           <div className="space-y-3">
                             <p className="text-gray-300 text-sm leading-relaxed">
-                              Important: <span className="font-semibold text-red-400">Data bundles are not delivered instantly</span>
+                              Important: <span className="font-semibold text-[#FFCC08]">Data bundles are not delivered instantly</span>
                             </p>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-red-500/20">
+                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-[#FFCC08]/20">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <Timer className="w-5 h-5 text-red-400" />
+                                  <Timer className="w-5 h-5 text-[#FFCC08]" />
                                   <span className="text-sm font-semibold text-gray-100">Delivery Time</span>
                                 </div>
-                                <p className="text-red-400 text-lg font-bold">5 min - 4 hours</p>
+                                <p className="text-[#FFCC08] text-lg font-bold">1min-5min</p>
                                 <p className="text-gray-400 text-xs mt-1">Network dependent</p>
                               </div>
                               
-                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-red-500/20">
+                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-[#FFCC08]/20">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <Clock className="w-5 h-5 text-red-400" />
+                                  <Clock className="w-5 h-5 text-[#FFCC08]" />
                                   <span className="text-sm font-semibold text-gray-100">Business Hours</span>
                                 </div>
-                                <p className="text-red-400 text-lg font-bold">8 AM - 9 PM</p>
+                                <p className="text-[#FFCC08] text-lg font-bold">7 AM - 9 PM</p>
                                 <div className="space-y-1 mt-2">
                                   <p className="text-gray-300 text-xs">• Same day delivery</p>
                                   <p className="text-gray-400 text-xs">• 7 days service</p>
@@ -443,7 +443,7 @@ const DashboardPage = () => {
                         
                         <button
                           onClick={dismissNotice}
-                          className="ml-4 text-gray-500 hover:text-red-400 transition-colors"
+                          className="ml-4 text-gray-500 hover:text-[#FFCC08] transition-colors"
                           aria-label="Dismiss notice"
                         >
                           <X className="w-5 h-5" />
@@ -457,30 +457,29 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* Hero Section - Premium Dark */}
+        {/* Hero Section - MTN Premium Dark */}
         <div className="mb-6">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-[2px] shadow-2xl">
+          <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl">
             <div className="bg-gray-950 rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-transparent to-black/50"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-red-500/10 blur-3xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FFCC08]/30 via-transparent to-black/50"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#FFCC08]/10 blur-3xl"></div>
               
               <div className="relative z-10">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="mb-4 lg:mb-0">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-2xl">
-                        <Cpu className="w-7 h-7 text-white" strokeWidth={2.5} />
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-2xl">
+                        <Cpu className="w-7 h-7 text-black" strokeWidth={2.5} />
                       </div>
                       <div>
                         <h1 className="text-2xl font-bold text-white tracking-tight">UNLIMITEDDATA GH</h1>
-                        <p className="text-red-400 text-sm font-medium">Control Center</p>
+                        <p className="text-[#FFCC08] text-sm font-medium">Control Center</p>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                        <span>{greeting.icon}</span>
-                        <span>{greeting.text}, {userName}!</span>
+                      <h2 className="text-xl font-bold text-white">
+                        {greeting}, {userName}!
                       </h2>
                       <p className="text-sm text-gray-400">
                         Your hustle command center is ready
@@ -491,7 +490,7 @@ const DashboardPage = () => {
                   <div className="flex space-x-3">
                     <button 
                       onClick={navigationHandlers.topup}
-                      className="group bg-red-600 hover:bg-red-500 text-white font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                      className="group bg-[#FFCC08] hover:bg-yellow-500 text-black font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
                     >
                       <PlusCircle className="w-5 h-5" />
                       <span>Top Up</span>
@@ -513,25 +512,25 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Stats Grid - Enhanced Dark Theme */}
+        {/* Stats Grid - MTN Enhanced Dark Theme */}
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Balance Card - Premium */}
-            <div className="lg:col-span-2 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-[2px] shadow-2xl">
+            {/* Balance Card - MTN Premium */}
+            <div className="lg:col-span-2 bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl">
               <div className="bg-gray-950 rounded-2xl p-6 h-full">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                        <DollarSign className="w-6 h-6 text-white" strokeWidth={2.5} />
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-lg">
+                        <DollarSign className="w-6 h-6 text-black" strokeWidth={2.5} />
                       </div>
                       <div>
                         <p className="text-gray-400 text-sm font-medium">Account Balance</p>
                         <p className="text-gray-500 text-xs">Available funds</p>
                       </div>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-red-950/50 flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-red-400" />
+                    <div className="w-10 h-10 rounded-lg bg-[#FFCC08]/20 flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-[#FFCC08]" />
                     </div>
                   </div>
                   
@@ -544,22 +543,22 @@ const DashboardPage = () => {
                     </div>
                     <button
                       onClick={navigationHandlers.topup}
-                      className="inline-flex items-center space-x-2 bg-red-600 hover:bg-red-500 text-white font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      className="inline-flex items-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                     >
                       <PlusCircle className="w-4 h-4" />
-                      <span className="text-sm">Add Funds</span>
+                      <span className="text-sm font-semibold">Add Funds</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Orders Today - Dark Card */}
+            {/* Orders Today - MTN Dark Card */}
             <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow">
-                    <Package className="w-5 h-5 text-white" strokeWidth={2} />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                    <Package className="w-5 h-5 text-black" strokeWidth={2} />
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-white">
@@ -578,12 +577,12 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            {/* Revenue Today - Dark Card */}
+            {/* Revenue Today - MTN Dark Card */}
             <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow">
-                    <TrendingUp className="w-5 h-5 text-white" strokeWidth={2} />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                    <TrendingUp className="w-5 h-5 text-black" strokeWidth={2} />
                   </div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-white">
@@ -604,12 +603,12 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Network Selection - Premium with Brand Colors */}
+        {/* Network Selection - MTN Premium with Brand Colors */}
         <div className="mb-6">
           <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-800">
             <div className="flex items-center space-x-3 mb-5">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow">
-                <Signal className="w-5 h-5 text-white" strokeWidth={2.5} />
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                <Signal className="w-5 h-5 text-black" strokeWidth={2.5} />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Quick Order</h2>
@@ -623,7 +622,7 @@ const DashboardPage = () => {
                 onClick={() => navigationHandlers.network('mtn')}
                 onMouseEnter={() => setSelectedNetwork('mtn')}
                 onMouseLeave={() => setSelectedNetwork(null)}
-                className="group relative bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 rounded-xl p-4 transition-all duration-500 transform hover:scale-105 shadow-xl border-2 border-yellow-600 hover:border-yellow-400 overflow-hidden"
+                className="group relative bg-gradient-to-br from-[#FFCC08] to-yellow-500 hover:from-yellow-500 hover:to-[#FFCC08] rounded-xl p-4 transition-all duration-500 transform hover:scale-105 shadow-xl border-2 border-yellow-600 hover:border-[#FFCC08] overflow-hidden"
               >
                 {/* Animated Background Pattern */}
                 <div className="absolute inset-0 bg-gradient-to-t from-yellow-600/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -639,7 +638,7 @@ const DashboardPage = () => {
                     <div className="w-full h-full flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110">
                       <svg viewBox="0 0 100 60" className="w-full h-full">
                         <ellipse cx="50" cy="30" rx="45" ry="25" fill="#000000"/>
-                        <text x="50" y="38" textAnchor="middle" className="fill-yellow-400 font-bold text-2xl">MTN</text>
+                        <text x="50" y="38" textAnchor="middle" className="fill-[#FFCC08] font-bold text-2xl">MTN</text>
                       </svg>
                     </div>
                   </div>
@@ -655,7 +654,7 @@ const DashboardPage = () => {
                     
                     {/* Call-to-Action */}
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 mt-2">
-                      <span className="inline-flex items-center space-x-1 text-white text-xs font-semibold">
+                      <span className="inline-flex items-center space-x-1 text-black group-hover:text-white text-xs font-semibold">
                         <span>Order Now</span>
                         <ChevronRight className="w-3 h-3 animate-pulse" />
                       </span>
@@ -664,7 +663,7 @@ const DashboardPage = () => {
                 </div>
                 
                 {/* Popular Badge */}
-                <div className="absolute top-2 right-2 bg-black text-yellow-400 text-xs px-2 py-1 rounded-full font-semibold shadow-lg animate-pulse">
+                <div className="absolute top-2 right-2 bg-black text-[#FFCC08] text-xs px-2 py-1 rounded-full font-semibold shadow-lg animate-pulse">
                   78% Market
                 </div>
               </button>
@@ -777,7 +776,7 @@ const DashboardPage = () => {
             <div className="mt-4 pt-4 border-t border-gray-800">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4 text-yellow-500 animate-pulse" />
+                  <Zap className="w-4 h-4 text-[#FFCC08] animate-pulse" />
                   <span className="text-xs text-gray-400">Lightning fast delivery</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -785,7 +784,7 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-400">100% Secure & Trusted</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-red-500" />
+                  <Activity className="w-4 h-4 text-[#FFCC08]" />
                   <span className="text-xs text-gray-400">24/7 Active</span>
                 </div>
               </div>
@@ -793,14 +792,14 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Recent Activity - Premium Dark */}
+        {/* Recent Activity - MTN Premium Dark */}
         <div className="mb-6">
           <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
             <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 via-gray-850 to-gray-900">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow">
-                    <Activity className="w-5 h-5 text-white" strokeWidth={2.5} />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                    <Activity className="w-5 h-5 text-black" strokeWidth={2.5} />
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-white">Recent Activity</h2>
@@ -810,9 +809,9 @@ const DashboardPage = () => {
                 
                 <button 
                   onClick={navigationHandlers.orders}
-                  className="group flex items-center space-x-2 bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  className="group flex items-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
-                  <span className="text-sm">View All</span>
+                  <span className="text-sm font-semibold">View All</span>
                   <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </button>
               </div>
@@ -824,11 +823,11 @@ const DashboardPage = () => {
                   {stats.recentTransactions.slice(0, 5).map((transaction, index) => (
                     <div 
                       key={transaction.id} 
-                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-900 to-gray-850 rounded-xl hover:from-gray-850 hover:to-gray-800 transition-all duration-200 border border-gray-800 hover:border-red-600/30"
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-900 to-gray-850 rounded-xl hover:from-gray-850 hover:to-gray-800 transition-all duration-200 border border-gray-800 hover:border-[#FFCC08]/30"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow">
-                          <Database className="w-5 h-5 text-white" strokeWidth={2} />
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                          <Database className="w-5 h-5 text-black" strokeWidth={2} />
                         </div>
                         <div>
                           <p className="text-white font-medium text-sm">{transaction.customer}</p>
@@ -856,13 +855,13 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Quick Actions - Premium Dark */}
+        {/* Quick Actions - MTN Premium Dark */}
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
           {QUICK_ACTIONS.map((action, index) => (
             <button
               key={index}
               onClick={() => router.push(action.path)}
-              className="group bg-gray-900 hover:bg-gray-850 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-800 hover:border-red-600/50 relative overflow-hidden"
+              className="group bg-gray-900 hover:bg-gray-850 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 relative overflow-hidden"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
               <div className="relative z-10 text-center space-y-2">

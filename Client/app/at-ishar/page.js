@@ -35,14 +35,38 @@ const ATBundleCards = () => {
     { capacity: '50', mb: '50000', price: '180.00', network: 'AT_PREMIUM' }
   ];
 
-  // AT Logo SVG
+  // Enhanced AT Logo SVG with official colors
   const ATLogo = () => (
     <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="100" cy="100" r="85" fill="#ffffff" stroke="#1e40af" strokeWidth="2"/>
-      <text x="100" y="115" textAnchor="middle" fontFamily="Arial" fontWeight="bold" fontSize="65" fill="#1e40af">AT</text>
-      <path d="M70 130 L130 130" stroke="#1e40af" strokeWidth="5" strokeLinecap="round"/>
-      <text x="100" y="155" textAnchor="middle" fontFamily="Arial" fontWeight="bold" fontSize="20" fill="#1e40af">PREMIUM</text>
+      <defs>
+        <linearGradient id="atGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{stopColor:'#ED1C24', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#0066CC', stopOpacity:1}} />
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="85" fill="#ffffff" stroke="url(#atGradient)" strokeWidth="3"/>
+      <circle cx="70" cy="100" r="25" fill="#ED1C24" opacity="0.9"/>
+      <circle cx="130" cy="100" r="25" fill="#0066CC" opacity="0.9"/>
+      <text x="100" y="115" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="55" fill="#ffffff" stroke="#000000" strokeWidth="1">AT</text>
+      <text x="100" y="155" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="18" fill="url(#atGradient)">PREMIUM</text>
     </svg>
+  );
+
+  // Large Package Logo Component for bundles
+  const ATPackageLogo = ({ capacity }) => (
+    <div className="relative w-24 h-24 mx-auto">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#ED1C24] to-[#0066CC] rounded-2xl opacity-20 animate-pulse"></div>
+      <div className="relative w-full h-full bg-white rounded-2xl flex flex-col items-center justify-center shadow-xl border-2 border-transparent bg-gradient-to-br from-[#ED1C24] via-purple-600 to-[#0066CC] p-[2px]">
+        <div className="w-full h-full bg-white rounded-2xl flex flex-col items-center justify-center">
+          <span className="font-black text-4xl bg-gradient-to-r from-[#ED1C24] to-[#0066CC] bg-clip-text text-transparent">{capacity}</span>
+          <span className="font-bold text-sm text-gray-700 -mt-1">GB</span>
+          <div className="flex mt-1">
+            <div className="w-2 h-2 bg-[#ED1C24] rounded-full mx-0.5"></div>
+            <div className="w-2 h-2 bg-[#0066CC] rounded-full mx-0.5"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   const handleSelectBundle = (index) => {
@@ -57,7 +81,7 @@ const ATBundleCards = () => {
     // Remove any spaces or dashes
     const cleanNumber = number.replace(/[\s-]/g, '');
     
-    // Airtel Tigo prefixes: 024, 054, 055, 057
+    // Airtel Tigo prefixes: 024, 054, 055, 057, 026, 027
     const airtelTigoPrefixes = ['024', '054', '055', '057','026','027'];
     
     // Check if number starts with valid Airtel Tigo prefix and is 10 digits
@@ -93,7 +117,7 @@ const ATBundleCards = () => {
       setBundleMessages(prev => ({ 
         ...prev, 
         [index]: { 
-          text: 'Please enter a valid Airtel Tigo phone number (024, 054, 055, or 057 followed by 7 digits)', 
+          text: 'Please enter a valid Airtel Tigo phone number (024, 054, 055, 057, 026, or 027 followed by 7 digits)', 
           type: 'error' 
         } 
       }));
@@ -147,11 +171,17 @@ const ATBundleCards = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">AT Premium Bundles</h1>
+    <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen">
+      {/* Header with gradient */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-[#ED1C24] to-[#0066CC] bg-clip-text text-transparent">
+          AT Premium Bundles
+        </h1>
+        <p className="text-gray-600 text-lg">Life is Simple • Choose Your Data Package</p>
+      </div>
       
       {globalMessage.text && (
-        <div className={`mb-6 p-4 rounded-lg shadow ${globalMessage.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`}>
+        <div className={`mb-6 p-4 rounded-lg shadow-lg ${globalMessage.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`}>
           <div className="flex items-center">
             <div className="mr-3">
               {globalMessage.type === 'success' ? (
@@ -173,77 +203,113 @@ const ATBundleCards = () => {
         {bundles.map((bundle, index) => (
           <div key={index} className="flex flex-col">
             <div 
-              className={`flex bg-blue-700 text-white w-full rounded-t-lg flex-col justify-between cursor-pointer transition-transform duration-300 hover:translate-y-[-5px] ${selectedBundleIndex === index ? 'rounded-b-none' : 'rounded-b-lg'}`}
+              className={`flex bg-gradient-to-br from-[#ED1C24] to-[#0066CC] text-white w-full rounded-t-2xl flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl ${selectedBundleIndex === index ? 'rounded-b-none' : 'rounded-b-2xl'} relative overflow-hidden`}
               onClick={() => handleSelectBundle(index)}
             >
-              <div className="flex flex-col items-center justify-center w-full p-3 space-y-3">
-                <div className="w-20 h-20 flex justify-center items-center">
-                  <ATLogo />
-                </div>
-                <h3 className="text-xl font-bold">
+              {/* Animated background pattern */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-x-16 translate-y-16"></div>
+              </div>
+              
+              <div className="flex flex-col items-center justify-center w-full p-4 space-y-3 relative z-10">
+                {/* Large Package Logo */}
+                <ATPackageLogo capacity={bundle.capacity} />
+                
+                <h3 className="text-2xl font-bold text-white drop-shadow-lg">
                   {bundle.capacity} GB
                 </h3>
               </div>
-              <div className="grid grid-cols-2 text-white bg-black" 
-                   style={{ borderRadius: selectedBundleIndex === index ? '0' : '0 0 0.5rem 0.5rem' }}>
-                <div className="flex flex-col items-center justify-center p-3 text-center border-r border-r-white">
-                  <p className="text-lg">GH₵ {bundle.price}</p>
-                  <p className="text-sm font-bold">Price</p>
+              
+              <div className="grid grid-cols-2 text-white relative z-10" 
+                   style={{ 
+                     background: 'linear-gradient(135deg, rgba(237,28,36,0.9) 0%, rgba(0,102,204,0.9) 100%)',
+                     borderRadius: selectedBundleIndex === index ? '0' : '0 0 1rem 1rem' 
+                   }}>
+                <div className="flex flex-col items-center justify-center p-3 text-center border-r border-r-white/30">
+                  <p className="text-xl font-bold">GH₵ {bundle.price}</p>
+                  <p className="text-sm opacity-90">Price</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 text-center">
-                  <p className="text-lg">No-Expiry</p>
-                  <p className="text-sm font-bold">Duration</p>
+                  <p className="text-xl font-bold">No-Expiry</p>
+                  <p className="text-sm opacity-90">Duration</p>
                 </div>
               </div>
             </div>
             
             {selectedBundleIndex === index && (
-              <div className="bg-blue-700 p-4 rounded-b-lg shadow-md">
-                {bundleMessages[index] && (
-                  <div className={`mb-3 p-3 rounded ${bundleMessages[index].type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`}>
-                    <div className="flex items-center">
-                      {bundleMessages[index].type === 'error' && (
-                        <svg className="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      )}
-                      {bundleMessages[index].text}
+              <div className="bg-gradient-to-br from-[#ED1C24] to-[#0066CC] p-[2px] rounded-b-2xl">
+                <div className="bg-white p-4 rounded-b-2xl">
+                  {bundleMessages[index] && (
+                    <div className={`mb-3 p-3 rounded-lg ${bundleMessages[index].type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`}>
+                      <div className="flex items-center">
+                        {bundleMessages[index].type === 'error' && (
+                          <svg className="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        )}
+                        <span className="text-sm">{bundleMessages[index].text}</span>
+                      </div>
                     </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Airtel Tigo Phone Number
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        className="w-full px-4 py-3 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 border-2 border-gray-200 focus:outline-none focus:border-[#ED1C24] focus:bg-white transition-all"
+                        placeholder="024XXXXXXX or 054XXXXXXX"
+                        value={phoneNumber}
+                        onChange={handlePhoneNumberChange}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg width="20" height="20" viewBox="0 0 40 40">
+                          <circle cx="15" cy="20" r="8" fill="#ED1C24" opacity="0.8"/>
+                          <circle cx="25" cy="20" r="8" fill="#0066CC" opacity="0.8"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">Must start with 024, 054, 055, 057, 026, or 027 followed by 7 digits</p>
                   </div>
-                )}
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Airtel Tigo Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-4 py-2 rounded bg-blue-600 text-white placeholder-blue-200 border border-blue-500 focus:outline-none focus:border-blue-300"
-                    placeholder="024XXXXXXX or 054XXXXXXX"
-                    value={phoneNumber}
-                    onChange={handlePhoneNumberChange}
-                  />
-                  <p className="mt-1 text-xs text-blue-200">Must start with 024, 054, 055, or 057 followed by 7 digits</p>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePurchase(bundle, index);
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed font-bold transition-all transform hover:scale-105 active:scale-95"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : 'Purchase Bundle'}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handlePurchase(bundle, index)}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-green-400 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : 'Purchase'}
-                </button>
               </div>
             )}
           </div>
         ))}
+      </div>
+      
+      {/* Footer branding */}
+      <div className="mt-12 text-center">
+        <div className="inline-flex items-center space-x-2">
+          <div className="flex">
+            <div className="w-3 h-3 bg-[#ED1C24] rounded-full"></div>
+            <div className="w-3 h-3 bg-[#0066CC] rounded-full -ml-1"></div>
+          </div>
+          <span className="text-gray-600 font-semibold">Powered by AirtelTigo • Life is Simple</span>
+        </div>
       </div>
     </div>
   );

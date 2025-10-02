@@ -63,14 +63,14 @@ const RegistrationClosedModal = ({ isOpen, onClose }) => {
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-black/80 backdrop-blur-xl rounded-2xl border border-red-500/30 w-full max-w-md shadow-xl">
+      <div className="bg-black/80 backdrop-blur-xl rounded-2xl border border-[#FFCC08]/30 w-full max-w-md shadow-xl">
         {/* Modal header */}
-        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-2xl flex justify-between items-center">
-          <h3 className="text-lg font-bold text-white flex items-center">
+        <div className="bg-gradient-to-r from-[#FFCC08] to-[#FFD700] px-6 py-4 rounded-t-2xl flex justify-between items-center">
+          <h3 className="text-lg font-bold text-black flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2" />
             Registration Closed
           </h3>
-          <button onClick={onClose} className="text-white hover:text-white/70 p-1 rounded-lg hover:bg-white/10 transition-all">
+          <button onClick={onClose} className="text-black hover:text-black/70 p-1 rounded-lg hover:bg-black/10 transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -78,8 +78,8 @@ const RegistrationClosedModal = ({ isOpen, onClose }) => {
         {/* Modal content */}
         <div className="px-6 py-4">
           <div className="flex items-start mb-4">
-            <div className="w-6 h-6 rounded-lg bg-red-600/30 flex items-center justify-center mr-3 flex-shrink-0">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
+            <div className="w-6 h-6 rounded-lg bg-[#FFCC08]/30 flex items-center justify-center mr-3 flex-shrink-0">
+              <AlertTriangle className="w-4 h-4 text-[#FFCC08]" />
             </div>
             <div>
               <p className="text-white font-medium text-sm mb-2">
@@ -93,10 +93,10 @@ const RegistrationClosedModal = ({ isOpen, onClose }) => {
         </div>
         
         {/* Modal footer */}
-        <div className="px-6 py-4 border-t border-red-500/20 flex justify-end">
+        <div className="px-6 py-4 border-t border-[#FFCC08]/20 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl transition-all transform hover:scale-105 text-sm"
+            className="px-4 py-2 bg-gradient-to-r from-[#FFCC08] to-[#FFD700] hover:from-[#FFD700] hover:to-[#FFCC08] text-black font-bold rounded-xl transition-all transform hover:scale-105 text-sm"
           >
             Got it
           </button>
@@ -148,10 +148,10 @@ export default function SignupPage() {
       }
       @keyframes pulseGlow {
         0%, 100% {
-          box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+          box-shadow: 0 0 20px rgba(255, 204, 8, 0.3);
         }
         50% {
-          box-shadow: 0 0 40px rgba(220, 38, 38, 0.5);
+          box-shadow: 0 0 40px rgba(255, 204, 8, 0.5);
         }
       }
       .pulse-glow {
@@ -253,11 +253,11 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden flex items-center justify-center p-4">
-      {/* Animated Background Elements - Red Theme */}
+      {/* Animated Background Elements - MTN Theme */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-600/20 to-red-800/20 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-700/20 to-black/40 blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-red-500/10 to-red-900/10 blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#FFCC08]/20 to-[#FFD700]/20 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#FFCC08]/20 to-black/40 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-[#FFD700]/10 blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Toast Notification */}
@@ -277,29 +277,29 @@ export default function SignupPage() {
 
       <div className="relative z-10 w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-red-500/30 overflow-hidden shadow-2xl pulse-glow">
+        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-[#FFCC08]/30 overflow-hidden shadow-2xl pulse-glow">
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-600 via-red-700 to-black p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#FFCC08] via-[#FFD700] to-black p-6 relative overflow-hidden">
             <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Star className="w-4 h-4 text-white animate-pulse" />
+              <Star className="w-4 h-4 text-black animate-pulse" />
             </div>
-            <div className="absolute bottom-3 left-3 w-6 h-6 rounded-full bg-red-500/30 flex items-center justify-center">
-              <Flame className="w-3 h-3 text-red-300 animate-bounce" />
+            <div className="absolute bottom-3 left-3 w-6 h-6 rounded-full bg-[#FFCC08]/30 flex items-center justify-center">
+              <Flame className="w-3 h-3 text-[#FFCC08] animate-bounce" />
             </div>
             
             <div className="relative z-10 text-center">
               {/* UnlimitedData Gh Logo */}
               <div className="flex justify-center mb-3">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-red-600/30 to-black/50 backdrop-blur-sm flex items-center justify-center border border-red-500/40 shadow-xl">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#FFCC08]/30 to-black/50 backdrop-blur-sm flex items-center justify-center border border-[#FFCC08]/40 shadow-xl">
                   <div className="text-center">
-                    <Wifi className="w-6 h-6 text-red-400 mx-auto mb-1" strokeWidth={3} />
-                    <div className="text-red-300 font-bold text-xs">DATA</div>
+                    <Wifi className="w-6 h-6 text-[#FFCC08] mx-auto mb-1" strokeWidth={3} />
+                    <div className="text-[#FFCC08] font-bold text-xs">DATA</div>
                   </div>
                 </div>
               </div>
               
-              <h1 className="text-2xl font-bold text-white mb-1">UNLIMITEDDATA GH</h1>
-              <p className="text-red-200/90 text-sm font-medium">Create Your Account</p>
+              <h1 className="text-2xl font-bold text-black mb-1">UNLIMITEDDATA GH</h1>
+              <p className="text-black/80 text-sm font-medium">Create Your Account</p>
             </div>
           </div>
 
@@ -307,12 +307,12 @@ export default function SignupPage() {
           <div className="p-6">
             {/* Registration Closed Warning */}
             {isRegistrationClosed && (
-              <div className="mb-4 p-3 rounded-xl flex items-start bg-yellow-500/20 border border-yellow-500/40 backdrop-blur-sm">
-                <div className="w-5 h-5 rounded-lg bg-yellow-500/30 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                  <AlertTriangle className="w-3 h-3 text-yellow-300" />
+              <div className="mb-4 p-3 rounded-xl flex items-start bg-[#FFCC08]/20 border border-[#FFCC08]/40 backdrop-blur-sm">
+                <div className="w-5 h-5 rounded-lg bg-[#FFCC08]/30 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
+                  <AlertTriangle className="w-3 h-3 text-[#FFCC08]" />
                 </div>
                 <div>
-                  <span className="text-yellow-200 font-medium text-sm">Registration is currently closed. Form is disabled.</span>
+                  <span className="text-[#FFCC08] font-medium text-sm">Registration is currently closed. Form is disabled.</span>
                 </div>
               </div>
             )}
@@ -331,7 +331,7 @@ export default function SignupPage() {
               {/* Full Name Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="w-4 h-4 text-red-500" />
+                  <User className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="text" 
@@ -339,7 +339,7 @@ export default function SignupPage() {
                   placeholder="Full Name" 
                   value={formData.name}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required 
                   disabled={isSubmitting || isRegistrationClosed}
                 />
@@ -348,7 +348,7 @@ export default function SignupPage() {
               {/* Email Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="w-4 h-4 text-red-500" />
+                  <Mail className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="email" 
@@ -356,7 +356,7 @@ export default function SignupPage() {
                   placeholder="Email Address" 
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required 
                   disabled={isSubmitting || isRegistrationClosed}
                 />
@@ -365,7 +365,7 @@ export default function SignupPage() {
               {/* Phone Number Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="w-4 h-4 text-red-500" />
+                  <Phone className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="tel" 
@@ -373,7 +373,7 @@ export default function SignupPage() {
                   placeholder="Phone Number" 
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required 
                   disabled={isSubmitting || isRegistrationClosed}
                 />
@@ -382,7 +382,7 @@ export default function SignupPage() {
               {/* Password Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="w-4 h-4 text-red-500" />
+                  <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="password" 
@@ -390,7 +390,7 @@ export default function SignupPage() {
                   placeholder="Password" 
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required 
                   disabled={isSubmitting || isRegistrationClosed}
                 />
@@ -399,7 +399,7 @@ export default function SignupPage() {
               {/* Confirm Password Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="w-4 h-4 text-red-500" />
+                  <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="password" 
@@ -407,7 +407,7 @@ export default function SignupPage() {
                   placeholder="Confirm Password" 
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required 
                   disabled={isSubmitting || isRegistrationClosed}
                 />
@@ -416,7 +416,7 @@ export default function SignupPage() {
               {/* Referral Code Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <RefreshCw className="w-4 h-4 text-red-500" />
+                  <RefreshCw className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
                   type="text" 
@@ -424,7 +424,7 @@ export default function SignupPage() {
                   placeholder="Referral Code (Optional)" 
                   value={formData.referralCode}
                   onChange={handleChange}
-                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-red-500/30 text-white placeholder-white/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-sm hover:border-red-400/50 transition-colors"
+                  className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   disabled={isSubmitting || isRegistrationClosed}
                 />
               </div>
@@ -432,10 +432,10 @@ export default function SignupPage() {
               {/* Submit Button */}
               <button 
                 onClick={handleSignup}
-                className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-white font-bold transition-all duration-300 transform ${
+                className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black font-bold transition-all duration-300 transform ${
                   (isSubmitting || isRegistrationClosed)
-                    ? 'bg-gradient-to-r from-gray-600 to-gray-700 opacity-60 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/50'
+                    ? 'bg-gradient-to-r from-gray-600 to-gray-700 opacity-60 cursor-not-allowed text-white' 
+                    : 'bg-gradient-to-r from-[#FFCC08] to-[#FFD700] hover:from-[#FFD700] hover:to-[#FFCC08] hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#FFCC08]/50'
                 }`}
                 disabled={isSubmitting || isRegistrationClosed}
               >
@@ -463,7 +463,7 @@ export default function SignupPage() {
             <div className="text-center mt-4">
               <p className="text-white font-medium text-sm">
                 Already have an account? 
-                <a href="/SignIn" className="text-red-400 hover:text-red-300 ml-1 font-bold hover:underline transition-colors">
+                <a href="/SignIn" className="text-[#FFCC08] hover:text-[#FFD700] ml-1 font-bold hover:underline transition-colors">
                   Login
                 </a>
               </p>

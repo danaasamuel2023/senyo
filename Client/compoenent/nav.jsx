@@ -76,9 +76,9 @@ const NAVIGATION_CONFIG = {
   ],
   services: [
     { id: 'airteltigo', icon: Globe, text: 'AirtelTigo', path: SERVICES.AIRTELTIGO, gradient: 'from-red-500 to-blue-600' },
-    { id: 'mtn', icon: Phone, text: 'MTN Data', path: SERVICES.MTN, gradient: 'from-yellow-400 to-yellow-600' },
+    { id: 'mtn', icon: Phone, text: 'MTN Data', path: SERVICES.MTN, gradient: 'from-[#FFCC08] to-yellow-500' },
     { id: 'telecel', icon: Layers, text: 'Telecel', path: SERVICES.TELECEL, isNew: true, gradient: 'from-blue-600 to-blue-800' },
-    { id: 'bulk', icon: Package, text: 'Bulk Purchase', path: SERVICES.BULK, badge: 'HOT', gradient: 'from-red-600 to-orange-600' },
+    { id: 'bulk', icon: Package, text: 'Bulk Purchase', path: SERVICES.BULK, badge: 'HOT', gradient: 'from-[#FFCC08] to-orange-500' },
     { id: 'bigtime', icon: Sparkles, text: 'AT Big Time', path: SERVICES.AT_BIGTIME, disabled: true, gradient: 'from-purple-600 to-pink-600' }
   ],
   finance: [
@@ -231,21 +231,27 @@ const MobileNavbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Custom Logo Component
+  // MTN-Style Logo Component
   const Logo = ({ size = 'default' }) => {
     const sizes = {
-      small: { container: 'w-8 h-8', icon: 16, text: 'text-xs' },
-      default: { container: 'w-11 h-11', icon: 20, text: 'text-sm' },
-      large: { container: 'w-16 h-16', icon: 28, text: 'text-lg' }
+      small: { container: 'w-8 h-8', oval: 'w-7 h-6', text: 'text-[8px]' },
+      default: { container: 'w-11 h-11', oval: 'w-10 h-9', text: 'text-[10px]' },
+      large: { container: 'w-16 h-16', oval: 'w-14 h-12', text: 'text-xs' }
     };
     
     const config = sizes[size] || sizes.default;
     
     return (
-      <div className={`${config.container} relative bg-gradient-to-br from-red-600 via-red-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:shadow-xl group-hover:shadow-red-500/40 transition-all duration-300`}>
-        <Wifi className="text-white absolute opacity-20" size={config.icon + 8} />
-        <Database className="text-white" size={config.icon} strokeWidth={2.5} />
-        <div className="absolute -inset-0.5 bg-gradient-to-br from-red-600 to-orange-600 rounded-2xl blur opacity-50 group-hover:opacity-75 transition-opacity"></div>
+      <div className={`${config.container} relative flex items-center justify-center`}>
+        {/* MTN-style oval background */}
+        <div className={`${config.oval} absolute bg-[#FFCC08] rounded-[50%] flex items-center justify-center shadow-lg shadow-yellow-500/30`}>
+          {/* Inner oval border effect */}
+          <div className={`absolute inset-[2px] border-2 border-black rounded-[50%]`} />
+          {/* Text inside oval */}
+          <span className={`${config.text} font-black text-black z-10 tracking-tighter`}>UDG</span>
+        </div>
+        {/* Glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-[#FFCC08]/40 to-yellow-500/20 rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   };
@@ -289,8 +295,8 @@ const MobileNavbar = () => {
         className={`
           relative flex items-center w-full py-4 px-6 
           transition-all duration-300 group
-          ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-transparent hover:to-red-500/5 cursor-pointer active:scale-[0.98]'}
-          ${isActive ? 'bg-gradient-to-r from-transparent to-red-500/10 border-r-4 border-red-500' : ''}
+          ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-transparent hover:to-[#FFCC08]/5 cursor-pointer active:scale-[0.98]'}
+          ${isActive ? 'bg-gradient-to-r from-transparent to-[#FFCC08]/10 border-r-4 border-[#FFCC08]' : ''}
         `}
       >
         {gradient && !disabled && (
@@ -298,7 +304,7 @@ const MobileNavbar = () => {
         )}
         
         <div className={`mr-4 transition-all duration-300 relative z-10 ${
-          isActive ? 'text-red-500 scale-110' : 'text-gray-500 dark:text-gray-400 group-hover:text-red-500'
+          isActive ? 'text-[#FFCC08] scale-110' : 'text-gray-500 dark:text-gray-400 group-hover:text-[#FFCC08]'
         }`}>
           <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
         </div>
@@ -310,7 +316,7 @@ const MobileNavbar = () => {
         </span>
         
         {badge && (
-          <span className="px-2.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-full uppercase tracking-wider shadow-sm animate-pulse">
+          <span className="px-2.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-full uppercase tracking-wider shadow-sm animate-pulse">
             {badge}
           </span>
         )}
@@ -336,9 +342,9 @@ const MobileNavbar = () => {
 
   // Section Heading Component
   const SectionHeading = ({ title, icon: Icon }) => (
-    <div className="px-6 py-3 mb-2 flex items-center border-l-4 border-red-500/30">
+    <div className="px-6 py-3 mb-2 flex items-center border-l-4 border-[#FFCC08]/30">
       {Icon && (
-        <div className="mr-2 text-red-500">
+        <div className="mr-2 text-[#FFCC08]">
           <Icon size={14} />
         </div>
       )}
@@ -368,12 +374,12 @@ const MobileNavbar = () => {
               key={notification.id}
               onClick={() => markAsRead(notification.id)}
               className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                notification.unread ? 'bg-red-50/50 dark:bg-red-950/20' : ''
+                notification.unread ? 'bg-[#FFCC08]/5 dark:bg-[#FFCC08]/10' : ''
               }`}
             >
               <div className="flex items-start space-x-3">
                 <div className={`w-2 h-2 rounded-full mt-2 ${
-                  notification.unread ? 'bg-red-500' : 'bg-transparent'
+                  notification.unread ? 'bg-[#FFCC08]' : 'bg-transparent'
                 }`} />
                 <div className="flex-1">
                   <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -395,7 +401,7 @@ const MobileNavbar = () => {
       </div>
       
       <div className="p-3 border-t border-gray-200 dark:border-gray-800">
-        <button className="w-full py-2 text-center text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
+        <button className="w-full py-2 text-center text-sm font-medium text-[#FFCC08] hover:text-yellow-600 transition-colors">
           View All Notifications
         </button>
       </div>
@@ -410,7 +416,7 @@ const MobileNavbar = () => {
           <Link href="/" className="flex items-center space-x-3 group">
             <Logo />
             <div>
-              <h1 className="text-lg font-black bg-gradient-to-r from-red-600 via-red-500 to-orange-600 bg-clip-text text-transparent">
+              <h1 className="text-lg font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent">
                 UnlimitedData GH
               </h1>
               <p className="text-[10px] text-gray-500 font-medium -mt-1">Premium Data Services</p>
@@ -434,7 +440,7 @@ const MobileNavbar = () => {
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <Sun size={20} className="text-yellow-500 group-hover:rotate-45 transition-transform duration-300" />
+                <Sun size={20} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300" />
               ) : (
                 <Moon size={20} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
               )}
@@ -450,7 +456,7 @@ const MobileNavbar = () => {
                 >
                   <Bell size={20} className="text-gray-700 dark:text-gray-300" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFCC08] text-black text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                       {unreadCount}
                     </span>
                   )}
@@ -462,10 +468,10 @@ const MobileNavbar = () => {
             {/* Menu Toggle */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700 shadow-lg shadow-red-500/25 transition-all duration-300 active:scale-95"
+              className="p-2.5 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black hover:from-yellow-500 hover:to-[#FFCC08] shadow-lg shadow-yellow-500/25 transition-all duration-300 active:scale-95"
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {isMobileMenuOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
             </button>
           </div>
         </div>
@@ -482,7 +488,7 @@ const MobileNavbar = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search services, data plans..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
               />
             </div>
           </div>
@@ -505,12 +511,12 @@ const MobileNavbar = () => {
         }`}
       >
         {/* Sidebar Header */}
-        <div className="relative border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-red-50/30 dark:from-gray-900 dark:to-red-950/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-orange-500/5" />
+        <div className="relative border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-[#FFCC08]/10 dark:from-gray-900 dark:to-[#FFCC08]/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#FFCC08]/5 via-transparent to-yellow-500/5" />
           
           <div className="relative flex justify-between items-center p-4 px-6">
             <div className="flex items-center space-x-2">
-              <Rocket className="w-5 h-5 text-red-500 animate-pulse" />
+              <Rocket className="w-5 h-5 text-[#FFCC08] animate-pulse" />
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Navigation</h2>
             </div>
             <button 
@@ -528,11 +534,11 @@ const MobileNavbar = () => {
               <Link
                 href="/profile"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center p-4 bg-gradient-to-r from-white to-red-50 dark:from-gray-800 dark:to-red-950/30 rounded-2xl hover:shadow-xl transition-all duration-300 border border-red-100 dark:border-red-900/50 group"
+                className="flex items-center p-4 bg-gradient-to-r from-white to-[#FFCC08]/10 dark:from-gray-800 dark:to-[#FFCC08]/5 rounded-2xl hover:shadow-xl transition-all duration-300 border border-[#FFCC08]/20 dark:border-[#FFCC08]/10 group"
               >
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-red-500/25">
-                    <User size={20} />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black shadow-lg shadow-yellow-500/25">
+                    <User size={20} strokeWidth={2.5} />
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900 animate-pulse" />
                 </div>
@@ -540,7 +546,7 @@ const MobileNavbar = () => {
                   <div className="font-bold text-gray-900 dark:text-white">
                     {userData.name || 'My Account'}
                   </div>
-                  <div className="text-sm text-red-500 font-medium flex items-center">
+                  <div className="text-sm text-[#FFCC08] font-medium flex items-center">
                     <Crown className="w-3 h-3 mr-1" />
                     {userData.role === 'admin' ? 'Administrator' : 'Premium User'}
                   </div>
@@ -552,7 +558,7 @@ const MobileNavbar = () => {
         </div>
 
         {/* Sidebar Content */}
-        <div className="h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-transparent">
+        <div className="h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-500 scrollbar-track-transparent">
           {isAuthenticated ? (
             <div className="py-4">
               {/* Main Menu */}
@@ -608,17 +614,17 @@ const MobileNavbar = () => {
               </div>
 
               {/* Premium Banner */}
-              <div className="mx-6 my-6 p-5 bg-gradient-to-br from-red-600 via-red-500 to-orange-600 rounded-2xl text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/20" />
+              <div className="mx-6 my-6 p-5 bg-gradient-to-br from-[#FFCC08] via-yellow-400 to-[#FFCC08] rounded-2xl text-black relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/10" />
                 <div className="relative z-10">
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
-                      <Crown className="w-5 h-5" />
+                    <div className="p-2 bg-black/20 backdrop-blur-sm rounded-lg">
+                      <Crown className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-base mb-1">Unlock Premium</h3>
                       <p className="text-sm opacity-90 mb-3">Unlimited transfers & exclusive deals</p>
-                      <button className="px-4 py-2 bg-white text-red-600 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all duration-300 shadow-lg">
+                      <button className="px-4 py-2 bg-black text-[#FFCC08] rounded-xl text-sm font-bold hover:bg-gray-900 transition-all duration-300 shadow-lg">
                         Upgrade Now →
                       </button>
                     </div>
@@ -630,7 +636,7 @@ const MobileNavbar = () => {
               <div className="mt-8 px-6 pb-6">
                 <button
                   onClick={logout}
-                  className="w-full flex items-center justify-center py-3.5 px-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl hover:from-red-50 hover:to-red-100 hover:text-red-600 dark:hover:from-red-950/20 dark:hover:to-red-950/30 dark:hover:text-red-400 transition-all duration-300 font-semibold group"
+                  className="w-full flex items-center justify-center py-3.5 px-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl hover:from-[#FFCC08]/10 hover:to-yellow-100 hover:text-black dark:hover:from-[#FFCC08]/10 dark:hover:to-[#FFCC08]/5 dark:hover:text-[#FFCC08] transition-all duration-300 font-semibold group"
                 >
                   <LogOut size={18} className="mr-2 group-hover:rotate-12 transition-transform" />
                   Sign Out
@@ -639,18 +645,18 @@ const MobileNavbar = () => {
             </div>
           ) : (
             // Not Authenticated View
-            <div className="p-6 flex flex-col items-center justify-center h-full bg-gradient-to-b from-transparent to-red-50/20 dark:to-red-950/10">
+            <div className="p-6 flex flex-col items-center justify-center h-full bg-gradient-to-b from-transparent to-[#FFCC08]/5 dark:to-[#FFCC08]/10">
               <div className="text-center mb-8 max-w-xs">
                 <div className="relative mx-auto mb-6">
                   <Logo size="large" />
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
                     {[...Array(3)].map((_, i) => (
-                      <div key={i} className="w-2 h-2 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+                      <div key={i} className="w-2 h-2 rounded-full bg-[#FFCC08] animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
                     ))}
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-black bg-gradient-to-r from-red-600 via-red-500 to-orange-600 bg-clip-text text-transparent mb-3">
+                <h2 className="text-2xl font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent mb-3">
                   Welcome to UnlimitedData GH
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
@@ -664,7 +670,7 @@ const MobileNavbar = () => {
                     router.push('/SignIn');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full py-3.5 px-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-2xl shadow-xl shadow-red-500/25 hover:shadow-2xl hover:shadow-red-500/30 transition-all duration-300 font-bold transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+                  className="w-full py-3.5 px-4 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-2xl shadow-xl shadow-yellow-500/25 hover:shadow-2xl hover:shadow-yellow-500/30 transition-all duration-300 font-bold transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
                 >
                   <Lock className="w-4 h-4 mr-2" />
                   Sign In
@@ -675,14 +681,14 @@ const MobileNavbar = () => {
                     router.push('/SignUp');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full py-3.5 px-4 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 border-2 border-red-200 dark:border-red-800 rounded-2xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-300 font-bold flex items-center justify-center"
+                  className="w-full py-3.5 px-4 bg-white dark:bg-gray-800 text-black dark:text-[#FFCC08] border-2 border-[#FFCC08] rounded-2xl hover:bg-[#FFCC08]/10 dark:hover:bg-[#FFCC08]/5 transition-all duration-300 font-bold flex items-center justify-center"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Create Account
                 </button>
                 
                 <div className="flex items-center justify-center space-x-2 text-gray-500 text-xs mt-4">
-                  <Users className="w-3 h-3 text-red-400" />
+                  <Users className="w-3 h-3 text-[#FFCC08]" />
                   <span>Join 10,000+ data hustlers</span>
                 </div>
               </div>
@@ -703,21 +709,21 @@ const MobileNavbar = () => {
           scrollbar-width: thin;
         }
         
-        .scrollbar-thumb-red-500::-webkit-scrollbar {
+        .scrollbar-thumb-yellow-500::-webkit-scrollbar {
           width: 6px;
         }
         
-        .scrollbar-thumb-red-500::-webkit-scrollbar-track {
+        .scrollbar-thumb-yellow-500::-webkit-scrollbar-track {
           background: transparent;
         }
         
-        .scrollbar-thumb-red-500::-webkit-scrollbar-thumb {
-          background: linear-gradient(to bottom, #ef4444, #f97316);
+        .scrollbar-thumb-yellow-500::-webkit-scrollbar-thumb {
+          background: linear-gradient(to bottom, #FFCC08, #fbbf24);
           border-radius: 3px;
         }
         
-        .dark .scrollbar-thumb-red-500::-webkit-scrollbar-thumb {
-          background: linear-gradient(to bottom, #dc2626, #ea580c);
+        .dark .scrollbar-thumb-yellow-500::-webkit-scrollbar-thumb {
+          background: linear-gradient(to bottom, #FFCC08, #f59e0b);
         }
 
         /* Smooth theme transitions */

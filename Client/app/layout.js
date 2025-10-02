@@ -135,7 +135,7 @@ export const viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#DC2626" },
+    { media: "(prefers-color-scheme: light)", color: "#FFCC08" },
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
@@ -173,23 +173,111 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning
     >
       <head>
-        {/* Critical CSS for preventing FOUC */}
+        {/* Critical CSS for preventing FOUC and MTN brand colors */}
         <style dangerouslySetInnerHTML={{
           __html: `
             :root {
-              --color-primary: #DC2626;
-              --color-primary-dark: #991B1B;
+              /* MTN Brand Colors */
+              --color-mtn-yellow: #FFCC08;
+              --color-mtn-yellow-dark: #f5c500;
+              --color-mtn-yellow-light: #ffd633;
               --color-black: #000000;
               --color-black-soft: #0A0A0A;
               --color-gray-dark: #111111;
+              
+              /* Light theme colors */
+              --color-bg-primary: #ffffff;
+              --color-bg-secondary: #f9fafb;
+              --color-bg-tertiary: #f3f4f6;
+              --color-text-primary: #111827;
+              --color-text-secondary: #4b5563;
+              --color-border: #e5e7eb;
+              --color-accent: #FFCC08;
+              --color-accent-hover: #f5c500;
+              
+              /* Dark theme will override these */
             }
+            
+            /* Dark theme colors */
+            [data-theme='dark'] {
+              --color-bg-primary: #000000;
+              --color-bg-secondary: #0A0A0A;
+              --color-bg-tertiary: #111111;
+              --color-text-primary: #f9fafb;
+              --color-text-secondary: #d1d5db;
+              --color-border: #1f2937;
+              --color-accent: #FFCC08;
+              --color-accent-hover: #ffd633;
+            }
+            
+            /* Smooth theme transition */
+            * {
+              transition: background-color 0.3s ease, 
+                          border-color 0.3s ease, 
+                          color 0.3s ease;
+            }
+            
+            /* Prevent flash of unstyled content */
             body { 
               opacity: 0; 
               transition: opacity 0.3s ease-in-out;
+              background-color: var(--color-bg-primary);
+              color: var(--color-text-primary);
             }
             body.ready { 
               opacity: 1; 
             }
+            
+            /* Custom selection colors */
+            ::selection {
+              background-color: var(--color-mtn-yellow);
+              color: var(--color-black);
+            }
+            
+            /* Custom scrollbar with MTN colors */
+            ::-webkit-scrollbar {
+              width: 10px;
+              height: 10px;
+            }
+            
+            ::-webkit-scrollbar-track {
+              background: var(--color-bg-secondary);
+            }
+            
+            ::-webkit-scrollbar-thumb {
+              background: linear-gradient(to bottom, var(--color-mtn-yellow), var(--color-mtn-yellow-dark));
+              border-radius: 5px;
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+              background: var(--color-mtn-yellow-dark);
+            }
+            
+            /* Firefox scrollbar */
+            * {
+              scrollbar-width: thin;
+              scrollbar-color: var(--color-mtn-yellow) var(--color-bg-secondary);
+            }
+          `
+        }} />
+        
+        {/* Theme initialization script - must run before body renders */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const savedTheme = localStorage.getItem('app_theme');
+              const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+              
+              document.documentElement.setAttribute('data-theme', theme);
+              document.documentElement.classList.toggle('dark', theme === 'dark');
+              
+              // Update meta theme-color
+              const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+              if (metaThemeColor) {
+                metaThemeColor.content = theme === 'dark' ? '#000000' : '#FFCC08';
+              }
+            })();
           `
         }} />
         
@@ -199,13 +287,12 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="UnlimitedData" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-navbutton-color" content="#DC2626" />
+        <meta name="msapplication-navbutton-color" content="#FFCC08" />
         <meta name="msapplication-starturl" content="/" />
         
-        {/* Enhanced color scheme for modern browsers */}
-        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#DC2626" />
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
-        <meta name="msapplication-TileColor" content="#DC2626" />
+        {/* Enhanced color scheme for modern browsers - MTN Colors */}
+        <meta name="theme-color" content="#FFCC08" />
+        <meta name="msapplication-TileColor" content="#FFCC08" />
         <meta name="color-scheme" content="light dark" />
         
         {/* Security headers */}
@@ -223,7 +310,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon-dark.ico" sizes="32x32" media="(prefers-color-scheme: dark)" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#DC2626" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#FFCC08" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* Structured data */}
@@ -235,9 +322,9 @@ export default function RootLayout({ children }) {
       <body
         className={`
           font-sans antialiased min-h-screen flex flex-col
-          bg-gradient-to-br from-black via-gray-950 to-red-950
-          text-gray-100 selection:bg-red-600 selection:text-white
-          relative overflow-x-hidden
+          bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]
+          selection:bg-[#FFCC08] selection:text-black
+          relative overflow-x-hidden transition-colors duration-300
         `}
       >
         {/* Initialize body opacity */}
@@ -249,16 +336,55 @@ export default function RootLayout({ children }) {
           }}
         />
         
+        {/* Theme provider script */}
+        <Script
+          id="theme-provider"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Theme switching functionality
+              window.toggleTheme = function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                document.documentElement.classList.toggle('dark', newTheme === 'dark');
+                localStorage.setItem('app_theme', newTheme);
+                
+                // Update meta theme-color
+                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+                if (metaThemeColor) {
+                  metaThemeColor.content = newTheme === 'dark' ? '#000000' : '#FFCC08';
+                }
+                
+                // Dispatch custom event for components to react
+                window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme } }));
+              };
+              
+              // Listen for system theme changes
+              window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('app_theme')) {
+                  const newTheme = e.matches ? 'dark' : 'light';
+                  document.documentElement.setAttribute('data-theme', newTheme);
+                  document.documentElement.classList.toggle('dark', newTheme === 'dark');
+                }
+              });
+            `
+          }}
+        />
+        
         {/* Modern layout structure with error boundary */}
         <AuthGuard>
-          {/* Premium gradient overlay */}
-          <div className="fixed inset-0 -z-20 bg-black" />
-          <div className="fixed inset-0 -z-10 bg-gradient-to-tr from-black via-red-950/20 to-black" />
+          {/* Dynamic background based on theme */}
+          <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
+          
+          {/* Light theme background gradient */}
+          <div className="fixed inset-0 -z-10 bg-gradient-to-br from-white via-[#FFCC08]/5 to-white dark:from-black dark:via-[#FFCC08]/10 dark:to-black transition-opacity duration-300" />
           
           {/* Animated background pattern */}
           <div className="absolute inset-0 -z-10 overflow-hidden">
-            {/* Primary grid pattern */}
-            <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-red-900/20 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
+            {/* Primary grid pattern with MTN yellow accent */}
+            <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-[#FFCC08]/20 dark:stroke-[#FFCC08]/10 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
               <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
                 <defs>
                   <pattern
@@ -276,8 +402,8 @@ export default function RootLayout({ children }) {
               </svg>
             </div>
             
-            {/* Animated red accent dots */}
-            <div className="absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-red-600/10 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
+            {/* Animated yellow accent dots */}
+            <div className="absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-[#FFCC08]/10 dark:stroke-[#FFCC08]/5 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
               <svg className="absolute inset-0 h-full w-full animate-pulse" aria-hidden="true">
                 <defs>
                   <pattern
@@ -292,13 +418,18 @@ export default function RootLayout({ children }) {
                 <rect width="100%" height="100%" fill="url(#dot-pattern)" />
               </svg>
             </div>
+            
+            {/* MTN-style decorative elements */}
+            <div className="absolute top-20 left-10 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse dark:bg-[#FFCC08]/5" />
+            <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse delay-1000 dark:bg-[#FFCC08]/5" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
           </div>
           
           <Navbar />
           
           <main className="flex-grow relative z-0">
             {/* Noise texture overlay for premium feel */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.015]">
+            <div className="pointer-events-none absolute inset-0 opacity-[0.015] dark:opacity-[0.02]">
               <svg width="100%" height="100%">
                 <filter id="noiseFilter">
                   <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />

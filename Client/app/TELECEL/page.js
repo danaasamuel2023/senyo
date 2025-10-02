@@ -41,9 +41,9 @@ const Toast = ({ message, type, onClose }) => {
   );
 };
 
-// Telecel Logo Component
+// Telecel Logo Component - Red theme
 const TelecelLogo = ({ className = "w-12 h-12" }) => (
-  <div className={`${className} bg-red-600 rounded-2xl flex items-center justify-center shadow-lg`}>
+  <div className={`${className} bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex items-center justify-center shadow-lg`}>
     <span className="font-black text-white text-xl">T</span>
   </div>
 );
@@ -56,7 +56,7 @@ const ServiceInfoModal = ({ isOpen, onClose, onConfirm }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl">
         {/* Modal header */}
-        <div className="bg-red-600 px-6 py-5 rounded-t-3xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-5 rounded-t-3xl flex justify-between items-center">
           <h3 className="text-xl font-bold text-white flex items-center">
             <AlertTriangle className="w-6 h-6 mr-2" />
             Service Notice
@@ -107,7 +107,7 @@ const ServiceInfoModal = ({ isOpen, onClose, onConfirm }) => {
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all transform hover:scale-105 shadow-lg"
+            className="flex-1 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl transition-all transform hover:scale-105 shadow-lg"
           >
             Continue
           </button>
@@ -135,7 +135,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl">
         {/* Modal header */}
-        <div className="bg-red-600 px-6 py-5 rounded-t-3xl flex justify-between items-center">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-5 rounded-t-3xl flex justify-between items-center">
           <h3 className="text-xl font-bold text-white flex items-center">
             <Smartphone className="w-6 h-6 mr-2" />
             Purchase {bundle.capacity}GB
@@ -148,14 +148,14 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
         {/* Modal content */}
         <div className="px-6 py-6">
           {/* Bundle Info */}
-          <div className="bg-red-50 rounded-2xl p-5 mb-5 border-2 border-red-200">
+          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-5 mb-5 border-2 border-red-200">
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Data Bundle:</span>
-              <span className="text-red-600 font-bold text-lg">{bundle.capacity}GB</span>
+              <span className="text-red-700 font-bold text-lg">{bundle.capacity}GB</span>
             </div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Network:</span>
-              <span className="text-red-600 font-bold">Telecel</span>
+              <span className="text-red-700 font-bold">Telecel</span>
             </div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Duration:</span>
@@ -163,7 +163,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             </div>
             <div className="flex justify-between items-center border-t-2 border-red-200 pt-3">
               <span className="text-gray-900 font-bold">Total Price:</span>
-              <span className="text-red-600 font-bold text-xl">GH₵{bundle.price}</span>
+              <span className="text-red-700 font-bold text-xl">GH₵{bundle.price}</span>
             </div>
           </div>
 
@@ -223,7 +223,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
               type="button"
               onClick={onPurchase}
               disabled={isLoading || !phoneNumber || phoneNumber.length !== 10}
-              className="flex-1 py-4 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-base shadow-lg"
+              className="flex-1 py-4 px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-base shadow-lg"
             >
               {isLoading ? (
                 <>
@@ -255,7 +255,7 @@ const LoadingOverlay = ({ isLoading }) => {
           <div className="relative w-16 h-16">
             <div className="w-16 h-16 rounded-full border-4 border-gray-200"></div>
             <div className="absolute top-0 w-16 h-16 rounded-full border-4 border-transparent border-t-red-600 animate-spin"></div>
-            <div className="absolute inset-3 rounded-full bg-red-600 animate-pulse flex items-center justify-center">
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-red-600 to-red-700 animate-pulse flex items-center justify-center">
               <Smartphone className="w-6 h-6 text-white animate-bounce" strokeWidth={2.5} />
             </div>
           </div>
@@ -430,7 +430,7 @@ const TelecelBundleSelect = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-50">
       {/* Toast Notification */}
       {toast.visible && (
         <Toast 
@@ -472,7 +472,7 @@ const TelecelBundleSelect = () => {
           {/* Header with Telecel Logo */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center shadow-xl">
+              <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-red-700 rounded-3xl flex items-center justify-center shadow-xl">
                 <span className="font-black text-white text-3xl">TELECEL</span>
               </div>
             </div>
@@ -483,7 +483,7 @@ const TelecelBundleSelect = () => {
           {/* Main Card */}
           <div className="bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-gray-100">
             {/* Header */}
-            <div className="bg-red-600 p-8 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
               
@@ -540,7 +540,7 @@ const TelecelBundleSelect = () => {
                         <div className="text-red-500 text-sm font-bold">Out of Stock</div>
                       )}
                       {bundle.inStock && (
-                        <div className="inline-flex items-center text-white text-sm font-semibold bg-red-600 px-3 py-1 rounded-full">
+                        <div className="inline-flex items-center text-white text-sm font-semibold bg-gradient-to-r from-red-600 to-red-700 px-3 py-1 rounded-full">
                           <span>Buy Now</span>
                           <ArrowRight className="w-3 h-3 ml-1" />
                         </div>
