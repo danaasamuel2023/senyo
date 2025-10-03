@@ -5,7 +5,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 // Paystack configuration
-const PAYSTACK_SECRET_KEY = 'sk_live_b8f78b58b7860fd9795eb376a8602eba072d6e15'; 
+const PAYSTACK_SECRET_KEY = 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b'; 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 // Initiate Deposit
