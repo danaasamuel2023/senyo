@@ -41,7 +41,53 @@ const Toast = ({ message, type, onClose }) => {
   );
 };
 
-// Telecel Logo Component - Red theme
+// Updated Telecel Package Card to match the image design
+const TelecelPackageCard = ({ bundle, onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={() => onClick(bundle)}
+    disabled={disabled}
+    className={`rounded-xl overflow-hidden transition-all transform hover:scale-105 shadow-lg relative ${
+      !disabled
+        ? 'hover:shadow-2xl cursor-pointer'
+        : 'cursor-not-allowed opacity-50'
+    }`}
+  >
+    {/* Red top section with Telecel branding */}
+    <div className="bg-red-600 p-4 pb-6 relative">
+      {/* White circular logo area */}
+      <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-3">
+        <span className="text-red-600 font-bold text-xs">TELECEL</span>
+      </div>
+      {/* Data capacity display */}
+      <div className="text-white font-bold text-3xl text-center">
+        {bundle.capacity} GB
+      </div>
+    </div>
+    
+    {/* Dark bottom section with price and duration */}
+    <div className="bg-gray-900 p-3">
+      <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="border-r border-gray-700">
+          <div className="text-white font-bold text-base mb-1">GHC {bundle.price}</div>
+          <div className="text-gray-400 text-xs">Price</div>
+        </div>
+        <div>
+          <div className="text-white font-bold text-base mb-1">30 Days</div>
+          <div className="text-gray-400 text-xs">Duration</div>
+        </div>
+      </div>
+    </div>
+    
+    {!bundle.inStock && (
+      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+        <div className="text-white font-bold bg-red-500 px-3 py-1 rounded">Out of Stock</div>
+      </div>
+    )}
+  </button>
+);
+
+// Telecel Logo Component - Red theme (for other uses)
 const TelecelLogo = ({ className = "w-12 h-12" }) => (
   <div className={`${className} bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex items-center justify-center shadow-lg`}>
     <span className="font-black text-white text-xl">T</span>
@@ -147,7 +193,14 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
         
         {/* Modal content */}
         <div className="px-6 py-6">
-          {/* Bundle Info */}
+          {/* Bundle Info Card */}
+          <div className="mb-5">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex flex-col items-center justify-center shadow-lg">
+              <span className="font-black text-white text-3xl">{bundle.capacity}</span>
+              <span className="font-bold text-white text-xs -mt-1">GB</span>
+            </div>
+          </div>
+          
           <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-5 mb-5 border-2 border-red-200">
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Data Bundle:</span>
@@ -159,7 +212,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             </div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Duration:</span>
-              <span className="text-green-600 font-bold">No-Expiry</span>
+              <span className="text-green-600 font-bold">30 Days</span>
             </div>
             <div className="flex justify-between items-center border-t-2 border-red-200 pt-3">
               <span className="text-gray-900 font-bold">Total Price:</span>
@@ -288,19 +341,19 @@ const TelecelBundleSelect = () => {
   const inventoryAvailable = true;
   
   const bundles = [
-    { capacity: '5', label: '5GB', mb: '5000', price: '19.50', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '5', label: '5GB', mb: '5000', price: '23.00', network: 'TELECEL', inStock: inventoryAvailable },
     { capacity: '8', label: '8GB', mb: '8000', price: '34.64', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '10', label: '10GB', mb: '10000', price: '36.50', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '12', label: '12GB', mb: '12000', price: '43.70', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '15', label: '15GB', mb: '15000', price: '52.85', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '20', label: '20GB', mb: '20000', price: '69.80', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '25', label: '25GB', mb: '25000', price: '86.75', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '30', label: '30GB', mb: '30000', price: '103.70', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '35', label: '35GB', mb: '35000', price: '120.65', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '40', label: '40GB', mb: '40000', price: '137.60', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '45', label: '45GB', mb: '45000', price: '154.55', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '50', label: '50GB', mb: '50000', price: '171.50', network: 'TELECEL', inStock: inventoryAvailable },
-    { capacity: '100', label: '100GB', mb: '100000', price: '341.00', network: 'TELECEL', inStock: inventoryAvailable }
+    { capacity: '10', label: '10GB', mb: '10000', price: '40.50', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '12', label: '12GB', mb: '12000', price: '48.50', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '15', label: '15GB', mb: '15000', price: '60.50', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '20', label: '20GB', mb: '20000', price: '81.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '25', label: '25GB', mb: '25000', price: '99.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '30', label: '30GB', mb: '30000', price: '118.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '35', label: '35GB', mb: '35000', price: '137.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '40', label: '40GB', mb: '40000', price: '155.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '45', label: '45GB', mb: '45000', price: '174.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '50', label: '50GB', mb: '50000', price: '195.00', network: 'TELECEL', inStock: inventoryAvailable },
+    { capacity: '100', label: '100GB', mb: '100000', price: '385.00', network: 'TELECEL', inStock: inventoryAvailable }
   ];
 
   // Get user data from localStorage on component mount
@@ -430,7 +483,7 @@ const TelecelBundleSelect = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Toast Notification */}
       {toast.visible && (
         <Toast 
@@ -444,7 +497,7 @@ const TelecelBundleSelect = () => {
       <LoadingOverlay isLoading={isLoading} />
       
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-7xl">
           <ServiceInfoModal 
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
@@ -513,39 +566,19 @@ const TelecelBundleSelect = () => {
                 </button>
               </div>
 
-              {/* Bundle Selection Grid */}
+              {/* Bundle Selection Grid with New Card Design */}
               <div>
                 <h3 className="text-2xl font-bold mb-6 text-gray-900 text-center">
                   Available Data Packages
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {bundles.map((bundle) => (
-                    <button
+                    <TelecelPackageCard
                       key={bundle.capacity}
-                      type="button"
-                      onClick={() => handleBundleSelect(bundle)}
+                      bundle={bundle}
+                      onClick={handleBundleSelect}
                       disabled={!bundle.inStock}
-                      className={`p-6 rounded-2xl text-center transition-all transform hover:scale-105 border-2 ${
-                        bundle.inStock
-                          ? 'bg-white border-red-300 hover:border-red-500 hover:bg-red-50 hover:shadow-xl cursor-pointer'
-                          : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-50'
-                      }`}
-                    >
-                      <div className="mb-1">
-                        <TelecelLogo className="w-8 h-8 mx-auto mb-3" />
-                      </div>
-                      <div className="text-3xl font-bold mb-2 text-gray-900">{bundle.label}</div>
-                      <div className="text-red-600 font-bold text-2xl mb-2">GH₵{bundle.price}</div>
-                      {!bundle.inStock && (
-                        <div className="text-red-500 text-sm font-bold">Out of Stock</div>
-                      )}
-                      {bundle.inStock && (
-                        <div className="inline-flex items-center text-white text-sm font-semibold bg-gradient-to-r from-red-600 to-red-700 px-3 py-1 rounded-full">
-                          <span>Buy Now</span>
-                          <ArrowRight className="w-3 h-3 ml-1" />
-                        </div>
-                      )}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>

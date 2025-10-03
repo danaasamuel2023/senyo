@@ -52,7 +52,53 @@ const MTNLogo = ({ className = "w-12 h-12", showText = true }) => (
   </div>
 );
 
-// Large MTN Package Logo for bundle display
+// Updated MTN Package Card to match the image design
+const MTNPackageCard = ({ bundle, onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={() => onClick(bundle)}
+    disabled={disabled}
+    className={`rounded-xl overflow-hidden transition-all transform hover:scale-105 shadow-lg relative ${
+      !disabled
+        ? 'hover:shadow-2xl cursor-pointer'
+        : 'cursor-not-allowed opacity-50'
+    }`}
+  >
+    {/* Yellow top section with MTN branding */}
+    <div className="bg-[#FFCC08] p-4 relative">
+      <div className="text-black font-bold text-sm mb-2">MTN</div>
+      <div className="text-black font-black text-3xl text-center py-2">
+        {bundle.capacity}GB
+      </div>
+    </div>
+    
+    {/* Dark bottom section with details */}
+    <div className="bg-gray-800 p-3">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-gray-400 text-xs uppercase tracking-wide mb-1">Price</div>
+          <div className="text-white font-bold text-sm">₵{bundle.price}</div>
+        </div>
+        <div>
+          <div className="text-gray-400 text-xs uppercase tracking-wide mb-1">Rollover</div>
+          <div className="text-gray-500 text-sm">N/A</div>
+        </div>
+        <div>
+          <div className="text-gray-400 text-xs uppercase tracking-wide mb-1">Duration</div>
+          <div className="text-white text-sm">90 days</div>
+        </div>
+      </div>
+    </div>
+    
+    {!bundle.inStock && (
+      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+        <div className="text-white font-bold bg-red-500 px-3 py-1 rounded">Out of Stock</div>
+      </div>
+    )}
+  </button>
+);
+
+// Modal Package Display (for purchase modal)
 const MTNPackageLogo = ({ capacity }) => (
   <div className="relative w-20 h-20 mx-auto mb-3">
     <div className="w-full h-full bg-gradient-to-br from-[#FFCC08] to-yellow-500 rounded-2xl flex flex-col items-center justify-center shadow-lg border-2 border-black transform rotate-3 hover:rotate-0 transition-transform">
@@ -111,7 +157,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             </div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Duration:</span>
-              <span className="text-black font-bold">No-Expiry</span>
+              <span className="text-black font-bold">90 days</span>
             </div>
             <div className="flex justify-between items-center border-t-2 border-[#FFCC08] pt-3">
               <span className="text-black font-bold">Total Price:</span>
@@ -308,11 +354,11 @@ const MTNBundleSelect = () => {
   const inventoryAvailable = true;
   
   const bundles = [
-    { value: '1', label: '1GB', capacity: '1', price: '4.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '2', label: '2GB', capacity: '2', price: '9.20', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '3', label: '3GB', capacity: '3', price: '13.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '4', label: '4GB', capacity: '4', price: '18.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '5', label: '5GB', capacity: '5', price: '23.50', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '1', label: '1GB', capacity: '1', price: '4.5', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '2', label: '2GB', capacity: '2', price: '8.9', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '3', label: '3GB', capacity: '3', price: '12.9', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '4', label: '4GB', capacity: '4', price: '16.9', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '5', label: '5GB', capacity: '5', price: '23', network: 'YELLO', inStock: inventoryAvailable },
     { value: '6', label: '6GB', capacity: '6', price: '27.00', network: 'YELLO', inStock: inventoryAvailable },
     { value: '8', label: '8GB', capacity: '8', price: '35.50', network: 'YELLO', inStock: inventoryAvailable },
     { value: '10', label: '10GB', capacity: '10', price: '43.50', network: 'YELLO', inStock: inventoryAvailable },
@@ -457,7 +503,7 @@ const MTNBundleSelect = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Toast Notification */}
       {toast.visible && (
         <Toast 
@@ -471,7 +517,7 @@ const MTNBundleSelect = () => {
       <LoadingOverlay isLoading={isLoading} />
       
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-7xl">
           <ServiceInfoModal 
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
@@ -546,43 +592,19 @@ const MTNBundleSelect = () => {
                 </button>
               </div>
 
-              {/* Bundle Selection Grid with Large MTN Package Logos */}
+              {/* Bundle Selection Grid with Updated Design */}
               <div>
                 <h3 className="text-2xl font-bold mb-6 text-black text-center">
                   Choose Your Data Package
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {bundles.map((bundle) => (
-                    <button
+                    <MTNPackageCard
                       key={bundle.value}
-                      type="button"
-                      onClick={() => handleBundleSelect(bundle)}
+                      bundle={bundle}
+                      onClick={handleBundleSelect}
                       disabled={!bundle.inStock}
-                      className={`p-6 rounded-2xl text-center transition-all transform hover:scale-105 border-2 relative overflow-hidden ${
-                        bundle.inStock
-                          ? 'bg-white border-[#FFCC08] hover:border-yellow-500 hover:bg-yellow-50 hover:shadow-xl cursor-pointer group'
-                          : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-50'
-                      }`}
-                    >
-                      {/* MTN Package Logo for each bundle */}
-                      <div className="mb-3">
-                        <MTNPackageLogo capacity={bundle.capacity} />
-                      </div>
-                      
-                      <div className="text-black font-bold text-2xl mb-2 bg-[#FFCC08] px-3 py-1 rounded-lg inline-block">
-                        GH₵{bundle.price}
-                      </div>
-                      
-                      {!bundle.inStock && (
-                        <div className="text-red-500 text-sm font-bold">Out of Stock</div>
-                      )}
-                      {bundle.inStock && (
-                        <div className="inline-flex items-center text-black text-sm font-semibold bg-yellow-100 px-3 py-1 rounded-full mt-2 group-hover:bg-[#FFCC08] transition-colors">
-                          <span>Buy Now</span>
-                          <ArrowRight className="w-3 h-3 ml-1" />
-                        </div>
-                      )}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>

@@ -7,11 +7,11 @@ import {
   Zap, ChevronRight, Phone, Mail, MessageCircle, WifiOff,
   DollarSign, Package, TrendingUp, Database, Wifi, Signal,
   Shield, Activity, ArrowUpRight, Timer, AlertTriangle,
-  CheckCircle, XCircle, RefreshCw, Info
+  CheckCircle, XCircle, RefreshCw, Info, Star
 } from 'lucide-react';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+const API_BASE_URL = 'https://unlimitedata.onrender.com';
 const API_ENDPOINTS = {
   NETWORKS: '/api/orders/networks',
   BULK_PURCHASE: '/api/orders/place-bulk'
@@ -21,6 +21,17 @@ const API_ENDPOINTS = {
 const MAX_RECIPIENTS = 50;
 const DEFAULT_CAPACITY = 5;
 const PHONE_REGEX = /^(?:\+233|233|0)?(20|23|24|25|26|27|28|29|30|31|32|50|53|54|55|56|57|58|59)\d{7}$/;
+
+// MTN Logo Component
+const MTNLogo = ({ className = "w-12 h-12", showText = true }) => (
+  <div className={`${className} relative`}>
+    <div className="w-full h-full bg-[#FFCC08] rounded-full flex items-center justify-center shadow-xl">
+      {showText && (
+        <span className="font-black text-black text-xl">MTN</span>
+      )}
+    </div>
+  </div>
+);
 
 // Animated Background Elements
 const FloatingElement = ({ delay, duration, children }) => (
@@ -332,7 +343,7 @@ export default function BulkPurchase() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'bulk_order_template.csv';
+    a.download = 'mtn_bulk_order_template.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -354,7 +365,7 @@ export default function BulkPurchase() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bulk_order_results_${Date.now()}.csv`;
+    a.download = `mtn_bulk_results_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -373,27 +384,27 @@ export default function BulkPurchase() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-black via-gray-950 to-black">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-red-900/20"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-[#FFCC08]/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FFCC08] animate-spin"></div>
           </div>
-          <h1 className="text-2xl font-black text-red-500">Loading...</h1>
+          <h1 className="text-2xl font-black text-[#FFCC08]">Loading...</h1>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <FloatingElement delay={0} duration={8}>
-          <div className="absolute top-20 left-20 w-32 h-32 bg-red-900/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-20 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl" />
         </FloatingElement>
         <FloatingElement delay={2} duration={10}>
-          <div className="absolute bottom-20 right-20 w-48 h-48 bg-red-800/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-48 h-48 bg-[#FFCC08]/10 rounded-full blur-3xl" />
         </FloatingElement>
       </div>
 
@@ -402,17 +413,19 @@ export default function BulkPurchase() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-red-900/30"
+          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-[#FFCC08]/30"
         >
           <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-black text-white flex items-center gap-2">
-                <Users className="w-8 h-8 text-red-500" />
-                Bulk Purchase
-              </h1>
-              <p className="text-gray-400 mt-1">
-                Process up to {MAX_RECIPIENTS} recipients at once
-              </p>
+            <div className="flex items-center gap-3">
+              <MTNLogo className="w-14 h-14" />
+              <div>
+                <h1 className="text-3xl font-black text-white flex items-center gap-2">
+                  MTN Bulk Purchase
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  Process up to {MAX_RECIPIENTS} recipients at once
+                </p>
+              </div>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -439,7 +452,7 @@ export default function BulkPurchase() {
                 onClick={() => setBulkMethod(method.id)}
                 className={`py-3 px-4 rounded-xl font-medium transition-all shadow-lg ${
                   bulkMethod === method.id
-                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
+                    ? 'bg-[#FFCC08] text-black'
                     : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'
                 }`}
               >
@@ -460,7 +473,7 @@ export default function BulkPurchase() {
               <select
                 value={selectedNetwork}
                 onChange={(e) => setSelectedNetwork(e.target.value)}
-                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-red-500 transition-colors"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-[#FFCC08] transition-colors"
               >
                 <option value="">Select Network</option>
                 {networks.map(network => (
@@ -478,7 +491,7 @@ export default function BulkPurchase() {
               <select
                 value={defaultCapacity}
                 onChange={(e) => setDefaultCapacity(parseFloat(e.target.value))}
-                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-red-500 transition-colors"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-[#FFCC08] transition-colors"
               >
                 {getNetworkBundles.map(bundle => (
                   <option key={bundle.capacity} value={bundle.capacity}>
@@ -492,8 +505,8 @@ export default function BulkPurchase() {
               <label className="block text-sm font-bold text-gray-300 mb-2">
                 Valid Recipients
               </label>
-              <div className="px-4 py-3 bg-red-950/30 rounded-xl border border-red-900/50">
-                <span className="text-3xl font-black text-red-500">
+              <div className="px-4 py-3 bg-[#FFCC08]/10 rounded-xl border border-[#FFCC08]/50">
+                <span className="text-3xl font-black text-[#FFCC08]">
                   {validOrdersCount}
                 </span>
                 <span className="text-gray-500 text-sm ml-2">/ {MAX_RECIPIENTS}</span>
@@ -506,17 +519,17 @@ export default function BulkPurchase() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-red-900/30"
+          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-[#FFCC08]/30"
         >
           {bulkMethod === 'paste' ? (
             <>
               <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                <ClipboardPaste className="w-6 h-6 mr-2 text-red-500" />
+                <ClipboardPaste className="w-6 h-6 mr-2 text-[#FFCC08]" />
                 Paste Recipients List
               </h2>
               
-              <div className="mb-4 p-4 bg-red-950/20 border border-red-900/50 rounded-xl">
-                <p className="text-sm font-bold text-red-400 mb-2">Format Examples:</p>
+              <div className="mb-4 p-4 bg-[#FFCC08]/10 border border-[#FFCC08]/50 rounded-xl">
+                <p className="text-sm font-bold text-[#FFCC08] mb-2">Format Examples:</p>
                 <div className="text-xs text-gray-400 space-y-1 font-mono">
                   <div>0241234567, 5</div>
                   <div>0551234567 10</div>
@@ -528,7 +541,7 @@ export default function BulkPurchase() {
                 value={bulkTextInput}
                 onChange={(e) => handleBulkTextChange(e.target.value)}
                 placeholder="Paste phone numbers here...&#10;One per line"
-                className="w-full h-64 px-4 py-3 bg-black border border-gray-700 rounded-xl text-white font-mono text-sm resize-y focus:border-red-500 transition-colors"
+                className="w-full h-64 px-4 py-3 bg-black border border-gray-700 rounded-xl text-white font-mono text-sm resize-y focus:border-[#FFCC08] transition-colors"
               />
 
               {parseError && (
@@ -547,7 +560,7 @@ export default function BulkPurchase() {
           ) : bulkMethod === 'manual' ? (
             <>
               <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                <Plus className="w-6 h-6 mr-2 text-red-500" />
+                <Plus className="w-6 h-6 mr-2 text-[#FFCC08]" />
                 Add Recipients Manually
               </h2>
 
@@ -571,7 +584,7 @@ export default function BulkPurchase() {
                         className={`w-full px-4 py-3 bg-black border rounded-xl text-white transition-all ${
                           validationErrors[`order-${index}`]
                             ? 'border-red-500'
-                            : 'border-gray-700 focus:border-red-500'
+                            : 'border-gray-700 focus:border-[#FFCC08]'
                         }`}
                       />
                       {validationErrors[`order-${index}`] && (
@@ -583,7 +596,7 @@ export default function BulkPurchase() {
                     <select
                       value={order.capacity}
                       onChange={(e) => handleOrderChange(index, 'capacity', e.target.value)}
-                      className="px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-red-500"
+                      className="px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:border-[#FFCC08]"
                     >
                       {getNetworkBundles.map(bundle => (
                         <option key={bundle.capacity} value={bundle.capacity}>
@@ -617,7 +630,7 @@ export default function BulkPurchase() {
           ) : (
             <>
               <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                <Upload className="w-6 h-6 mr-2 text-red-500" />
+                <Upload className="w-6 h-6 mr-2 text-[#FFCC08]" />
                 Upload CSV File
               </h2>
 
@@ -635,7 +648,7 @@ export default function BulkPurchase() {
                 />
                 <label
                   htmlFor="csv-upload"
-                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer inline-block transition-all shadow-lg font-bold"
+                  className="px-6 py-3 bg-[#FFCC08] hover:bg-yellow-500 text-black rounded-xl cursor-pointer inline-block transition-all shadow-lg font-bold"
                 >
                   Choose File
                 </label>
@@ -648,10 +661,10 @@ export default function BulkPurchase() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-red-900/30"
+          className="bg-gray-900 rounded-2xl shadow-2xl p-6 mb-6 border border-[#FFCC08]/30"
         >
           <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-            <DollarSign className="w-6 h-6 mr-2 text-red-500" />
+            <DollarSign className="w-6 h-6 mr-2 text-[#FFCC08]" />
             Order Summary
           </h2>
           
@@ -665,7 +678,7 @@ export default function BulkPurchase() {
             
             <div className="p-4 bg-black rounded-xl border border-gray-700">
               <p className="text-sm font-medium text-gray-400">Total Cost</p>
-              <p className="text-2xl font-black text-red-500">
+              <p className="text-2xl font-black text-[#FFCC08]">
                 GHS {calculateTotalCost.toFixed(2)}
               </p>
             </div>
@@ -676,7 +689,7 @@ export default function BulkPurchase() {
             whileTap={{ scale: 0.98 }}
             onClick={handleBulkPurchase}
             disabled={processing || validOrdersCount === 0 || !selectedNetwork}
-            className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-xl font-bold text-lg"
+            className="w-full py-4 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-xl font-bold text-lg"
           >
             {processing ? (
               <>
@@ -707,10 +720,11 @@ export default function BulkPurchase() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-auto p-6 shadow-2xl border border-red-900/30"
+                className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-auto p-6 shadow-2xl border border-[#FFCC08]/30"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-black text-white">
+                  <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                    <MTNLogo className="w-10 h-10" showText={false} />
                     Bulk Order Results
                   </h3>
                   <motion.button
@@ -737,9 +751,9 @@ export default function BulkPurchase() {
                       {results.data?.summary?.failed || 0}
                     </p>
                   </div>
-                  <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                  <div className="bg-[#FFCC08]/10 p-4 rounded-xl border border-[#FFCC08]/50">
                     <p className="text-gray-400 text-sm font-medium">Total Cost</p>
-                    <p className="text-2xl font-black text-white">
+                    <p className="text-2xl font-black text-[#FFCC08]">
                       GHS {(results.data?.summary?.totalCost || 0).toFixed(2)}
                     </p>
                   </div>
@@ -781,7 +795,7 @@ export default function BulkPurchase() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={downloadResults}
-                  className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold"
+                  className="w-full py-3 bg-[#FFCC08] hover:bg-yellow-500 text-black rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold"
                 >
                   <Download className="w-5 h-5" />
                   Download Results
