@@ -51,7 +51,7 @@ const AuthGuard = ({ children }) => {
           
           <div className="space-y-4">
             <h1 className="text-4xl font-black bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-transparent bg-clip-text animate-pulse">
-              DATAHUSTLE
+              UnlimitedData
             </h1>
             <div className="flex items-center justify-center space-x-2 text-emerald-300">
               <Sparkles className="w-5 h-5 animate-spin" />
