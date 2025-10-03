@@ -35,28 +35,37 @@ const AuthGuard = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
         <div className="text-center">
           {/* Epic Loading Animation */}
           <div className="relative w-32 h-32 mx-auto mb-8">
             {/* Outer ring */}
-            <div className="absolute inset-0 rounded-full border-4 border-emerald-200/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-yellow-400/20"></div>
             {/* Spinning gradient ring */}
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-400 border-r-teal-400 animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-yellow-400 border-r-amber-400 animate-spin"></div>
             {/* Inner pulsing circle */}
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 animate-pulse flex items-center justify-center">
-              <Zap className="w-8 h-8 text-white animate-bounce" strokeWidth={2.5} />
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 animate-pulse flex items-center justify-center shadow-lg shadow-yellow-500/50">
+              <Zap className="w-8 h-8 text-black animate-bounce" strokeWidth={2.5} />
             </div>
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-xl animate-pulse"></div>
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-4xl font-black bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-transparent bg-clip-text animate-pulse">
+            <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-transparent bg-clip-text animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.5)]">
               UnlimitedData
             </h1>
-            <div className="flex items-center justify-center space-x-2 text-emerald-300">
-              <Sparkles className="w-5 h-5 animate-spin" />
-              <span className="text-lg font-bold">Verifying authentication...</span>
-              <Sparkles className="w-5 h-5 animate-spin" />
+            <div className="flex items-center justify-center space-x-2 text-yellow-400">
+              <Sparkles className="w-5 h-5 animate-spin drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]" />
+              <span className="text-lg font-bold text-yellow-300">Verifying authentication...</span>
+              <Sparkles className="w-5 h-5 animate-spin drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]" />
+            </div>
+            
+            {/* Loading dots animation */}
+            <div className="flex justify-center space-x-2 pt-2">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
           </div>
         </div>
