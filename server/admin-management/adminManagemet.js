@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { User, DataPurchase, Transaction, ReferralBonus,DataInventory } = require('../schema/schema');
+const { User, DataPurchase, Transaction, ReferralBonus,DataInventory, AgentCatalog, ProductPricing } = require('../schema/schema');
 const mongoose = require('mongoose');
 const auth = require('../middlewareUser/middleware');
 const adminAuth = require('../adminMiddleware/middleware');
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
 const PAYSTACK_SECRET_KEY = 'sk_live_0fba72fb9c4fc71200d2e0cdbb4f2b37c1de396c'; 
 
 
@@ -1574,5 +1575,576 @@ router.get('/dashboard/statistics', auth, adminAuth, async (req, res) => {
   }
 });
 
+
+// Generate Unique Referral Code
+const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+/**
+ * @route   POST /api/create-admin
+ * @desc    Create a new admin user (requires existing admin)
+ * @access  Admin only
+ */
+router.post('/create-admin', auth, adminAuth, async (req, res) => {
+  try {
+    const { name, email, password, phoneNumber } = req.body;
+    
+    // Validation
+    if (!name || !email || !password || !phoneNumber) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+    
+    // Password strength validation
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { phoneNumber }] 
+    });
+    
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res.status(400).json({ message: "Email already registered" });
+      } else {
+        return res.status(400).json({ message: "Phone number already registered" });
+      }
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new admin user
+    const newAdmin = new User({
+      name,
+      email,
+      password: hashedPassword,
+      phoneNumber,
+      role: 'admin',
+      referralCode: generateReferralCode(),
+      approvalStatus: 'approved',
+      isVerified: true,
+      walletBalance: 0,
+      adminMetadata: {
+        permissions: [
+          'manage_users',
+          'manage_orders',
+          'manage_inventory',
+          'manage_reports',
+          'manage_settings',
+          'view_analytics',
+          'process_payments',
+          'handle_refunds'
+        ],
+        canApproveUsers: true,
+        canManagePricing: true,
+        canAccessReports: true,
+        adminNotes: `Created by admin ${req.user.name} on ${new Date().toISOString()}`
+      }
+    });
+
+    await newAdmin.save();
+
+    // Log admin creation
+    console.log(`New admin created: ${email} by ${req.user.email}`);
+
+    res.status(201).json({
+      success: true,
+      message: "Admin user created successfully",
+      admin: {
+        id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        phoneNumber: newAdmin.phoneNumber,
+        role: newAdmin.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error creating admin user",
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/make-admin/:userId
+ * @desc    Convert existing user to admin (requires existing admin)
+ * @access  Admin only
+ */
+router.put('/make-admin/:userId', auth, adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Find the user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: "User is already an admin" });
+    }
+
+    // Update user to admin
+    user.role = 'admin';
+    user.approvalStatus = 'approved';
+    user.isVerified = true;
+    user.adminMetadata = {
+      permissions: [
+        'manage_users',
+        'manage_orders',
+        'manage_inventory',
+        'manage_reports',
+        'manage_settings',
+        'view_analytics',
+        'process_payments',
+        'handle_refunds'
+      ],
+      canApproveUsers: true,
+      canManagePricing: true,
+      canAccessReports: true,
+      adminNotes: `Promoted to admin by ${req.user.name} on ${new Date().toISOString()}`
+    };
+
+    await user.save();
+
+    // Log admin promotion
+    console.log(`User promoted to admin: ${user.email} by ${req.user.email}`);
+
+    res.json({
+      success: true,
+      message: "User successfully promoted to admin",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Error promoting user to admin:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error promoting user to admin",
+      error: error.message 
+    });
+  }
+});
+
+module.exports = router;
+/**
+ * Agent Management & Catalog Routes
+ */
+
+// List agents (admin only)
+router.get('/agents', auth, adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, search = '' } = req.query;
+
+    const searchQuery = {
+      role: 'agent',
+      ...(search
+        ? {
+            $or: [
+              { name: { $regex: search, $options: 'i' } },
+              { email: { $regex: search, $options: 'i' } },
+              { phoneNumber: { $regex: search, $options: 'i' } },
+              { 'agentMetadata.agentCode': { $regex: search, $options: 'i' } }
+            ]
+          }
+        : {})
+    };
+
+    const agents = await User.find(searchQuery)
+      .select('-password')
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await User.countDocuments(searchQuery);
+
+    res.json({
+      agents,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      total
+    });
+  } catch (err) {
+    console.error('List agents error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Ensure catalog exists helper
+async function ensureAgentCatalog(agentId) {
+  let catalog = await AgentCatalog.findOne({ agentId });
+  if (!catalog) {
+    catalog = new AgentCatalog({ agentId, items: [] });
+    await catalog.save();
+  }
+  return catalog;
+}
+
+// Get agent catalog (admin)
+router.get('/agents/:id/catalog', auth, adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user || user.role !== 'agent') {
+      return res.status(404).json({ msg: 'Agent not found' });
+    }
+    const catalog = await ensureAgentCatalog(id);
+    res.json({ agentId: id, items: catalog.items });
+  } catch (err) {
+    console.error('Get agent catalog error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Add catalog item (admin)
+router.post('/agents/:id/catalog/item', auth, adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { network, capacity, price, title, description, enabled = true } = req.body;
+
+    if (!network || !capacity || price === undefined) {
+      return res.status(400).json({ msg: 'network, capacity and price are required' });
+    }
+
+    const user = await User.findById(id);
+    if (!user || user.role !== 'agent') {
+      return res.status(404).json({ msg: 'Agent not found' });
+    }
+
+    const catalog = await ensureAgentCatalog(id);
+
+    // Prevent duplicates by network+capacity
+    const exists = catalog.items.find(
+      (it) => it.network === network && Number(it.capacity) === Number(capacity)
+    );
+    if (exists) {
+      return res.status(400).json({ msg: 'Item already exists for this network and capacity' });
+    }
+
+    catalog.items.push({ network, capacity, price, title, description, enabled, updatedAt: new Date() });
+    catalog.updatedAt = new Date();
+    await catalog.save();
+
+    res.status(201).json({ agentId: id, items: catalog.items });
+  } catch (err) {
+    console.error('Add catalog item error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Update catalog item (admin)
+router.put('/agents/:id/catalog/item/:itemId', auth, adminAuth, async (req, res) => {
+  try {
+    const { id, itemId } = req.params;
+    const updates = req.body || {};
+
+    const user = await User.findById(id);
+    if (!user || user.role !== 'agent') {
+      return res.status(404).json({ msg: 'Agent not found' });
+    }
+
+    const catalog = await ensureAgentCatalog(id);
+    const item = catalog.items.find((it) => String(it.id) === String(itemId));
+    if (!item) {
+      return res.status(404).json({ msg: 'Catalog item not found' });
+    }
+
+    // Apply allowed fields
+    ['network', 'capacity', 'price', 'title', 'description', 'enabled'].forEach((field) => {
+      if (updates[field] !== undefined) item[field] = updates[field];
+    });
+    item.updatedAt = new Date();
+    catalog.updatedAt = new Date();
+    await catalog.save();
+
+    res.json({ agentId: id, item, items: catalog.items });
+  } catch (err) {
+    console.error('Update catalog item error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Delete catalog item (admin)
+router.delete('/agents/:id/catalog/item/:itemId', auth, adminAuth, async (req, res) => {
+  try {
+    const { id, itemId } = req.params;
+    const catalog = await ensureAgentCatalog(id);
+    const beforeCount = catalog.items.length;
+    catalog.items = catalog.items.filter((it) => String(it.id) !== String(itemId));
+    if (catalog.items.length === beforeCount) {
+      return res.status(404).json({ msg: 'Catalog item not found' });
+    }
+    catalog.updatedAt = new Date();
+    await catalog.save();
+    res.json({ agentId: id, items: catalog.items });
+  } catch (err) {
+    console.error('Delete catalog item error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Agent self: get my catalog (agent only)
+router.get('/agent/catalog', auth, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'agent') {
+      return res.status(403).json({ msg: 'Agent access required' });
+    }
+    const catalog = await ensureAgentCatalog(req.user.id);
+    res.json({ agentId: req.user.id, items: catalog.items });
+  } catch (err) {
+    console.error('Get my catalog error:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Public: get agent store by agent code or custom slug (no auth required)
+router.get('/public/agent-store/:identifier', async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    
+    // Find agent by agent code OR custom slug
+    const agent = await User.findOne({ 
+      $or: [
+        { 'agentMetadata.agentCode': identifier },
+        { 'agentMetadata.customSlug': identifier }
+      ],
+      role: 'agent'
+    }).select('name email phoneNumber agentMetadata');
+    
+    if (!agent) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Agent store not found' 
+      });
+    }
+    
+    // Check if agent is active
+    if (agent.agentMetadata?.agentStatus !== 'active') {
+      return res.status(403).json({ 
+        success: false,
+        message: 'This agent store is not currently available' 
+      });
+    }
+    
+    // Get agent catalog
+    const catalog = await AgentCatalog.findOne({ agentId: agent._id });
+    const items = catalog ? catalog.items.filter(item => item.enabled) : [];
+    
+    res.json({
+      success: true,
+      agent: {
+        name: agent.name,
+        phoneNumber: agent.phoneNumber,
+        agentCode: agent.agentMetadata?.agentCode,
+        customSlug: agent.agentMetadata?.customSlug,
+        territory: agent.agentMetadata?.territory,
+        agentLevel: agent.agentMetadata?.agentLevel,
+        storeCustomization: agent.agentMetadata?.storeCustomization || {}
+      },
+      catalog: items
+    });
+  } catch (err) {
+    console.error('Get public agent store error:', err.message);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server Error' 
+    });
+  }
+});
+
+/**
++ * Product Pricing Management Routes (Admin Only)
++ */
+
+// Get all products
+router.get('/products', auth, adminAuth, async (req, res) => {
+  try {
+    const products = await ProductPricing.find({}).sort({ network: 1, capacity: 1 });
+    res.json({ success: true, products });
+  } catch (err) {
+    console.error('Get products error:', err.message);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
+// Add new product/package
+router.post('/products', auth, adminAuth, async (req, res) => {
+  try {
+    const { network, capacity, price, description, enabled = true } = req.body;
+    
+    if (!network || !capacity || price === undefined) {
+      return res.status(400).json({ message: 'Network, capacity, and price are required' });
+    }
+    
+    // Check if product already exists
+    const existing = await ProductPricing.findOne({ network, capacity });
+    if (existing) {
+      return res.status(400).json({ message: 'Product already exists for this network and capacity' });
+    }
+    
+    const product = new ProductPricing({
+      network,
+      capacity,
+      price,
+      description,
+      enabled
+    });
+    
+    await product.save();
+    res.status(201).json({ success: true, product });
+  } catch (err) {
+    console.error('Add product error:', err.message);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
+// Update product price/details
+router.put('/products/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const { price, description, enabled } = req.body;
+    const product = await ProductPricing.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    if (price !== undefined) product.price = price;
+    if (description !== undefined) product.description = description;
+    if (enabled !== undefined) product.enabled = enabled;
+    product.updatedAt = new Date();
+    
+    await product.save();
+    res.json({ success: true, product });
+  } catch (err) {
+    console.error('Update product error:', err.message);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
+// Delete product
+router.delete('/products/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const product = await ProductPricing.findByIdAndDelete(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (err) {
+    console.error('Delete product error:', err.message);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
+// Agent: update store customization (agent only)
+router.put('/agent/customize-store', auth, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'agent') {
+      return res.status(403).json({ msg: 'Agent access required' });
+    }
+    
+    const {
+      customSlug,
+      storeName,
+      storeDescription,
+      brandColor,
+      logoUrl,
+      bannerUrl,
+      socialLinks,
+      welcomeMessage,
+      showAgentInfo,
+      showContactButton
+    } = req.body;
+    
+    const agent = await User.findById(req.user.id);
+    if (!agent) {
+      return res.status(404).json({ msg: 'Agent not found' });
+    }
+    
+    // Validate custom slug if provided
+    if (customSlug) {
+      // Check if slug is valid (alphanumeric, hyphens, underscores only)
+      if (!/^[a-zA-Z0-9-_]+$/.test(customSlug)) {
+        return res.status(400).json({ 
+          msg: 'Invalid slug. Use only letters, numbers, hyphens, and underscores' 
+        });
+      }
+      
+      // Check if slug is already taken
+      const existingAgent = await User.findOne({
+        'agentMetadata.customSlug': customSlug,
+        _id: { $ne: req.user.id }
+      });
+      
+      if (existingAgent) {
+        return res.status(400).json({ msg: 'This URL is already taken' });
+      }
+      
+      agent.agentMetadata.customSlug = customSlug;
+    }
+    
+    // Update customization fields
+    if (!agent.agentMetadata.storeCustomization) {
+      agent.agentMetadata.storeCustomization = {};
+    }
+    
+    if (storeName !== undefined) agent.agentMetadata.storeCustomization.storeName = storeName;
+    if (storeDescription !== undefined) agent.agentMetadata.storeCustomization.storeDescription = storeDescription;
+    if (brandColor !== undefined) agent.agentMetadata.storeCustomization.brandColor = brandColor;
+    if (logoUrl !== undefined) agent.agentMetadata.storeCustomization.logoUrl = logoUrl;
+    if (bannerUrl !== undefined) agent.agentMetadata.storeCustomization.bannerUrl = bannerUrl;
+    if (welcomeMessage !== undefined) agent.agentMetadata.storeCustomization.welcomeMessage = welcomeMessage;
+    if (showAgentInfo !== undefined) agent.agentMetadata.storeCustomization.showAgentInfo = showAgentInfo;
+    if (showContactButton !== undefined) agent.agentMetadata.storeCustomization.showContactButton = showContactButton;
+    
+    if (socialLinks) {
+      if (!agent.agentMetadata.storeCustomization.socialLinks) {
+        agent.agentMetadata.storeCustomization.socialLinks = {};
+      }
+      if (socialLinks.whatsapp !== undefined) agent.agentMetadata.storeCustomization.socialLinks.whatsapp = socialLinks.whatsapp;
+      if (socialLinks.facebook !== undefined) agent.agentMetadata.storeCustomization.socialLinks.facebook = socialLinks.facebook;
+      if (socialLinks.twitter !== undefined) agent.agentMetadata.storeCustomization.socialLinks.twitter = socialLinks.twitter;
+      if (socialLinks.instagram !== undefined) agent.agentMetadata.storeCustomization.socialLinks.instagram = socialLinks.instagram;
+    }
+    
+    await agent.save();
+    
+    res.json({
+      success: true,
+      message: 'Store customization updated successfully',
+      customization: agent.agentMetadata.storeCustomization,
+      customSlug: agent.agentMetadata.customSlug,
+      storeUrl: agent.agentMetadata.customSlug 
+        ? `/agent-store/${agent.agentMetadata.customSlug}`
+        : `/agent-store/${agent.agentMetadata.agentCode}`
+    });
+  } catch (err) {
+    console.error('Update store customization error:', err.message);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server Error',
+      error: err.message
+    });
+  }
+});
 
 module.exports = router;

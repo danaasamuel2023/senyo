@@ -136,20 +136,41 @@ const useAuth = () => {
 };
 
 const useTheme = () => {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(THEME_KEY) || 
+             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    }
+    return 'light';
+  });
 
   useEffect(() => {
     const savedTheme = localStorage.getItem(THEME_KEY) || 
                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme);
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    
+    // Apply theme immediately
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem(THEME_KEY, newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    
+    // Apply theme to document
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Dispatch custom event for other components
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme } }));
   }, [theme]);
 
   return { theme, toggleTheme };
@@ -208,28 +229,64 @@ const MobileNavbar = () => {
     setShowSearch(false);
   }, [pathname]);
 
-  // Handle body scroll lock
+  // Handle body scroll lock and viewport meta for mobile
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'auto';
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    
     return () => {
       document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
     };
   }, [isMobileMenuOpen]);
 
-  // Close on outside click
+  // Enhanced mobile touch handling
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    const handleOutsideInteraction = (event) => {
+      // Handle menu close
+      if (menuRef.current && !menuRef.current.contains(event.target) && isMobileMenuOpen) {
         setIsMobileMenuOpen(false);
       }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      // Handle notification close
+      if (notificationRef.current && !notificationRef.current.contains(event.target) && showNotifications) {
         setShowNotifications(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+        if (showNotifications) setShowNotifications(false);
+        if (showSearch) setShowSearch(false);
+      }
+    };
+
+    // Support both mouse and touch events for better mobile experience
+    document.addEventListener('mousedown', handleOutsideInteraction);
+    document.addEventListener('touchstart', handleOutsideInteraction);
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('touchstart', handleOutsideInteraction);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isMobileMenuOpen, showNotifications, showSearch]);
 
   // MTN-Style Logo Component
   const Logo = ({ size = 'default' }) => {
@@ -293,9 +350,9 @@ const MobileNavbar = () => {
         onClick={handleClick}
         disabled={disabled}
         className={`
-          relative flex items-center w-full py-4 px-6 
-          transition-all duration-300 group
-          ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-transparent hover:to-[#FFCC08]/5 cursor-pointer active:scale-[0.98]'}
+          relative flex items-center w-full py-4 sm:py-3.5 px-4 sm:px-6 
+          transition-all duration-300 group touch-manipulation
+          ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gradient-to-r hover:from-transparent hover:to-[#FFCC08]/5 cursor-pointer active:scale-[0.98] active:bg-[#FFCC08]/5'}
           ${isActive ? 'bg-gradient-to-r from-transparent to-[#FFCC08]/10 border-r-4 border-[#FFCC08]' : ''}
         `}
       >
@@ -354,11 +411,11 @@ const MobileNavbar = () => {
     </div>
   );
 
-  // Notification Panel
+  // Enhanced Notification Panel for Mobile
   const NotificationPanel = () => (
     <div 
       ref={notificationRef}
-      className={`absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 transform transition-all duration-300 ${
+      className={`fixed sm:absolute top-20 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 transform transition-all duration-300 z-50 ${
         showNotifications ? 'translate-y-0 opacity-100 visible' : '-translate-y-4 opacity-0 invisible'
       }`}
     >
@@ -411,8 +468,8 @@ const MobileNavbar = () => {
   return (
     <>
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-sm z-40 border-b border-gray-200/50 dark:border-gray-800/50">
-        <div className="flex justify-between items-center h-16 px-4 max-w-screen-xl mx-auto">
+      <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-sm z-40 border-b border-gray-200/50 dark:border-gray-800/50 safe-area-inset-top">
+        <div className="flex justify-between items-center h-16 px-4 sm:px-6 max-w-screen-xl mx-auto">
           <Link href="/" className="flex items-center space-x-3 group">
             <Logo />
             <div>
@@ -423,26 +480,26 @@ const MobileNavbar = () => {
             </div>
           </Link>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Search Button */}
             <button 
               onClick={() => setShowSearch(!showSearch)}
-              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
+              className="p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95"
               aria-label="Search"
             >
-              <Search size={20} className="text-gray-700 dark:text-gray-300" />
+              <Search size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
             </button>
 
             {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
+              className="p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group touch-manipulation active:scale-95"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <Sun size={20} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300" />
+                <Sun size={18} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300 sm:w-5 sm:h-5" />
               ) : (
-                <Moon size={20} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
+                <Moon size={18} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300 sm:w-5 sm:h-5" />
               )}
             </button>
             
@@ -451,13 +508,13 @@ const MobileNavbar = () => {
               <div className="relative">
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
+                  className="relative p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95"
                   aria-label="Notifications"
                 >
-                  <Bell size={20} className="text-gray-700 dark:text-gray-300" />
+                  <Bell size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFCC08] text-black text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
-                      {unreadCount}
+                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-4 h-4 sm:w-5 sm:h-5 bg-[#FFCC08] text-black text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
@@ -468,7 +525,7 @@ const MobileNavbar = () => {
             {/* Menu Toggle */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black hover:from-yellow-500 hover:to-[#FFCC08] shadow-lg shadow-yellow-500/25 transition-all duration-300 active:scale-95"
+              className="p-3 sm:p-2.5 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black hover:from-yellow-500 hover:to-[#FFCC08] shadow-lg shadow-yellow-500/25 transition-all duration-300 active:scale-95 touch-manipulation ml-1 sm:ml-0"
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
@@ -503,10 +560,10 @@ const MobileNavbar = () => {
         />
       )}
 
-      {/* Sidebar Menu */}
+      {/* Enhanced Mobile Sidebar Menu */}
       <aside 
         ref={menuRef}
-        className={`fixed right-0 top-0 h-full w-[85%] max-w-sm bg-white dark:bg-gray-950 shadow-2xl transform transition-all duration-500 ease-out z-50 ${
+        className={`fixed right-0 top-0 h-full w-full xs:w-[90%] sm:w-[85%] max-w-sm bg-white dark:bg-gray-950 shadow-2xl transform transition-all duration-500 ease-out z-50 safe-area-inset-right ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -557,8 +614,8 @@ const MobileNavbar = () => {
           )}
         </div>
 
-        {/* Sidebar Content */}
-        <div className="h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-500 scrollbar-track-transparent">
+        {/* Enhanced Sidebar Content */}
+        <div className="h-[calc(100vh-180px)] sm:h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-500 scrollbar-track-transparent overscroll-contain">
           {isAuthenticated ? (
             <div className="py-4">
               {/* Main Menu */}
@@ -670,7 +727,7 @@ const MobileNavbar = () => {
                     router.push('/SignIn');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full py-3.5 px-4 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-2xl shadow-xl shadow-yellow-500/25 hover:shadow-2xl hover:shadow-yellow-500/30 transition-all duration-300 font-bold transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+                  className="w-full py-4 px-4 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-2xl shadow-xl shadow-yellow-500/25 hover:shadow-2xl hover:shadow-yellow-500/30 transition-all duration-300 font-bold transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center touch-manipulation"
                 >
                   <Lock className="w-4 h-4 mr-2" />
                   Sign In
@@ -681,7 +738,7 @@ const MobileNavbar = () => {
                     router.push('/SignUp');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full py-3.5 px-4 bg-white dark:bg-gray-800 text-black dark:text-[#FFCC08] border-2 border-[#FFCC08] rounded-2xl hover:bg-[#FFCC08]/10 dark:hover:bg-[#FFCC08]/5 transition-all duration-300 font-bold flex items-center justify-center"
+                  className="w-full py-4 px-4 bg-white dark:bg-gray-800 text-black dark:text-[#FFCC08] border-2 border-[#FFCC08] rounded-2xl hover:bg-[#FFCC08]/10 dark:hover:bg-[#FFCC08]/5 transition-all duration-300 font-bold flex items-center justify-center touch-manipulation"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Create Account
@@ -702,8 +759,34 @@ const MobileNavbar = () => {
         {/* Content goes here */}
       </main>
 
-      {/* Custom Styles */}
+      {/* Enhanced Custom Styles for Mobile */}
       <style jsx>{`
+        /* Safe area support for notched devices */
+        .safe-area-inset-top {
+          padding-top: env(safe-area-inset-top);
+        }
+        
+        .safe-area-inset-right {
+          padding-right: env(safe-area-inset-right);
+        }
+
+        /* Touch optimization */
+        .touch-manipulation {
+          touch-action: manipulation;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+
+        /* Prevent overscroll bounce on iOS */
+        .overscroll-contain {
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
         /* Premium scrollbar */
         .scrollbar-thin {
           scrollbar-width: thin;
@@ -731,13 +814,12 @@ const MobileNavbar = () => {
           transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
-        /* Pulse animation */
+        /* Enhanced mobile animations */
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
 
-        /* Slide animations */
         @keyframes slideDown {
           from {
             opacity: 0;
@@ -749,8 +831,55 @@ const MobileNavbar = () => {
           }
         }
 
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
         .animate-slide-down {
           animation: slideDown 0.3s ease-out;
+        }
+
+        .animate-slide-in-right {
+          animation: slideInRight 0.5s ease-out;
+        }
+
+        /* Backdrop blur fallback for older browsers */
+        @supports not (backdrop-filter: blur(12px)) {
+          .backdrop-blur-xl {
+            background-color: rgba(255, 255, 255, 0.95);
+          }
+          
+          .dark .backdrop-blur-xl {
+            background-color: rgba(0, 0, 0, 0.95);
+          }
+        }
+
+        /* Custom breakpoint for extra small screens */
+        @media (max-width: 375px) {
+          .xs\\:w-\\[90\\%\\] {
+            width: 90%;
+          }
+        }
+
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+          .fixed {
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+          }
+        }
+
+        /* Prevent text selection on interactive elements */
+        button, .touch-manipulation {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
       `}</style>
     </>

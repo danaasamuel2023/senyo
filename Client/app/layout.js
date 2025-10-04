@@ -158,9 +158,19 @@ const structuredData = {
   publisher: {
     "@type": "Organization",
     name: "UnlimitedData GH",
+    email: "Unlimiteddatagh@gmail.com",
+    telephone: "+233256702995",
     logo: {
       "@type": "ImageObject",
       url: "https://www.unlimiteddata.gh/logo.png"
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+233256702995",
+      contactType: "customer support",
+      email: "Unlimiteddatagh@gmail.com",
+      areaServed: "GH",
+      availableLanguage: "English"
     }
   }
 };
@@ -320,12 +330,8 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body
-        className={`
-          font-sans antialiased min-h-screen flex flex-col
-          bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]
-          selection:bg-[#FFCC08] selection:text-black
-          relative overflow-x-hidden transition-colors duration-300
-        `}
+        className="font-sans antialiased min-h-screen flex flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] selection:bg-[#FFCC08] selection:text-black relative overflow-x-hidden transition-colors duration-300"
+        suppressHydrationWarning
       >
         {/* Initialize body opacity */}
         <Script

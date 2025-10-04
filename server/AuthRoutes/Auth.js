@@ -14,7 +14,7 @@ const generateReferralCode = () => Math.random().toString(36).substring(2, 8).to
 // REGISTER ROUTE
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, phoneNumber, referredBy } = req.body;
+    const { name, email, password, phoneNumber, referredBy, role, agentMetadata } = req.body;
     
     // Input validation
     if (!name || !email || !password || !phoneNumber) {
@@ -59,8 +59,16 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       phoneNumber,
       referralCode,
-      referredBy ,
-       approvalStatus: "pending"
+      referredBy,
+      role: role || "buyer", // Use provided role or default to buyer
+      approvalStatus: role === "agent" ? "pending" : "approved", // Agents need approval
+      ...(role === "agent" && agentMetadata ? { 
+        agentMetadata: {
+          ...agentMetadata,
+          agentCode: generateReferralCode() + '-AG', // Generate unique agent code
+          joinedAsAgent: new Date()
+        }
+      } : {})
     });
 
     await newUser.save();
@@ -139,7 +147,8 @@ router.post("/login", async (req, res) => {
       email: user.email,
       role: user.role,
       walletBalance: user.walletBalance,
-      referralCode: user.referralCode
+      referralCode: user.referralCode,
+      ...(user.role === 'agent' ? { agentMetadata: user.agentMetadata } : {})
     };
 
     res.json({ 

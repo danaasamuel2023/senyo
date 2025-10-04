@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Wifi } from 'lucide-react';
 
 function PaymentCallbackClient() {
   const [status, setStatus] = useState('processing');
@@ -27,6 +28,28 @@ function PaymentCallbackClient() {
           if (response.data.success) {
             setStatus('success');
             setMessage('Your deposit was successful! Funds have been added to your wallet.');
+            
+            // Force refresh user data in localStorage
+            try {
+              console.log('[FRONTEND] Refreshing user wallet data...');
+              
+              // Also update with the new balance from response if available
+              if (response.data.data?.newBalance !== undefined) {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                userData.walletBalance = response.data.data.newBalance;
+                localStorage.setItem('userData', JSON.stringify(userData));
+                console.log('[FRONTEND] ✅ Wallet balance updated to:', response.data.data.newBalance);
+              }
+              
+              // Trigger a storage event for other tabs/components to update
+              window.dispatchEvent(new Event('storage'));
+              window.dispatchEvent(new CustomEvent('walletUpdated', { 
+                detail: { newBalance: response.data.data?.newBalance } 
+              }));
+            } catch (err) {
+              console.log('[FRONTEND] Could not refresh user data:', err);
+            }
+            
             // No need to check anymore
             return true;
           } else if (response.data.data && response.data.data.status === 'failed') {
@@ -203,7 +226,20 @@ function PaymentCallbackClient() {
   const currentConfig = statusConfig[status] || statusConfig.processing;
 
   return (
-    <div className={`flex items-center justify-center min-h-screen bg-gradient-to-br ${currentConfig.bgGradient} transition-all duration-1000`}>
+    <div className={`flex flex-col items-center justify-center min-h-screen bg-gradient-to-br ${currentConfig.bgGradient} transition-all duration-1000`}>
+      {/* Header with Branding */}
+      <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+            <Wifi className="w-7 h-7 text-black" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">UnlimitedData GH</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Secure Payment Processing</p>
+          </div>
+        </div>
+      </div>
+
       {/* Animated background shapes */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -336,14 +372,27 @@ function PaymentCallbackClient() {
 // Fallback component to show while loading
 function PaymentCallbackFallback() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 
                   dark:from-gray-900 dark:to-gray-800">
+      {/* Header with Branding */}
+      <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+            <Wifi className="w-7 h-7 text-black" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">UnlimitedData GH</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Secure Payment Processing</p>
+          </div>
+        </div>
+      </div>
+
       <div className="w-full max-w-md p-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl 
                     shadow-2xl border border-gray-200 dark:border-gray-700">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
             Payment Processing
-          </h1>
+          </h2>
           <div className="flex justify-center my-8">
             <div className="relative w-24 h-24">
               <div className="absolute inset-0 animate-spin">

@@ -13,7 +13,6 @@ mongoose.set('bufferCommands', false);
 mongoose.set('bufferTimeoutMS', 10000);
 
 // Query optimization defaults
-mongoose.set('lean', true);
 mongoose.set('strictQuery', true);
 
 // ============================================
@@ -152,7 +151,7 @@ const UserSchema = new Schema({
   },
   role: { 
     type: String, 
-    enum: ["buyer", "seller", "reporter", "admin", "Dealer"], 
+    enum: ["buyer", "seller", "reporter", "admin", "Dealer", "agent"], 
     default: "buyer",
     index: true
   },
@@ -228,9 +227,16 @@ const UserSchema = new Schema({
   },
   lastPasswordReset: { type: Date, sparse: true },
   
-  // Two-Factor - Optional fields with sparse index
+  // Enhanced Two-Factor Authentication
   twoFactorEnabled: { type: Boolean, default: false, sparse: true },
   twoFactorSecret: { type: String, select: false, sparse: true },
+  twoFactorBackupCodes: { 
+    type: [String], 
+    select: false, 
+    validate: [arrayLimit10, '{PATH} exceeds the limit of 10'],
+    sparse: true 
+  },
+  twoFactorSetupAt: { type: Date, sparse: true },
   
   // Account Status - Optimized for queries
   isDisabled: { type: Boolean, default: false, sparse: true },
@@ -257,6 +263,32 @@ const UserSchema = new Schema({
   },
   lockoutUntil: { type: Date, sparse: true },
   
+  // Enhanced Security Settings
+  securitySettings: {
+    sessionTimeout: { type: Number, default: 30, min: 5, max: 480 }, // minutes
+    loginNotifications: { type: Boolean, default: true },
+    deviceManagementEnabled: { type: Boolean, default: true },
+    requirePasswordForSensitiveActions: { type: Boolean, default: true },
+    allowMultipleSessions: { type: Boolean, default: true }
+  },
+  
+  // Session Management
+  activeSessions: {
+    type: [{
+      sessionId: { type: String, required: true, maxlength: 100 },
+      deviceId: { type: String, maxlength: 100 },
+      deviceName: { type: String, maxlength: 100 },
+      ipAddress: { type: String, maxlength: 45 },
+      userAgent: { type: String, maxlength: 500 },
+      location: { type: String, maxlength: 200 },
+      createdAt: { type: Date, default: Date.now },
+      lastActivity: { type: Date, default: Date.now },
+      isActive: { type: Boolean, default: true }
+    }],
+    validate: [arrayLimit20, '{PATH} exceeds the limit of 20'],
+    select: false
+  },
+  
   // Admin Approval
   approvalStatus: { 
     type: String, 
@@ -268,11 +300,160 @@ const UserSchema = new Schema({
   approvedAt: { type: Date, sparse: true },
   rejectionReason: { type: String, maxlength: 200, sparse: true },
   
-  // Minimal preferences
+  // Enhanced User Preferences
   preferences: {
     language: { type: String, default: "en", maxlength: 5 },
     currency: { type: String, default: "GHS", maxlength: 3 },
-    theme: { type: String, enum: ["light", "dark", "auto"], default: "light" }
+    theme: { type: String, enum: ["light", "dark", "auto"], default: "light" },
+    timezone: { type: String, default: "Africa/Accra", maxlength: 50 },
+    dateFormat: { type: String, default: "DD/MM/YYYY", maxlength: 20 },
+    numberFormat: { type: String, default: "1,000.00", maxlength: 10 }
+  },
+  
+  // Activity Tracking
+  activityLog: {
+    type: [{
+      action: { type: String, required: true, maxlength: 100 },
+      details: { type: String, maxlength: 500 },
+      ipAddress: { type: String, maxlength: 45 },
+      userAgent: { type: String, maxlength: 500 },
+      timestamp: { type: Date, default: Date.now }
+    }],
+    validate: [arrayLimit100, '{PATH} exceeds the limit of 100'],
+    select: false
+  },
+  
+  // Privacy Settings
+  privacySettings: {
+    profileVisibility: { type: String, enum: ["public", "private", "friends"], default: "private" },
+    showOnlineStatus: { type: Boolean, default: true },
+    allowContactByEmail: { type: Boolean, default: true },
+    allowContactBySMS: { type: Boolean, default: false },
+    dataExportRequested: { type: Date, sparse: true },
+    dataExportCompletedAt: { type: Date, sparse: true }
+  },
+  
+  // Admin-Specific Fields
+  adminMetadata: {
+    assignedTerritory: { type: String, maxlength: 100 },
+    permissions: {
+      type: [String],
+      enum: ["manage_users", "manage_orders", "manage_inventory", "manage_reports", "manage_settings", "view_analytics", "process_payments", "handle_refunds"],
+      validate: [arrayLimit20, '{PATH} exceeds the limit of 20']
+    },
+    canApproveUsers: { type: Boolean, default: false },
+    canManagePricing: { type: Boolean, default: false },
+    canAccessReports: { type: Boolean, default: false },
+    lastAdminAction: {
+      action: { type: String, maxlength: 100 },
+      targetId: { type: Schema.Types.ObjectId },
+      timestamp: { type: Date }
+    },
+    adminNotes: { type: String, maxlength: 1000 }
+  },
+  
+  // Business Metrics (for dealers and sellers)
+  businessMetrics: {
+    totalOrders: { type: Number, default: 0, min: 0 },
+    totalRevenue: { type: Number, default: 0, min: 0 },
+    totalProfit: { type: Number, default: 0 },
+    averageOrderValue: { type: Number, default: 0, min: 0 },
+    customerCount: { type: Number, default: 0, min: 0 },
+    successRate: { type: Number, default: 100, min: 0, max: 100 },
+    responseTime: { type: Number, default: 0, min: 0 }, // in minutes
+    rating: { type: Number, default: 5, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
+    lastOrderDate: { type: Date },
+    monthlyTarget: { type: Number, default: 0, min: 0 },
+    monthlyAchievement: { type: Number, default: 0, min: 0 }
+  },
+  
+  // Agent-Specific Fields
+  agentMetadata: {
+    agentCode: { type: String, unique: true, sparse: true, maxlength: 20 },
+    customSlug: { type: String, unique: true, sparse: true, maxlength: 50 }, // Custom URL slug
+    territory: { type: String, maxlength: 100 },
+    commissionRate: { type: Number, default: 5, min: 0, max: 100 }, // percentage
+    totalCommissions: { type: Number, default: 0, min: 0 },
+    pendingCommissions: { type: Number, default: 0, min: 0 },
+    paidCommissions: { type: Number, default: 0, min: 0 },
+    customerBase: { type: Number, default: 0, min: 0 },
+    activeCustomers: { type: Number, default: 0, min: 0 },
+    // Store Customization
+    storeCustomization: {
+      storeName: { type: String, maxlength: 100 },
+      storeDescription: { type: String, maxlength: 500 },
+      brandColor: { type: String, default: '#FFCC08', maxlength: 7 },
+      logoUrl: { type: String, maxlength: 500 },
+      bannerUrl: { type: String, maxlength: 500 },
+      socialLinks: {
+        whatsapp: { type: String, maxlength: 20 },
+        facebook: { type: String, maxlength: 200 },
+        twitter: { type: String, maxlength: 200 },
+        instagram: { type: String, maxlength: 200 }
+      },
+      welcomeMessage: { type: String, maxlength: 500 },
+      showAgentInfo: { type: Boolean, default: true },
+      showContactButton: { type: Boolean, default: true }
+    },
+    registeredCustomers: [{
+      customerId: { type: Schema.Types.ObjectId, ref: "Userdataunlimited" },
+      registeredAt: { type: Date, default: Date.now },
+      totalPurchases: { type: Number, default: 0 },
+      lastPurchase: { type: Date, sparse: true }
+    }],
+    performanceMetrics: {
+      conversionRate: { type: Number, default: 0, min: 0, max: 100 },
+      averageTicketSize: { type: Number, default: 0, min: 0 },
+      monthlyTarget: { type: Number, default: 0, min: 0 },
+      monthlyAchievement: { type: Number, default: 0, min: 0 },
+      quarterlyBonus: { type: Number, default: 0, min: 0 }
+    },
+    bankDetails: {
+      bankName: { type: String, maxlength: 100 },
+      accountName: { type: String, maxlength: 100 },
+      accountNumber: { type: String, maxlength: 20 },
+      momoNumber: { type: String, maxlength: 20 }
+    },
+    documents: {
+      idType: { type: String, enum: ["passport", "drivers_license", "voter_id", "ghana_card"], maxlength: 20 },
+      idNumber: { type: String, maxlength: 50 },
+      idVerified: { type: Boolean, default: false },
+      idVerifiedAt: { type: Date, sparse: true }
+    },
+    agentStatus: { 
+      type: String, 
+      enum: ["pending", "active", "suspended", "terminated"], 
+      default: "pending" 
+    },
+    agentLevel: {
+      type: String,
+      enum: ["bronze", "silver", "gold", "platinum"],
+      default: "bronze"
+    },
+    joinedAsAgent: { type: Date, sparse: true },
+    lastActivityAsAgent: { type: Date, sparse: true }
+  },
+  
+  // Compliance and Verification
+  compliance: {
+    kycVerified: { type: Boolean, default: false },
+    kycDocuments: {
+      type: [{
+        type: { type: String, enum: ["national_id", "drivers_license", "passport", "utility_bill"] },
+        documentNumber: { type: String, maxlength: 50 },
+        uploadedAt: { type: Date },
+        verifiedAt: { type: Date },
+        expiryDate: { type: Date },
+        status: { type: String, enum: ["pending", "verified", "rejected"], default: "pending" }
+      }],
+      validate: [arrayLimit10, '{PATH} exceeds the limit of 10']
+    },
+    taxId: { type: String, maxlength: 50, sparse: true },
+    businessLicense: { type: String, maxlength: 100, sparse: true },
+    termsAcceptedAt: { type: Date },
+    privacyPolicyAcceptedAt: { type: Date },
+    lastComplianceCheck: { type: Date }
   }
 }, {
   timestamps: true,
@@ -298,25 +479,91 @@ function arrayLimit50(val) {
   return val.length <= 50;
 }
 
+function arrayLimit100(val) {
+  return val.length <= 100;
+}
+
 // Optimized Compound Indexes
 UserSchema.index({ approvalStatus: 1, createdAt: -1 });
 UserSchema.index({ role: 1, isDisabled: 1 });
 UserSchema.index({ referralCode: 1 }, { sparse: true });
 UserSchema.index({ isOnline: 1, lastSeen: -1 });
 UserSchema.index({ 'pushTokens.token': 1 }, { sparse: true });
+UserSchema.index({ 'compliance.kycVerified': 1, role: 1 });
+UserSchema.index({ 'businessMetrics.totalOrders': -1, role: 1 });
+UserSchema.index({ 'businessMetrics.totalRevenue': -1, role: 1 });
+UserSchema.index({ 'adminMetadata.permissions': 1 }, { sparse: true });
 
 // Text index for search
-UserSchema.index({ name: 'text', email: 'text' });
+UserSchema.index({ name: 'text', email: 'text', phoneNumber: 'text' });
 
 // Virtual for active status (computed, not stored)
 UserSchema.virtual('isActive').get(function() {
   return !this.isDisabled && this.approvalStatus === 'approved';
 });
 
-// Pre-save optimization
+// Virtual for admin check
+UserSchema.virtual('isAdmin').get(function() {
+  return this.role === 'admin';
+});
+
+// Virtual for seller/dealer check
+UserSchema.virtual('isBusinessUser').get(function() {
+  return ['seller', 'Dealer', 'reporter'].includes(this.role);
+});
+
+// Virtual for agent check
+UserSchema.virtual('isAgent').get(function() {
+  return this.role === 'agent';
+});
+
+// Virtual for completion percentage
+UserSchema.virtual('profileCompleteness').get(function() {
+  let completed = 0;
+  const total = 10;
+  
+  if (this.name) completed++;
+  if (this.email && this.emailVerified) completed++;
+  if (this.phoneNumber && this.phoneVerified) completed++;
+  if (this.referralCode) completed++;
+  if (this.compliance?.kycVerified) completed++;
+  if (this.notificationPreferences) completed++;
+  if (this.preferences) completed++;
+  if (this.twoFactorEnabled) completed++;
+  if (this.profilePicture) completed++;
+  if (this.walletBalance > 0) completed++;
+  
+  return Math.round((completed / total) * 100);
+});
+
+// Pre-save optimization and business logic
 UserSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  
+  // Auto-calculate business metrics
+  if (this.isModified('businessMetrics.totalOrders') && this.businessMetrics.totalOrders > 0) {
+    if (this.businessMetrics.totalRevenue > 0) {
+      this.businessMetrics.averageOrderValue = this.businessMetrics.totalRevenue / this.businessMetrics.totalOrders;
+    }
+  }
+  
+  // Update last seen
+  if (this.isModified('isOnline') && this.isOnline) {
+    this.lastSeen = Date.now();
+  }
+  
   next();
+});
+
+// Post-save hook for logging
+UserSchema.post('save', function(doc) {
+  // Log important changes (can be connected to audit system)
+  if (doc.isModified('role')) {
+    console.log(`User role changed: ${doc._id} -> ${doc.role}`);
+  }
+  if (doc.isModified('isDisabled')) {
+    console.log(`User status changed: ${doc._id} -> ${doc.isDisabled ? 'disabled' : 'enabled'}`);
+  }
 });
 
 // ============================================
@@ -674,6 +921,58 @@ const DataInventorySchema = new Schema({
 });
 
 // ============================================
+// PRODUCT PRICING SCHEMA (Global Price Management)
+// ============================================
+
+const ProductPricingSchema = new Schema({
+  network: { 
+    type: String, 
+    enum: ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+    required: true,
+    index: true
+  },
+  capacity: { type: Number, required: true, min: 1 },
+  price: { type: Number, required: true, min: 0 },
+  enabled: { type: Boolean, default: true, index: true },
+  description: { type: String, maxlength: 200 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Compound unique index
+ProductPricingSchema.index({ network: 1, capacity: 1 }, { unique: true });
+
+// ============================================
+// AGENT CATALOG SCHEMA
+// ============================================
+
+const AgentCatalogSchema = new Schema({
+  agentId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    index: true,
+    unique: true
+  },
+  items: [{
+    _id: false,
+    id: { type: Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    network: { type: String, enum: ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], required: true },
+    capacity: { type: Number, required: true, min: 0 },
+    price: { type: Number, required: true, min: 0 },
+    enabled: { type: Boolean, default: true },
+    title: { type: String, maxlength: 100 },
+    description: { type: String, maxlength: 300 },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+  }],
+  updatedAt: { type: Date, default: Date.now }
+});
+
+AgentCatalogSchema.index({ agentId: 1 });
+AgentCatalogSchema.index({ "items.network": 1, "items.capacity": 1 });
+
+// ============================================
 // API KEY SCHEMA
 // ============================================
 
@@ -780,7 +1079,9 @@ const Transaction = getModel("Transactiondataunlimited", TransactionSchema);
 const ReferralBonus = getModel("ReferralBonusdataunlimited", ReferralBonusSchema);
 const ApiKey = getModel("ApiKeydatahusle", ApiKeySchema);
 const DataInventory = getModel("DataInventorydataunlimited", DataInventorySchema);
+const ProductPricing = getModel("ProductPricing", ProductPricingSchema);
 const OrderReport = getModel("OrderReportunlimited", OrderReportSchema);
+const AgentCatalog = getModel("AgentCatalog", AgentCatalogSchema);
 const Notification = getModel("Notification", NotificationSchema);
 const NotificationQueue = getModel("NotificationQueue", NotificationQueueSchema);
 const SiteSettings = getModel("SiteSettings", SiteSettingsSchema);
@@ -833,11 +1134,13 @@ module.exports = {
   Transaction, 
   ReferralBonus, 
   ApiKey, 
-  DataInventory, 
+  DataInventory,
+  ProductPricing,
   OrderReport,
   Notification,
   NotificationQueue,
   SiteSettings,
+  AgentCatalog,
   
   // Performance helpers
   bulkWrite,

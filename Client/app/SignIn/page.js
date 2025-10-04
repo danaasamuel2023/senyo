@@ -128,7 +128,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://unlimitedata.onrender.com/api/v1/login', {
+      // Use local API in development
+      const API_URL = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:5000/api/v1/login'
+        : 'https://unlimitedata.onrender.com/api/v1/login';
+      
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,17 +153,27 @@ export default function LoginPage() {
             id: data.user._id,
             name: data.user.name,
             email: data.user.email,
-            role: data.user.role
+            role: data.user.role,
+            ...(data.user.agentMetadata ? { agentMetadata: data.user.agentMetadata } : {})
           }));
         }
 
         showToast('Login successful! Redirecting...', 'success');
         
-        // Redirect to dashboard after showing success message
+        // Redirect based on user role
         setTimeout(() => {
           try {
-            // Force a hard navigation instead of client-side navigation
-            window.location.href = '/';
+            // Check user role and redirect accordingly
+            if (data.user && data.user.role === 'admin') {
+              // Redirect to admin dashboard
+              window.location.href = '/admin/dashboard';
+            } else if (data.user && data.user.role === 'agent') {
+              // Redirect to agent dashboard
+              window.location.href = '/agent/dashboard';
+            } else {
+              // Redirect to home page for regular users
+              window.location.href = '/';
+            }
           } catch (err) {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
@@ -170,8 +185,16 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('An error occurred. Please try again.');
-      showToast('An error occurred. Please try again.', 'error');
+      const errorMessage = err.message || 'An error occurred. Please try again.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      
+      // Log more details for debugging
+      console.log('Login error details:', {
+        message: err.message,
+        stack: err.stack,
+        apiUrl: API_URL
+      });
     } finally {
       setIsLoading(false);
     }

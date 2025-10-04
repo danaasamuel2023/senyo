@@ -468,6 +468,16 @@ export default function SignupPage() {
                 </a>
               </p>
             </div>
+
+            {/* Agent Sign Up Link */}
+            <div className="text-center mt-3">
+              <p className="text-white/80 font-medium text-sm">
+                Want to become an agent? 
+                <a href="/agent-signup" className="text-[#FFCC08] hover:text-[#FFD700] ml-1 font-bold hover:underline transition-colors">
+                  Apply Here
+                </a>
+              </p>
+            </div>
           </div>
         </div>
       </div>
