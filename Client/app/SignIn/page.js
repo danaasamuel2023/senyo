@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { getApiEndpoint } from '@/utils/apiConfig';
 
 // Toast Notification Component
 const Toast = ({ message, type, onClose }) => {
@@ -128,11 +129,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Use local API in development
-      const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5001/api/v1/login'
-        : 'https://unlimitedata.onrender.com/api/v1/login';
-      
+      // Get API URL using utility function
+      const API_URL = getApiEndpoint('/api/v1/login');
+
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -140,6 +139,11 @@ export default function LoginPage() {
         },
         body: JSON.stringify({ email, password }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
 
@@ -185,16 +189,19 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      const errorMessage = err.message || 'An error occurred. Please try again.';
+      
+      let errorMessage = 'An error occurred. Please try again.';
+      
+      if (err.message.includes('Failed to fetch')) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection.';
+      } else if (err.message.includes('HTTP')) {
+        errorMessage = err.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       showToast(errorMessage, 'error');
-      
-      // Log more details for debugging
-      console.log('Login error details:', {
-        message: err.message,
-        stack: err.stack,
-        apiUrl: API_URL
-      });
     } finally {
       setIsLoading(false);
     }

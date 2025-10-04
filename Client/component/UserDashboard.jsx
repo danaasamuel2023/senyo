@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { AnimatedCounter, CurrencyCounter } from './Animation';
 import DailySalesChart from '@/app/week/page';
+import PullToRefresh from './PullToRefresh';
 
 // Constants
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
@@ -348,15 +349,16 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
-      {/* Premium Animated Background with MTN Yellow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-yellow-600/10 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/10 to-black blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-transparent blur-3xl"></div>
-      </div>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
+        {/* Premium Animated Background with MTN Yellow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-yellow-600/10 blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/10 to-black blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-transparent blur-3xl"></div>
+        </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
         
         {/* Error Notification - MTN Enhanced */}
         {error && (
@@ -513,92 +515,101 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Stats Grid - MTN Enhanced Dark Theme */}
+        {/* Stats Grid - Enhanced Mobile Layout */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Balance Card - MTN Premium */}
-            <div className="lg:col-span-2 bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl">
-              <div className="bg-gray-950 rounded-2xl p-6 h-full">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-lg">
-                        <DollarSign className="w-6 h-6 text-black" strokeWidth={2.5} />
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm font-medium">Account Balance</p>
-                        <p className="text-gray-500 text-xs">Available funds</p>
-                      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Balance Card - MTN Premium - Full width on mobile */}
+            <div className="sm:col-span-2 lg:col-span-2 bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl hover:shadow-yellow-500/50 transition-shadow">
+              <div className="bg-gray-950 rounded-2xl p-5 sm:p-6 h-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                  <div className="flex items-start sm:items-center space-x-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                      <DollarSign className="w-6 h-6 sm:w-7 sm:h-7 text-black" strokeWidth={2.5} />
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-[#FFCC08]/20 flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-[#FFCC08]" />
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-sm sm:text-base font-medium">Account Balance</p>
+                      <p className="text-gray-500 text-xs">Available funds</p>
+                      <div className="text-2xl sm:text-3xl font-bold text-white mt-2">
+                        {animateStats ? 
+                          <CurrencyCounter value={stats.balance} duration={1500} /> : 
+                          formatCurrency(0)
+                        }
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="text-3xl font-bold text-white">
-                      {animateStats ? 
-                        <CurrencyCounter value={stats.balance} duration={1500} /> : 
-                        formatCurrency(0)
-                      }
-                    </div>
-                    <button
-                      onClick={navigationHandlers.topup}
-                      className="inline-flex items-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      <span className="text-sm font-semibold">Add Funds</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={navigationHandlers.topup}
+                    className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2.5 px-5 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg active:scale-95"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Add Funds</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Orders Today - MTN Dark Card */}
-            <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                    <Package className="w-5 h-5 text-black" strokeWidth={2} />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-white">
-                      {animateStats ? 
-                        <AnimatedCounter value={stats.todayOrders} duration={1200} /> : 
-                        "0"
-                      }
-                    </div>
+            {/* Orders Today - Compact Mobile Card */}
+            <div className="bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
+                  <Package className="w-5 h-5 sm:w-6 sm:h-6 text-black" strokeWidth={2} />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl sm:text-3xl font-bold text-white">
+                    {animateStats ? 
+                      <AnimatedCounter value={stats.todayOrders} duration={1200} /> : 
+                      "0"
+                    }
                   </div>
                 </div>
-                
-                <div>
-                  <p className="text-gray-100 font-medium text-sm">Orders Today</p>
-                  <p className="text-gray-500 text-xs">Active transactions</p>
-                </div>
+              </div>
+              <div>
+                <p className="text-gray-100 font-medium text-sm">Orders Today</p>
+                <p className="text-gray-500 text-xs">Active transactions</p>
               </div>
             </div>
 
-            {/* Revenue Today - MTN Dark Card */}
-            <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                    <TrendingUp className="w-5 h-5 text-black" strokeWidth={2} />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-white">
-                      {animateStats ? 
-                        <CurrencyCounter value={stats.todayRevenue} duration={1500} /> : 
-                        formatCurrency(0)
-                      }
-                    </div>
+            {/* Revenue Today - Compact Mobile Card */}
+            <div className="bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
+                </div>
+                <div className="text-right">
+                  <div className="text-xl sm:text-2xl font-bold text-white">
+                    {animateStats ? 
+                      <CurrencyCounter value={stats.todayRevenue} duration={1500} /> : 
+                      formatCurrency(0)
+                    }
                   </div>
                 </div>
-                
-                <div>
-                  <p className="text-gray-100 font-medium text-sm">Revenue Today</p>
-                  <p className="text-gray-500 text-xs">Total earnings</p>
+              </div>
+              <div>
+                <p className="text-gray-100 font-medium text-sm">Revenue Today</p>
+                <p className="text-gray-500 text-xs">Total earnings</p>
+              </div>
+            </div>
+
+            {/* Data Sold Today - Compact Mobile Card */}
+            <div className="sm:col-span-2 lg:col-span-1 bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow">
+                  <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
                 </div>
+                <div className="text-right">
+                  <div className="text-xl sm:text-2xl font-bold text-white">
+                    {animateStats ? 
+                      <AnimatedCounter value={stats.todayGbSold} duration={1200} /> : 
+                      "0"
+                    }
+                    <span className="text-sm text-gray-400 ml-1">GB</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-gray-100 font-medium text-sm">Data Sold Today</p>
+                <p className="text-gray-500 text-xs">Total capacity</p>
               </div>
             </div>
           </div>
@@ -942,24 +953,25 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
+        {/* Custom Animations */}
+        <style jsx>{`
+          @keyframes slideInDown {
+            from {
+              opacity: 0;
+              transform: translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          
+          .animate-slideInDown {
+            animation: slideInDown 0.5s ease-out;
           }
-        }
-        
-        .animate-slideInDown {
-          animation: slideInDown 0.5s ease-out;
-        }
-      `}</style>
-    </div>
+        `}</style>
+      </div>
+    </PullToRefresh>
   );
 };
 

@@ -5,6 +5,9 @@ import Navbar from "@/compoenent/nav";
 import Footer from "@/compoenent/footer";
 import AuthGuard from "@/component/AuthGuide";
 import WhatsAppLink from "@/component/groupIcon";
+import PWAInstaller from "@/component/PWAInstaller";
+import BottomNav from "@/component/BottomNav";
+import { ThemeProvider } from "@/app/providers/ThemeProvider";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
@@ -342,120 +345,92 @@ export default function RootLayout({ children }) {
           }}
         />
         
-        {/* Theme provider script */}
-        <Script
-          id="theme-provider"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Theme switching functionality
-              window.toggleTheme = function() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                document.documentElement.classList.toggle('dark', newTheme === 'dark');
-                localStorage.setItem('app_theme', newTheme);
-                
-                // Update meta theme-color
-                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-                if (metaThemeColor) {
-                  metaThemeColor.content = newTheme === 'dark' ? '#000000' : '#FFCC08';
-                }
-                
-                // Dispatch custom event for components to react
-                window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme } }));
-              };
-              
-              // Listen for system theme changes
-              window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                if (!localStorage.getItem('app_theme')) {
-                  const newTheme = e.matches ? 'dark' : 'light';
-                  document.documentElement.setAttribute('data-theme', newTheme);
-                  document.documentElement.classList.toggle('dark', newTheme === 'dark');
-                }
-              });
-            `
-          }}
-        />
         
         {/* Modern layout structure with error boundary */}
-        <AuthGuard>
-          {/* Dynamic background based on theme */}
-          <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
-          
-          {/* Light theme background gradient */}
-          <div className="fixed inset-0 -z-10 bg-gradient-to-br from-white via-[#FFCC08]/5 to-white dark:from-black dark:via-[#FFCC08]/10 dark:to-black transition-opacity duration-300" />
-          
-          {/* Animated background pattern */}
-          <div className="absolute inset-0 -z-10 overflow-hidden">
-            {/* Primary grid pattern with MTN yellow accent */}
-            <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-[#FFCC08]/20 dark:stroke-[#FFCC08]/10 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
-              <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
-                <defs>
-                  <pattern
-                    id="grid-pattern"
-                    width={200}
-                    height={200}
-                    x="50%"
-                    y={-1}
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <path d="M100 200V.5M.5 .5H200" fill="none" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" strokeWidth={0} fill="url(#grid-pattern)" />
-              </svg>
+        <ThemeProvider>
+          <AuthGuard>
+            {/* Dynamic background based on theme */}
+            <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
+            
+            {/* Light theme background gradient */}
+            <div className="fixed inset-0 -z-10 bg-gradient-to-br from-white via-[#FFCC08]/5 to-white dark:from-black dark:via-[#FFCC08]/10 dark:to-black transition-opacity duration-300" />
+            
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 -z-10 overflow-hidden">
+              {/* Primary grid pattern with MTN yellow accent */}
+              <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-[#FFCC08]/20 dark:stroke-[#FFCC08]/10 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
+                <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
+                  <defs>
+                    <pattern
+                      id="grid-pattern"
+                      width={200}
+                      height={200}
+                      x="50%"
+                      y={-1}
+                      patternUnits="userSpaceOnUse"
+                    >
+                      <path d="M100 200V.5M.5 .5H200" fill="none" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" strokeWidth={0} fill="url(#grid-pattern)" />
+                </svg>
+              </div>
+              
+              {/* Animated yellow accent dots */}
+              <div className="absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-[#FFCC08]/10 dark:stroke-[#FFCC08]/5 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
+                <svg className="absolute inset-0 h-full w-full animate-pulse" aria-hidden="true">
+                  <defs>
+                    <pattern
+                      id="dot-pattern"
+                      width={50}
+                      height={50}
+                      patternUnits="userSpaceOnUse"
+                    >
+                      <circle cx={25} cy={25} r={2} fill="currentColor" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#dot-pattern)" />
+                </svg>
+              </div>
+              
+              {/* MTN-style decorative elements */}
+              <div className="absolute top-20 left-10 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse dark:bg-[#FFCC08]/5" />
+              <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse delay-1000 dark:bg-[#FFCC08]/5" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
             </div>
             
-            {/* Animated yellow accent dots */}
-            <div className="absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-[#FFCC08]/10 dark:stroke-[#FFCC08]/5 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
-              <svg className="absolute inset-0 h-full w-full animate-pulse" aria-hidden="true">
-                <defs>
-                  <pattern
-                    id="dot-pattern"
-                    width={50}
-                    height={50}
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <circle cx={25} cy={25} r={2} fill="currentColor" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#dot-pattern)" />
-              </svg>
-            </div>
+            <Navbar />
             
-            {/* MTN-style decorative elements */}
-            <div className="absolute top-20 left-10 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse dark:bg-[#FFCC08]/5" />
-            <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse delay-1000 dark:bg-[#FFCC08]/5" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
-          </div>
-          
-          <Navbar />
-          
-          <main className="flex-grow relative z-0">
-            {/* Noise texture overlay for premium feel */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.015] dark:opacity-[0.02]">
-              <svg width="100%" height="100%">
-                <filter id="noiseFilter">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
-                  <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
-                </filter>
-                <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-              </svg>
-            </div>
+            <main className="flex-grow relative z-0 pb-20 md:pb-0">
+              {/* Noise texture overlay for premium feel */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.015] dark:opacity-[0.02]">
+                <svg width="100%" height="100%">
+                  <filter id="noiseFilter">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
+                    <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
+                  </filter>
+                  <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+                </svg>
+              </div>
+              
+              {/* Main content wrapper */}
+              <div className="relative">
+                {children}
+              </div>
+              
+              {/* WhatsApp floating button */}
+              <WhatsAppLink />
+            </main>
             
-            {/* Main content wrapper */}
-            <div className="relative">
-              {children}
-            </div>
+            <Footer />
             
-            {/* WhatsApp floating button */}
-            <WhatsAppLink />
-          </main>
-          
-          <Footer />
-        </AuthGuard>
+            {/* Bottom Navigation for Mobile */}
+            <BottomNav />
+            
+            {/* PWA Install Prompt and Push Notifications */}
+            <PWAInstaller />
+          </AuthGuard>
+        </ThemeProvider>
         
         {/* Google Analytics with enhanced tracking */}
         <Script

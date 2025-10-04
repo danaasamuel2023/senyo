@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Home, 
-  LayoutDashboard, 
-  Layers, 
+import { useTheme } from '../app/providers/ThemeProvider';
+import {
+  Home,
+  LayoutDashboard,
+  Layers,
   User,
   CreditCard,
   LogOut,
@@ -50,7 +51,8 @@ import {
   Filter,
   Download,
   Upload,
-  Database
+  Database,
+  Store
 } from 'lucide-react';
 
 // Constants
@@ -72,6 +74,7 @@ const SERVICES = {
 const NAVIGATION_CONFIG = {
   main: [
     { id: 'dashboard', icon: LayoutDashboard, text: 'Dashboard', path: '/', requiresAuth: true },
+    { id: 'agent-store', icon: Store, text: 'Manage Store', path: '/agent/manage-store', requiresAuth: true, requiresRole: 'agent', badge: 'AGENT' },
     { id: 'admin', icon: Shield, text: 'Admin Panel', path: '/admin', requiresAuth: true, requiresRole: 'admin', badge: 'ADMIN' }
   ],
   services: [
@@ -135,46 +138,6 @@ const useAuth = () => {
   return { isAuthenticated, userData, isLoading, logout };
 };
 
-const useTheme = () => {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(THEME_KEY) || 
-             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    }
-    return 'light';
-  });
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_KEY) || 
-                      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    setTheme(savedTheme);
-    
-    // Apply theme immediately
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem(THEME_KEY, newTheme);
-    
-    // Apply theme to document
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    // Dispatch custom event for other components
-    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme } }));
-  }, [theme]);
-
-  return { theme, toggleTheme };
-};
 
 const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -217,8 +180,6 @@ const MobileNavbar = () => {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
   const menuRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -226,7 +187,6 @@ const MobileNavbar = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setShowNotifications(false);
-    setShowSearch(false);
   }, [pathname]);
 
   // Handle body scroll lock and viewport meta for mobile
@@ -272,7 +232,6 @@ const MobileNavbar = () => {
       if (event.key === 'Escape') {
         if (isMobileMenuOpen) setIsMobileMenuOpen(false);
         if (showNotifications) setShowNotifications(false);
-        if (showSearch) setShowSearch(false);
       }
     };
 
@@ -286,23 +245,23 @@ const MobileNavbar = () => {
       document.removeEventListener('touchstart', handleOutsideInteraction);
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [isMobileMenuOpen, showNotifications, showSearch]);
+  }, [isMobileMenuOpen, showNotifications]);
 
-  // Logo Component matching the exact design provided
+  // Enhanced Logo Component - Optimized for mobile
   const Logo = ({ size = 'default' }) => {
     const sizes = {
-      small: { container: 'w-7 h-7', icon: 'w-3.5 h-3.5' },
-      default: { container: 'w-8 h-8 sm:w-10 sm:h-10', icon: 'w-4 h-4 sm:w-5 sm:h-5' },
-      large: { container: 'w-14 h-14', icon: 'w-7 h-7' }
+      small: { container: 'w-8 h-8', icon: 'w-4 h-4' },
+      default: { container: 'w-9 h-9 sm:w-11 sm:h-11', icon: 'w-5 h-5 sm:w-6 sm:h-6' },
+      large: { container: 'w-16 h-16', icon: 'w-8 h-8' }
     };
     
     const config = sizes[size] || sizes.default;
     
     return (
-      <div className={`${config.container} relative flex items-center justify-center group`}>
-        {/* Clean geometric background */}
-        <div className={`${config.container} absolute bg-gradient-to-br from-[#FFCC08] via-yellow-400 to-[#FFCC08] rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/25 transform rotate-1 group-hover:rotate-3 transition-transform duration-300`}>
-          {/* Exact logo design from the image */}
+      <div className={`${config.container} relative flex items-center justify-center group flex-shrink-0`}>
+        {/* Modern geometric background with enhanced gradient */}
+        <div className={`${config.container} absolute bg-gradient-to-br from-[#FFCC08] via-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/30 transform rotate-2 group-hover:rotate-6 transition-all duration-300`}>
+          {/* Sophisticated data/connectivity icon */}
           <svg className={`${config.icon} text-black`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             {/* Wi-Fi signal curves - outer arcs */}
             <path d="M2 12c0-5.5 4.5-10 10-10s10 4.5 10 10" strokeWidth="2" fill="none"/>
@@ -315,7 +274,7 @@ const MobileNavbar = () => {
             {/* Central geometric shape - stylized M/W */}
             <path d="M9 12l1.5-3 1.5 3 1.5-3 1.5 3" strokeWidth="2.5" fill="none"/>
             
-            {/* Distinctive curved elements from the design */}
+            {/* Distinctive curved elements */}
             <path d="M12 9c1.5 0 2.5 1 2.5 2.5c0 1.5-1 2.5-2.5 2.5" strokeWidth="2" fill="none"/>
             <path d="M12 15c-1.5 0-2.5-1-2.5-2.5c0-1.5 1-2.5 2.5-2.5" strokeWidth="2" fill="none"/>
             
@@ -326,8 +285,8 @@ const MobileNavbar = () => {
             <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
           </svg>
         </div>
-        {/* Subtle glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-br from-[#FFCC08]/20 to-yellow-500/10 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Enhanced glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-[#FFCC08]/25 to-yellow-500/15 rounded-xl blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
     );
   };
@@ -489,50 +448,41 @@ const MobileNavbar = () => {
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-sm z-40 border-b border-gray-200/50 dark:border-gray-800/50 safe-area-inset-top">
         <div className="flex justify-between items-center h-12 sm:h-16 px-2 sm:px-6 max-w-screen-xl mx-auto">
-          <Link href="/" className="flex items-center space-x-1.5 sm:space-x-3 group">
+          <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group flex-1 min-w-0">
             <Logo />
-            <div className="flex-shrink-0">
-              <h1 className="text-xs sm:text-lg font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent leading-tight">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-sm sm:text-lg md:text-xl font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent leading-tight whitespace-nowrap">
                 UnlimitedData GH
               </h1>
-              <p className="text-[7px] sm:text-[10px] text-gray-500 font-medium -mt-0.5 sm:-mt-1 leading-tight">Premium Data Services</p>
+              <p className="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400 font-medium -mt-0.5 sm:-mt-1 leading-tight hidden sm:block">Premium Data Services</p>
             </div>
           </Link>
           
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* Search Button */}
-            <button 
-              onClick={() => setShowSearch(!showSearch)}
-              className="p-2.5 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
-              aria-label="Search"
-            >
-              <Search size={16} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
-            </button>
-
-            {/* Theme Toggle */}
+            {/* Theme Switcher */}
             <button 
               onClick={toggleTheme}
-              className="p-2.5 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
-              aria-label="Toggle theme"
+              className="relative p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
             >
               {theme === 'dark' ? (
-                <Sun size={16} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300 sm:w-5 sm:h-5" />
+                <Sun size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
               ) : (
-                <Moon size={16} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300 sm:w-5 sm:h-5" />
+                <Moon size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
               )}
             </button>
-            
+
             {/* Notifications */}
             {isAuthenticated && (
               <div className="relative">
                 <button 
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95"
+                  className="relative p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
                   aria-label="Notifications"
                 >
                   <Bell size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-4 h-4 sm:w-5 sm:h-5 bg-[#FFCC08] text-black text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFCC08] text-black text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -549,24 +499,6 @@ const MobileNavbar = () => {
             >
               {isMobileMenuOpen ? <X size={18} strokeWidth={2.5} /> : <Menu size={18} strokeWidth={2.5} />}
             </button>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className={`absolute top-full left-0 w-full bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ${
-          showSearch ? 'translate-y-0 opacity-100 visible' : '-translate-y-full opacity-0 invisible'
-        }`}>
-          <div className="px-4 py-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search services, data plans..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
-              />
-            </div>
           </div>
         </div>
       </header>

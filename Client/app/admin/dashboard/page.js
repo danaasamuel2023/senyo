@@ -10,8 +10,11 @@ import {
   Upload, Edit, Trash2, Eye, Database, Shield, Activity, PieChart, ArrowUp, 
   ArrowDown, Bell, HelpCircle, Save, XCircle, Home, ShoppingCart, Wallet,
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
-  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase
+  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store
 } from 'lucide-react';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders';
+import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates';
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -359,6 +362,7 @@ const AdminDashboard = () => {
     { id: 'control-center', label: 'Control Center', icon: Zap, badge: null, highlight: true },
     { id: 'users', label: 'Users', icon: Users, badge: stats.activeUsers || null },
     { id: 'agents', label: 'Agents', icon: Briefcase, badge: null },
+    { id: 'agent-stores', label: 'Agent Stores', icon: Store, badge: null },
     { id: 'orders', label: 'Orders', icon: Package, badge: stats.pendingOrders || null },
     { id: 'products', label: 'Products', icon: Package2, badge: null },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: null },
@@ -374,6 +378,7 @@ const AdminDashboard = () => {
       'products': '/admin/products',
       'analytics': '/admin/analytics',
       'agents': '/admin/agents',
+      'agent-stores': '/admin/agent-stores',
       'transactions': '/admin/transactions',
       'reports': '/admin/reports',
       'settings': '/admin/settings'
@@ -515,10 +520,10 @@ const AdminDashboard = () => {
 
       {/* Charts and Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Chart */}
+        {/* Sales Chart - Enhanced with Recharts */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sales Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Revenue Trend</h3>
             <select className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-[#FFCC08]">
               <option>Last 7 days</option>
               <option>Last 30 days</option>
@@ -526,29 +531,55 @@ const AdminDashboard = () => {
             </select>
           </div>
           
-          {/* Simple Chart */}
-          <div className="h-64 flex items-end justify-between space-x-2">
-            {chartData.length > 0 ? chartData.map((data, index) => {
-              const maxSales = Math.max(...chartData.map(d => d.sales), 1);
-              const heightPercentage = (data.sales / maxSales) * 100;
-              
-              return (
-                <div key={index} className="flex-1 flex flex-col items-center">
-                  <div className="w-full bg-gradient-to-t from-[#FFCC08] to-yellow-400 rounded-t-lg relative transition-all duration-500 hover:from-[#FFD633] hover:to-yellow-300" 
-                       style={{ height: `${heightPercentage}%` }}>
-                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {data.sales.toFixed(0)}
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">{data.date}</span>
-                </div>
-              );
-            }) : (
-              <div className="flex-1 flex items-center justify-center">
+          {/* Professional Chart with Recharts */}
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FFCC08" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#FFCC08" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF" 
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#9CA3AF" 
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(31, 41, 55, 0.95)', 
+                    border: 'none', 
+                    borderRadius: '12px',
+                    color: '#fff',
+                    padding: '12px'
+                  }}
+                  labelStyle={{ color: '#FFCC08', fontWeight: 'bold' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="sales" 
+                  stroke="#FFCC08" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <BarChart3 className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">No data available</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Activities */}
@@ -708,101 +739,210 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Users Table */}
+        {/* Users Table - Responsive Design */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          {filteredUsers.length === 0 ? (
+            <EmptyUsers />
+          ) : (
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                  <div 
+                    key={user.id} 
+                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start space-x-3 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold text-lg flex-shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
+                            user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                            user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {user.role}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            user.status === 'active' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
+                            }`} />
+                            {user.status}
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
+                    </div>
+                    
+                    {/* Details */}
+                    <div className="space-y-2 mb-3 text-sm">
                       <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                         <Phone className="w-4 h-4" />
-                        <span className="text-sm">{user.phone}</span>
+                        <span>{user.phone}</span>
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
-                        user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
-                        user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.status === 'active' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
-                        }`} />
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(user.joinDate).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => handleViewUser(user.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleUserStatus(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          {user.isDisabled ? 
-                            <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
-                            <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                          }
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        </button>
+                      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                        <Calendar className="w-4 h-4" />
+                        <span>Joined {new Date(user.joinDate).toLocaleDateString()}</span>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-4 gap-2">
+                      <button 
+                        onClick={() => handleViewUser(user.id)}
+                        className="flex flex-col items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">View</span>
+                      </button>
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="flex flex-col items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors active:scale-95"
+                        title="Edit User"
+                      >
+                        <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleToggleUserStatus(user)}
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors active:scale-95 ${
+                          user.isDisabled 
+                            ? 'bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-900/30'
+                            : 'bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200 dark:hover:bg-orange-900/30'
+                        }`}
+                        title={user.isDisabled ? 'Enable User' : 'Disable User'}
+                      >
+                        {user.isDisabled ? 
+                          <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
+                          <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                        }
+                        <span className={`text-[10px] mt-1 ${
+                          user.isDisabled 
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-orange-600 dark:text-orange-400'
+                        }`}>
+                          {user.isDisabled ? 'Enable' : 'Disable'}
+                        </span>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteUser(user)}
+                        className="flex flex-col items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors active:scale-95"
+                        title="Delete User"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <span className="text-[10px] text-red-600 dark:text-red-400 mt-1">Delete</span>
+                      </button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                            <Phone className="w-4 h-4" />
+                            <span className="text-sm">{user.phone}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
+                            user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                            user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.status === 'active' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                              user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
+                            }`} />
+                            {user.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(user.joinDate).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleViewUser(user.id)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                              <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                            </button>
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleUserStatus(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                              {user.isDisabled ? 
+                                <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
+                                <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              }
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* Pagination */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
@@ -917,78 +1057,150 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Orders List */}
+        {/* Orders List - Responsive Design */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-2">
+          {filteredOrders.length === 0 ? (
+            <EmptyOrders />
+          ) : (
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {filteredOrders.map((order) => (
+                  <div 
+                    key={order.id} 
+                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
                           <Hash className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
+                          <p className="font-semibold text-gray-900 dark:text-white">#{order.id}</p>
                         </div>
-                      </td>
-                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
-                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
-                      <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                        GHS {order.amount.toFixed(2)}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                        {order.date.toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => handleUpdateOrderStatus(order)}
-                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                          >
-                            Update Status
-                          </button>
-                          <button
-                            onClick={() => handleViewOrderDetails(order)}
-                            className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm"
-                          >
-                            Details
-                          </button>
-                        </div>
-                      </td>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{order.customer}</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    
+                    {/* Details */}
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Product:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{order.product}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Amount:</span>
+                        <span className="font-semibold text-[#FFCC08]">GHS {order.amount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Phone:</span>
+                        <span className="text-gray-600 dark:text-gray-300">{order.phoneNumber}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Date:</span>
+                        <span className="text-gray-600 dark:text-gray-300">{order.date.toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex space-x-2">
+                      <button 
+                        onClick={() => handleUpdateOrderStatus(order)}
+                        className="flex-1 px-3 py-2 bg-[#FFCC08] text-black rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors active:scale-95"
+                      >
+                        Update Status
+                      </button>
+                      <button 
+                        onClick={() => handleViewOrderDetails(order)}
+                        className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      No orders found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order) => (
+                      <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <Hash className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
+                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
+                        <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
+                          GHS {order.amount.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                          {order.date.toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleUpdateOrderStatus(order)}
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium hover:underline"
+                            >
+                              Update
+                            </button>
+                            <button
+                              onClick={() => handleViewOrderDetails(order)}
+                              className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm hover:underline"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
   };
 
   const renderContent = () => {
+    // Show skeleton on initial load
+    if (loading && activeTab === 'overview') {
+      return <SkeletonDashboard />;
+    }
+    
+    if (loading && activeTab === 'orders') {
+      return <SkeletonTable />;
+    }
+    
+    if (loading && activeTab === 'users') {
+      return <SkeletonTable />;
+    }
+
     switch (activeTab) {
       case 'overview':
         return renderOverview();

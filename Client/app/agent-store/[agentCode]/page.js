@@ -9,6 +9,7 @@ import {
   Facebook, Twitter, Instagram, TrendingUp, Sparkles,
   Heart, Share2, MapPin, Clock, BadgeCheck
 } from 'lucide-react';
+import { getApiEndpoint } from '@/utils/apiConfig';
 
 const AgentStorePage = () => {
   const params = useParams();
@@ -36,16 +37,51 @@ const AgentStorePage = () => {
   const loadAgentStore = async () => {
     setLoading(true);
     try {
-      const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5001'
-        : 'https://unlimitedata.onrender.com';
+      const API_URL = getApiEndpoint('');
       
       const response = await fetch(`${API_URL}/api/public/agent-store/${params.agentCode}`);
       const data = await response.json();
       
       if (data.success) {
         setAgentInfo(data.agent);
-        setProducts(data.catalog || []);
+        
+        // Use new products array if available, fallback to legacy items
+        const storeProducts = data.catalog || [];
+        
+        // Transform legacy items to new format if needed
+        const transformedProducts = storeProducts.map(product => {
+          if (product.capacity && typeof product.capacity === 'number') {
+            // Legacy format - transform to new format
+            return {
+              id: product.id || product._id,
+              name: product.title || `${product.network} ${product.capacity}GB`,
+              description: product.description || `${product.capacity}GB ${product.network} data bundle`,
+              network: product.network,
+              capacity: `${product.capacity}GB`,
+              price: product.price,
+              enabled: product.enabled,
+              isActive: product.enabled,
+              category: 'data'
+            };
+          } else {
+            // New format - use as is
+            return {
+              id: product._id || product.id,
+              name: product.name,
+              description: product.description,
+              network: product.network,
+              capacity: product.capacity,
+              price: product.agentPrice || product.basePrice || product.price,
+              enabled: product.isActive !== false,
+              isActive: product.isActive !== false,
+              category: product.category || 'data',
+              stock: product.stock || 0,
+              tags: product.tags || []
+            };
+          }
+        });
+        
+        setProducts(transformedProducts);
         
         if (data.agent.storeCustomization?.brandColor) {
           document.documentElement.style.setProperty('--agent-brand-color', data.agent.storeCustomization.brandColor);
@@ -192,6 +228,16 @@ const AgentStorePage = () => {
               <BadgeCheck className="w-8 h-8 text-[#FFCC08]" />
             </div>
             
+            {/* Star Rating */}
+            <div className="flex items-center justify-center space-x-1 mb-4">
+              <Star className="w-5 h-5 text-[#FFCC08] fill-current" />
+              <Star className="w-5 h-5 text-[#FFCC08] fill-current" />
+              <Star className="w-5 h-5 text-[#FFCC08] fill-current" />
+              <Star className="w-5 h-5 text-[#FFCC08] fill-current" />
+              <Star className="w-5 h-5 text-[#FFCC08] fill-current" />
+              <span className="text-white font-semibold ml-2">5.0 (127 reviews)</span>
+            </div>
+            
             <p className="text-xl text-gray-300 font-medium mb-4">{welcomeMessage}</p>
             <p className="text-gray-400 max-w-2xl mx-auto">{storeDescription}</p>
 
@@ -213,13 +259,13 @@ const AgentStorePage = () => {
           </div>
 
           {/* Contact Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
             {agentInfo.storeCustomization?.socialLinks?.whatsapp && (
               <a
                 href={`https://wa.me/${agentInfo.storeCustomization.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="flex items-center space-x-2 px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm"
               >
                 <MessageCircle className="w-5 h-5" />
                 <span>Chat on WhatsApp</span>
@@ -227,7 +273,7 @@ const AgentStorePage = () => {
             )}
             <a
               href={`tel:${agentInfo.phoneNumber}`}
-              className="flex items-center space-x-2 px-6 py-3 bg-[#FFCC08] hover:bg-yellow-500 text-black rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              className="flex items-center space-x-2 px-8 py-4 bg-white/20 hover:bg-white/30 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm border border-white/30"
             >
               <Phone className="w-5 h-5" />
               <span>Call Now</span>
@@ -240,12 +286,15 @@ const AgentStorePage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         {/* Network Filter */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Available Bundles</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Our Data Bundles</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Choose from our wide selection of affordable data bundles</p>
+            </div>
             {cart.length > 0 && (
               <button
                 onClick={() => setShowCheckout(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all relative"
+                className="flex items-center space-x-2 px-6 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all relative shadow-lg hover:shadow-xl"
               >
                 <ShoppingCart className="w-5 h-5" />
                 <span>Cart ({cart.length})</span>
@@ -257,7 +306,7 @@ const AgentStorePage = () => {
           </div>
 
           {/* Network Tabs */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {networks.map((network) => (
               <button
                 key={network}
@@ -304,7 +353,7 @@ const AgentStorePage = () => {
                     <Zap className="w-8 h-8 text-black" />
                   </div>
                   <h3 className="text-3xl font-black text-gray-900 dark:text-white text-center mb-1">
-                    {product.capacity}GB
+                    {product.capacity}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                     {product.description}
@@ -343,20 +392,25 @@ const AgentStorePage = () => {
 
       {/* Shopping Cart Modal */}
       {showCheckout && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-[#FFCC08]/10 to-yellow-500/5 border-b border-gray-200 dark:border-gray-700 p-6 z-10 rounded-t-3xl">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping Cart</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{cart.length} items</p>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FFCC08] flex items-center justify-center">
+                    <ShoppingCart className="w-5 h-5 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping Cart</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{cart.length} items</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-all"
                 >
-                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
             </div>
@@ -376,7 +430,7 @@ const AgentStorePage = () => {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h4 className="font-bold text-gray-900 dark:text-white">
-                          {item.network} {item.capacity}GB
+                          {item.network} {item.capacity}
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
                       </div>
@@ -408,24 +462,30 @@ const AgentStorePage = () => {
             </div>
 
             {/* Cart Footer */}
-            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
-                <span className="text-3xl font-black text-gray-900 dark:text-white">
-                  ₵{getTotalAmount().toFixed(2)}
-                </span>
+            <div className="sticky bottom-0 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-t border-gray-200 dark:border-gray-700 p-6 rounded-b-3xl">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Including all fees</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl font-black text-gray-900 dark:text-white">
+                    ₵{getTotalAmount().toFixed(2)}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+                  className="flex-1 py-3 px-6 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-all"
                 >
                   Continue Shopping
                 </button>
                 <button
                   onClick={handleCheckout}
-                  className="flex-1 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  disabled={cart.length === 0 || cart.some(item => !item.phoneNumber)}
+                  className="flex-1 py-3 px-6 bg-[#FFCC08] hover:bg-yellow-500 text-black rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   <span>Proceed to Payment</span>
                   <ArrowRight className="w-5 h-5" />

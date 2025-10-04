@@ -1,113 +1,111 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Save, ArrowLeft, Eye, RefreshCw, CheckCircle, AlertCircle, X,
-  Link as LinkIcon, Palette, Package, Plus, Edit, Trash2, Settings,
-  Globe, Phone, Mail, Facebook, Twitter, Instagram, MessageCircle,
-  Copy, ExternalLink, Sparkles, Zap, ShoppingBag, DollarSign, ToggleLeft,
-  ToggleRight, Search, Filter, ChevronDown, ChevronUp
+  Store, Package, TrendingUp, Users, ShoppingCart, Settings,
+  Palette, Upload, Eye, Edit3, Trash2, Plus, Save, X,
+  BarChart3, DollarSign, Calendar, MapPin, Clock,
+  Star, MessageCircle, Share2, QrCode, Globe, Smartphone,
+  AlertCircle, CheckCircle, Loader2, ChevronRight,
+  Palette as ColorPalette, Image as ImageIcon, Type,
+  Bell, Mail, Phone, Facebook, Twitter, Instagram,
+  Zap, Wifi, Shield, Award, Target, PieChart, Megaphone
 } from 'lucide-react';
+import { getApiEndpoint } from '@/utils/apiConfig';
+import ProductManager from '@/component/ProductManager';
+import OrderManager from '@/component/OrderManager';
+import AnalyticsDashboard from '@/component/AnalyticsDashboard';
+import MarketingTools from '@/component/MarketingTools';
 
-const ManageStorePage = () => {
+const AgentStoreManagement = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [agentData, setAgentData] = useState(null);
+  const [storeData, setStoreData] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [activeTab, setActiveTab] = useState('store'); // 'store' or 'packages'
-  const [userData, setUserData] = useState(null);
-  const [catalog, setCatalog] = useState([]);
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterNetwork, setFilterNetwork] = useState('all');
 
-  const [customization, setCustomization] = useState({
-    customSlug: '',
+  // Store customization states
+  const [storeCustomization, setStoreCustomization] = useState({
     storeName: '',
+    welcomeMessage: '',
     storeDescription: '',
     brandColor: '#FFCC08',
-    welcomeMessage: '',
-    showAgentInfo: true,
-    showContactButton: true,
+    logo: null,
     socialLinks: {
       whatsapp: '',
       facebook: '',
       twitter: '',
       instagram: ''
+    },
+    businessHours: {
+      monday: { open: '08:00', close: '18:00', isOpen: true },
+      tuesday: { open: '08:00', close: '18:00', isOpen: true },
+      wednesday: { open: '08:00', close: '18:00', isOpen: true },
+      thursday: { open: '08:00', close: '18:00', isOpen: true },
+      friday: { open: '08:00', close: '18:00', isOpen: true },
+      saturday: { open: '09:00', close: '16:00', isOpen: true },
+      sunday: { open: '10:00', close: '14:00', isOpen: false }
     }
   });
 
+  // Product management states
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newProduct, setNewProduct] = useState({
+    name: '',
+    description: '',
     network: 'MTN',
     capacity: '',
-    price: '',
-    enabled: true,
-    description: ''
+    basePrice: 0,
+    agentPrice: 0,
+    stock: 0,
+    isActive: true,
+    category: 'data',
+    tags: []
   });
 
   useEffect(() => {
-    checkAuth();
-    loadStoreData();
+    loadAgentData();
   }, []);
 
-  const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
-    
-    if (!token || user.role !== 'agent') {
-      router.push('/SignIn');
-      return false;
-    }
-    
-    setUserData(user);
-    return true;
-  };
-
-  const loadStoreData = async () => {
+  const loadAgentData = async () => {
     setLoading(true);
     try {
-      const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5001'
-        : 'https://unlimitedata.onrender.com';
-
       const token = localStorage.getItem('authToken');
-      
-      // Load customization and catalog
-      const response = await fetch(`${API_URL}/api/agent/catalog`, {
+      if (!token) {
+        router.push('/SignIn');
+        return;
+      }
+
+      const API_URL = getApiEndpoint('');
+
+      const response = await fetch(`${API_URL}/api/agent/profile`, {
         headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (response.ok) {
         const data = await response.json();
-        setCatalog(data.catalog?.items || []);
+        setAgentData(data.agent);
+        setStoreData(data.store);
+        setProducts(data.products || []);
+        setOrders(data.orders || []);
+        setAnalytics(data.analytics || {});
         
-        // Load customization from userData
-        const user = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (user.agentMetadata) {
-          setCustomization({
-            customSlug: user.agentMetadata.customSlug || '',
-            storeName: user.agentMetadata.storeCustomization?.storeName || '',
-            storeDescription: user.agentMetadata.storeCustomization?.storeDescription || '',
-            brandColor: user.agentMetadata.storeCustomization?.brandColor || '#FFCC08',
-            welcomeMessage: user.agentMetadata.storeCustomization?.welcomeMessage || '',
-            showAgentInfo: user.agentMetadata.storeCustomization?.showAgentInfo !== false,
-            showContactButton: user.agentMetadata.storeCustomization?.showContactButton !== false,
-            socialLinks: user.agentMetadata.storeCustomization?.socialLinks || {
-              whatsapp: '',
-              facebook: '',
-              twitter: '',
-              instagram: ''
-            }
-          });
+        if (data.agent.storeCustomization) {
+          setStoreCustomization(data.agent.storeCustomization);
         }
       }
     } catch (error) {
-      console.error('Failed to load store data:', error);
+      console.error('Failed to load agent data:', error);
       showNotification('Failed to load store data', 'error');
     } finally {
       setLoading(false);
@@ -120,181 +118,162 @@ const ManageStorePage = () => {
   };
 
   const handleSaveCustomization = async () => {
-    setSaving(true);
     try {
-      const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5001'
-        : 'https://unlimitedata.onrender.com';
+      const token = localStorage.getItem('authToken');
+      const API_URL = getApiEndpoint('');
 
-      const response = await fetch(`${API_URL}/api/agent/customize-store`, {
+      const response = await fetch(`${API_URL}/api/agent/store-customization`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': localStorage.getItem('authToken')
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(customization)
+        body: JSON.stringify(storeCustomization)
       });
 
       if (response.ok) {
         showNotification('Store customization saved successfully!', 'success');
-        
-        // Update localStorage
-        const user = JSON.parse(localStorage.getItem('userData') || '{}');
-        user.agentMetadata = {
-          ...user.agentMetadata,
-          ...customization,
-          storeCustomization: {
-            storeName: customization.storeName,
-            storeDescription: customization.storeDescription,
-            brandColor: customization.brandColor,
-            welcomeMessage: customization.welcomeMessage,
-            showAgentInfo: customization.showAgentInfo,
-            showContactButton: customization.showContactButton,
-            socialLinks: customization.socialLinks
-          }
-        };
-        localStorage.setItem('userData', JSON.stringify(user));
+        loadAgentData(); // Reload data
       } else {
         showNotification('Failed to save customization', 'error');
       }
     } catch (error) {
-      console.error('Save error:', error);
+      console.error('Error saving customization:', error);
       showNotification('Error saving customization', 'error');
-    } finally {
-      setSaving(false);
     }
   };
 
-  const handleAddProduct = () => {
-    if (!newProduct.capacity || !newProduct.price) {
-      showNotification('Please fill in all required fields', 'error');
-      return;
-    }
-
-    const product = {
-      ...newProduct,
-      capacity: parseInt(newProduct.capacity),
-      price: parseFloat(newProduct.price),
-      description: newProduct.description || `${newProduct.network} ${newProduct.capacity}GB Data Bundle`
-    };
-
-    const updatedCatalog = [...catalog, product];
-    saveCatalog(updatedCatalog);
-    
-    setNewProduct({
-      network: 'MTN',
-      capacity: '',
-      price: '',
-      enabled: true,
-      description: ''
-    });
-    setShowAddProduct(false);
-  };
-
-  const handleEditProduct = (product) => {
-    setEditingProduct(product);
-    setNewProduct({
-      network: product.network,
-      capacity: product.capacity.toString(),
-      price: product.price.toString(),
-      enabled: product.enabled,
-      description: product.description
-    });
-    setShowAddProduct(true);
-  };
-
-  const handleUpdateProduct = () => {
-    const updatedCatalog = catalog.map(item => 
-      item.id === editingProduct.id 
-        ? {
-            ...item,
-            network: newProduct.network,
-            capacity: parseInt(newProduct.capacity),
-            price: parseFloat(newProduct.price),
-            enabled: newProduct.enabled,
-            description: newProduct.description
-          }
-        : item
-    );
-    
-    saveCatalog(updatedCatalog);
-    setEditingProduct(null);
-    setShowAddProduct(false);
-    setNewProduct({
-      network: 'MTN',
-      capacity: '',
-      price: '',
-      enabled: true,
-      description: ''
-    });
-  };
-
-  const handleDeleteProduct = (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    
-    const updatedCatalog = catalog.filter(item => item.id !== productId);
-    saveCatalog(updatedCatalog);
-  };
-
-  const toggleProductStatus = (productId) => {
-    const updatedCatalog = catalog.map(item => 
-      item.id === productId ? { ...item, enabled: !item.enabled } : item
-    );
-    saveCatalog(updatedCatalog);
-  };
-
-  const saveCatalog = async (updatedCatalog) => {
-    setSaving(true);
+  const handleSaveProduct = async () => {
     try {
-      const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5001'
-        : 'https://unlimitedata.onrender.com';
+      const token = localStorage.getItem('authToken');
+      const API_URL = getApiEndpoint('');
 
-      const response = await fetch(`${API_URL}/api/agent/catalog`, {
-        method: 'PUT',
+      const productData = {
+        ...newProduct,
+        agentId: agentData._id
+      };
+
+      const url = editingProduct 
+        ? `${API_URL}/api/agent/products/${editingProduct._id}`
+        : `${API_URL}/api/agent/products`;
+
+      const method = editingProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': localStorage.getItem('authToken')
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ items: updatedCatalog })
+        body: JSON.stringify(productData)
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setCatalog(data.catalog?.items || updatedCatalog);
-        showNotification('Catalog updated successfully!', 'success');
+        showNotification(
+          editingProduct ? 'Product updated successfully!' : 'Product added successfully!', 
+          'success'
+        );
+        setShowProductModal(false);
+        setEditingProduct(null);
+        setNewProduct({
+          name: '',
+          description: '',
+          network: 'MTN',
+          capacity: '',
+          basePrice: 0,
+          agentPrice: 0,
+          stock: 0,
+          isActive: true,
+          category: 'data',
+          tags: []
+        });
+        loadAgentData();
       } else {
-        showNotification('Failed to update catalog', 'error');
+        showNotification('Failed to save product', 'error');
       }
     } catch (error) {
-      console.error('Save catalog error:', error);
-      showNotification('Error updating catalog', 'error');
-    } finally {
-      setSaving(false);
+      console.error('Error saving product:', error);
+      showNotification('Error saving product', 'error');
     }
   };
 
-  const copyStoreLink = () => {
-    const storeUrl = `${window.location.origin}/agent-store/${customization.customSlug || userData?.agentCode}`;
-    navigator.clipboard.writeText(storeUrl);
-    showNotification('Store link copied to clipboard!', 'success');
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const API_URL = getApiEndpoint('');
+
+      const response = await fetch(`${API_URL}/api/agent/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        showNotification('Product deleted successfully!', 'success');
+        loadAgentData();
+      } else {
+        showNotification('Failed to delete product', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      showNotification('Error deleting product', 'error');
+    }
   };
 
-  const filteredCatalog = catalog.filter(product => {
-    const matchesSearch = product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.network.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterNetwork === 'all' || product.network === filterNetwork;
-    return matchesSearch && matchesFilter;
-  });
+  const openProductModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setNewProduct({
+        name: product.name,
+        description: product.description,
+        network: product.network,
+        capacity: product.capacity,
+        basePrice: product.basePrice,
+        agentPrice: product.agentPrice,
+        stock: product.stock,
+        isActive: product.isActive,
+        category: product.category,
+        tags: product.tags || []
+      });
+    } else {
+      setEditingProduct(null);
+      setNewProduct({
+        name: '',
+        description: '',
+        network: 'MTN',
+        capacity: '',
+        basePrice: 0,
+        agentPrice: 0,
+        stock: 0,
+        isActive: true,
+        category: 'data',
+        tags: []
+      });
+    }
+    setShowProductModal(true);
+  };
 
-  const networks = ['all', ...new Set(catalog.map(p => p.network))];
+  const tabs = [
+    { id: 'overview', label: 'Dashboard', icon: BarChart3 },
+    { id: 'products', label: 'Products', icon: Package },
+    { id: 'orders', label: 'Transactions', icon: ShoppingCart },
+    { id: 'withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { id: 'customize', label: 'Customize', icon: Palette },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-12 h-12 animate-spin text-[#FFCC08] mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading store data...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-[#FFCC08] mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Loading store management...</p>
         </div>
       </div>
     );
@@ -304,7 +283,7 @@ const ManageStorePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in">
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
           <div className={`px-6 py-4 rounded-xl shadow-2xl backdrop-blur-xl border ${
             notification.type === 'success' ? 'bg-green-500/90 border-green-400' :
             notification.type === 'error' ? 'bg-red-500/90 border-red-400' :
@@ -318,522 +297,569 @@ const ManageStorePage = () => {
       )}
 
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/agent/dashboard')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 flex items-center justify-center shadow-lg">
+                <Store className="w-6 h-6 text-black" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Store</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Customize your store and manage packages</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Store Management
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Manage your store, products, and orders
+                </p>
               </div>
             </div>
-
+            
             <div className="flex items-center space-x-3">
               <button
-                onClick={copyStoreLink}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
-              >
-                <Copy className="w-4 h-4" />
-                <span className="hidden sm:inline">Copy Link</span>
-              </button>
-              
-              <a
-                href={`/agent-store/${customization.customSlug || userData?.agentCode}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all font-semibold"
+                onClick={() => setShowPreview(!showPreview)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
               >
                 <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline">Preview Store</span>
-              </a>
+                <span>Preview Store</span>
+              </button>
+              <button
+                onClick={() => router.push(`/agent-store/${agentData?.agentCode}`)}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all shadow-lg"
+              >
+                <Globe className="w-4 h-4" />
+                <span>Visit Store</span>
+              </button>
             </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex space-x-2 mt-4">
-            <button
-              onClick={() => setActiveTab('store')}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all ${
-                activeTab === 'store'
-                  ? 'bg-[#FFCC08] text-black'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Settings className="w-5 h-5" />
-              <span>Store Settings</span>
-            </button>
-            
-            <button
-              onClick={() => setActiveTab('packages')}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all ${
-                activeTab === 'packages'
-                  ? 'bg-[#FFCC08] text-black'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Package className="w-5 h-5" />
-              <span>Packages</span>
-              <span className="px-2 py-1 bg-gray-900 dark:bg-white text-white dark:text-black text-xs rounded-full font-bold">
-                {catalog.length}
-              </span>
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Navigation Tabs */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex space-x-8 overflow-x-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-all ${
+                    activeTab === tab.id
+                      ? 'border-[#FFCC08] text-[#FFCC08]'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {activeTab === 'store' ? (
-          /* Store Settings Tab */
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
-                <Globe className="w-6 h-6 text-[#FFCC08]" />
-                <span>Basic Information</span>
-              </h2>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Total Revenue</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                        ₵{analytics?.totalRevenue?.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-black" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Total Orders</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                      {analytics?.totalOrders || 0}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <ShoppingCart className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Active Products</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                      {products?.filter(p => p.isActive).length || 0}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Customers</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                      {analytics?.customerCount || 0}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Orders</h3>
+              </div>
+              <div className="p-6">
+                {orders?.slice(0, 5).map((order, index) => (
+                  <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-500 flex items-center justify-center">
+                        <ShoppingCart className="w-5 h-5 text-black" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Order #{order.id}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{order.product}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900 dark:text-white">₵{order.amount?.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{order.status}</p>
+                    </div>
+                  </div>
+                ))}
+                {(!orders || orders.length === 0) && (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 dark:text-gray-400">No orders yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Products Tab */}
+        {activeTab === 'products' && (
+          <ProductManager 
+            agentId={agentData?._id} 
+            onProductUpdate={loadAgentData}
+          />
+        )}
+
+        {/* Orders Tab */}
+        {activeTab === 'orders' && (
+          <OrderManager
+            agentId={agentData?._id}
+            onOrderUpdate={loadAgentData}
+          />
+        )}
+
+        {activeTab === 'withdrawals' && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Withdrawal Management</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600 dark:text-green-400">Available Balance</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">₵{agentData?.wallet?.balance?.toFixed(2) || '0.00'}</p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Pending Withdrawals</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">₵0.00</p>
+                    </div>
+                    <Clock className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Withdrawn</p>
+                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">₵0.00</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Request Withdrawal</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
+                    <input
+                      type="number"
+                      placeholder="Enter amount"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
+                    <select className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white">
+                      <option>Mobile Money</option>
+                      <option>Bank Transfer</option>
+                    </select>
+                  </div>
+                </div>
+                <button className="w-full py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all shadow-lg hover:shadow-xl">
+                  Request Withdrawal
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdrawal History</h4>
+              <div className="text-center py-8">
+                <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">No withdrawal requests yet</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Customize Tab */}
+        {activeTab === 'customize' && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Store Customization</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Customize your store appearance and branding</p>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Store Name */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Store Name *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Store Name
                   </label>
                   <input
                     type="text"
-                    value={customization.storeName}
-                    onChange={(e) => setCustomization({ ...customization, storeName: e.target.value })}
-                    placeholder="e.g., DataHub Store"
+                    value={storeCustomization.storeName}
+                    onChange={(e) => setStoreCustomization({...storeCustomization, storeName: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="Enter your store name"
                   />
                 </div>
 
+                {/* Welcome Message */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Custom URL Slug *
-                  </label>
-                  <input
-                    type="text"
-                    value={customization.customSlug}
-                    onChange={(e) => setCustomization({ ...customization, customSlug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                    placeholder="my-store"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Your store will be accessible at: /agent-store/{customization.customSlug || 'your-slug'}
-                  </p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Welcome Message
                   </label>
                   <input
                     type="text"
-                    value={customization.welcomeMessage}
-                    onChange={(e) => setCustomization({ ...customization, welcomeMessage: e.target.value })}
-                    placeholder="Welcome to our store!"
+                    value={storeCustomization.welcomeMessage}
+                    onChange={(e) => setStoreCustomization({...storeCustomization, welcomeMessage: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="Welcome to our store!"
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {/* Store Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Store Description
                   </label>
                   <textarea
-                    value={customization.storeDescription}
-                    onChange={(e) => setCustomization({ ...customization, storeDescription: e.target.value })}
-                    placeholder="Describe your store..."
+                    value={storeCustomization.storeDescription}
+                    onChange={(e) => setStoreCustomization({...storeCustomization, storeDescription: e.target.value})}
                     rows={3}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="Describe your store and services"
                   />
                 </div>
 
+                {/* Brand Color */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Brand Color
                   </label>
                   <div className="flex items-center space-x-3">
                     <input
                       type="color"
-                      value={customization.brandColor}
-                      onChange={(e) => setCustomization({ ...customization, brandColor: e.target.value })}
-                      className="w-16 h-12 rounded-lg cursor-pointer"
+                      value={storeCustomization.brandColor}
+                      onChange={(e) => setStoreCustomization({...storeCustomization, brandColor: e.target.value})}
+                      className="w-12 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
                     />
                     <input
                       type="text"
-                      value={customization.brandColor}
-                      onChange={(e) => setCustomization({ ...customization, brandColor: e.target.value })}
+                      value={storeCustomization.brandColor}
+                      onChange={(e) => setStoreCustomization({...storeCustomization, brandColor: e.target.value})}
                       className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
-                <MessageCircle className="w-6 h-6 text-[#FFCC08]" />
-                <span>Social Links</span>
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-2">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp Number</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={customization.socialLinks.whatsapp}
-                    onChange={(e) => setCustomization({
-                      ...customization,
-                      socialLinks: { ...customization.socialLinks, whatsapp: e.target.value }
-                    })}
-                    placeholder="+233XXXXXXXXX"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-2">
-                    <Facebook className="w-4 h-4" />
-                    <span>Facebook Page</span>
-                  </label>
-                  <input
-                    type="url"
-                    value={customization.socialLinks.facebook}
-                    onChange={(e) => setCustomization({
-                      ...customization,
-                      socialLinks: { ...customization.socialLinks, facebook: e.target.value }
-                    })}
-                    placeholder="https://facebook.com/yourpage"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-2">
-                    <Twitter className="w-4 h-4" />
-                    <span>Twitter Handle</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customization.socialLinks.twitter}
-                    onChange={(e) => setCustomization({
-                      ...customization,
-                      socialLinks: { ...customization.socialLinks, twitter: e.target.value }
-                    })}
-                    placeholder="https://twitter.com/yourhandle"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-2">
-                    <Instagram className="w-4 h-4" />
-                    <span>Instagram Profile</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customization.socialLinks.instagram}
-                    onChange={(e) => setCustomization({
-                      ...customization,
-                      socialLinks: { ...customization.socialLinks, instagram: e.target.value }
-                    })}
-                    placeholder="https://instagram.com/yourprofile"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleSaveCustomization}
-                disabled={saving}
-                className="flex items-center space-x-2 px-8 py-4 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    <span>Save Store Settings</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Packages Tab */
-          <div className="space-y-6">
-            {/* Toolbar */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-                <div className="flex-1 max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search packages..."
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                      placeholder="#FFCC08"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <select
-                    value={filterNetwork}
-                    onChange={(e) => setFilterNetwork(e.target.value)}
-                    className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                  >
-                    {networks.map(network => (
-                      <option key={network} value={network}>
-                        {network === 'all' ? 'All Networks' : network}
-                      </option>
-                    ))}
-                  </select>
+                {/* Social Links */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Social Media Links
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <MessageCircle className="w-5 h-5 text-green-500" />
+                      <input
+                        type="text"
+                        value={storeCustomization.socialLinks.whatsapp}
+                        onChange={(e) => setStoreCustomization({
+                          ...storeCustomization, 
+                          socialLinks: {...storeCustomization.socialLinks, whatsapp: e.target.value}
+                        })}
+                        className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                        placeholder="WhatsApp number (e.g., +233123456789)"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Facebook className="w-5 h-5 text-blue-600" />
+                      <input
+                        type="text"
+                        value={storeCustomization.socialLinks.facebook}
+                        onChange={(e) => setStoreCustomization({
+                          ...storeCustomization, 
+                          socialLinks: {...storeCustomization.socialLinks, facebook: e.target.value}
+                        })}
+                        className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                        placeholder="Facebook page URL"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Twitter className="w-5 h-5 text-sky-500" />
+                      <input
+                        type="text"
+                        value={storeCustomization.socialLinks.twitter}
+                        onChange={(e) => setStoreCustomization({
+                          ...storeCustomization, 
+                          socialLinks: {...storeCustomization.socialLinks, twitter: e.target.value}
+                        })}
+                        className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                        placeholder="Twitter profile URL"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Instagram className="w-5 h-5 text-pink-500" />
+                      <input
+                        type="text"
+                        value={storeCustomization.socialLinks.instagram}
+                        onChange={(e) => setStoreCustomization({
+                          ...storeCustomization, 
+                          socialLinks: {...storeCustomization.socialLinks, instagram: e.target.value}
+                        })}
+                        className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                        placeholder="Instagram profile URL"
+                      />
+                    </div>
+                  </div>
+                </div>
 
+                {/* Save Button */}
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                   <button
-                    onClick={() => {
-                      setShowAddProduct(true);
-                      setEditingProduct(null);
-                    }}
-                    className="flex items-center space-x-2 px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all font-semibold shadow-lg hover:shadow-xl"
+                    onClick={handleSaveCustomization}
+                    className="w-full px-6 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all shadow-lg flex items-center justify-center space-x-2"
                   >
-                    <Plus className="w-5 h-5" />
-                    <span>Add Package</span>
+                    <Save className="w-5 h-5" />
+                    <span>Save Customization</span>
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Packages Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCatalog.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-black" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">
-                          {product.network} {product.capacity}GB
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          ₵{product.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => toggleProductStatus(product.id)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    >
-                      {product.enabled ? (
-                        <ToggleRight className="w-6 h-6 text-green-500" />
-                      ) : (
-                        <ToggleLeft className="w-6 h-6 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {product.description}
-                  </p>
-
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEditProduct(product)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {filteredCatalog.length === 0 && (
-              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  No packages found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  {searchTerm || filterNetwork !== 'all' 
-                    ? 'Try adjusting your filters' 
-                    : 'Get started by adding your first package'}
-                </p>
-                <button
-                  onClick={() => setShowAddProduct(true)}
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all font-semibold"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Add Package</span>
-                </button>
-              </div>
-            )}
           </div>
+        )}
+
+        {/* Marketing Tab */}
+        {activeTab === 'marketing' && (
+          <MarketingTools agentId={agentData?._id} />
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <AnalyticsDashboard agentId={agentData?._id} />
         )}
       </div>
 
-      {/* Add/Edit Product Modal */}
-      {showAddProduct && (
+      {/* Product Modal */}
+      {showProductModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {editingProduct ? 'Edit Package' : 'Add New Package'}
+                  {editingProduct ? 'Edit Product' : 'Add New Product'}
                 </h3>
                 <button
-                  onClick={() => {
-                    setShowAddProduct(false);
-                    setEditingProduct(null);
-                    setNewProduct({
-                      network: 'MTN',
-                      capacity: '',
-                      price: '',
-                      enabled: true,
-                      description: ''
-                    });
-                  }}
+                  onClick={() => setShowProductModal(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
             </div>
 
             <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Network *
-                </label>
-                <select
-                  value={newProduct.network}
-                  onChange={(e) => setNewProduct({ ...newProduct, network: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                >
-                  <option value="MTN">MTN</option>
-                  <option value="AT">AirtelTigo</option>
-                  <option value="Telecel">Telecel</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="e.g., MTN Data Bundle"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Network
+                  </label>
+                  <select
+                    value={newProduct.network}
+                    onChange={(e) => setNewProduct({...newProduct, network: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                  >
+                    <option value="MTN">MTN</option>
+                    <option value="AT">AT (AirtelTigo)</option>
+                    <option value="Telecel">Telecel</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Capacity (GB)
+                  </label>
+                  <input
+                    type="number"
+                    value={newProduct.capacity}
+                    onChange={(e) => setNewProduct({...newProduct, capacity: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="e.g., 5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Base Price (₵)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newProduct.basePrice}
+                    onChange={(e) => setNewProduct({...newProduct, basePrice: parseFloat(e.target.value) || 0})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Your Price (₵)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newProduct.agentPrice}
+                    onChange={(e) => setNewProduct({...newProduct, agentPrice: parseFloat(e.target.value) || 0})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Stock Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={newProduct.stock}
+                    onChange={(e) => setNewProduct({...newProduct, stock: parseInt(e.target.value) || 0})}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                    placeholder="0 (0 = unlimited)"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Capacity (GB) *
-                </label>
-                <input
-                  type="number"
-                  value={newProduct.capacity}
-                  onChange={(e) => setNewProduct({ ...newProduct, capacity: e.target.value })}
-                  placeholder="e.g., 1, 5, 10"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Price (₵) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={newProduct.price}
-                  onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                  placeholder="e.g., 4.20, 8.40"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <textarea
                   value={newProduct.description}
-                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                  placeholder="Package description..."
+                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
                   rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
+                  placeholder="Describe this product..."
                 />
               </div>
 
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  id="enabled"
-                  checked={newProduct.enabled}
-                  onChange={(e) => setNewProduct({ ...newProduct, enabled: e.target.checked })}
-                  className="w-5 h-5 text-[#FFCC08] border-gray-300 rounded focus:ring-[#FFCC08]"
+                  id="isActive"
+                  checked={newProduct.isActive}
+                  onChange={(e) => setNewProduct({...newProduct, isActive: e.target.checked})}
+                  className="w-4 h-4 text-[#FFCC08] bg-gray-100 border-gray-300 rounded focus:ring-[#FFCC08] focus:ring-2"
                 />
-                <label htmlFor="enabled" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Enable this package
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Product is active and visible to customers
                 </label>
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex space-x-3">
-              <button
-                onClick={() => {
-                  setShowAddProduct(false);
-                  setEditingProduct(null);
-                  setNewProduct({
-                    network: 'MTN',
-                    capacity: '',
-                    price: '',
-                    enabled: true,
-                    description: ''
-                  });
-                }}
-                className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
-              >
-                Cancel
-              </button>
-              
-              <button
-                onClick={editingProduct ? handleUpdateProduct : handleAddProduct}
-                disabled={saving}
-                className="flex-1 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Saving...' : editingProduct ? 'Update Package' : 'Add Package'}
-              </button>
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowProductModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProduct}
+                  className="flex-1 px-4 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all shadow-lg flex items-center justify-center space-x-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{editingProduct ? 'Update Product' : 'Add Product'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       <style jsx global>{`
-        @keyframes slide-in {
+        @keyframes slide-in-right {
           from {
             transform: translateX(100%);
             opacity: 0;
@@ -843,13 +869,12 @@ const ManageStorePage = () => {
             opacity: 1;
           }
         }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
         }
       `}</style>
     </div>
   );
 };
 
-export default ManageStorePage;
-
+export default AgentStoreManagement;
