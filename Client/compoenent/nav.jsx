@@ -288,27 +288,46 @@ const MobileNavbar = () => {
     };
   }, [isMobileMenuOpen, showNotifications, showSearch]);
 
-  // MTN-Style Logo Component
+  // Logo Component matching the exact design provided
   const Logo = ({ size = 'default' }) => {
     const sizes = {
-      small: { container: 'w-8 h-8', oval: 'w-7 h-6', text: 'text-[8px]' },
-      default: { container: 'w-11 h-11', oval: 'w-10 h-9', text: 'text-[10px]' },
-      large: { container: 'w-16 h-16', oval: 'w-14 h-12', text: 'text-xs' }
+      small: { container: 'w-7 h-7', icon: 'w-3.5 h-3.5' },
+      default: { container: 'w-8 h-8 sm:w-10 sm:h-10', icon: 'w-4 h-4 sm:w-5 sm:h-5' },
+      large: { container: 'w-14 h-14', icon: 'w-7 h-7' }
     };
     
     const config = sizes[size] || sizes.default;
     
     return (
-      <div className={`${config.container} relative flex items-center justify-center`}>
-        {/* MTN-style oval background */}
-        <div className={`${config.oval} absolute bg-[#FFCC08] rounded-[50%] flex items-center justify-center shadow-lg shadow-yellow-500/30`}>
-          {/* Inner oval border effect */}
-          <div className={`absolute inset-[2px] border-2 border-black rounded-[50%]`} />
-          {/* Text inside oval */}
-          <span className={`${config.text} font-black text-black z-10 tracking-tighter`}>UDG</span>
+      <div className={`${config.container} relative flex items-center justify-center group`}>
+        {/* Clean geometric background */}
+        <div className={`${config.container} absolute bg-gradient-to-br from-[#FFCC08] via-yellow-400 to-[#FFCC08] rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/25 transform rotate-1 group-hover:rotate-3 transition-transform duration-300`}>
+          {/* Exact logo design from the image */}
+          <svg className={`${config.icon} text-black`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            {/* Wi-Fi signal curves - outer arcs */}
+            <path d="M2 12c0-5.5 4.5-10 10-10s10 4.5 10 10" strokeWidth="2" fill="none"/>
+            <path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8" strokeWidth="2" fill="none"/>
+            
+            {/* Inner signal curves */}
+            <path d="M6 12c0-3.3 2.7-6 6-6s6 2.7 6 6" strokeWidth="2" fill="none"/>
+            <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" strokeWidth="2" fill="none"/>
+            
+            {/* Central geometric shape - stylized M/W */}
+            <path d="M9 12l1.5-3 1.5 3 1.5-3 1.5 3" strokeWidth="2.5" fill="none"/>
+            
+            {/* Distinctive curved elements from the design */}
+            <path d="M12 9c1.5 0 2.5 1 2.5 2.5c0 1.5-1 2.5-2.5 2.5" strokeWidth="2" fill="none"/>
+            <path d="M12 15c-1.5 0-2.5-1-2.5-2.5c0-1.5 1-2.5 2.5-2.5" strokeWidth="2" fill="none"/>
+            
+            {/* Additional curved elements */}
+            <path d="M9 12c0-1.1.9-2 2-2s2 .9 2 2" strokeWidth="2" fill="none"/>
+            
+            {/* Central dot */}
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          </svg>
         </div>
-        {/* Glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-br from-[#FFCC08]/40 to-yellow-500/20 rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
+        {/* Subtle glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-[#FFCC08]/20 to-yellow-500/10 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
     );
   };
@@ -469,14 +488,14 @@ const MobileNavbar = () => {
     <>
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 w-full bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-sm z-40 border-b border-gray-200/50 dark:border-gray-800/50 safe-area-inset-top">
-        <div className="flex justify-between items-center h-16 px-4 sm:px-6 max-w-screen-xl mx-auto">
-          <Link href="/" className="flex items-center space-x-3 group">
+        <div className="flex justify-between items-center h-12 sm:h-16 px-2 sm:px-6 max-w-screen-xl mx-auto">
+          <Link href="/" className="flex items-center space-x-1.5 sm:space-x-3 group">
             <Logo />
-            <div>
-              <h1 className="text-lg font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent">
+            <div className="flex-shrink-0">
+              <h1 className="text-xs sm:text-lg font-black bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] bg-clip-text text-transparent leading-tight">
                 UnlimitedData GH
               </h1>
-              <p className="text-[10px] text-gray-500 font-medium -mt-1">Premium Data Services</p>
+              <p className="text-[7px] sm:text-[10px] text-gray-500 font-medium -mt-0.5 sm:-mt-1 leading-tight">Premium Data Services</p>
             </div>
           </Link>
           
@@ -484,22 +503,22 @@ const MobileNavbar = () => {
             {/* Search Button */}
             <button 
               onClick={() => setShowSearch(!showSearch)}
-              className="p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95"
+              className="p-2.5 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
               aria-label="Search"
             >
-              <Search size={18} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
+              <Search size={16} className="text-gray-700 dark:text-gray-300 sm:w-5 sm:h-5" />
             </button>
 
             {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}
-              className="p-3 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group touch-manipulation active:scale-95"
+              className="p-2.5 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group touch-manipulation active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <Sun size={18} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300 sm:w-5 sm:h-5" />
+                <Sun size={16} className="text-[#FFCC08] group-hover:rotate-45 transition-transform duration-300 sm:w-5 sm:h-5" />
               ) : (
-                <Moon size={18} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300 sm:w-5 sm:h-5" />
+                <Moon size={16} className="text-gray-700 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300 sm:w-5 sm:h-5" />
               )}
             </button>
             
@@ -525,10 +544,10 @@ const MobileNavbar = () => {
             {/* Menu Toggle */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-3 sm:p-2.5 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black hover:from-yellow-500 hover:to-[#FFCC08] shadow-lg shadow-yellow-500/25 transition-all duration-300 active:scale-95 touch-manipulation ml-1 sm:ml-0"
+              className="p-2.5 sm:p-2.5 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black hover:from-yellow-500 hover:to-[#FFCC08] shadow-lg shadow-yellow-500/25 transition-all duration-300 active:scale-95 touch-manipulation ml-1 sm:ml-0 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
+              {isMobileMenuOpen ? <X size={18} strokeWidth={2.5} /> : <Menu size={18} strokeWidth={2.5} />}
             </button>
           </div>
         </div>

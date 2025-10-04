@@ -175,7 +175,7 @@ export default function AgentSignUpPage() {
     setLoading(true);
     try {
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000/api/v1/register'
+        ? 'http://localhost:5001/api/v1/register'
         : 'https://unlimitedata.onrender.com/api/v1/register';
       
       const response = await fetch(API_URL, {

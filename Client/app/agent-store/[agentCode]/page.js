@@ -5,20 +5,23 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ShoppingCart, Zap, Wifi, Phone, ArrowRight, CheckCircle,
   AlertCircle, X, Loader2, Star, Award, Shield, Home,
-  Package, User, Mail, Lock, Eye, EyeOff, MessageCircle,
-  Facebook, Twitter, Instagram
+  Package, User, Mail, ChevronRight, MessageCircle,
+  Facebook, Twitter, Instagram, TrendingUp, Sparkles,
+  Heart, Share2, MapPin, Clock, BadgeCheck
 } from 'lucide-react';
 
 const AgentStorePage = () => {
   const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [agentInfo, setAgentInfo] = useState(null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [notification, setNotification] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState('all');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
     loadAgentStore();
@@ -34,17 +37,16 @@ const AgentStorePage = () => {
     setLoading(true);
     try {
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000'
+        ? 'http://localhost:5001'
         : 'https://unlimitedata.onrender.com';
       
-      // Fetch agent info and catalog
       const response = await fetch(`${API_URL}/api/public/agent-store/${params.agentCode}`);
       const data = await response.json();
       
       if (data.success) {
         setAgentInfo(data.agent);
         setProducts(data.catalog || []);
-        // Apply custom brand color if set
+        
         if (data.agent.storeCustomization?.brandColor) {
           document.documentElement.style.setProperty('--agent-brand-color', data.agent.storeCustomization.brandColor);
         }
@@ -70,12 +72,19 @@ const AgentStorePage = () => {
       showNotification('Product already in cart', 'info');
       return;
     }
-    setCart([...cart, { ...product, quantity: 1 }]);
-    showNotification('Added to cart', 'success');
+    setCart([...cart, { ...product, quantity: 1, phoneNumber: '' }]);
+    showNotification('✓ Added to cart', 'success');
   };
 
   const removeFromCart = (productId) => {
     setCart(cart.filter(item => item.id !== productId));
+    showNotification('Removed from cart', 'info');
+  };
+
+  const updatePhoneNumber = (productId, phone) => {
+    setCart(cart.map(item => 
+      item.id === productId ? { ...item, phoneNumber: phone } : item
+    ));
   };
 
   const getTotalAmount = () => {
@@ -93,363 +102,332 @@ const AgentStorePage = () => {
       showNotification('Your cart is empty', 'error');
       return;
     }
+
+    const missingPhone = cart.some(item => !item.phoneNumber);
+    if (missingPhone) {
+      showNotification('Please enter phone number for all items', 'error');
+      return;
+    }
     
     setShowCheckout(true);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Notification */}
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
-          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span className="font-medium">{notification.message}</span>
-          <button onClick={() => setNotification(null)}>
-            <X className="w-4 h-4" />
+  const filteredProducts = selectedNetwork === 'all' 
+    ? products 
+    : products.filter(p => p.network.toLowerCase() === selectedNetwork.toLowerCase());
+
+  const networks = ['all', ...new Set(products.map(p => p.network))];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-[#FFCC08] mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Loading store...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!agentInfo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Store Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">This agent store doesn't exist or has been disabled.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all"
+          >
+            Go to Homepage
           </button>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Floating Cart */}
-      {cart.length > 0 && (
-        <button
-          onClick={handleCheckout}
-          className="fixed bottom-6 right-6 z-40 bg-[#FFCC08] text-black px-6 py-4 rounded-full shadow-2xl hover:bg-yellow-500 transition-all transform hover:scale-105 flex items-center space-x-3 font-bold"
-        >
-          <ShoppingCart className="w-5 h-5" />
-          <span>{cart.length} {cart.length === 1 ? 'item' : 'items'}</span>
-          <span className="bg-black text-[#FFCC08] px-3 py-1 rounded-full text-sm">
-            GHS {getTotalAmount().toFixed(2)}
-          </span>
-        </button>
-      )}
+  const brandColor = agentInfo.storeCustomization?.brandColor || '#FFCC08';
+  const storeName = agentInfo.storeCustomization?.storeName || `${agentInfo.name}'s Store`;
+  const welcomeMessage = agentInfo.storeCustomization?.welcomeMessage || 'Welcome to our store!';
+  const storeDescription = agentInfo.storeCustomization?.storeDescription || 'Your trusted data provider';
 
-      {/* Header */}
-      <header className="bg-black/40 backdrop-blur-xl border-b border-[#FFCC08]/30 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/')}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <Home className="w-5 h-5 text-white" />
-              </button>
-              {agentInfo && (
-                <div>
-                  <h1 className="text-xl font-bold text-white">{agentInfo.name}'s Store</h1>
-                  <p className="text-sm text-gray-400 flex items-center space-x-2">
-                    <Award className="w-4 h-4 text-[#FFCC08]" />
-                    <span className="capitalize">{agentInfo.agentMetadata?.agentLevel || 'Agent'} Level</span>
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {!isLoggedIn ? (
-                <>
-                  <button
-                    onClick={() => router.push('/SignIn')}
-                    className="px-4 py-2 text-white hover:text-[#FFCC08] transition-colors font-medium"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => router.push('/SignUp')}
-                    className="px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => router.push('/')}
-                  className="px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium"
-                >
-                  Dashboard
-                </button>
-              )}
-            </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className={`px-6 py-4 rounded-xl shadow-2xl backdrop-blur-xl border ${
+            notification.type === 'success' ? 'bg-green-500/90 border-green-400' :
+            notification.type === 'error' ? 'bg-red-500/90 border-red-400' :
+            'bg-blue-500/90 border-blue-400'
+          } text-white flex items-center space-x-3`}>
+            {notification.type === 'success' && <CheckCircle className="w-5 h-5" />}
+            {notification.type === 'error' && <AlertCircle className="w-5 h-5" />}
+            {notification.type === 'info' && <AlertCircle className="w-5 h-5" />}
+            <span className="font-medium">{notification.message}</span>
           </div>
         </div>
-      </header>
+      )}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-12 h-12 text-[#FFCC08] animate-spin" />
-          </div>
-        ) : (
-          <>
-            {/* Agent Info Banner */}
-            {agentInfo && (
-              <div 
-                className="rounded-2xl p-8 mb-12 text-black"
-                style={{ 
-                  background: `linear-gradient(to right, ${agentInfo.storeCustomization?.brandColor || '#FFCC08'}, ${agentInfo.storeCustomization?.brandColor || '#FFCC08'}dd)` 
-                }}
-              >
-                {/* Custom Banner Image */}
-                {agentInfo.storeCustomization?.bannerUrl && (
-                  <img
-                    src={agentInfo.storeCustomization.bannerUrl}
-                    alt="Store Banner"
-                    className="w-full h-48 object-cover rounded-xl mb-6"
-                  />
-                )}
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl font-bold mb-2">
-                      {agentInfo.storeCustomization?.storeName || `${agentInfo.name}'s Store`}
-                    </h2>
-                    <p className="text-black/80 mb-4">
-                      {agentInfo.storeCustomization?.storeDescription || 'Your trusted data bundle provider'}
-                    </p>
-                    
-                    {/* Welcome Message */}
-                    {agentInfo.storeCustomization?.welcomeMessage && (
-                      <div className="bg-black/20 rounded-lg p-4 mb-4">
-                        <p className="text-sm font-medium">
-                          {agentInfo.storeCustomization.welcomeMessage}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Agent Info */}
-                    {agentInfo.storeCustomization?.showAgentInfo !== false && (
-                      <div className="flex items-center space-x-6">
-                        {agentInfo.phoneNumber && (
-                          <div className="flex items-center space-x-2">
-                            <Phone className="w-4 h-4" />
-                            <span className="font-medium">{agentInfo.phoneNumber}</span>
-                          </div>
-                        )}
-                        {agentInfo.territory && (
-                          <div className="flex items-center space-x-2">
-                            <User className="w-4 h-4" />
-                            <span className="font-medium">{agentInfo.territory}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Social Links */}
-                    {agentInfo.storeCustomization?.socialLinks && (
-                      <div className="flex items-center space-x-3 mt-4">
-                        {agentInfo.storeCustomization.socialLinks.whatsapp && (
-                          <a
-                            href={`https://wa.me/${agentInfo.storeCustomization.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <MessageCircle className="w-5 h-5 text-white" />
-                          </a>
-                        )}
-                        {agentInfo.storeCustomization.socialLinks.facebook && (
-                          <a
-                            href={agentInfo.storeCustomization.socialLinks.facebook}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Facebook className="w-5 h-5 text-white" />
-                          </a>
-                        )}
-                        {agentInfo.storeCustomization.socialLinks.twitter && (
-                          <a
-                            href={agentInfo.storeCustomization.socialLinks.twitter}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Twitter className="w-5 h-5 text-white" />
-                          </a>
-                        )}
-                        {agentInfo.storeCustomization.socialLinks.instagram && (
-                          <a
-                            href={agentInfo.storeCustomization.socialLinks.instagram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 bg-pink-600 hover:bg-pink-700 rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Instagram className="w-5 h-5 text-white" />
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Custom Logo or Default */}
-                  {agentInfo.storeCustomization?.logoUrl ? (
-                    <img
-                      src={agentInfo.storeCustomization.logoUrl}
-                      alt="Store Logo"
-                      className="w-24 h-24 rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 bg-black rounded-2xl flex items-center justify-center">
-                      <Zap className="w-12 h-12 text-[#FFCC08]" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+      {/* Hero Header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black py-16 sm:py-20">
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] animate-pulse"></div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8">
+            {/* Logo/Badge */}
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 shadow-2xl shadow-yellow-500/50 mb-6 transform rotate-3 hover:rotate-6 transition-transform">
+              <Wifi className="w-10 h-10 text-black" strokeWidth={2.5} />
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <h1 className="text-4xl sm:text-5xl font-black text-white">
+                {storeName}
+              </h1>
+              <BadgeCheck className="w-8 h-8 text-[#FFCC08]" />
+            </div>
+            
+            <p className="text-xl text-gray-300 font-medium mb-4">{welcomeMessage}</p>
+            <p className="text-gray-400 max-w-2xl mx-auto">{storeDescription}</p>
 
-            {/* Products Grid */}
-            {products.length > 0 ? (
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-6">Available Products</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {products.filter(p => p.enabled).map((product) => (
-                    <div 
-                      key={product.id} 
-                      className="bg-white/10 backdrop-blur-xl border border-[#FFCC08]/30 rounded-2xl p-6 hover:border-[#FFCC08] transition-all transform hover:scale-105"
-                    >
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                          <Wifi className="w-8 h-8 text-black" />
-                        </div>
-                        <h4 className="font-bold text-white text-lg mb-2">{product.network}</h4>
-                        <p className="text-4xl font-bold text-[#FFCC08] mb-2">{product.capacity}GB</p>
-                        <p className="text-2xl font-bold text-white mb-4">
-                          GHS {product.price}
-                        </p>
-                        {product.description && (
-                          <p className="text-sm text-gray-400 mb-4">{product.description}</p>
-                        )}
-                        <button
-                          onClick={() => addToCart(product)}
-                          className="w-full bg-[#FFCC08] text-black py-3 rounded-xl hover:bg-yellow-500 transition-colors font-bold flex items-center justify-center space-x-2"
-                        >
-                          <ShoppingCart className="w-5 h-5" />
-                          <span>Add to Cart</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* Agent Info Badge */}
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                <MapPin className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-white text-sm font-medium">{agentInfo.territory}</span>
               </div>
-            ) : (
-              <div className="bg-white/10 backdrop-blur-xl border border-[#FFCC08]/30 rounded-2xl p-12 text-center">
-                <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No Products Available</h3>
-                <p className="text-gray-400">
-                  This agent store doesn't have any products yet.
-                </p>
+              <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                <Award className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-white text-sm font-medium capitalize">{agentInfo.agentLevel} Agent</span>
               </div>
-            )}
-
-            {/* Trust Badges */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 text-center">
-                <Shield className="w-12 h-12 text-[#FFCC08] mx-auto mb-3" />
-                <h4 className="font-bold text-white mb-2">Secure Payment</h4>
-                <p className="text-sm text-gray-400">Your payment is safe and secure</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 text-center">
-                <Zap className="w-12 h-12 text-[#FFCC08] mx-auto mb-3" />
-                <h4 className="font-bold text-white mb-2">Instant Delivery</h4>
-                <p className="text-sm text-gray-400">Get your data within minutes</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 text-center">
-                <Star className="w-12 h-12 text-[#FFCC08] mx-auto mb-3" />
-                <h4 className="font-bold text-white mb-2">Trusted Agent</h4>
-                <p className="text-sm text-gray-400">Verified and certified agent</p>
+              <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                <Star className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-white text-sm font-medium">Verified Seller</span>
               </div>
             </div>
-          </>
-        )}
-      </main>
+          </div>
 
-      {/* Checkout Modal */}
+          {/* Contact Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {agentInfo.storeCustomization?.socialLinks?.whatsapp && (
+              <a
+                href={`https://wa.me/${agentInfo.storeCustomization.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>Chat on WhatsApp</span>
+              </a>
+            )}
+            <a
+              href={`tel:${agentInfo.phoneNumber}`}
+              className="flex items-center space-x-2 px-6 py-3 bg-[#FFCC08] hover:bg-yellow-500 text-black rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              <Phone className="w-5 h-5" />
+              <span>Call Now</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        {/* Network Filter */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Available Bundles</h2>
+            {cart.length > 0 && (
+              <button
+                onClick={() => setShowCheckout(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all relative"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <span>Cart ({cart.length})</span>
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {cart.length}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Network Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {networks.map((network) => (
+              <button
+                key={network}
+                onClick={() => setSelectedNetwork(network)}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
+                  selectedNetwork === network
+                    ? 'bg-[#FFCC08] text-black shadow-lg'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                {network === 'all' ? 'All Networks' : network}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-xl text-gray-600 dark:text-gray-400">No bundles available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 hover:scale-105"
+              >
+                {/* Network Badge */}
+                <div className="absolute top-4 right-4 z-10">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg ${
+                    product.network === 'MTN' ? 'bg-yellow-500' :
+                    product.network === 'AT' ? 'bg-blue-500' :
+                    'bg-purple-500'
+                  }`}>
+                    {product.network}
+                  </span>
+                </div>
+
+                {/* Card Header */}
+                <div className="p-6 bg-gradient-to-br from-[#FFCC08]/10 to-yellow-500/5">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 shadow-lg mx-auto mb-4">
+                    <Zap className="w-8 h-8 text-black" />
+                  </div>
+                  <h3 className="text-3xl font-black text-gray-900 dark:text-white text-center mb-1">
+                    {product.capacity}GB
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                    {product.description}
+                  </p>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-6">
+                  <div className="flex items-baseline justify-center mb-6">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 mr-1">₵</span>
+                    <span className="text-4xl font-black text-gray-900 dark:text-white">{product.price.toFixed(2)}</span>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <button
+                    onClick={() => addToCart(product)}
+                    disabled={!product.enabled}
+                    className={`w-full py-3 rounded-xl font-semibold transition-all transform hover:scale-105 flex items-center justify-center space-x-2 ${
+                      product.enabled
+                        ? 'bg-[#FFCC08] hover:bg-yellow-500 text-black shadow-lg hover:shadow-xl'
+                        : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    <span>{product.enabled ? 'Add to Cart' : 'Unavailable'}</span>
+                  </button>
+                </div>
+
+                {/* Hover Effect */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#FFCC08]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Shopping Cart Modal */}
       {showCheckout && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-[#FFCC08]/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-700">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-white">Checkout</h3>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping Cart</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{cart.length} items</p>
+                </div>
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-white" />
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
             </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Cart Items */}
-              <div>
-                <h4 className="font-semibold text-white mb-4">Order Summary</h4>
-                <div className="space-y-3">
-                  {cart.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between bg-gray-800 rounded-xl p-4">
-                      <div>
-                        <p className="font-medium text-white">{item.network} {item.capacity}GB</p>
-                        <p className="text-sm text-gray-400">GHS {item.price}</p>
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                      >
-                        <X className="w-4 h-4 text-gray-400" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Total */}
-              <div className="bg-gray-800 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-white">Total Amount</span>
-                  <span className="text-2xl font-bold text-[#FFCC08]">
-                    GHS {getTotalAmount().toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Phone Number Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Recipient Phone Number *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="w-4 h-4 text-[#FFCC08]" />
+            {/* Cart Items */}
+            <div className="p-6 space-y-4">
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#FFCC08] to-yellow-500 rounded-lg flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-black" />
                   </div>
-                  <input
-                    type="tel"
-                    id="recipientPhone"
-                    placeholder="0501234567"
-                    className="pl-10 pr-4 py-3 block w-full rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08]"
-                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-bold text-gray-900 dark:text-white">
+                          {item.network} {item.capacity}GB
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900 dark:text-white">₵{item.price.toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    {/* Phone Number Input */}
+                    <div className="mb-2">
+                      <input
+                        type="tel"
+                        placeholder="Enter phone number"
+                        value={item.phoneNumber}
+                        onChange={(e) => updatePhoneNumber(item.id, e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-sm text-red-500 hover:text-red-600 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Cart Footer */}
+            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Amount</span>
+                <span className="text-3xl font-black text-gray-900 dark:text-white">
+                  ₵{getTotalAmount().toFixed(2)}
+                </span>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-4">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="flex-1 px-6 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 transition-colors font-medium"
+                  className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
                 >
                   Continue Shopping
                 </button>
                 <button
-                  onClick={() => {
-                    showNotification('Order placed successfully!', 'success');
-                    setShowCheckout(false);
-                    setCart([]);
-                  }}
-                  className="flex-1 px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-bold flex items-center justify-center space-x-2"
+                  onClick={handleCheckout}
+                  className="flex-1 py-3 bg-[#FFCC08] text-black rounded-xl font-semibold hover:bg-yellow-500 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
-                  <span>Place Order</span>
+                  <span>Proceed to Payment</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
@@ -457,6 +435,65 @@ const AgentStorePage = () => {
           </div>
         </div>
       )}
+
+      {/* Social Links Footer */}
+      {agentInfo.storeCustomization?.socialLinks && (
+        <div className="bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center">
+              <p className="text-gray-600 dark:text-gray-400 mb-4 font-medium">Connect with us</p>
+              <div className="flex items-center justify-center space-x-4">
+                {agentInfo.storeCustomization.socialLinks.facebook && (
+                  <a
+                    href={agentInfo.storeCustomization.socialLinks.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-110"
+                  >
+                    <Facebook className="w-6 h-6" />
+                  </a>
+                )}
+                {agentInfo.storeCustomization.socialLinks.twitter && (
+                  <a
+                    href={agentInfo.storeCustomization.socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-110"
+                  >
+                    <Twitter className="w-6 h-6" />
+                  </a>
+                )}
+                {agentInfo.storeCustomization.socialLinks.instagram && (
+                  <a
+                    href={agentInfo.storeCustomization.socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-110"
+                  >
+                    <Instagram className="w-6 h-6" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

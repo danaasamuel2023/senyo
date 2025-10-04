@@ -4,6 +4,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
+
+dotenv.config();
+const dotenv = require('dotenv');
 const path = require('path');
 
 // Load environment variables
@@ -15,8 +18,11 @@ const { User } = require('../schema/schema');
 // MongoDB connection
 const connectDB = async () => {
   try {
-    const password = '0246783840Sa';
-    const uri = `mongodb+srv://dajounimarket:${password}@cluster0.kp8c2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+    const username = process.env.MONGODB_USERNAME || 'dajounimarket';
+    const password = process.env.MONGODB_PASSWORD || '';
+    const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
+    
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
     
     await mongoose.connect(uri, {
       useNewUrlParser: true,

@@ -20,6 +20,7 @@ const adminOrder = require('./allOrders/allorders.js')
 const waiting_orders_export = require('./waitingorders/waiting.js')
 const phoneVerification = require('./PhoneVerifyRoutes/Verification.js')
 const settingsRoutes = require('./settingsRoutes/settings.js')
+const agentRoutes = require('./agentRoutes/agentManagement.js')
 dotenv.config();
 
 // Initialize Express app
@@ -50,6 +51,8 @@ app.use('/api', adminOrder);
 app.use('/api/orders', waiting_orders_export);
 app.use('/api/verifications', phoneVerification);
 app.use('/api/user', settingsRoutes);
+app.use('/api/agent', agentRoutes);
+app.use('/api/public', agentRoutes);
 
 // Default Route
 app.get('/', (req, res) => {
@@ -57,7 +60,7 @@ app.get('/', (req, res) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

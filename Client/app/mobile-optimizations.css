@@ -67,6 +67,28 @@ body {
     min-height: 44px;
     min-width: 44px;
   }
+  
+  /* Improved mobile navigation */
+  .nav-mobile {
+    padding: 0.75rem;
+  }
+  
+  /* Better mobile spacing */
+  .mobile-spacing {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Mobile-optimized text sizes */
+  .mobile-text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .mobile-text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
 }
 
 /* Disable text selection on buttons */
@@ -144,14 +166,38 @@ button {
 
 /* Responsive font sizes */
 @media (max-width: 640px) {
-  h1 { font-size: 1.875rem; } /* 30px */
-  h2 { font-size: 1.5rem; }   /* 24px */
-  h3 { font-size: 1.25rem; }  /* 20px */
+  h1 { font-size: 1.5rem; } /* 24px - reduced for mobile */
+  h2 { font-size: 1.25rem; }   /* 20px */
+  h3 { font-size: 1.125rem; }  /* 18px */
+  
+  /* Mobile-optimized navigation branding */
+  .nav-brand-text {
+    font-size: 0.75rem; /* 12px - perfect for mobile */
+    line-height: 1rem;
+    letter-spacing: -0.025em; /* Tighter letter spacing */
+  }
+  
+  .nav-subtitle {
+    font-size: 0.625rem; /* 10px */
+    line-height: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+  
+  /* Ensure logo and text fit perfectly */
+  .nav-brand-container {
+    max-width: calc(100vw - 200px); /* Leave space for buttons */
+    overflow: hidden;
+  }
+  
+  /* Mobile logo optimization */
+  .nav-logo {
+    flex-shrink: 0;
+  }
 }
 
 @media (min-width: 640px) and (max-width: 1024px) {
-  h1 { font-size: 2.25rem; } /* 36px */
-  h2 { font-size: 1.875rem; } /* 30px */
+  h1 { font-size: 2rem; } /* 32px */
+  h2 { font-size: 1.75rem; } /* 28px */
   h3 { font-size: 1.5rem; }   /* 24px */
 }
 

@@ -42,13 +42,31 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="mb-8">
-              {/* Logo - Updated to MTN colors */}
+              {/* Logo - Updated to match new design */}
               <div className="mb-6 flex items-center space-x-3">
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 shadow-2xl shadow-[#FFCC08]/25">
-                  <Zap className="h-7 w-7 text-black" strokeWidth={2.5} />
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-[#FFCC08] shadow-lg">
-                    <Star className="h-2.5 w-2.5 text-black" strokeWidth={3} />
-                  </div>
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 shadow-2xl shadow-[#FFCC08]/25 transform rotate-2 hover:rotate-4 transition-transform duration-300">
+                  <svg className="h-7 w-7 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    {/* Wi-Fi signal curves - outer arcs */}
+                    <path d="M2 12c0-5.5 4.5-10 10-10s10 4.5 10 10" strokeWidth="2" fill="none"/>
+                    <path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8" strokeWidth="2" fill="none"/>
+                    
+                    {/* Inner signal curves */}
+                    <path d="M6 12c0-3.3 2.7-6 6-6s6 2.7 6 6" strokeWidth="2" fill="none"/>
+                    <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" strokeWidth="2" fill="none"/>
+                    
+                    {/* Central geometric shape - stylized M/W */}
+                    <path d="M9 12l1.5-3 1.5 3 1.5-3 1.5 3" strokeWidth="2.5" fill="none"/>
+                    
+                    {/* Distinctive curved elements from the design */}
+                    <path d="M12 9c1.5 0 2.5 1 2.5 2.5c0 1.5-1 2.5-2.5 2.5" strokeWidth="2" fill="none"/>
+                    <path d="M12 15c-1.5 0-2.5-1-2.5-2.5c0-1.5 1-2.5 2.5-2.5" strokeWidth="2" fill="none"/>
+                    
+                    {/* Additional curved elements */}
+                    <path d="M9 12c0-1.1.9-2 2-2s2 .9 2 2" strokeWidth="2" fill="none"/>
+                    
+                    {/* Central dot */}
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                  </svg>
                 </div>
                 <h2 className="bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-white bg-clip-text text-3xl font-black tracking-tight text-transparent">
                   Unlimited Data GH

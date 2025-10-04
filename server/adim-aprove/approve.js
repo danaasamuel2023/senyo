@@ -159,6 +159,13 @@ router.put('/admin/users/:userId/approve', authMiddleware, adminMiddleware, asyn
     userToApprove.approvalStatus = "approved";
     userToApprove.approvedBy = req.user._id;
     userToApprove.approvedAt = Date.now();
+    // If approving an agent, activate their store availability
+    if (userToApprove.role === 'agent') {
+      if (!userToApprove.agentMetadata) {
+        userToApprove.agentMetadata = {};
+      }
+      userToApprove.agentMetadata.agentStatus = 'active';
+    }
     await userToApprove.save();
     
     // Process referral if applicable

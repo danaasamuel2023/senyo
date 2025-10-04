@@ -5,10 +5,16 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const readline = require('readline');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // MongoDB connection string
-const password = '0246783840Sa';
-const MONGODB_URI = `mongodb+srv://dajounimarket:${password}@cluster0.kp8c2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const username = process.env.MONGODB_USERNAME || 'dajounimarket';
+const password = process.env.MONGODB_PASSWORD || '';
+const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
+
+const MONGODB_URI = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // User Schema Definition (simplified version)
 const userSchema = new mongoose.Schema({
@@ -94,13 +100,11 @@ async function createFirstAdmin() {
       throw new Error('Invalid email format!');
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { phoneNumber }] 
-    });
+    // Check if email already exists (only email needs to be unique)
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      throw new Error('A user with this email or phone number already exists!');
+      throw new Error('A user with this email already exists!');
     }
 
     // Hash password

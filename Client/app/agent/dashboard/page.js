@@ -3,38 +3,25 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Users, DollarSign, TrendingUp, Package, UserPlus, Activity,
-  Calendar, Download, Eye, Plus, Search, Filter, ChevronRight,
-  Home, ShoppingCart, Wallet, BarChart3, Settings, LogOut, Menu,
-  X, Bell, RefreshCw, CheckCircle, AlertCircle, Clock, Star,
-  Phone, Mail, MapPin, Copy, ExternalLink, ArrowUp, ArrowDown,
-  CreditCard, Shield, Zap, Award, Target
+  BarChart3, DollarSign, Package, TrendingUp, Users, Settings,
+  Eye, RefreshCw, Calendar, Clock, Award, Zap, ArrowRight,
+  CheckCircle, AlertCircle, X, Loader2, ExternalLink, Copy
 } from 'lucide-react';
 
 const AgentDashboard = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notification, setNotification] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState(null);
-
-  // Agent data
-  const [agentStats, setAgentStats] = useState({
-    totalCustomers: 0,
-    activeCustomers: 0,
-    totalCommission: 0,
-    pendingCommission: 0,
-    monthlyTarget: 5000,
-    monthlyAchievement: 0,
-    conversionRate: 0,
-    agentLevel: 'bronze'
+  const [stats, setStats] = useState({
+    today: { orders: 0, revenue: 0, earnings: 0 },
+    month: { orders: 0, revenue: 0, earnings: 0 },
+    commissionRate: 5,
+    totalWithdrawn: 0,
+    agentStatus: 'pending',
+    agentLevel: 'Agent'
   });
-
-  const [recentActivities, setRecentActivities] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [commissionHistory, setCommissionHistory] = useState([]);
-  const [catalogProducts, setCatalogProducts] = useState([]);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     checkAuth();
@@ -55,73 +42,37 @@ const AgentDashboard = () => {
   };
 
   const loadDashboardData = async () => {
-    if (!checkAuth()) return;
-    
     setLoading(true);
     try {
-      // Load agent-specific data
-      await Promise.all([
-        loadAgentStats(),
-        loadRecentActivities(),
-        loadCustomers(),
-        loadCommissionHistory(),
-        loadCatalog()
-      ]);
+      const API_URL = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:5001'
+        : 'https://unlimitedata.onrender.com';
+
+      const response = await fetch(`${API_URL}/api/agent/dashboard`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': localStorage.getItem('authToken')
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+      } else {
+        showNotification('Failed to load dashboard data', 'error');
+      }
     } catch (error) {
+      console.error('Failed to load dashboard:', error);
       showNotification('Failed to load dashboard data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadAgentStats = async () => {
-    // Simulate loading agent stats - replace with API call
-    setAgentStats({
-      totalCustomers: 45,
-      activeCustomers: 32,
-      totalCommission: 2340.50,
-      pendingCommission: 450.00,
-      monthlyTarget: 5000,
-      monthlyAchievement: 3200,
-      conversionRate: 68.5,
-      agentLevel: 'silver'
-    });
-  };
-
-  const loadRecentActivities = async () => {
-    setRecentActivities([
-      { id: 1, type: 'customer', message: 'New customer registered', time: '2 hours ago', icon: UserPlus },
-      { id: 2, type: 'sale', message: 'Customer purchased 50GB MTN', time: '4 hours ago', icon: ShoppingCart },
-      { id: 3, type: 'commission', message: 'Commission earned: GHS 25', time: '1 day ago', icon: DollarSign },
-      { id: 4, type: 'achievement', message: 'Weekly target achieved!', time: '2 days ago', icon: Award }
-    ]);
-  };
-
-  const loadCustomers = async () => {
-    setCustomers([
-      { id: 1, name: 'John Doe', phone: '+233501234567', totalPurchases: 5, lastPurchase: '2 days ago', status: 'active' },
-      { id: 2, name: 'Jane Smith', phone: '+233501234568', totalPurchases: 3, lastPurchase: '1 week ago', status: 'active' },
-      { id: 3, name: 'Bob Johnson', phone: '+233501234569', totalPurchases: 1, lastPurchase: '2 weeks ago', status: 'inactive' }
-    ]);
-  };
-
-  const loadCommissionHistory = async () => {
-    setCommissionHistory([
-      { id: 1, date: '2024-03-01', amount: 450.00, status: 'paid', orders: 15 },
-      { id: 2, date: '2024-02-01', amount: 380.00, status: 'paid', orders: 12 },
-      { id: 3, date: '2024-01-01', amount: 520.00, status: 'paid', orders: 18 }
-    ]);
-  };
-
-  const loadCatalog = async () => {
-    try {
-      const response = await adminAPI.agent.getMyCatalog();
-      setCatalogProducts(response.items || []);
-    } catch (error) {
-      console.error('Failed to load catalog:', error);
-      // Set empty catalog on error
-      setCatalogProducts([]);
-    }
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadDashboardData();
+    setRefreshing(false);
   };
 
   const showNotification = (message, type = 'success') => {
@@ -129,510 +80,51 @@ const AgentDashboard = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    router.push('/SignIn');
+  const getStoreUrl = () => {
+    const identifier = userData?.agentMetadata?.customSlug || userData?.agentMetadata?.agentCode;
+    return identifier ? `/agent-store/${identifier}` : '';
   };
 
-  const sidebarItems = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'store', label: 'My Store', icon: ShoppingCart, badge: catalogProducts.length },
-    { id: 'customize', label: 'Customize Store', icon: Zap },
-    { id: 'customers', label: 'My Customers', icon: Users, badge: customers.length },
-    { id: 'commissions', label: 'Commissions', icon: DollarSign },
-    { id: 'performance', label: 'Performance', icon: BarChart3 },
-    { id: 'resources', label: 'Resources', icon: Package },
-    { id: 'profile', label: 'Profile', icon: Settings }
-  ];
+  const copyStoreUrl = () => {
+    const url = `${window.location.origin}${getStoreUrl()}`;
+    navigator.clipboard.writeText(url);
+    showNotification('Store URL copied!', 'success');
+  };
 
-  const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl bg-gradient-to-r ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        {change !== undefined && (
-          <div className={`flex items-center text-sm font-medium ${
-            change >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {change >= 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-            <span>{Math.abs(change)}%</span>
-          </div>
-        )}
-      </div>
-      <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-      {subtitle && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
-      )}
-    </div>
-  );
-
-  const renderOverview = () => {
-    // Get agent code from correct path in userData or from localStorage
-    const storedUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userData') || '{}') : {};
-    const agentCode = userData?.agentMetadata?.agentCode || storedUser?.agentMetadata?.agentCode;
-    
+  if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-2xl p-6 text-black">
-          <h2 className="text-2xl font-bold mb-2">Welcome back, {userData?.name || 'Agent'}!</h2>
-          <p className="text-black/80">
-            You're doing great! Keep up the excellent work.
-          </p>
-          <div className="mt-4 flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Award className="w-5 h-5" />
-              <span className="font-medium capitalize">{agentStats.agentLevel} Level</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Target className="w-5 h-5" />
-              <span className="font-medium">
-                {((agentStats.monthlyAchievement / agentStats.monthlyTarget) * 100).toFixed(0)}% of target
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Store Link Section */}
-        {agentCode && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Store Link</h3>
-            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-3">
-              <code className="text-sm font-mono text-gray-900 dark:text-white flex-1 overflow-x-auto">
-                {typeof window !== 'undefined' ? `${window.location.origin}/agent-store/${agentCode}` : ''}
-              </code>
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    navigator.clipboard.writeText(`${window.location.origin}/agent-store/${agentCode}`);
-                    showNotification('Store link copied!', 'success');
-                  }
-                }}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.open(`/agent-store/${agentCode}`, '_blank');
-                  }
-                }}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Share this link with your customers to sell products
-            </p>
-          </div>
-        )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Customers"
-          value={agentStats.totalCustomers}
-          change={12.5}
-          icon={Users}
-          color="from-blue-500 to-blue-600"
-        />
-        <StatCard
-          title="Active Customers"
-          value={agentStats.activeCustomers}
-          icon={Activity}
-          color="from-green-500 to-green-600"
-          subtitle={`${((agentStats.activeCustomers / agentStats.totalCustomers) * 100).toFixed(0)}% active rate`}
-        />
-        <StatCard
-          title="Total Commission"
-          value={`GHS ${agentStats.totalCommission.toLocaleString()}`}
-          change={8.3}
-          icon={DollarSign}
-          color="from-purple-500 to-purple-600"
-        />
-        <StatCard
-          title="Pending Commission"
-          value={`GHS ${agentStats.pendingCommission.toLocaleString()}`}
-          icon={Clock}
-          color="from-yellow-500 to-yellow-600"
-        />
-      </div>
-
-      {/* Performance Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Monthly Performance</h3>
-        <div className="relative">
-          <div className="flex items-end justify-between h-48 space-x-2">
-            {[65, 78, 82, 91, 87, 94, agentStats.conversionRate].map((value, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div 
-                  className="w-full bg-[#FFCC08] rounded-t-lg transition-all duration-500"
-                  style={{ height: `${value}%` }}
-                >
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {value}%
-                  </div>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][index]}
-                </span>
-              </div>
-            ))}
-          </div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+        <div className="text-center">
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-green-600/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-600 border-r-green-500 animate-spin"></div>
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-green-600 to-green-800 animate-pulse flex items-center justify-center">
+              <Award className="w-6 h-6 text-white animate-bounce" strokeWidth={2.5} />
         </div>
       </div>
 
-      {/* Recent Activities & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Recent Activities
-          </h3>
           <div className="space-y-3">
-            {recentActivities.map(activity => {
-              const Icon = activity.icon;
-              return (
-                <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <div className={`p-2 rounded-lg ${
-                    activity.type === 'customer' ? 'bg-blue-100 text-blue-600' :
-                    activity.type === 'sale' ? 'bg-green-100 text-green-600' :
-                    activity.type === 'commission' ? 'bg-purple-100 text-purple-600' :
-                    'bg-yellow-100 text-yellow-600'
-                  }`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => setActiveTab('customers')}
-              className="p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-center"
-            >
-              <UserPlus className="w-6 h-6 text-gray-700 dark:text-gray-300 mx-auto mb-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Add Customer</span>
-            </button>
-            <button className="p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-center">
-              <Eye className="w-6 h-6 text-gray-700 dark:text-gray-300 mx-auto mb-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View Sales</span>
-            </button>
-            <button className="p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-center">
-              <Download className="w-6 h-6 text-gray-700 dark:text-gray-300 mx-auto mb-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Download Report</span>
-            </button>
-            <button className="p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-center">
-              <Phone className="w-6 h-6 text-gray-700 dark:text-gray-300 mx-auto mb-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contact Support</span>
-            </button>
+            <h1 className="text-2xl font-bold text-green-600 animate-pulse">
+              Agent Dashboard
+            </h1>
+            <div className="flex items-center justify-center space-x-2 text-green-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm font-medium">Loading your agent dashboard...</span>
           </div>
         </div>
       </div>
     </div>
     );
-  };
-
-  const renderCustomers = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Customers</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your customer base</p>
-        </div>
-        <button className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium">
-          <Plus className="w-5 h-5" />
-          <span>Add Customer</span>
-        </button>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search customers..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] transition-all"
-              />
-            </div>
-          </div>
-          <button className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-            <Filter className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Customers Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Purchases</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Last Purchase</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((customer) => (
-                <tr key={customer.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
-                        {customer.name.charAt(0)}
-                      </div>
-                      <span className="font-medium text-gray-900 dark:text-white">{customer.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                      <Phone className="w-4 h-4" />
-                      <span className="text-sm">{customer.phone}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {customer.totalPurchases}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                    {customer.lastPurchase}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      customer.status === 'active' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {customer.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStore = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Store</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Products available in your store</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={loadCatalog}
-            className="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {catalogProducts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {catalogProducts.filter(p => p.enabled).map((product) => (
-            <div key={product.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-2 border-gray-200 dark:border-gray-600 hover:border-[#FFCC08] dark:hover:border-[#FFCC08] transition-all">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-8 h-8 text-black" />
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-lg">{product.network}</h3>
-                <p className="text-3xl font-bold text-[#FFCC08] my-2">{product.capacity}GB</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  GHS {product.price}
-                </p>
-                {product.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{product.description}</p>
-                )}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Share this product with your customers
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center">
-          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Products Yet</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Contact your administrator to add products to your store catalog.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderCommissions = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Commission History</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Track your earnings</p>
-      </div>
-
-      {/* Commission Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
-          <h3 className="text-gray-600 dark:text-gray-400 text-sm">Total Earned</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            GHS {agentStats.totalCommission.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-yellow-500">
-          <h3 className="text-gray-600 dark:text-gray-400 text-sm">Pending</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            GHS {agentStats.pendingCommission.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-blue-500">
-          <h3 className="text-gray-600 dark:text-gray-400 text-sm">This Month</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            GHS {(agentStats.monthlyAchievement * 0.05).toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      {/* Commission History */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Period</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Orders</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Commission</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commissionHistory.map((commission) => (
-                <tr key={commission.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {new Date(commission.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-400">
-                    {commission.orders}
-                  </td>
-                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                    GHS {commission.amount.toFixed(2)}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      commission.status === 'paid' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                    }`}>
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      {commission.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return renderOverview();
-      case 'store':
-        return renderStore();
-      case 'customize':
-        router.push('/agent/customize-store');
-        return null;
-      case 'customers':
-        return renderCustomers();
-      case 'commissions':
-        return renderCommissions();
-      case 'performance':
-        return (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Analytics</h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Coming soon...</p>
-            </div>
-          </div>
-        );
-      case 'resources':
-        return (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Agent Resources</h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Coming soon...</p>
-            </div>
-          </div>
-        );
-      case 'profile':
-        return (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profile Settings</h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Coming soon...</p>
-            </div>
-          </div>
-        );
-      default:
-        return renderOverview();
-    }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-green-600/10 to-green-800/10 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-green-800/10 to-black blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
       {/* Notification */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
@@ -646,135 +138,257 @@ const AgentDashboard = () => {
         </div>
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-xl transition-all duration-300 z-40 ${
-        sidebarOpen ? 'w-64' : 'w-20'
-      }`}>
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-black" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        
+        {/* Header */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-2xl p-[2px] shadow-2xl">
+            <div className="bg-gray-950 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600/30 via-transparent to-black/50"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-green-600/10 blur-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                  <div className="mb-4 lg:mb-0">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-2xl">
+                        <Award className="w-7 h-7 text-white" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">Agent Dashboard</h1>
+                        <p className="text-green-400 text-sm font-medium">
+                          {userData?.name} • {stats.agentLevel} • {stats.agentStatus}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        Manage your store, track earnings, and grow your business
+                      </p>
+                      {getStoreUrl() && (
+                        <div className="flex items-center space-x-2 bg-black/40 rounded-lg px-3 py-2">
+                          <span className="text-green-400 text-sm font-medium">Store URL:</span>
+                          <code className="text-white text-sm font-mono">
+                            {typeof window !== 'undefined' ? `${window.location.origin}${getStoreUrl()}` : ''}
+                          </code>
+                          <button
+                            onClick={copyStoreUrl}
+                            className="p-1 hover:bg-green-600/20 rounded transition-colors"
+                          >
+                            <Copy className="w-4 h-4 text-green-400" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button 
+                      onClick={() => window.open(getStoreUrl(), '_blank')}
+                      className="group bg-green-600 hover:bg-green-500 text-white font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                    >
+                      <Eye className="w-5 h-5" />
+                      <span>View Store</span>
+                      <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    
+                    <button 
+                      onClick={handleRefresh}
+                      disabled={refreshing}
+                      className="group bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-5 rounded-xl border border-gray-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                    >
+                      <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                      <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            {sidebarOpen && (
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Today's Earnings */}
+            <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-2xl p-[2px] shadow-2xl">
+              <div className="bg-gray-950 rounded-2xl p-6 h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-lg">
+                      <DollarSign className="w-6 h-6 text-white" strokeWidth={2.5} />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-white">
+                        GHS {stats.today.earnings.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-gray-100 font-medium text-sm">Today's Earnings</p>
+                    <p className="text-gray-500 text-xs">Commission: {stats.commissionRate}%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Today's Orders */}
+            <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow">
+                    <Package className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-white">
+                      {stats.today.orders}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-gray-100 font-medium text-sm">Today's Orders</p>
+                  <p className="text-gray-500 text-xs">Completed sales</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly Revenue */}
+            <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow">
+                    <TrendingUp className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-white">
+                      GHS {stats.month.revenue.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-gray-100 font-medium text-sm">Monthly Revenue</p>
+                  <p className="text-gray-500 text-xs">Total sales value</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly Earnings */}
+            <div className="bg-gray-900 rounded-2xl p-5 shadow-xl border border-gray-800">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow">
+                    <BarChart3 className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-white">
+                      GHS {stats.month.earnings.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                
               <div>
-                <h1 className="font-bold text-lg text-gray-900 dark:text-white">Agent Portal</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">UnlimitedData GH</p>
+                  <p className="text-gray-100 font-medium text-sm">Monthly Earnings</p>
+                  <p className="text-gray-500 text-xs">Total commission</p>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all mb-2 ${
-                  isActive
-                    ? 'bg-[#FFCC08] text-black'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && (
-                  <>
-                    <span className="font-medium">{item.label}</span>
-                    {item.badge && (
-                      <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
-                        isActive ? 'bg-black text-[#FFCC08]' : 'bg-[#FFCC08] text-black'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* User Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
-          {sidebarOpen ? (
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-full flex items-center justify-center text-black font-bold">
-                {userData?.name?.charAt(0) || 'A'}
+        {/* Quick Actions */}
+        <div className="mb-6">
+          <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-800">
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow">
+                <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {userData?.name || 'Agent'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                  {agentStats.agentLevel} Agent
-                </p>
+              <div>
+                <h2 className="text-lg font-bold text-white">Quick Actions</h2>
+                <p className="text-gray-500 text-xs">Manage your agent business</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors flex justify-center"
-            >
-              <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-          )}
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
-        {/* Top Bar */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white capitalize">
-                {activeTab === 'overview' ? 'Agent Dashboard' : activeTab}
-              </h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button
-                onClick={loadDashboardData}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => router.push('/agent/customize-store')}
+                className="group bg-gray-800 hover:bg-gray-700 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-700 hover:border-green-600/50 relative overflow-hidden"
               >
-                <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center space-y-2">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow group-hover:shadow-lg transition-shadow">
+                    <Settings className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-gray-300 group-hover:text-white font-medium text-xs transition-colors">Customize Store</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push('/agent/earnings')}
+                className="group bg-gray-800 hover:bg-gray-700 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-700 hover:border-green-600/50 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center space-y-2">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow group-hover:shadow-lg transition-shadow">
+                    <DollarSign className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-gray-300 group-hover:text-white font-medium text-xs transition-colors">View Earnings</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push('/agent/withdraw')}
+                className="group bg-gray-800 hover:bg-gray-700 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-700 hover:border-green-600/50 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center space-y-2">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow group-hover:shadow-lg transition-shadow">
+                    <TrendingUp className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-gray-300 group-hover:text-white font-medium text-xs transition-colors">Withdraw Funds</p>
+                </div>
+              </button>
+            
+              <button
+                onClick={() => window.open(getStoreUrl(), '_blank')}
+                className="group bg-gray-800 hover:bg-gray-700 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-700 hover:border-green-600/50 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 text-center space-y-2">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow group-hover:shadow-lg transition-shadow">
+                    <ExternalLink className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-gray-300 group-hover:text-white font-medium text-xs transition-colors">Visit Store</p>
+                </div>
               </button>
             </div>
           </div>
-        </header>
+        </div>
 
-        {/* Page Content */}
-        <div className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />
+        {/* Status Banner */}
+        {stats.agentStatus === 'pending' && (
+          <div className="mb-6">
+            <div className="bg-yellow-900/30 backdrop-blur-xl border border-yellow-600/30 rounded-2xl p-4 shadow-2xl">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-yellow-600/20 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-yellow-400" />
+                  </div>
+                </div>
+                <div className="flex-grow">
+                  <p className="text-sm font-semibold text-yellow-300">Account Under Review</p>
+                  <p className="text-sm text-yellow-200/80 mt-1">
+                    Your agent application is being reviewed by our team. You'll receive an email once approved.
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
-            renderContent()
+          </div>
           )}
         </div>
-      </main>
     </div>
   );
 };

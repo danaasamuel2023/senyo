@@ -3,7 +3,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const { User, ReferralBonus } = require("../schema/schema");
+const { User, ReferralBonus, AgentCatalog } = require("../schema/schema");
 
 dotenv.config();
 const router = express.Router();
@@ -32,17 +32,11 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 8 characters" });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { phoneNumber }] 
-    });
+    // Check if email already exists (only email needs to be unique)
+    const existingUser = await User.findOne({ email });
     
     if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(400).json({ message: "Email already registered" });
-      } else {
-        return res.status(400).json({ message: "Phone number already registered" });
-      }
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     // Hash password with stronger salt
@@ -72,6 +66,15 @@ router.post("/register", async (req, res) => {
     });
 
     await newUser.save();
+
+    // Auto-create an empty agent catalog on signup to enable store setup
+    if (newUser.role === 'agent') {
+      try {
+        await AgentCatalog.create({ agentId: newUser._id, items: [] });
+      } catch (e) {
+        console.error('Agent catalog creation error:', e.message);
+      }
+    }
 
     // Handle Referral Bonus
     if (referredBy) {
@@ -108,7 +111,7 @@ router.post("/register", async (req, res) => {
       // Extract the duplicate field from the error
       const field = Object.keys(error.keyPattern)[0];
       return res.status(400).json({ 
-        message: `${field === 'email' ? 'Email' : 'Phone number'} already registered` 
+        message: `${field === 'email' ? 'Email' : 'Field'} already registered` 
       });
     }
     // Handle other errors

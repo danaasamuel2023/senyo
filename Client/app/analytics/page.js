@@ -50,7 +50,7 @@ const AnalyticsPage = () => {
     setLoading(true);
     try {
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000'
+        ? 'http://localhost:5001'
         : 'https://unlimitedata.onrender.com';
 
       const userId = userData?.id || JSON.parse(localStorage.getItem('userData') || '{}').id;

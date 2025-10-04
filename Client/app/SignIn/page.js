@@ -130,7 +130,7 @@ export default function LoginPage() {
     try {
       // Use local API in development
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000/api/v1/login'
+        ? 'http://localhost:5001/api/v1/login'
         : 'https://unlimitedata.onrender.com/api/v1/login';
       
       const response = await fetch(API_URL, {

@@ -1604,17 +1604,11 @@ router.post('/create-admin', auth, adminAuth, async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 8 characters" });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { phoneNumber }] 
-    });
+    // Check if email already exists (only email needs to be unique)
+    const existingUser = await User.findOne({ email });
     
     if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(400).json({ message: "Email already registered" });
-      } else {
-        return res.status(400).json({ message: "Phone number already registered" });
-      }
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     // Hash password
@@ -1927,7 +1921,7 @@ router.get('/public/agent-store/:identifier', async (req, res) => {
         { 'agentMetadata.customSlug': identifier }
       ],
       role: 'agent'
-    }).select('name email phoneNumber agentMetadata');
+    }).select('name email phoneNumber approvalStatus agentMetadata');
     
     if (!agent) {
       return res.status(404).json({ 
@@ -1936,8 +1930,9 @@ router.get('/public/agent-store/:identifier', async (req, res) => {
       });
     }
     
-    // Check if agent is active
-    if (agent.agentMetadata?.agentStatus !== 'active') {
+    // Check if agent is active (treat approved agents without explicit agentStatus as active)
+    const isActive = agent.agentMetadata?.agentStatus === 'active' || agent.approvalStatus === 'approved';
+    if (!isActive) {
       return res.status(403).json({ 
         success: false,
         message: 'This agent store is not currently available' 

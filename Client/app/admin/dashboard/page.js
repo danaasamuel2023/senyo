@@ -53,7 +53,7 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState([]);
 
   // API Configuration
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
   
   // Cache for performance
   const [dataCache, setDataCache] = useState({});

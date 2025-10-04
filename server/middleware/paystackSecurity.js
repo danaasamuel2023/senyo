@@ -138,7 +138,7 @@ const validateDepositAmount = (req, res, next) => {
 /**
  * Prevent duplicate transactions
  */
-const preventDuplicateDeposits = async (Transaction) => {
+const preventDuplicateDeposits = (Transaction) => {
   return async (req, res, next) => {
     const { userId } = req.body;
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);

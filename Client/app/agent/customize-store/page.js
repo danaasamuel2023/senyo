@@ -56,7 +56,7 @@ const CustomizeStorePage = () => {
     setLoading(true);
     try {
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000'
+        ? 'http://localhost:5001'
         : 'https://unlimitedata.onrender.com';
 
       const response = await fetch(`${API_URL}/api/agent/catalog`, {
@@ -101,7 +101,7 @@ const CustomizeStorePage = () => {
     setSaving(true);
     try {
       const API_URL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000'
+        ? 'http://localhost:5001'
         : 'https://unlimitedata.onrender.com';
 
       const response = await fetch(`${API_URL}/api/agent/customize-store`, {

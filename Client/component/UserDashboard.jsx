@@ -74,7 +74,8 @@ const QUICK_ACTIONS = [
   { icon: Clock, label: 'History', path: '/orders', gradient: 'from-yellow-600 to-yellow-700' },
   { icon: CreditCard, label: 'Top Up', path: '/topup', gradient: 'from-black to-gray-800' },
   { icon: Shield, label: 'Support', path: '/support', gradient: 'from-[#FFCC08] to-yellow-600' },
-  { icon: User, label: 'Profile', path: '/profile', gradient: 'from-gray-800 to-black' }
+  { icon: User, label: 'Profile', path: '/profile', gradient: 'from-gray-800 to-black' },
+  { icon: Award, label: 'Become Agent', path: '/agent-signup', gradient: 'from-green-600 to-green-800' }
 ];
 
 const DashboardPage = () => {
@@ -597,6 +598,72 @@ const DashboardPage = () => {
                 <div>
                   <p className="text-gray-100 font-medium text-sm">Revenue Today</p>
                   <p className="text-gray-500 text-xs">Total earnings</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Become Agent Section */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-2xl p-[2px] shadow-2xl">
+            <div className="bg-gray-950 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600/30 via-transparent to-black/50"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-green-600/10 blur-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                  <div className="mb-4 lg:mb-0">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-2xl">
+                        <Award className="w-7 h-7 text-white" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Become an Agent</h2>
+                        <p className="text-green-400 text-sm font-medium">Earn commissions & build your business</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        Join our network of successful agents and start earning commissions on every sale. 
+                        Get your own branded store, customer support, and monthly payments.
+                      </p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-400">
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 text-green-400" />
+                          <span>5-10% Commission</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Shield className="w-4 h-4 text-green-400" />
+                          <span>Full Support</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <TrendingUp className="w-4 h-4 text-green-400" />
+                          <span>Performance Bonus</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button 
+                      onClick={() => router.push('/agent-signup')}
+                      className="group bg-green-600 hover:bg-green-500 text-white font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                    >
+                      <Award className="w-5 h-5" />
+                      <span>Apply Now</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    
+                    <button 
+                      onClick={() => router.push('/agent-store/demo')}
+                      className="group bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-5 rounded-xl border border-gray-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                    >
+                      <Eye className="w-5 h-5" />
+                      <span>View Demo</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -66,7 +66,7 @@ const ProductsPage = () => {
     
     setLoading(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       
       const [inventoryResp, productsResp] = await Promise.all([
         adminAPI.inventory.getInventory(),
@@ -144,7 +144,7 @@ const ProductsPage = () => {
     
     if (newPrice && !isNaN(newPrice) && parseFloat(newPrice) > 0) {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
         
         if (product.globalPriceId) {
           await fetch(`${API_URL}/api/products/${product.globalPriceId}`, {
