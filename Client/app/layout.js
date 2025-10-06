@@ -1,7 +1,7 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import ConditionalNavbar from "@/component/ConditionalNavbar";
+import MobileNavbar from "@/compoenent/nav.jsx";
 import Footer from "@/compoenent/footer";
 import AuthGuard from "@/component/AuthGuide";
 import WhatsAppLink from "@/component/groupIcon";
@@ -439,7 +439,7 @@ export default function RootLayout({ children }) {
               <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
             </div>
             
-            <ConditionalNavbar />
+            <MobileNavbar />
             
             {/* Main content - MOBILE OPTIMIZED SPACING */}
             <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
