@@ -90,10 +90,15 @@ router.post("/register", async (req, res) => {
     }
 
     // Generate initial token for auto-login after registration
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET not set');
+      return res.status(500).json({ message: 'Server misconfiguration' });
+    }
     const token = jwt.sign(
       { userId: newUser._id },
-      'DatAmArt'  ,  
-     { expiresIn: "7d" }
+      jwtSecret,
+      { expiresIn: "7d" }
     );
 
     res.status(201).json({ 
@@ -134,12 +139,17 @@ router.post("/login", async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate JWT Token with user role for authorization
+    const jwtSecretLogin = process.env.JWT_SECRET;
+    if (!jwtSecretLogin) {
+      console.error('JWT_SECRET not set');
+      return res.status(500).json({ message: 'Server misconfiguration' });
+    }
     const token = jwt.sign(
       { 
         userId: user._id,
         role: user.role 
       },
-      'DatAmArt',
+      jwtSecretLogin,
       { expiresIn: "7d" }
     );
 
@@ -178,7 +188,11 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
     
     // Verify token
-    const decoded = jwt.verify(token, 'DatAmArt');
+    const jwtSecretVerify = process.env.JWT_SECRET;
+    if (!jwtSecretVerify) {
+      return res.status(500).json({ message: 'Server misconfiguration' });
+    }
+    const decoded = jwt.verify(token, jwtSecretVerify);
     
     // Add user data to request
     req.user = {
