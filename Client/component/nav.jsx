@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useTheme } from '../app/providers/ThemeProvider';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import {
   Home,
   LayoutDashboard,
