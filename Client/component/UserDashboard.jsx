@@ -65,54 +65,6 @@ const CurrencyCounter = ({ value, duration = 1500 }) => {
   return <span>₵{count.toFixed(2)}</span>;
 };
 
-// Pull to Refresh Component
-const PullToRefresh = ({ onRefresh, children }) => {
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  
-  const handleTouchStart = useCallback((e) => {
-    if (window.scrollY === 0) {
-      setIsPulling(true);
-    }
-  }, []);
-  
-  const handleTouchMove = useCallback((e) => {
-    if (isPulling && e.touches[0]) {
-      const distance = e.touches[0].clientY;
-      setPullDistance(Math.min(distance, 100));
-    }
-  }, [isPulling]);
-  
-  const handleTouchEnd = useCallback(async () => {
-    if (pullDistance > 60) {
-      setIsRefreshing(true);
-      await onRefresh();
-      setIsRefreshing(false);
-    }
-    setPullDistance(0);
-    setIsPulling(false);
-  }, [pullDistance, onRefresh]);
-  
-  return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="relative"
-    >
-      {(isPulling || isRefreshing) && (
-        <div className="absolute top-0 left-0 right-0 flex justify-center py-2 transition-all z-50"
-          style={{ transform: `translateY(${pullDistance}px)` }}>
-          <RefreshCw className={`w-5 h-5 text-[#FFCC08] ${isRefreshing ? 'animate-spin' : ''}`} />
-        </div>
-      )}
-      <div style={{ transform: isPulling ? `translateY(${pullDistance}px)` : 'none' }}>
-        {children}
-      </div>
-    </div>
-  );
-};
 
 // WhatsApp Floating Button - Enhanced for mobile
 const WhatsAppButton = () => {
@@ -540,8 +492,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
         {/* Premium Background - Static for better performance */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-yellow-600/5 blur-3xl"></div>
@@ -926,7 +877,6 @@ const DashboardPage = () => {
         </div>
 
       </div>
-    </PullToRefresh>
   );
 };
 
