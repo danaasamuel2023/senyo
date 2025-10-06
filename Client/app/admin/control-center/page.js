@@ -86,14 +86,26 @@ const ControlCenterPage = () => {
   const loadControlCenterData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        loadSystemMetrics(),
-        loadRealTimeStats(),
-        loadSystemAlerts()
-      ]);
+      // Check authentication first
+      if (!checkAuth()) {
+        return;
+      }
+
+      // Load data sequentially to avoid overwhelming the server
+      await loadSystemMetrics();
+      await loadRealTimeStats();
+      await loadSystemAlerts();
     } catch (error) {
       console.error('Failed to load control center:', error);
-      showNotification('Failed to load data', 'error');
+      
+      // Handle authentication errors
+      if (error.message && error.message.includes('401')) {
+        showNotification('Authentication expired. Please log in again.', 'error');
+        router.push('/SignIn');
+        return;
+      }
+      
+      showNotification('Failed to load some data. Please refresh the page.', 'error');
     } finally {
       setLoading(false);
     }
@@ -120,6 +132,11 @@ const ControlCenterPage = () => {
 
   const loadRealTimeStats = async () => {
     try {
+      // Check authentication first
+      if (!checkAuth()) {
+        return;
+      }
+
       const [stats, agents] = await Promise.all([
         adminAPI.dashboard.getStatistics(),
         adminAPI.agent.getAgents(1, 1000)
@@ -139,6 +156,25 @@ const ControlCenterPage = () => {
       });
     } catch (error) {
       console.error('Failed to load real-time stats:', error);
+      
+      // Handle authentication errors
+      if (error.message && error.message.includes('401')) {
+        showNotification('Authentication expired. Please log in again.', 'error');
+        router.push('/SignIn');
+        return;
+      }
+      
+      // Set default stats on error
+      setRealTimeStats({
+        usersOnline: 0,
+        ordersToday: 0,
+        revenueToday: 0,
+        newUsersToday: 0,
+        pendingOrders: 0,
+        pendingAgents: 0,
+        activeAgents: 0,
+        totalCommissions: 0
+      });
     }
   };
 

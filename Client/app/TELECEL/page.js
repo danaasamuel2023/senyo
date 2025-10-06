@@ -1,6 +1,20 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import { Zap, Star, AlertTriangle, CheckCircle, X, Info, Shield, Phone, CreditCard, ArrowRight, Wifi, Signal, Smartphone } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Zap, Star, AlertTriangle, CheckCircle, X, Info, Shield, Phone, CreditCard, 
+  ArrowRight, Wifi, Signal, Smartphone, ArrowUpDown, ArrowUp, ArrowDown,
+  Search, Filter, Grid, List, SortAsc, SortDesc, Package, TrendingUp,
+  DollarSign, Calendar, Clock, Loader2, Eye, ShoppingCart, Heart
+} from 'lucide-react';
+
+// API Configuration
+const getApiEndpoint = (path) => {
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  return `${baseUrl}${path}`;
+};
 
 // Toast Notification Component
 const Toast = ({ message, type, onClose }) => {
@@ -19,7 +33,7 @@ const Toast = ({ message, type, onClose }) => {
           ? 'bg-green-500 text-white border-green-400' 
           : type === 'error' 
             ? 'bg-red-500 text-white border-red-400' 
-            : 'bg-red-600 text-white border-red-500'
+            : 'bg-[#FFCC08] text-black border-yellow-500'
       }`}>
         <div className="mr-3">
           {type === 'success' ? (
@@ -41,124 +55,111 @@ const Toast = ({ message, type, onClose }) => {
   );
 };
 
-// Updated Telecel Package Card to match the image design
-const TelecelPackageCard = ({ bundle, onClick, disabled }) => (
-  <button
-    type="button"
-    onClick={() => onClick(bundle)}
-    disabled={disabled}
-    className={`rounded-xl overflow-hidden transition-all transform hover:scale-105 shadow-lg relative ${
-      !disabled
-        ? 'hover:shadow-2xl cursor-pointer'
-        : 'cursor-not-allowed opacity-50'
-    }`}
-  >
-    {/* Red top section with Telecel branding */}
-    <div className="bg-red-600 p-4 pb-6 relative">
-      {/* White circular logo area */}
-      <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-3">
-        <span className="text-red-600 font-bold text-xs">TELECEL</span>
-      </div>
-      {/* Data capacity display */}
-      <div className="text-white font-bold text-3xl text-center">
-        {bundle.capacity} GB
-      </div>
-    </div>
-    
-    {/* Dark bottom section with price and duration */}
-    <div className="bg-gray-900 p-3">
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div className="border-r border-gray-700">
-          <div className="text-white font-bold text-base mb-1">GHC {bundle.price}</div>
-          <div className="text-gray-400 text-xs">Price</div>
-        </div>
-        <div>
-          <div className="text-white font-bold text-base mb-1">30 Days</div>
-          <div className="text-gray-400 text-xs">Duration</div>
-        </div>
-      </div>
-    </div>
-    
-    {!bundle.inStock && (
-      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-        <div className="text-white font-bold bg-red-500 px-3 py-1 rounded">Out of Stock</div>
-      </div>
-    )}
-  </button>
-);
-
-// Telecel Logo Component - Red theme (for other uses)
-const TelecelLogo = ({ className = "w-12 h-12" }) => (
-  <div className={`${className} bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex items-center justify-center shadow-lg`}>
-    <span className="font-black text-white text-xl">T</span>
-  </div>
-);
-
-// Service Information Modal
-const ServiceInfoModal = ({ isOpen, onClose, onConfirm }) => {
-  if (!isOpen) return null;
+// Enhanced Telecel Package Card with modern design
+const TelecelPackageCard = ({ bundle, onClick, disabled, isGridView = true }) => {
+  const [isHovered, setIsHovered] = useState(false);
   
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl">
-        {/* Modal header */}
-        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-5 rounded-t-3xl flex justify-between items-center">
-          <h3 className="text-xl font-bold text-white flex items-center">
-            <AlertTriangle className="w-6 h-6 mr-2" />
-            Service Notice
-          </h3>
-          <button onClick={onClose} className="text-white hover:text-white/70 p-2 rounded-xl hover:bg-white/10 transition-all">
-            <X className="w-5 h-5" />
+  if (!isGridView) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+        <div className="flex items-center p-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center mr-4">
+            <span className="font-black text-white text-xl">{bundle.capacity}</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900">{bundle.capacity}GB Data</h3>
+            <p className="text-gray-600 text-sm">Telecel • 30 Days Validity</p>
+          </div>
+          <div className="text-right mr-4">
+            <p className="text-2xl font-bold text-red-600">₵{bundle.price}</p>
+            <p className="text-gray-500 text-sm">₵{(bundle.price / bundle.capacity).toFixed(2)}/GB</p>
+          </div>
+          <button
+            onClick={() => onClick(bundle)}
+            disabled={disabled}
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all font-bold disabled:opacity-50"
+          >
+            Buy Now
           </button>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className={`bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:scale-105 ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+      onClick={() => !disabled && onClick(bundle)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Header with Telecel branding */}
+      <div className="bg-gradient-to-br from-red-600 to-red-700 p-4 relative overflow-hidden">
+        <div className="absolute top-2 right-2">
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <Star className="w-4 h-4 text-white" />
+          </div>
+        </div>
         
-        {/* Modal content */}
-        <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
-          <div className="space-y-4 text-gray-700">
-            <div className="flex items-start">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-3 mt-2 flex-shrink-0"></div>
-              <p><strong className="text-gray-900">Not instant service</strong> - delivery times vary</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-3 mt-2 flex-shrink-0"></div>
-              <p>For urgent data, consider other immediate options</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-3 mt-2 flex-shrink-0"></div>
-              <p>Please be patient - orders may take time to process</p>
-            </div>
-            <div className="flex items-start">
-              <div className="w-2 h-2 rounded-full bg-red-600 mr-3 mt-2 flex-shrink-0"></div>
-              <p>Not suitable for instant bundle needs</p>
-            </div>
+        <div className="text-center">
+          <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-2">
+            <span className="font-black text-white text-2xl">{bundle.capacity}</span>
+          </div>
+          <h3 className="text-white font-bold text-lg">{bundle.capacity}GB</h3>
+          <p className="text-white/80 text-sm">Telecel Data</p>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="p-4">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 text-sm">Price</span>
+            <span className="text-2xl font-bold text-gray-900">₵{bundle.price}</span>
           </div>
           
-          <div className="bg-red-50 border-2 border-red-200 p-4 rounded-2xl mt-5">
-            <div className="flex items-start">
-              <Info className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
-              <p className="text-gray-800 text-sm font-medium">
-                Thank you for your patience and understanding.
-              </p>
-            </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 text-sm">Per GB</span>
+            <span className="text-gray-700 font-semibold">₵{(bundle.price / bundle.capacity).toFixed(2)}</span>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 text-sm">Validity</span>
+            <span className="text-green-600 font-semibold">30 Days</span>
+          </div>
+          
+          <div className="pt-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick(bundle);
+              }}
+              disabled={disabled}
+              className="w-full py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all font-bold disabled:opacity-50 flex items-center justify-center space-x-2"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Buy Now</span>
+            </button>
           </div>
         </div>
-        
-        {/* Modal footer */}
-        <div className="px-6 py-5 border-t-2 border-gray-100 flex space-x-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl transition-all transform hover:scale-105 shadow-lg"
-          >
-            Continue
-          </button>
-        </div>
       </div>
+      
+      {/* Hover overlay */}
+      {isHovered && !disabled && (
+        <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-red-700/10 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-xl p-3 shadow-lg">
+            <Eye className="w-6 h-6 text-red-600" />
+          </div>
+        </div>
+      )}
+      
+      {!bundle.inStock && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <div className="text-white font-bold bg-red-500 px-3 py-1 rounded-lg">Out of Stock</div>
+        </div>
+      )}
     </div>
   );
 };
@@ -193,7 +194,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
         
         {/* Modal content */}
         <div className="px-6 py-6">
-          {/* Bundle Info Card */}
+          {/* Bundle Info */}
           <div className="mb-5">
             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex flex-col items-center justify-center shadow-lg">
               <span className="font-black text-white text-3xl">{bundle.capacity}</span>
@@ -201,10 +202,10 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-5 mb-5 border-2 border-red-200">
+          <div className="bg-red-50 rounded-2xl p-5 mb-5 border-2 border-red-200">
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Data Bundle:</span>
-              <span className="text-red-700 font-bold text-lg">{bundle.capacity}GB</span>
+              <span className="text-gray-900 font-bold text-lg">{bundle.capacity}GB</span>
             </div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-700 font-medium">Network:</span>
@@ -216,7 +217,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             </div>
             <div className="flex justify-between items-center border-t-2 border-red-200 pt-3">
               <span className="text-gray-900 font-bold">Total Price:</span>
-              <span className="text-red-700 font-bold text-xl">GH₵{bundle.price}</span>
+              <span className="text-red-700 font-bold text-xl bg-red-100 px-3 py-1 rounded-lg">₵{bundle.price}</span>
             </div>
           </div>
 
@@ -280,7 +281,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
             >
               {isLoading ? (
                 <>
-                  <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (
@@ -321,14 +322,20 @@ const LoadingOverlay = ({ isLoading }) => {
 };
 
 const TelecelBundleSelect = () => {
+  const router = useRouter();
+  
+  // State Management
   const [selectedBundle, setSelectedBundle] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [userData, setUserData] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('capacity'); // capacity, price, value
+  const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
+  const [viewMode, setViewMode] = useState('grid'); // grid, list
   
   // Toast state
   const [toast, setToast] = useState({
@@ -389,6 +396,45 @@ const TelecelBundleSelect = () => {
     };
   }, []);
 
+  // Filtered and sorted bundles
+  const filteredAndSortedBundles = useMemo(() => {
+    let filtered = bundles.filter(bundle => 
+      bundle.capacity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bundle.price.includes(searchTerm) ||
+      bundle.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Sort bundles
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'capacity':
+          aValue = parseInt(a.capacity);
+          bValue = parseInt(b.capacity);
+          break;
+        case 'price':
+          aValue = parseFloat(a.price);
+          bValue = parseFloat(b.price);
+          break;
+        case 'value':
+          aValue = parseFloat(a.price) / parseInt(a.capacity);
+          bValue = parseFloat(b.price) / parseInt(b.capacity);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+
+    return filtered;
+  }, [bundles, searchTerm, sortBy, sortOrder]);
+
   // Function to validate Telecel phone number format
   const validatePhoneNumber = (number) => {
     const cleanNumber = number.replace(/[\s-]/g, '');
@@ -445,7 +491,7 @@ const TelecelBundleSelect = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('https://unlimitedata.onrender.com/api/v1/data/purchase-data', {
+      const response = await fetch(getApiEndpoint('/api/v1/data/purchase-data'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -482,8 +528,23 @@ const TelecelBundleSelect = () => {
     }
   };
 
+  const handleSort = (newSortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-600/5 to-red-700/5 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-red-700/5 to-black blur-3xl"></div>
+      </div>
+
       {/* Toast Notification */}
       {toast.visible && (
         <Toast 
@@ -496,127 +557,193 @@ const TelecelBundleSelect = () => {
       {/* Loading Overlay */}
       <LoadingOverlay isLoading={isLoading} />
       
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-7xl">
-          <ServiceInfoModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onConfirm={() => {
-              setIsModalOpen(false);
-            }}
-          />
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={isPurchaseModalOpen}
+        onClose={() => {
+          setIsPurchaseModalOpen(false);
+          setPendingPurchase(null);
+          setPhoneNumber('');
+          setError('');
+        }}
+        bundle={pendingPurchase}
+        phoneNumber={phoneNumber}
+        setPhoneNumber={setPhoneNumber}
+        onPurchase={processPurchase}
+        error={error}
+        isLoading={isLoading}
+      />
 
-          <PurchaseModal
-            isOpen={isPurchaseModalOpen}
-            onClose={() => {
-              setIsPurchaseModalOpen(false);
-              setPendingPurchase(null);
-              setPhoneNumber('');
-              setError('');
-            }}
-            bundle={pendingPurchase}
-            phoneNumber={phoneNumber}
-            setPhoneNumber={setPhoneNumber}
-            onPurchase={processPurchase}
-            error={error}
-            isLoading={isLoading}
-          />
-          
-          {/* Header with Telecel Logo */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-red-700 rounded-3xl flex items-center justify-center shadow-xl">
-                <span className="font-black text-white text-3xl">TELECEL</span>
+      {/* Main Content */}
+      <div className="relative z-10 px-3 sm:px-4 py-3 sm:py-4 max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="p-2.5 hover:bg-gray-800/50 rounded-xl transition-colors"
+              >
+                <ArrowRight className="w-5 h-5 text-red-600 rotate-180" />
+              </button>
+              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center">
+                <span className="font-black text-white text-lg">T</span>
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Telecel Data Bundles</h1>
+                <p className="text-gray-400 mt-1">Connect • Communicate • Create</p>
               </div>
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Premium Data Bundles</h1>
-            <p className="text-red-600 font-semibold text-lg">Connect • Communicate • Create</p>
           </div>
 
-          {/* Main Card */}
-          <div className="bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-gray-100">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-700 p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center space-x-4">
-                  <div className="w-14 h-14 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center">
-                    <Signal className="w-7 h-7 text-red-600" strokeWidth={2} />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">Select Your Data Package</h2>
-                    <p className="text-red-100 text-lg">Choose your preferred bundle & buy instantly</p>
-                  </div>
-                </div>
+          {/* Search and Filters */}
+          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-4 sm:p-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search bundles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 text-white placeholder-gray-400"
+                />
               </div>
+
+              {/* Sort by Capacity */}
+              <button
+                onClick={() => handleSort('capacity')}
+                className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center space-x-2 ${
+                  sortBy === 'capacity' 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-gray-900/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                <span>Capacity</span>
+                {sortBy === 'capacity' && (
+                  sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Sort by Price */}
+              <button
+                onClick={() => handleSort('price')}
+                className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center space-x-2 ${
+                  sortBy === 'price' 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-gray-900/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Price</span>
+                {sortBy === 'price' && (
+                  sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Sort by Value */}
+              <button
+                onClick={() => handleSort('value')}
+                className={`px-4 py-2.5 rounded-xl transition-all flex items-center justify-center space-x-2 ${
+                  sortBy === 'value' 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-gray-900/50 text-gray-300 hover:bg-gray-700/50'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Value</span>
+                {sortBy === 'value' && (
+                  sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                )}
+              </button>
             </div>
 
-            {/* Form */}
-            <div className="p-8">
-              {/* Service info button */}
-              <div className="mb-8 flex justify-center">
+            {/* View Mode Toggle */}
+            <div className="flex items-center justify-center mt-4">
+              <div className="bg-gray-900/50 rounded-xl p-1 flex">
                 <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center space-x-2 px-6 py-3 bg-red-50 border-2 border-red-300 text-red-700 font-bold rounded-2xl hover:bg-red-100 transition-all text-base"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-2 rounded-lg transition-all flex items-center space-x-2 ${
+                    viewMode === 'grid' ? 'bg-red-600 text-white' : 'text-gray-300 hover:text-white'
+                  }`}
                 >
-                  <Info className="h-5 w-5" />
-                  <span>Service Information</span>
+                  <Grid className="w-4 h-4" />
+                  <span>Grid</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-lg transition-all flex items-center space-x-2 ${
+                    viewMode === 'list' ? 'bg-red-600 text-white' : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                  <span>List</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Bundle Selection Grid with New Card Design */}
-              <div>
-                <h3 className="text-2xl font-bold mb-6 text-gray-900 text-center">
-                  Available Data Packages
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {bundles.map((bundle) => (
-                    <TelecelPackageCard
-                      key={bundle.capacity}
-                      bundle={bundle}
-                      onClick={handleBundleSelect}
-                      disabled={!bundle.inStock}
-                    />
-                  ))}
-                </div>
+        {/* Bundles Grid/List */}
+        <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-4 sm:p-6">
+          {filteredAndSortedBundles.length > 0 ? (
+            <div className={viewMode === 'grid' 
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
+              : 'space-y-4'
+            }>
+              {filteredAndSortedBundles.map((bundle) => (
+                <TelecelPackageCard
+                  key={bundle.capacity}
+                  bundle={bundle}
+                  onClick={handleBundleSelect}
+                  disabled={!bundle.inStock}
+                  isGridView={viewMode === 'grid'}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-600/20 to-red-700/20 flex items-center justify-center">
+                <Package className="w-12 h-12 text-red-600" />
               </div>
+              <h3 className="text-xl font-bold text-white mb-2">No Bundles Found</h3>
+              <p className="text-gray-400 mb-6">Try adjusting your search criteria</p>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all font-bold"
+              >
+                Clear Search
+              </button>
+            </div>
+          )}
+        </div>
 
-              {/* Important Notice */}
-              <div className="mt-8 p-6 bg-amber-50 border-2 border-amber-200 rounded-2xl">
-                <div className="flex items-start">
-                  <AlertTriangle className="w-6 h-6 text-amber-600 mr-4 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-3">Important Notice</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">
-                      <p className="flex items-center">
-                        <Info className="w-4 h-4 text-blue-500 mr-2" />
-                        Only 020 or 050 numbers supported
-                      </p>
-                      <p className="flex items-center">
-                        <X className="w-4 h-4 text-red-500 mr-2" />
-                        Not instant service - delivery takes time
-                      </p>
-                      <p className="flex items-center">
-                        <AlertTriangle className="w-4 h-4 text-amber-500 mr-2" />
-                        No refunds for wrong numbers
-                      </p>
-                      <p className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        Verify number carefully before purchase
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Telecel Branding Footer */}
-              <div className="mt-8 text-center">
-                <div className="inline-flex items-center space-x-2 text-gray-600">
-                  <TelecelLogo className="w-10 h-10" />
-                  <span className="font-semibold">Powered by Telecel Ghana • Your Network of Choice</span>
-                </div>
+        {/* Important Notice */}
+        <div className="mt-6 p-4 sm:p-6 bg-red-50/10 backdrop-blur-xl rounded-2xl border border-red-600/20">
+          <div className="flex items-start">
+            <AlertTriangle className="w-6 h-6 text-red-600 mr-4 mt-1 flex-shrink-0" />
+            <div>
+              <h4 className="text-lg font-bold text-white mb-3">Important Notice</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-300">
+                <p className="flex items-center">
+                  <Info className="w-4 h-4 text-blue-400 mr-2" />
+                  Only 020 or 050 numbers supported
+                </p>
+                <p className="flex items-center">
+                  <X className="w-4 h-4 text-red-400 mr-2" />
+                  Not instant service - delivery takes time
+                </p>
+                <p className="flex items-center">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2" />
+                  No refunds for wrong numbers
+                </p>
+                <p className="flex items-center">
+                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                  Verify number carefully before purchase
+                </p>
               </div>
             </div>
           </div>

@@ -323,16 +323,93 @@ const AgentStoreManagement = () => {
                 <span>Preview Store</span>
               </button>
               <button
-                onClick={() => router.push(`/agent-store/${agentData?.agentCode}`)}
-                className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-all shadow-lg"
+                onClick={() => router.push(`/store?agent=${agentData?.agentCode}`)}
+                className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black rounded-xl transition-all shadow-lg"
               >
                 <Globe className="w-4 h-4" />
-                <span>Visit Store</span>
+                <span>View Public Store</span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Store Sharing Section */}
+      {agentData?.agentCode && (
+        <div className="bg-gradient-to-r from-yellow-500/10 to-yellow-600/5 border-b border-yellow-200 dark:border-yellow-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                  <Share2 className="w-6 h-6 text-black" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Your Store is Live!</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Share your unique store link with customers</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                {/* Store URL */}
+                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <Globe className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+                    {window.location.origin}/store?agent={agentData.agentCode}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/store?agent=${agentData.agentCode}`);
+                      setNotification({ message: 'Store link copied!', type: 'success' });
+                    }}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    <Share2 className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                
+                {/* Share Buttons */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/store?agent=${agentData.agentCode}`;
+                      const text = `Check out my data store: ${storeCustomization.storeName || 'UnlimitedData Store'}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/store?agent=${agentData.agentCode}`;
+                      const text = `Check out my data store: ${storeCustomization.storeName || 'UnlimitedData Store'}`;
+                      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    <Facebook className="w-4 h-4" />
+                    <span>Facebook</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/store?agent=${agentData.agentCode}`;
+                      const text = `Check out my data store: ${storeCustomization.storeName || 'UnlimitedData Store'}`;
+                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors"
+                  >
+                    <Twitter className="w-4 h-4" />
+                    <span>Twitter</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -873,6 +950,150 @@ const AgentStoreManagement = () => {
           animation: slide-in-right 0.3s ease-out;
         }
       `}</style>
+
+      {/* Store Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-yellow-500/10 to-yellow-600/5 border-b border-gray-200 dark:border-gray-700 p-6 z-10 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Store Preview</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Preview your store as customers will see it</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Content */}
+            <div className="p-6">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 mb-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Store className="w-8 h-8 text-black" />
+                  </div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {storeCustomization.storeName || `${agentData?.name}'s Data Store`}
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {storeCustomization.welcomeMessage || 'Welcome to my data store!'}
+                  </p>
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{agentData?.agentMetadata?.territory || 'Ghana'}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{storeCustomization.businessHours?.monday?.open || '8AM'} - {storeCustomization.businessHours?.monday?.close || '9PM'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Store URL Display */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-6 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Globe className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Your Store URL</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                          {typeof window !== 'undefined' ? `${window.location.origin}/store?agent=${agentData?.agentCode}` : 'Loading...'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          navigator.clipboard.writeText(`${window.location.origin}/store?agent=${agentData?.agentCode}`);
+                          setNotification({ message: 'Store URL copied!', type: 'success' });
+                        }
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black rounded-lg transition-colors"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span>Copy Link</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Social Links Preview */}
+                {(storeCustomization.socialLinks?.whatsapp || storeCustomization.socialLinks?.facebook || storeCustomization.socialLinks?.twitter || storeCustomization.socialLinks?.instagram) && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Contact & Social</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {storeCustomization.socialLinks?.whatsapp && (
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                          <MessageCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">WhatsApp</span>
+                        </div>
+                      )}
+                      {storeCustomization.socialLinks?.facebook && (
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                          <Facebook className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Facebook</span>
+                        </div>
+                      )}
+                      {storeCustomization.socialLinks?.twitter && (
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
+                          <Twitter className="w-4 h-4 text-sky-600" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Twitter</span>
+                        </div>
+                      )}
+                      {storeCustomization.socialLinks?.instagram && (
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
+                          <Instagram className="w-4 h-4 text-pink-600" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Instagram</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.open(`/store?agent=${agentData?.agentCode}`, '_blank');
+                      }
+                    }}
+                    className="flex items-center space-x-2 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-black rounded-xl font-semibold transition-all"
+                  >
+                    <Globe className="w-5 h-5" />
+                    <span>Open Store</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        const url = `${window.location.origin}/store?agent=${agentData?.agentCode}`;
+                        const text = `Check out my data store: ${storeCustomization.storeName || 'UnlimitedData Store'}`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                      }
+                    }}
+                    className="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Share on WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

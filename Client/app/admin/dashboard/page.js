@@ -10,7 +10,7 @@ import {
   Upload, Edit, Trash2, Eye, Database, Shield, Activity, PieChart, ArrowUp, 
   ArrowDown, Bell, HelpCircle, Save, XCircle, Home, ShoppingCart, Wallet,
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
-  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store
+  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders';
@@ -365,6 +365,8 @@ const AdminDashboard = () => {
     { id: 'agent-stores', label: 'Agent Stores', icon: Store, badge: null },
     { id: 'orders', label: 'Orders', icon: Package, badge: stats.pendingOrders || null },
     { id: 'products', label: 'Products', icon: Package2, badge: null },
+    { id: 'bulk-messaging', label: 'Bulk Messaging', icon: MessageSquare, badge: null },
+    { id: 'package-management', label: 'Package Management', icon: Package2, badge: null },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: null },
     { id: 'transactions', label: 'Transactions', icon: CreditCard, badge: null },
     { id: 'reports', label: 'Reports', icon: FileText, badge: null },
@@ -372,10 +374,12 @@ const AdminDashboard = () => {
   ], [stats.activeUsers, stats.pendingOrders]);
 
   // Handle navigation for tabs that go to separate pages
-  useEffect(() => {
+  const handleTabClick = (tabId) => {
     const navigationTabs = {
       'control-center': '/admin/control-center',
       'products': '/admin/products',
+      'bulk-messaging': '/admin/bulk-messaging',
+      'package-management': '/admin/package-management',
       'analytics': '/admin/analytics',
       'agents': '/admin/agents',
       'agent-stores': '/admin/agent-stores',
@@ -384,10 +388,12 @@ const AdminDashboard = () => {
       'settings': '/admin/settings'
     };
 
-    if (navigationTabs[activeTab]) {
-      router.push(navigationTabs[activeTab]);
+    if (navigationTabs[tabId]) {
+      router.push(navigationTabs[tabId]);
+    } else {
+      setActiveTab(tabId);
     }
-  }, [activeTab, router]);
+  };
 
   // Components
   const StatCard = ({ title, value, change, icon: Icon, color }) => (
@@ -578,8 +584,8 @@ const AdminDashboard = () => {
                 <BarChart3 className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">No data available</p>
               </div>
-            </div>
-          )}
+              </div>
+            )}
         </div>
 
         {/* Recent Activities */}
@@ -849,98 +855,98 @@ const AdminDashboard = () => {
 
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                            <Phone className="w-4 h-4" />
-                            <span className="text-sm">{user.phone}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
-                            user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
-                            user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.status === 'active' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                              user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
-                            }`} />
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(user.joinDate).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-2">
-                            <button 
-                              onClick={() => handleViewUser(user.id)}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                            </button>
-                            <button
-                              onClick={() => handleEditUser(user)}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleUserStatus(user)}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              {user.isDisabled ? 
-                                <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
-                                <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                              }
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteUser(user)}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-sm">{user.phone}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
+                        user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                        user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.status === 'active' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                          user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
+                        }`} />
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(user.joinDate).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          onClick={() => handleViewUser(user.id)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </button>
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleUserStatus(user)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                          {user.isDisabled ? 
+                            <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
+                            <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                          }
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteUser(user)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
             </>
           )}
 
@@ -1125,61 +1131,61 @@ const AdminDashboard = () => {
 
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
                     {filteredOrders.map((order) => (
-                      <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-2">
-                            <Hash className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
-                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
-                        <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                          GHS {order.amount.toFixed(2)}
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                          {order.date.toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-2">
-                            <button 
-                              onClick={() => handleUpdateOrderStatus(order)}
+                    <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <Hash className="w-4 h-4 text-gray-400" />
+                          <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
+                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
+                      <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
+                        GHS {order.amount.toFixed(2)}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                        {order.date.toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => handleUpdateOrderStatus(order)}
                               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium hover:underline"
-                            >
+                          >
                               Update
-                            </button>
-                            <button
-                              onClick={() => handleViewOrderDetails(order)}
+                          </button>
+                          <button
+                            onClick={() => handleViewOrderDetails(order)}
                               className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm hover:underline"
-                            >
-                              Details
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          >
+                            Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+              </tbody>
+            </table>
+          </div>
             </>
           )}
         </div>
@@ -1210,14 +1216,19 @@ const AdminDashboard = () => {
         return renderOrders();
       case 'control-center':
       case 'products':
+      case 'bulk-messaging':
+      case 'package-management':
       case 'analytics':
       case 'agents':
+      case 'agent-stores':
       case 'transactions':
       case 'reports':
       case 'settings':
+        // These tabs navigate to separate pages, so show loading while navigating
         return (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />
+            <p className="text-gray-600 dark:text-gray-400">Navigating to {activeTab.replace('-', ' ')}...</p>
           </div>
         );
       default:
@@ -1347,7 +1358,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'} ml-0`}>
         {/* Top Bar */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-20">
+        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
           <div className="flex items-center justify-between px-4 md:px-6 py-4">
             <div className="flex items-center space-x-4">
               <button
@@ -1386,7 +1397,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Page Content */}
-        <div className="p-4 md:p-6">
+        <div className="p-4 md:p-6 pb-20">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />

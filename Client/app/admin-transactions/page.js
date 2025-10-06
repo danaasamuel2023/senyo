@@ -69,7 +69,7 @@ const IconHash = () => (
 );
 
 // Define API base URL - replace with your actual API URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export default function AdminTransactions() {
   const router = useRouter();
@@ -147,7 +147,7 @@ const fetchTransactions = async () => {
     // Convert to URLSearchParams
     const params = new URLSearchParams(queryParams);
 
-    const response = await axios.get(`${API_BASE_URL}/transactions?${params}`, {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/transactions?${params}`, {
       headers: {
         'x-auth-token': authToken
       }
@@ -215,7 +215,7 @@ const fetchTransactions = async () => {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/transactions/${id}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/transactions/${id}`, {
         headers: {
           'x-auth-token': authToken
         }
@@ -247,7 +247,7 @@ const fetchTransactions = async () => {
       }
 
       await axios.put(
-        `${API_BASE_URL}/transactions/${statusUpdateData.id}/update-status`,
+        `${API_BASE_URL}/api/admin/transactions/${statusUpdateData.id}/update-status`,
         {
           status: statusUpdateData.status,
           adminNotes: statusUpdateData.adminNotes
@@ -354,7 +354,7 @@ const fetchTransactions = async () => {
       });
 
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/transactions?${params}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/transactions?${params}`, {
         headers: {
           'x-auth-token': authToken
         }

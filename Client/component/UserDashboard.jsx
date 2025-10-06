@@ -1,25 +1,167 @@
-'use client'
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  CreditCard, Package, Database, DollarSign, TrendingUp, Calendar, X, 
-  AlertCircle, PlusCircle, User, BarChart2, ChevronDown, ChevronUp, 
-  Clock, Eye, Globe, Zap, Activity, Sparkles, ArrowUpRight, Star, 
-  Target, Flame, Award, Shield, Info, Timer, CheckCircle, Wifi,
-  Smartphone, Signal, ArrowRight, Bell, Settings, LogOut, RefreshCw,
-  TrendingDown, Loader2, ChevronRight, Layers, Cpu, Server
-} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { AnimatedCounter, CurrencyCounter } from './Animation';
-import DailySalesChart from '@/app/week/page';
-import PullToRefresh from './PullToRefresh';
+import { useToast } from './ToastNotification';
+import { 
+  CreditCard, Package, Database, DollarSign, TrendingUp, X, 
+  AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
+  Activity, Sparkles, ArrowUpRight, Star, Award, Shield, Info, 
+  Timer, Wifi, Signal, Bell, Settings, LogOut, RefreshCw,
+  Loader2, ChevronRight, Cpu, MessageCircle, Home, Menu,
+  Rocket, Globe2, Layers3, ArrowUp, Users, Target, Send,
+  ChevronDown, ChevronUp, Globe, Flame, CheckCircle, Smartphone,
+  ArrowRight, TrendingDown, Layers, Server, Calendar
+} from 'lucide-react';
 
-// Constants
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+// Animation Components
+const AnimatedCounter = ({ value, duration = 1000 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value) || 0;
+    if (!end) {
+      setCount(0);
+      return;
+    }
+    const increment = Math.ceil(end / (duration / 16));
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+  
+  return <span>{count}</span>;
+};
+
+const CurrencyCounter = ({ value, duration = 1500 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value) || 0;
+    if (!end) {
+      setCount(0);
+      return;
+    }
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+  
+  return <span>₵{count.toFixed(2)}</span>;
+};
+
+// Pull to Refresh Component
+const PullToRefresh = ({ onRefresh, children }) => {
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleTouchStart = useCallback((e) => {
+    if (window.scrollY === 0) {
+      setIsPulling(true);
+    }
+  }, []);
+  
+  const handleTouchMove = useCallback((e) => {
+    if (isPulling && e.touches[0]) {
+      const distance = e.touches[0].clientY;
+      setPullDistance(Math.min(distance, 100));
+    }
+  }, [isPulling]);
+  
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance > 60) {
+      setIsRefreshing(true);
+      await onRefresh();
+      setIsRefreshing(false);
+    }
+    setPullDistance(0);
+    setIsPulling(false);
+  }, [pullDistance, onRefresh]);
+  
+  return (
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative"
+    >
+      {(isPulling || isRefreshing) && (
+        <div className="absolute top-0 left-0 right-0 flex justify-center py-2 transition-all z-50"
+          style={{ transform: `translateY(${pullDistance}px)` }}>
+          <RefreshCw className={`w-5 h-5 text-[#FFCC08] ${isRefreshing ? 'animate-spin' : ''}`} />
+        </div>
+      )}
+      <div style={{ transform: isPulling ? `translateY(${pullDistance}px)` : 'none' }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// WhatsApp Floating Button - Enhanced for mobile
+const WhatsAppButton = () => {
+  const phoneNumber = "233256702995";
+  const message = "Hello, I need help with my data order";
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const openWhatsApp = () => {
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  return (
+    <div className="fixed bottom-20 right-3 sm:bottom-8 sm:right-8" style={{ zIndex: 9999 }}>
+      <div className={`absolute bottom-full mb-2 right-0 transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} pointer-events-none`}>
+        <div className="bg-[#25D366] text-white text-xs px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl">
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">24/7 Support</span>
+          </div>
+        </div>
+      </div>
+      
+      <button
+        onClick={openWhatsApp}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="group relative"
+      >
+        <div className="relative w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#25D366] to-green-600 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center">
+          <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="currentColor" />
+        </div>
+      </button>
+    </div>
+  );
+};
+
+// API Configuration - Dynamic based on environment
+const getApiEndpoint = (path) => {
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  return `${baseUrl}${path}`;
+};
+
 const API_ENDPOINTS = {
   DASHBOARD: '/api/v1/data/user-dashboard/',
   REFRESH: '/api/v1/auth/refresh-token'
 };
 
+// Network Configuration
 const NETWORKS = [
   { 
     id: 'mtn', 
@@ -28,49 +170,53 @@ const NETWORKS = [
     tagline: 'Everywhere you go',
     gradient: 'from-[#FFCC08] to-yellow-500',
     bgGradient: 'from-[#FFCC08]/20 to-yellow-500/20',
-    logoSvg: (
+    marketShare: '78%',
+    route: '/mtnup2u',
+    logo: (
       <svg viewBox="0 0 100 60" className="w-full h-full">
-        <ellipse cx="50" cy="30" rx="45" ry="25" fill="#FFCC08"/>
-        <text x="50" y="38" textAnchor="middle" className="fill-black font-bold text-2xl">MTN</text>
+        <ellipse cx="50" cy="30" rx="45" ry="25" fill="#000000"/>
+        <text x="50" y="38" textAnchor="middle" className="fill-[#FFCC08] font-bold text-2xl">MTN</text>
       </svg>
-    ),
-    color: 'yellow'
+    )
   },
   { 
     id: 'airteltigo', 
-    name: 'AT', 
+    name: 'AT',
     fullName: 'AT Ghana',
     tagline: 'Life is Simple',
-    gradient: 'from-red-500 to-blue-600',
+    gradient: 'from-red-500 via-red-600 to-blue-600',
     bgGradient: 'from-red-500/20 to-blue-600/20',
-    logoSvg: (
+    badge: 'New AT',
+    route: '/at-ishare',
+    logo: (
       <svg viewBox="0 0 100 60" className="w-full h-full">
-        <circle cx="30" cy="30" r="25" fill="#ED1C24"/>
-        <circle cx="70" cy="30" r="25" fill="#0066CC"/>
-        <text x="50" y="38" textAnchor="middle" className="fill-white font-bold text-2xl">AT</text>
+        <circle cx="30" cy="30" r="20" fill="#ED1C24" opacity="0.9"/>
+        <circle cx="70" cy="30" r="20" fill="#0066CC" opacity="0.9"/>
+        <text x="50" y="38" textAnchor="middle" className="fill-white font-bold text-2xl stroke-black" strokeWidth="1">AT</text>
       </svg>
-    ),
-    color: 'red-blue'
+    )
   },
   { 
     id: 'telecel', 
-    name: 'Telecel', 
+    name: 'Telecel',
     fullName: 'Telecel Ghana',
     tagline: 'Total communications',
-    gradient: 'from-blue-600 to-blue-800',
-    bgGradient: 'from-blue-600/20 to-blue-800/20',
-    logoSvg: (
+    gradient: 'from-red-600 to-red-700',
+    bgGradient: 'from-red-600/20 to-red-700/20',
+    badge: 'Ex-Vodafone',
+    route: '/TELECEL',
+    logo: (
       <svg viewBox="0 0 120 60" className="w-full h-full">
-        <path d="M20,30 L40,10 L60,30 L80,10 L100,30" stroke="#0052CC" strokeWidth="4" fill="none"/>
-        <text x="60" y="48" textAnchor="middle" className="fill-blue-600 font-bold text-lg">Telecel</text>
+        <path d="M20,35 L35,15 L50,35 L65,15 L80,35 L95,15" stroke="#DC2626" strokeWidth="4" fill="none" strokeLinecap="round"/>
+        <text x="60" y="50" textAnchor="middle" className="fill-red-600 font-bold text-lg">Telecel</text>
       </svg>
-    ),
-    color: 'blue'
+    )
   }
 ];
 
+// Quick Actions Configuration
 const QUICK_ACTIONS = [
-  { icon: Package, label: 'New Order', path: '/datamart', gradient: 'from-[#FFCC08] to-yellow-600' },
+  { icon: Package, label: 'Store', path: '/store', gradient: 'from-[#FFCC08] to-yellow-600' },
   { icon: BarChart2, label: 'Analytics', path: '/reports', gradient: 'from-gray-700 to-gray-900' },
   { icon: Clock, label: 'History', path: '/orders', gradient: 'from-yellow-600 to-yellow-700' },
   { icon: CreditCard, label: 'Top Up', path: '/topup', gradient: 'from-black to-gray-800' },
@@ -81,12 +227,20 @@ const QUICK_ACTIONS = [
 
 const DashboardPage = () => {
   const router = useRouter();
+  const { success, error: showError, info } = useToast();
   
   // State Management
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
   const [error, setError] = useState(null);
+  const [showNotice, setShowNotice] = useState(true);
+  const [animateStats, setAnimateStats] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+  const [showSalesChart, setShowSalesChart] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState('7d');
+  
+  // API Data State
   const [stats, setStats] = useState({
     balance: 0,
     todayOrders: 0,
@@ -96,12 +250,6 @@ const DashboardPage = () => {
     weeklyTrend: 0,
     monthlyGrowth: 0
   });
-  
-  const [animateStats, setAnimateStats] = useState(false);
-  const [showSalesChart, setShowSalesChart] = useState(false);
-  const [salesPeriod, setSalesPeriod] = useState('7d');
-  const [showNotice, setShowNotice] = useState(true);
-  const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   // Memoized Values
   const greeting = useMemo(() => {
@@ -112,6 +260,15 @@ const DashboardPage = () => {
   }, []);
 
   // Utility Functions
+  const formatCurrency = useCallback((value) => {
+    return new Intl.NumberFormat('en-GH', {
+      style: 'currency',
+      currency: 'GHS',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value || 0).replace('GHS', '₵');
+  }, []);
+
   const formatDataCapacity = useCallback((capacity) => {
     if (!capacity) return '0';
     if (capacity >= 1000) {
@@ -120,36 +277,36 @@ const DashboardPage = () => {
     return `${capacity}`;
   }, []);
 
-  const formatCurrency = useCallback((value) => {
-    return new Intl.NumberFormat('en-GH', {
-      style: 'currency',
-      currency: 'GHS',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value || 0);
-  }, []);
-
   // Navigation Functions
   const navigationHandlers = useMemo(() => ({
-    orders: () => router.push('/orders'),
-    myOrders: () => router.push('/myorders'),
-    topup: () => router.push('/topup'),
-    registerFriend: () => router.push('/registerFriend'),
-    verificationServices: () => router.push('/verification-services'),
-    network: (network) => {
-      const routes = {
-        mtn: '/mtnup2u',
-        airteltigo: '/at-ishare',
-        telecel: '/TELECEL'
-      };
-      router.push(routes[network] || '/');
+    orders: () => {
+      router.push('/orders');
+    },
+    myOrders: () => {
+      router.push('/myorders');
+    },
+    topup: () => {
+      router.push('/topup');
+    },
+    registerFriend: () => {
+      router.push('/registerFriend');
+    },
+    verificationServices: () => {
+      router.push('/verification-services');
+    },
+    network: (networkId) => {
+      if (!networkId) return;
+      const selectedNet = NETWORKS.find(n => n.id === networkId);
+      if (selectedNet) {
+        router.push(selectedNet.route);
+      }
     }
   }), [router]);
 
   // Enhanced API call with retry logic
   const fetchDashboardData = useCallback(async (userId, retryCount = 0) => {
     const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000 * Math.pow(2, retryCount); // Exponential backoff
+    const RETRY_DELAY = 1000 * Math.pow(2, retryCount);
 
     try {
       setError(null);
@@ -167,15 +324,15 @@ const DashboardPage = () => {
       }
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.DASHBOARD}${userId}`, {
+      const response = await fetch(getApiEndpoint(`${API_ENDPOINTS.DASHBOARD}${userId}`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-Request-ID': crypto.randomUUID?.() || Date.now().toString()
+          'X-Request-ID': Date.now().toString()
         },
         signal: controller.signal
       });
@@ -185,6 +342,11 @@ const DashboardPage = () => {
       if (!response.ok) {
         if (response.status === 401) {
           handleAuthenticationError();
+          return;
+        }
+        
+        if (response.status === 429) {
+          setError('Too many requests. Please wait a moment and try again.');
           return;
         }
         
@@ -213,7 +375,6 @@ const DashboardPage = () => {
           recentTransactions: (todayOrders.orders || []).map(order => ({
             id: order._id,
             customer: order.phoneNumber,
-            method: order.method,
             amount: order.price,
             gb: formatDataCapacity(order.capacity),
             time: new Date(order.createdAt).toLocaleTimeString('en-US', {
@@ -222,6 +383,7 @@ const DashboardPage = () => {
               hour12: true
             }),
             network: order.network,
+            method: order.method || 'Direct',
             status: order.status || 'completed'
           }))
         });
@@ -248,9 +410,13 @@ const DashboardPage = () => {
         );
       }
       
-      // Set default values
       setStats(prev => ({ ...prev }));
       setAnimateStats(true);
+      
+      // Show success toast only on initial load
+      if (retryCount === 0) {
+        info('Welcome back! Dashboard loaded successfully.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -267,38 +433,64 @@ const DashboardPage = () => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    if (userData.id) {
-      await fetchDashboardData(userData.id);
+    if (userData.id || userData._id) {
+      try {
+        await fetchDashboardData(userData.id || userData._id);
+        success('Dashboard refreshed successfully!');
+      } catch (error) {
+        showError('Failed to refresh dashboard. Please try again.');
+      }
+    } else {
+      showError('User data not found. Please sign in again.');
     }
     setRefreshing(false);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, success, showError]);
 
   const dismissNotice = useCallback(() => {
     setShowNotice(false);
     localStorage.setItem('dataDeliveryNoticeDismissed', 'true');
   }, []);
 
+  // Auto-dismiss error messages after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   // Effects
   useEffect(() => {
     const initializeDashboard = async () => {
       const userDataString = localStorage.getItem('userData');
+      
       if (!userDataString) {
-        router.push('/SignUp');
+        setError('Please login to access your dashboard');
+        router.push('/SignIn');
         return;
       }
 
       try {
         const userData = JSON.parse(userDataString);
         
-        if (!userData?.id) {
-          throw new Error('Invalid user data');
+        if (!userData?.id && !userData?._id) {
+          setError('Invalid user data. Please login again.');
+          localStorage.removeItem('userData');
+          localStorage.removeItem('authToken');
+          router.push('/SignIn');
+          return;
         }
         
         setUserName(userData.name || 'User');
-        await fetchDashboardData(userData.id);
+        await fetchDashboardData(userData.id || userData._id);
       } catch (err) {
         console.error('Initialization error:', err);
-        handleAuthenticationError();
+        setError('Failed to load user data. Please login again.');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('authToken');
+        router.push('/SignIn');
       }
     };
 
@@ -312,35 +504,34 @@ const DashboardPage = () => {
     // Auto-refresh every 5 minutes
     const refreshInterval = setInterval(() => {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (userData.id) {
-        fetchDashboardData(userData.id);
+      if (userData.id || userData._id) {
+        fetchDashboardData(userData.id || userData._id);
       }
     }, 5 * 60 * 1000);
 
     return () => clearInterval(refreshInterval);
-  }, [router, fetchDashboardData, handleAuthenticationError]);
+  }, [router, fetchDashboardData]);
 
-  // Loading State with MTN colors
+  // Loading State
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
         <div className="text-center">
           <div className="relative w-24 h-24 mx-auto mb-6">
             <div className="absolute inset-0 rounded-full border-4 border-[#FFCC08]/20"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FFCC08] border-r-yellow-500 animate-spin"></div>
-            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 animate-pulse flex items-center justify-center">
-              <Zap className="w-6 h-6 text-black animate-bounce" strokeWidth={2.5} />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FFCC08] animate-spin"></div>
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+              <Zap className="w-6 h-6 text-black" strokeWidth={2.5} />
             </div>
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-2xl font-bold text-[#FFCC08] animate-pulse">
+            <h1 className="text-2xl font-bold text-[#FFCC08]">
               UNLIMITEDDATA GH
             </h1>
             <div className="flex items-center justify-center space-x-2 text-yellow-400">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm font-medium">Initializing dashboard...</span>
-              <Sparkles className="w-4 h-4 animate-pulse" />
             </div>
           </div>
         </div>
@@ -350,626 +541,390 @@ const DashboardPage = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden">
-        {/* Premium Animated Background with MTN Yellow */}
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
+        {/* Premium Background - Static for better performance */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/10 to-yellow-600/10 blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/10 to-black blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-transparent blur-3xl"></div>
+          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-yellow-600/5 blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/5 to-black blur-3xl"></div>
         </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
         
-        {/* Error Notification - MTN Enhanced */}
-        {error && (
-          <div className="mb-4 animate-slideInDown">
-            <div className="bg-yellow-950/30 backdrop-blur-xl border border-[#FFCC08]/30 rounded-2xl p-4 shadow-2xl">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-lg bg-[#FFCC08]/20 flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-[#FFCC08]" />
-                  </div>
-                </div>
+        {/* WhatsApp Button - Always Visible */}
+        <WhatsAppButton />
+        
+        {/* Main Content */}
+        <div className="relative z-10 px-3 sm:px-4 pt-14 sm:pt-16 pb-3 sm:pb-4 max-w-7xl mx-auto">
+          
+          {/* Error Alert - Fixed Position Above Navbar */}
+          {error && (
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-950/30 backdrop-blur-xl rounded-xl p-3 shadow-lg border border-yellow-500/20 max-w-md w-full mx-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-4 h-4 text-[#FFCC08] flex-shrink-0 mt-0.5" />
                 <div className="flex-grow">
-                  <p className="text-sm font-semibold text-yellow-300">Connection Notice</p>
-                  <p className="text-sm text-yellow-200/80 mt-1">{error}</p>
+                  <p className="text-xs text-yellow-200">{error}</p>
                   <button
                     onClick={handleRefresh}
-                    className="mt-3 inline-flex items-center space-x-2 text-sm text-[#FFCC08] hover:text-yellow-300 font-medium transition-colors"
+                    className="mt-2 text-xs text-[#FFCC08] font-medium flex items-center space-x-1"
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-3 h-3" />
                     <span>Try Again</span>
                   </button>
                 </div>
-                <button
-                  onClick={() => setError(null)}
-                  className="flex-shrink-0 text-yellow-400/60 hover:text-yellow-300 transition-colors"
-                >
-                  <X className="w-5 h-5" />
+                <button onClick={() => setError(null)} className="text-yellow-400/60">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Data Delivery Notice - MTN Enhanced Dark Theme */}
-        {showNotice && (
-          <div className="mb-6 animate-slideInDown">
-            <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-1 shadow-2xl">
-              <div className="bg-gray-950 rounded-xl p-5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFCC08]/20 to-transparent"></div>
-                <div className="relative z-10">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-xl bg-[#FFCC08]/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                        <Timer className="w-6 h-6 text-[#FFCC08]" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-grow">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-3">
-                          <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                            <Info className="w-5 h-5 text-[#FFCC08]" />
-                            <span>Service Information</span>
-                          </h3>
-                          
-                          <div className="space-y-3">
-                            <p className="text-gray-300 text-sm leading-relaxed">
-                              Important: <span className="font-semibold text-[#FFCC08]">Data bundles are not delivered instantly</span>
-                            </p>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-[#FFCC08]/20">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <Timer className="w-5 h-5 text-[#FFCC08]" />
-                                  <span className="text-sm font-semibold text-gray-100">Delivery Time</span>
-                                </div>
-                                <p className="text-[#FFCC08] text-lg font-bold">1min-5min</p>
-                                <p className="text-gray-400 text-xs mt-1">Network dependent</p>
-                              </div>
-                              
-                              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-[#FFCC08]/20">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <Clock className="w-5 h-5 text-[#FFCC08]" />
-                                  <span className="text-sm font-semibold text-gray-100">Business Hours</span>
-                                </div>
-                                <p className="text-[#FFCC08] text-lg font-bold">7 AM - 9 PM</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-gray-300 text-xs">• Same day delivery</p>
-                                  <p className="text-gray-400 text-xs">• 7 days service</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={dismissNotice}
-                          className="ml-4 text-gray-500 hover:text-[#FFCC08] transition-colors"
-                          aria-label="Dismiss notice"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+          )}
+          
+          {/* Service Notice - Fixed Position Above Navbar */}
+          {showNotice && (
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-[#FFCC08]/10 backdrop-blur-xl rounded-xl p-3 shadow-lg border border-[#FFCC08]/20 max-w-md w-full mx-4">
+              <div className="flex items-center space-x-3">
+                <Timer className="w-5 h-5 text-[#FFCC08] flex-shrink-0" />
+                <div className="flex-grow">
+                  <p className="text-xs text-[#FFCC08] font-bold">Delivery: 1-5 mins</p>
+                  <p className="text-xs text-gray-400">Service: 7AM - 9PM daily</p>
                 </div>
+                <button onClick={dismissNotice} className="text-gray-500">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Hero Section - MTN Premium Dark */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl">
-            <div className="bg-gray-950 rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFCC08]/30 via-transparent to-black/50"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#FFCC08]/10 blur-3xl"></div>
-              
-              <div className="relative z-10">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="mb-4 lg:mb-0">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-2xl">
-                        <Cpu className="w-7 h-7 text-black" strokeWidth={2.5} />
-                      </div>
-                      <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">UNLIMITEDDATA GH</h1>
-                        <p className="text-[#FFCC08] text-sm font-medium">Control Center</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-bold text-white">
-                        {greeting}, {userName}!
-                      </h2>
-                      <p className="text-sm text-gray-400">
-                        Your hustle command center is ready
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button 
-                      onClick={navigationHandlers.topup}
-                      className="group bg-[#FFCC08] hover:bg-yellow-500 text-black font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-                    >
-                      <PlusCircle className="w-5 h-5" />
-                      <span>Top Up</span>
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    
-                    <button 
-                      onClick={handleRefresh}
-                      disabled={refreshing}
-                      className="group bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-5 rounded-xl border border-gray-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-                    >
-                      <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-                      <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid - Enhanced Mobile Layout */}
-        <div className="mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {/* Balance Card - MTN Premium - Full width on mobile */}
-            <div className="sm:col-span-2 lg:col-span-2 bg-gradient-to-r from-[#FFCC08] to-yellow-600 rounded-2xl p-[2px] shadow-2xl hover:shadow-yellow-500/50 transition-shadow">
-              <div className="bg-gray-950 rounded-2xl p-5 sm:p-6 h-full">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                  <div className="flex items-start sm:items-center space-x-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-lg flex-shrink-0">
-                      <DollarSign className="w-6 h-6 sm:w-7 sm:h-7 text-black" strokeWidth={2.5} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-gray-400 text-sm sm:text-base font-medium">Account Balance</p>
-                      <p className="text-gray-500 text-xs">Available funds</p>
-                      <div className="text-2xl sm:text-3xl font-bold text-white mt-2">
-                        {animateStats ? 
-                          <CurrencyCounter value={stats.balance} duration={1500} /> : 
-                          formatCurrency(0)
-                        }
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={navigationHandlers.topup}
-                    className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2.5 px-5 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg active:scale-95"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Add Funds</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Orders Today - Compact Mobile Card */}
-            <div className="bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                  <Package className="w-5 h-5 sm:w-6 sm:h-6 text-black" strokeWidth={2} />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-white">
-                    {animateStats ? 
-                      <AnimatedCounter value={stats.todayOrders} duration={1200} /> : 
-                      "0"
-                    }
-                  </div>
-                </div>
-              </div>
+          {/* Hero Section - Mobile Compact */}
+          <div className="mb-4 bg-gradient-to-r from-[#FFCC08]/20 to-yellow-600/10 backdrop-blur-xl rounded-2xl p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-100 font-medium text-sm">Orders Today</p>
-                <p className="text-gray-500 text-xs">Active transactions</p>
-              </div>
-            </div>
-
-            {/* Revenue Today - Compact Mobile Card */}
-            <div className="bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
-                </div>
-                <div className="text-right">
-                  <div className="text-xl sm:text-2xl font-bold text-white">
-                    {animateStats ? 
-                      <CurrencyCounter value={stats.todayRevenue} duration={1500} /> : 
-                      formatCurrency(0)
-                    }
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-100 font-medium text-sm">Revenue Today</p>
-                <p className="text-gray-500 text-xs">Total earnings</p>
-              </div>
-            </div>
-
-            {/* Data Sold Today - Compact Mobile Card */}
-            <div className="sm:col-span-2 lg:col-span-1 bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow">
-                  <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
-                </div>
-                <div className="text-right">
-                  <div className="text-xl sm:text-2xl font-bold text-white">
-                    {animateStats ? 
-                      <AnimatedCounter value={stats.todayGbSold} duration={1200} /> : 
-                      "0"
-                    }
-                    <span className="text-sm text-gray-400 ml-1">GB</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-100 font-medium text-sm">Data Sold Today</p>
-                <p className="text-gray-500 text-xs">Total capacity</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Become Agent Section */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-2xl p-[2px] shadow-2xl">
-            <div className="bg-gray-950 rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-600/30 via-transparent to-black/50"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-green-600/10 blur-3xl"></div>
-              
-              <div className="relative z-10">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="mb-4 lg:mb-0">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-2xl">
-                        <Award className="w-7 h-7 text-white" strokeWidth={2.5} />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Become an Agent</h2>
-                        <p className="text-green-400 text-sm font-medium">Earn commissions & build your business</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-gray-300 text-sm leading-relaxed">
-                        Join our network of successful agents and start earning commissions on every sale. 
-                        Get your own branded store, customer support, and monthly payments.
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-400">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 text-green-400" />
-                          <span>5-10% Commission</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Shield className="w-4 h-4 text-green-400" />
-                          <span>Full Support</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <TrendingUp className="w-4 h-4 text-green-400" />
-                          <span>Performance Bonus</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button 
-                      onClick={() => router.push('/agent-signup')}
-                      className="group bg-green-600 hover:bg-green-500 text-white font-semibold py-3 px-6 rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-                    >
-                      <Award className="w-5 h-5" />
-                      <span>Apply Now</span>
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    
-                    <button 
-                      onClick={() => router.push('/agent-store/demo')}
-                      className="group bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-5 rounded-xl border border-gray-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-                    >
-                      <Eye className="w-5 h-5" />
-                      <span>View Demo</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Network Selection - MTN Premium with Brand Colors */}
-        <div className="mb-6">
-          <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-800">
-            <div className="flex items-center space-x-3 mb-5">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                <Signal className="w-5 h-5 text-black" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Quick Order</h2>
-                <p className="text-gray-500 text-xs">Select network provider</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4">
-              {/* MTN - Yellow Brand Colors */}
-              <button 
-                onClick={() => navigationHandlers.network('mtn')}
-                onMouseEnter={() => setSelectedNetwork('mtn')}
-                onMouseLeave={() => setSelectedNetwork(null)}
-                className="group relative bg-gradient-to-br from-[#FFCC08] to-yellow-500 hover:from-yellow-500 hover:to-[#FFCC08] rounded-xl p-4 transition-all duration-500 transform hover:scale-105 shadow-xl border-2 border-yellow-600 hover:border-[#FFCC08] overflow-hidden"
-              >
-                {/* Animated Background Pattern */}
-                <div className="absolute inset-0 bg-gradient-to-t from-yellow-600/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                {/* Pulse Animation on Hover */}
-                {selectedNetwork === 'mtn' && (
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                )}
-                
-                <div className="relative z-10 text-center space-y-3">
-                  {/* Logo Container */}
-                  <div className="w-16 h-16 mx-auto rounded-xl bg-white/90 backdrop-blur-sm p-2 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-yellow-800/50 group-hover:rotate-3">
-                    <div className="w-full h-full flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110">
-                      <svg viewBox="0 0 100 60" className="w-full h-full">
-                        <ellipse cx="50" cy="30" rx="45" ry="25" fill="#000000"/>
-                        <text x="50" y="38" textAnchor="middle" className="fill-[#FFCC08] font-bold text-2xl">MTN</text>
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Network Info */}
-                  <div className="space-y-1">
-                    <p className="text-black font-bold text-sm group-hover:text-white transition-colors duration-300">
-                      MTN Ghana
-                    </p>
-                    <p className="text-yellow-800 text-xs group-hover:text-yellow-100 transition-colors">
-                      Everywhere you go
-                    </p>
-                    
-                    {/* Call-to-Action */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 mt-2">
-                      <span className="inline-flex items-center space-x-1 text-black group-hover:text-white text-xs font-semibold">
-                        <span>Order Now</span>
-                        <ChevronRight className="w-3 h-3 animate-pulse" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Popular Badge */}
-                <div className="absolute top-2 right-2 bg-black text-[#FFCC08] text-xs px-2 py-1 rounded-full font-semibold shadow-lg animate-pulse">
-                  78% Market
-                </div>
-              </button>
-
-              {/* AT Ghana (AirtelTigo) - Red & Blue Brand Colors */}
-              <button 
-                onClick={() => navigationHandlers.network('airteltigo')}
-                onMouseEnter={() => setSelectedNetwork('airteltigo')}
-                onMouseLeave={() => setSelectedNetwork(null)}
-                className="group relative bg-gradient-to-br from-red-500 via-red-600 to-blue-600 hover:from-red-600 hover:via-red-700 hover:to-blue-700 rounded-xl p-4 transition-all duration-500 transform hover:scale-105 shadow-xl border-2 border-red-600 hover:border-blue-500 overflow-hidden"
-              >
-                {/* Animated Background Pattern */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-700/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                {/* Pulse Animation on Hover */}
-                {selectedNetwork === 'airteltigo' && (
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                )}
-                
-                <div className="relative z-10 text-center space-y-3">
-                  {/* Logo Container */}
-                  <div className="w-16 h-16 mx-auto rounded-xl bg-white/90 backdrop-blur-sm p-2 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-blue-500/50 group-hover:rotate-3">
-                    <div className="w-full h-full flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110">
-                      <svg viewBox="0 0 100 60" className="w-full h-full">
-                        <circle cx="30" cy="30" r="20" fill="#ED1C24" opacity="0.9"/>
-                        <circle cx="70" cy="30" r="20" fill="#0066CC" opacity="0.9"/>
-                        <text x="50" y="38" textAnchor="middle" className="fill-white font-bold text-2xl stroke-black" strokeWidth="1">AT</text>
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Network Info */}
-                  <div className="space-y-1">
-                    <p className="text-white font-bold text-sm group-hover:text-yellow-300 transition-colors duration-300">
-                      AT Ghana
-                    </p>
-                    <p className="text-red-100 text-xs group-hover:text-white transition-colors">
-                      Life is Simple
-                    </p>
-                    
-                    {/* Call-to-Action */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 mt-2">
-                      <span className="inline-flex items-center space-x-1 text-white text-xs font-semibold">
-                        <span>Order Now</span>
-                        <ChevronRight className="w-3 h-3 animate-pulse" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Rebranded Badge */}
-                <div className="absolute top-2 right-2 bg-white/90 text-red-600 text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
-                  New AT
-                </div>
-              </button>
-
-              {/* Telecel - Red Brand Colors (Former Vodafone) */}
-              <button 
-                onClick={() => navigationHandlers.network('telecel')}
-                onMouseEnter={() => setSelectedNetwork('telecel')}
-                onMouseLeave={() => setSelectedNetwork(null)}
-                className="group relative bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl p-4 transition-all duration-500 transform hover:scale-105 shadow-xl border-2 border-red-700 hover:border-red-500 overflow-hidden"
-              >
-                {/* Animated Background Pattern */}
-                <div className="absolute inset-0 bg-gradient-to-t from-red-800/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                {/* Pulse Animation on Hover */}
-                {selectedNetwork === 'telecel' && (
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                )}
-                
-                <div className="relative z-10 text-center space-y-3">
-                  {/* Logo Container */}
-                  <div className="w-16 h-16 mx-auto rounded-xl bg-white/90 backdrop-blur-sm p-2 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-red-500/50 group-hover:rotate-3">
-                    <div className="w-full h-full flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110">
-                      <svg viewBox="0 0 120 60" className="w-full h-full">
-                        <path d="M20,35 L35,15 L50,35 L65,15 L80,35 L95,15" stroke="#DC2626" strokeWidth="4" fill="none" strokeLinecap="round"/>
-                        <text x="60" y="50" textAnchor="middle" className="fill-red-600 font-bold text-lg">Telecel</text>
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Network Info */}
-                  <div className="space-y-1">
-                    <p className="text-white font-bold text-sm group-hover:text-yellow-300 transition-colors duration-300">
-                      Telecel Ghana
-                    </p>
-                    <p className="text-red-100 text-xs group-hover:text-white transition-colors">
-                      Total communications
-                    </p>
-                    
-                    {/* Call-to-Action */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 mt-2">
-                      <span className="inline-flex items-center space-x-1 text-white text-xs font-semibold">
-                        <span>Order Now</span>
-                        <ChevronRight className="w-3 h-3 animate-pulse" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Ex-Vodafone Badge */}
-                <div className="absolute top-2 right-2 bg-white/90 text-red-600 text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
-                  Ex-Vodafone
-                </div>
-              </button>
-            </div>
-            
-            {/* Network Stats Bar */}
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4 text-[#FFCC08] animate-pulse" />
-                  <span className="text-xs text-gray-400">Lightning fast delivery</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Shield className="w-4 h-4 text-green-500" />
-                  <span className="text-xs text-gray-400">100% Secure & Trusted</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-[#FFCC08]" />
-                  <span className="text-xs text-gray-400">24/7 Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity - MTN Premium Dark */}
-        <div className="mb-6">
-          <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
-            <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 via-gray-850 to-gray-900">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                    <Activity className="w-5 h-5 text-black" strokeWidth={2.5} />
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+                    <Cpu className="w-5 h-5 text-black" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Recent Activity</h2>
-                    <p className="text-gray-500 text-xs">Latest transactions</p>
+                    <h1 className="text-base sm:text-lg font-bold text-white">UNLIMITEDDATA GH</h1>
+                    <p className="text-xs text-[#FFCC08]">{greeting}, {userName}!</p>
                   </div>
                 </div>
-                
+              </div>
+              <div className="flex space-x-2">
                 <button 
-                  onClick={navigationHandlers.orders}
-                  className="group flex items-center space-x-2 bg-[#FFCC08] hover:bg-yellow-500 text-black font-medium py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  onClick={() => router.push('/store')}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs font-bold py-2 px-3 rounded-xl transition-colors flex items-center space-x-1"
                 >
-                  <span className="text-sm font-semibold">View All</span>
-                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  <Package className="w-3 h-3" />
+                  <span>Store</span>
+                </button>
+                <button 
+                  onClick={() => router.push('/agent/dashboard')}
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors flex items-center space-x-1"
+                >
+                  <Award className="w-3 h-3" />
+                  <span>Agent</span>
+                </button>
+                <button 
+                  onClick={navigationHandlers.topup}
+                  className="bg-[#FFCC08] text-black text-xs font-bold py-2 px-3 rounded-xl"
+                >
+                  Top Up
+                </button>
+                <button 
+                  onClick={handleRefresh}
+                  className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center"
+                >
+                  <RefreshCw className={`w-4 h-4 text-[#FFCC08] ${refreshing ? 'animate-spin' : ''}`} />
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Stats Grid - Circular Cards */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* Balance Card - Full Width */}
+            <div className="col-span-2 bg-gradient-to-br from-[#FFCC08]/20 to-yellow-600/10 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow-lg">
+                    <DollarSign className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Balance</p>
+                    <div className="text-xl sm:text-2xl font-bold text-white">
+                      {animateStats ? 
+                        <CurrencyCounter value={stats.balance} duration={1500} /> : 
+                        formatCurrency(0)
+                      }
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={navigationHandlers.topup}
+                  className="bg-[#FFCC08] text-black font-bold py-2 px-4 rounded-full text-xs sm:text-sm hover:bg-yellow-500 transition-colors"
+                >
+                  Add Funds
+                </button>
+              </div>
+            </div>
+
+            {/* Circular Stat Cards */}
+            <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
+              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mb-2">
+                <Package className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+              </div>
+              <div className="text-base sm:text-lg font-bold text-white">
+                {animateStats ? <AnimatedCounter value={stats.todayOrders} /> : "0"}
+              </div>
+              <p className="text-xs text-gray-400">Orders</p>
+            </div>
+
+            <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
+              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center mb-2">
+                <TrendingUp className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+              </div>
+              <div className="text-base sm:text-lg font-bold text-white">
+                {animateStats ? <CurrencyCounter value={stats.todayRevenue} /> : "₵0"}
+              </div>
+              <p className="text-xs text-gray-400">Revenue</p>
+            </div>
+
+            <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
+              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-2">
+                <Database className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+              </div>
+              <div className="text-base sm:text-lg font-bold text-white">
+                {animateStats ? <AnimatedCounter value={stats.todayGbSold} /> : "0"} GB
+              </div>
+              <p className="text-xs text-gray-400">Data Sold</p>
+            </div>
+
+            <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
+              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center mb-2">
+                <Activity className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+              </div>
+              <div className="text-base sm:text-lg font-bold text-white">
+                {animateStats ? <AnimatedCounter value={stats.weeklyTrend} /> : "0"}%
+              </div>
+              <p className="text-xs text-gray-400">Growth</p>
+            </div>
+          </div>
+
+          {/* Network Selection - Logo-based Cards */}
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-white mb-3 flex items-center">
+              <Signal className="w-4 h-4 text-[#FFCC08] mr-2" />
+              Select Network
+            </h2>
             
-            <div className="p-6 bg-black/30">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {NETWORKS.map((network) => (
+                <button 
+                  key={network.id}
+                  onClick={() => navigationHandlers.network(network.id)}
+                  onMouseEnter={() => setSelectedNetwork(network.id)}
+                  onMouseLeave={() => setSelectedNetwork(null)}
+                  className="relative bg-gray-800/50 backdrop-blur-xl rounded-2xl p-3 transition-all duration-300 transform hover:scale-105 group"
+                >
+                  <div className="w-14 sm:w-16 h-14 sm:h-16 mx-auto rounded-full bg-white/90 p-1.5 sm:p-2 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    {network.logo}
+                  </div>
+                  
+                  <p className="text-xs text-white font-semibold">{network.name}</p>
+                  <p className="text-xs text-gray-400 hidden sm:block">{network.tagline}</p>
+                  
+                  {(network.marketShare || network.badge) && (
+                    <div className="absolute -top-1 -right-1 bg-[#FFCC08] text-black text-xs px-2 py-0.5 rounded-full font-bold shadow-lg">
+                      {network.marketShare || network.badge}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Become Agent - Mobile Compact */}
+          <div className="mb-4 bg-gradient-to-br from-green-600/20 to-green-800/10 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+                  <Award className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Become an Agent</h3>
+                  <p className="text-xs text-green-400">Earn 5-10% commission</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => router.push('/agent-signup')}
+                className="bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-full text-xs sm:text-sm hover:bg-green-500 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
+          {/* Agent Stores - Mobile Compact */}
+          <div className="mb-4 bg-gradient-to-br from-yellow-600/20 to-yellow-800/10 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <Globe className="w-4 h-4 text-[#FFCC08]" />
+                <h3 className="text-sm font-bold text-white">Agent Stores</h3>
+              </div>
+              <button 
+                onClick={() => router.push('/store')}
+                className="text-[#FFCC08] text-xs font-medium flex items-center space-x-1"
+              >
+                <span>View All</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-gray-800/30 rounded-xl">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+                    <Package className="w-4 h-4 text-black" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-white">Main Store</p>
+                    <p className="text-xs text-gray-400">All products available</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => router.push('/store')}
+                  className="bg-[#FFCC08] text-black text-xs font-bold py-1 px-2 rounded-lg hover:bg-yellow-500 transition-colors"
+                >
+                  Visit
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between p-2 bg-gray-800/30 rounded-xl">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-white">Agent Stores</p>
+                    <p className="text-xs text-gray-400">Personalized stores</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => router.push('/agent-signup')}
+                  className="bg-green-600 text-white text-xs font-bold py-1 px-2 rounded-lg hover:bg-green-500 transition-colors"
+                >
+                  Become Agent
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions - Circular Buttons */}
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-white mb-3">Quick Actions</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {QUICK_ACTIONS.slice(0, 6).map((action, index) => (
+                <button
+                  key={index}
+                  onClick={() => router.push(action.path)}
+                  className="flex flex-col items-center space-y-2 group"
+                >
+                  <div className={`w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg transform transition-all duration-300 group-hover:scale-110 group-active:scale-95`}>
+                    <action.icon className="w-5 sm:w-6 h-5 sm:h-6 text-white" strokeWidth={2} />
+                  </div>
+                  <p className="text-xs text-gray-300 font-medium">{action.label}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity - Mobile Optimized */}
+          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl overflow-hidden">
+            <div className="p-3 sm:p-4 bg-gray-800/50 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-4 h-4 text-[#FFCC08]" />
+                <h2 className="text-sm font-bold text-white">Recent Activity</h2>
+              </div>
+              <button 
+                onClick={navigationHandlers.orders}
+                className="text-[#FFCC08] text-xs font-medium flex items-center space-x-1"
+              >
+                <span>View All</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+            
+            <div className="p-3">
               {stats.recentTransactions.length > 0 ? (
-                <div className="space-y-3">
-                  {stats.recentTransactions.slice(0, 5).map((transaction, index) => (
+                <div className="space-y-2">
+                  {stats.recentTransactions.slice(0, 3).map((transaction) => (
                     <div 
                       key={transaction.id} 
-                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-900 to-gray-850 rounded-xl hover:from-gray-850 hover:to-gray-800 transition-all duration-200 border border-gray-800 hover:border-[#FFCC08]/30"
+                      className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-900/50 rounded-xl"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center shadow">
-                          <Database className="w-5 h-5 text-black" strokeWidth={2} />
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-[#FFCC08]/20 flex items-center justify-center">
+                          <Database className="w-4 sm:w-5 h-4 sm:h-5 text-[#FFCC08]" />
                         </div>
                         <div>
-                          <p className="text-white font-medium text-sm">{transaction.customer}</p>
-                          <p className="text-gray-500 text-xs">{transaction.gb}GB • {transaction.method}</p>
+                          <p className="text-white text-xs sm:text-sm font-medium">{transaction.customer}</p>
+                          <p className="text-gray-400 text-xs">{transaction.gb}GB • {transaction.method}</p>
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <p className="text-white font-bold text-sm">{formatCurrency(transaction.amount)}</p>
-                        <p className="text-gray-500 text-xs">{transaction.time}</p>
+                        <p className="text-white font-bold text-xs sm:text-sm">{formatCurrency(transaction.amount)}</p>
+                        <p className="text-gray-400 text-xs">{transaction.time}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto rounded-xl bg-gray-800 flex items-center justify-center mb-4">
-                    <Database className="w-8 h-8 text-gray-600" />
+                <div className="text-center py-6 sm:py-8">
+                  <div className="w-14 sm:w-16 h-14 sm:h-16 mx-auto rounded-full bg-gray-800 flex items-center justify-center mb-3">
+                    <Database className="w-7 sm:w-8 h-7 sm:h-8 text-gray-600" />
                   </div>
-                  <p className="text-gray-300 text-sm font-medium">No transactions yet</p>
-                  <p className="text-gray-500 text-xs mt-1">Start your hustle journey!</p>
+                  <p className="text-gray-300 text-sm">No transactions yet</p>
+                  <p className="text-gray-500 text-xs mt-1">Start your journey!</p>
                 </div>
               )}
             </div>
           </div>
+
         </div>
 
-        {/* Quick Actions - MTN Premium Dark */}
-        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-          {QUICK_ACTIONS.map((action, index) => (
-            <button
-              key={index}
-              onClick={() => router.push(action.path)}
-              className="group bg-gray-900 hover:bg-gray-850 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 shadow-xl border border-gray-800 hover:border-[#FFCC08]/50 relative overflow-hidden"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-              <div className="relative z-10 text-center space-y-2">
-                <div className={`w-10 h-10 mx-auto rounded-lg bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow group-hover:shadow-lg transition-shadow`}>
-                  <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
-                </div>
-                <p className="text-gray-300 group-hover:text-white font-medium text-xs transition-colors">{action.label}</p>
-              </div>
+        {/* Bottom Navigation - Mobile Only */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl" style={{ zIndex: 50 }}>
+          <div className="grid grid-cols-5 py-2">
+            <button className="flex flex-col items-center py-1.5">
+              <Home className="w-5 h-5 text-[#FFCC08]" />
+              <span className="text-xs text-[#FFCC08] mt-0.5 font-medium">Home</span>
             </button>
-          ))}
+            <button 
+              onClick={() => router.push('/store')}
+              className="flex flex-col items-center py-1.5"
+            >
+              <Package className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Store</span>
+            </button>
+            <button 
+              onClick={() => router.push('/agent/dashboard')}
+              className="flex flex-col items-center py-1.5"
+            >
+              <Award className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Agent</span>
+            </button>
+            <button 
+              onClick={() => router.push('/profile')}
+              className="flex flex-col items-center py-1.5"
+            >
+              <User className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Profile</span>
+            </button>
+            <button className="flex flex-col items-center py-1.5">
+              <Menu className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Menu</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-        {/* Custom Animations */}
-        <style jsx>{`
-          @keyframes slideInDown {
-            from {
-              opacity: 0;
-              transform: translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          
-          .animate-slideInDown {
-            animation: slideInDown 0.5s ease-out;
-          }
-        `}</style>
       </div>
     </PullToRefresh>
   );

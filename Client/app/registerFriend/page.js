@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Lock, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, Lock, UserPlus, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const RegisterFriendForm = () => {
   const [userData, setUserData] = useState(null);
@@ -66,6 +66,25 @@ const RegisterFriendForm = () => {
     }
   };
   
+  // Auto-dismiss messages after 5 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 8000); // Success messages stay longer
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -144,35 +163,67 @@ const RegisterFriendForm = () => {
       </h2>
       
       {!userData ? (
-        <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-4 rounded-md mb-4">
-          <p className="flex items-center">
-            <AlertCircle size={16} className="mr-2" />
-            Please log in to register a friend.
-          </p>
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-4 rounded-md mb-4 shadow-lg border border-yellow-200 dark:border-yellow-700 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <p className="flex items-center">
+              <AlertCircle size={16} className="mr-2" />
+              Please log in to register a friend.
+            </p>
+            <button 
+              onClick={() => setErrorMessage(null)}
+              className="ml-2 text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       ) : userData.walletBalance < 15 ? (
-        <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-4 rounded-md mb-4">
-          <p className="flex items-center">
-            <AlertCircle size={16} className="mr-2" />
-            Insufficient balance. You need at least 15 cedis to register a friend.
-          </p>
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-4 rounded-md mb-4 shadow-lg border border-yellow-200 dark:border-yellow-700 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <p className="flex items-center">
+              <AlertCircle size={16} className="mr-2" />
+              Insufficient balance. You need at least 15 cedis to register a friend.
+            </p>
+            <button 
+              onClick={() => setErrorMessage(null)}
+              className="ml-2 text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       ) : null}
       
       {errorMessage && (
-        <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-md mb-4">
-          <p className="flex items-center">
-            <AlertCircle size={16} className="mr-2" />
-            {errorMessage}
-          </p>
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-md mb-4 shadow-lg border border-red-200 dark:border-red-700 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <p className="flex items-center">
+              <AlertCircle size={16} className="mr-2" />
+              {errorMessage}
+            </p>
+            <button 
+              onClick={() => setErrorMessage(null)}
+              className="ml-2 text-red-600 hover:text-red-800 dark:text-red-300 dark:hover:text-red-100"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
       
       {successMessage && (
-        <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 p-4 rounded-md mb-4">
-          <div className="flex items-center mb-2">
-            <CheckCircle size={18} className="mr-2" />
-            <span className="font-bold text-lg">{successMessage.message}</span>
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 p-4 rounded-md mb-4 shadow-lg border border-green-200 dark:border-green-700 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <CheckCircle size={18} className="mr-2" />
+              <span className="font-bold text-lg">{successMessage.message}</span>
+            </div>
+            <button 
+              onClick={() => setSuccessMessage(null)}
+              className="ml-2 text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-green-100"
+            >
+              <X size={16} />
+            </button>
           </div>
           
           <div className="mt-3 p-3 bg-white dark:bg-gray-700 rounded-md">

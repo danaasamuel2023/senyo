@@ -64,10 +64,10 @@ The UnlimitedData GH Admin Panel is a comprehensive dashboard for managing users
 - `POST /api/orders/bulk-status-update` - Bulk update orders
 
 ### Transaction Management
-- `GET /api/transactions` - Get all transactions
-- `GET /api/transactions/:id` - Get transaction details
-- `GET /api/verify-paystack/:reference` - Verify Paystack payment
-- `PUT /api/transactions/:id/update-status` - Update transaction
+- `GET /api/admin/transactions` - Get all transactions
+- `GET /api/admin/transactions/:id` - Get transaction details
+- `GET /api/admin/verify-paystack/:reference` - Verify Paystack payment
+- `PUT /api/admin/transactions/:id/update-status` - Update transaction
 
 ### Inventory Management
 - `GET /api/inventory` - Get all inventory status

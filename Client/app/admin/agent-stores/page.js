@@ -55,7 +55,7 @@ const AdminAgentStores = () => {
       const token = localStorage.getItem('authToken');
       const API_URL = getApiEndpoint('');
 
-      const response = await fetch(`${API_URL}/api/admin/agents`, {
+      const response = await fetch(`${API_URL}/api/v1/admin/agents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ const AdminAgentStores = () => {
       const token = localStorage.getItem('authToken');
       const API_URL = getApiEndpoint('');
 
-      const response = await fetch(`${API_URL}/api/admin/agents/${agentId}/status`, {
+      const response = await fetch(`${API_URL}/api/v1/admin/agents/${agentId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -112,7 +112,7 @@ const AdminAgentStores = () => {
       const token = localStorage.getItem('authToken');
       const API_URL = getApiEndpoint('');
 
-      const response = await fetch(`${API_URL}/api/admin/agents/${agentId}/level`, {
+      const response = await fetch(`${API_URL}/api/v1/admin/agents/${agentId}/level`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

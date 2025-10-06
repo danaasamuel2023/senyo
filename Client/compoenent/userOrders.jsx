@@ -11,7 +11,7 @@ import {
 // API constants
 const GEONETTECH_BASE_URL = 'https://unlimitedata.orders.geonettech.com/api/v1';
 const API_KEY = '21|rkrw7bcoGYjK8irAOTMaZ8sc1LRHYcwjuZnZmMNw4a6196f1';
-const API_BASE_URL = 'https://unlimitedata.onrender.com/api/v1';
+const API_BASE_URL = 'http://localhost:5001/api/v1';
 
 // Format currency as GHS
 const formatCurrency = (amount) => {
@@ -33,23 +33,23 @@ const networkNames = {
 
 // Network logo colors - Updated for better contrast
 const networkColors = {
-  'YELLO': 'bg-yellow-500 shadow-yellow-500/25',
+  'YELLO': 'bg-[#FFCC08] shadow-yellow-500/25',
   'TELECEL': 'bg-red-600 shadow-red-600/25',
   'AT_PREMIUM': 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/25',
   'airteltigo': 'bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/25',
   'at': 'bg-blue-500 shadow-blue-500/25'
 };
 
-// Status badge color mapping - Modern red theme with gradients
+// Status badge color mapping - Yellow and Black theme
 const statusColors = {
-  'pending': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold shadow-md',
+  'pending': 'bg-gradient-to-r from-yellow-400 to-[#FFCC08] text-black font-bold shadow-md',
   'completed': 'bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold shadow-md',
-  'failed': 'bg-gradient-to-r from-red-500 to-rose-600 text-white font-bold shadow-md',
-  'processing': 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold shadow-md',
+  'failed': 'bg-gradient-to-r from-gray-800 to-black text-white font-bold shadow-md',
+  'processing': 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black font-bold shadow-md',
   'refunded': 'bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold shadow-md',
-  'waiting': 'bg-gradient-to-r from-gray-400 to-gray-600 text-white font-bold shadow-md',
+  'waiting': 'bg-gradient-to-r from-gray-600 to-gray-800 text-white font-bold shadow-md',
   'unknown': 'bg-gradient-to-r from-gray-500 to-gray-700 text-white font-bold shadow-md',
-  'error checking': 'bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold shadow-md'
+  'error checking': 'bg-gradient-to-r from-orange-500 to-[#FFCC08] text-black font-bold shadow-md'
 };
 
 // Status icons mapping
@@ -280,18 +280,18 @@ export default function DataPurchases() {
   const userId = getUserId();
   if (!userId && typeof window !== 'undefined') {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full overflow-hidden">
-          <div className="py-16 px-6">
+      <div className="container mx-auto px-3 py-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full overflow-hidden">
+          <div className="py-12 px-4">
             <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-2xl shadow-red-500/30">
-                <Shield className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/25">
+                <Shield className="w-8 h-8 text-black" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Authentication Required</h3>
-              <p className="mb-6 text-gray-600 dark:text-gray-400">Please sign in to view your purchase history</p>
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Authentication Required</h3>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">Please sign in to view your purchase history</p>
               <button 
                 onClick={() => router.push('/SignIn')}
-                className="px-8 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl shadow-xl shadow-red-500/25 hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                className="px-6 py-2.5 bg-gradient-to-r from-[#FFCC08] to-yellow-500 hover:from-yellow-500 hover:to-[#FFCC08] text-black font-bold rounded-lg shadow-lg shadow-yellow-500/25 transition-all duration-300 transform hover:scale-105"
               >
                 Sign In Now
               </button>
@@ -326,95 +326,97 @@ export default function DataPurchases() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full overflow-hidden border border-gray-200 dark:border-gray-700">
-        {/* Premium Header with Gradient */}
-        <div className="relative border-b border-gray-200 dark:border-gray-700 p-6 bg-gradient-to-r from-red-500 via-rose-500 to-red-600 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 via-transparent to-rose-600/20" />
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
+      <div className="bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-lg sm:shadow-2xl w-full overflow-hidden border border-gray-200 dark:border-gray-700">
+        {/* Premium Header - MOBILE OPTIMIZED */}
+        <div className="relative border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6 bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 via-transparent to-[#FFCC08]/20" />
+          <div className="absolute -top-8 -right-8 w-32 h-32 bg-black/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-black/10 rounded-full blur-2xl" />
           
           <div className="relative flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Package className="h-8 w-8 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="p-2 sm:p-3 bg-black/20 backdrop-blur-sm rounded-xl sm:rounded-2xl">
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
               </div>
               <div>
-                <h2 className="text-2xl md:text-3xl font-black text-white">Purchase History</h2>
-                <p className="text-red-100 text-sm mt-1">Track all your data transactions</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-black">Purchase History</h2>
+                <p className="text-black/80 text-xs sm:text-sm mt-0.5">Track your data transactions</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center space-x-2">
-              <Flame className="h-5 w-5 text-yellow-300 animate-pulse" />
-              <span className="text-white/90 font-medium">Live Updates</span>
+            <div className="hidden sm:flex items-center space-x-2">
+              <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-black animate-pulse" />
+              <span className="text-black/90 font-medium text-sm">Live</span>
             </div>
           </div>
         </div>
         
-        {/* Enhanced Search and Filter Bar */}
+        {/* Search and Filter Bar - MOBILE OPTIMIZED */}
         {!loading && !error && purchases.length > 0 && (
-          <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row gap-3">
-              {/* Search input with modern styling */}
+          <div className="p-3 sm:p-4 md:p-6 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col gap-2 sm:gap-3">
+              {/* Search input */}
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by phone number or reference..."
-                  className="block w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300"
+                  placeholder="Search by phone or reference..."
+                  className="block w-full pl-9 sm:pl-10 pr-9 sm:pr-10 py-2 sm:py-3 text-sm border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] transition-all"
                 />
                 {searchTerm && (
                   <button 
                     onClick={() => setSearchTerm('')}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center group"
                   >
-                    <X className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                    <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-hover:text-[#FFCC08] transition-colors" />
                   </button>
                 )}
               </div>
               
-              {/* Filter button with badge */}
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center px-6 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 font-medium"
-              >
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
-                {(filterStatus !== 'all' || filterNetwork !== 'all') && (
-                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
-                <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {/* Reset button with animation */}
-              {(searchTerm || filterStatus !== 'all' || filterNetwork !== 'all') && (
+              <div className="flex gap-2">
+                {/* Filter button */}
                 <button 
-                  onClick={resetFilters}
-                  className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 shadow-lg shadow-red-500/25 transition-all duration-300 font-medium transform hover:scale-105"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center justify-center px-4 py-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-sm font-medium"
                 >
-                  <X className="h-5 w-5 mr-2" />
-                  Clear All
+                  <Filter className="h-4 w-4 mr-1.5" />
+                  Filters
+                  {(filterStatus !== 'all' || filterNetwork !== 'all') && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-[#FFCC08] text-black text-xs rounded-full">
+                      Active
+                    </span>
+                  )}
+                  <ChevronDown className={`ml-1.5 h-3 w-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                 </button>
-              )}
+                
+                {/* Reset button */}
+                {(searchTerm || filterStatus !== 'all' || filterNetwork !== 'all') && (
+                  <button 
+                    onClick={resetFilters}
+                    className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-lg hover:from-yellow-500 hover:to-[#FFCC08] shadow-md shadow-yellow-500/25 transition-all text-sm font-bold"
+                  >
+                    <X className="h-4 w-4 mr-1.5" />
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
             
-            {/* Expanded filters with modern cards */}
+            {/* Expanded filters */}
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Filter by Status:
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Status:
                   </label>
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="block w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                    className="block w-full px-3 py-2 text-sm border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08]"
                   >
                     <option value="all">All Statuses</option>
                     {getUniqueStatuses().map(status => (
@@ -423,14 +425,14 @@ export default function DataPurchases() {
                   </select>
                 </div>
                 
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Filter by Network:
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Network:
                   </label>
                   <select
                     value={filterNetwork}
                     onChange={(e) => setFilterNetwork(e.target.value)}
-                    className="block w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                    className="block w-full px-3 py-2 text-sm border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08]"
                   >
                     <option value="all">All Networks</option>
                     {getUniqueNetworks().map(network => (
@@ -445,50 +447,50 @@ export default function DataPurchases() {
           </div>
         )}
         
-        {/* Content area with enhanced styling */}
-        <div className="p-4 md:p-6">
-          {/* Loading state with animated dots */}
+        {/* Content area - MOBILE OPTIMIZED */}
+        <div className="p-3 sm:p-4 md:p-6">
+          {/* Loading state */}
           {loading ? (
-            <div className="flex flex-col justify-center items-center py-16">
+            <div className="flex flex-col justify-center items-center py-12 sm:py-16">
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-2xl shadow-red-500/30 animate-pulse">
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#FFCC08] to-yellow-500 flex items-center justify-center shadow-xl shadow-yellow-500/25 animate-pulse">
+                  <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-black animate-spin" />
                 </div>
               </div>
-              <div className="flex space-x-2 mt-6">
+              <div className="flex space-x-1.5 mt-4">
                 {[...Array(3)].map((_, i) => (
                   <div 
                     key={i} 
-                    className="w-3 h-3 bg-red-500 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#FFCC08] rounded-full animate-bounce"
                     style={{ animationDelay: `${i * 0.1}s` }}
                   />
                 ))}
               </div>
-              <span className="text-gray-900 dark:text-gray-100 font-semibold mt-4">Loading your purchases...</span>
+              <span className="text-gray-900 dark:text-gray-100 font-semibold mt-3 text-sm">Loading purchases...</span>
             </div>
           ) : error ? (
-            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 p-6 rounded-xl flex items-start space-x-3">
-              <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 p-4 rounded-lg flex items-start space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-red-800 dark:text-red-200 font-bold mb-1">Error Loading Purchases</h3>
-                <p className="text-red-700 dark:text-red-300">{error}</p>
+                <h3 className="text-red-800 dark:text-red-200 font-bold mb-1 text-sm">Error Loading</h3>
+                <p className="text-red-700 dark:text-red-300 text-xs">{error}</p>
               </div>
             </div>
           ) : purchases.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                <Database className="h-12 w-12 text-gray-500 dark:text-gray-400" />
+            <div className="text-center py-12 sm:py-16">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                <Database className="h-10 w-10 text-gray-500 dark:text-gray-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Purchases Found</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No Purchases Found</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 {searchTerm || filterStatus !== 'all' || filterNetwork !== 'all' 
-                  ? "Try adjusting your filters to see more results" 
-                  : "You haven't made any data purchases yet"}
+                  ? "Try adjusting your filters" 
+                  : "You haven't made any purchases yet"}
               </p>
               {searchTerm || filterStatus !== 'all' || filterNetwork !== 'all' ? (
                 <button 
                   onClick={resetFilters}
-                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold shadow-lg transition-all duration-300"
+                  className="px-5 py-2 bg-gradient-to-r from-[#FFCC08] to-yellow-500 hover:from-yellow-500 hover:to-[#FFCC08] text-black rounded-lg font-bold shadow-md transition-all text-sm"
                 >
                   Clear Filters
                 </button>
@@ -496,48 +498,48 @@ export default function DataPurchases() {
             </div>
           ) : (
             <>
-              {/* Mobile-friendly card list with enhanced design */}
-              <div className="block lg:hidden space-y-4">
+              {/* Mobile card list - OPTIMIZED */}
+              <div className="space-y-3 sm:space-y-4">
                 {purchases.map((purchase) => {
                   const StatusIcon = statusIcons[purchase.status] || Info;
                   return (
                     <div 
                       key={purchase._id} 
-                      className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
+                      className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
                     >
-                      {/* Card header with gradient accent */}
+                      {/* Card header */}
                       <div 
-                        className="p-5 cursor-pointer bg-gradient-to-r from-gray-50 to-red-50/20 dark:from-gray-800 dark:to-red-900/10"
+                        className="p-3 sm:p-4 cursor-pointer bg-gradient-to-r from-gray-50 to-yellow-50/20 dark:from-gray-800 dark:to-yellow-900/10"
                         onClick={() => toggleExpand(purchase._id)}
                       >
-                        {/* Network and data badge */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg ${networkColors[purchase.network] || 'bg-gray-500'}`}>
-                              {getNetworkInitials(purchase.network)}
+                        {/* Network and data */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2 sm:space-x-3">
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center text-white font-bold shadow-md ${networkColors[purchase.network] || 'bg-gray-500'}`}>
+                              <span className="text-xs sm:text-sm">{getNetworkInitials(purchase.network)}</span>
                             </div>
                             <div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                              <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium">
                                 {networkNames[purchase.network] || purchase.network}
                               </div>
-                              <div className="font-black text-xl text-gray-900 dark:text-white">
+                              <div className="font-black text-lg sm:text-xl text-gray-900 dark:text-white">
                                 {formatDataSize(purchase.capacity)}
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Amount</div>
-                            <div className="font-bold text-lg text-red-600 dark:text-red-400">
+                            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">Amount</div>
+                            <div className="font-bold text-base sm:text-lg text-[#FFCC08]">
                               {formatCurrency(purchase.price)}
                             </div>
                           </div>
                         </div>
                         
-                        {/* Phone and status row */}
+                        {/* Phone and status */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-red-500" />
-                            <span className="text-gray-900 dark:text-white font-semibold">
+                          <div className="flex items-center space-x-1.5">
+                            <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-[#FFCC08]" />
+                            <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-semibold">
                               {purchase.phoneNumber}
                             </span>
                           </div>
@@ -547,85 +549,85 @@ export default function DataPurchases() {
                             <button
                               onClick={(e) => checkOrderStatus(purchase._id, purchase.geonetReference, purchase.network, e)}
                               disabled={checkingStatus[purchase._id]}
-                              className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold rounded-full flex items-center shadow-md transition-all duration-300 transform hover:scale-105"
+                              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-[#FFCC08] to-yellow-500 hover:from-yellow-500 hover:to-[#FFCC08] text-black text-[10px] sm:text-xs font-bold rounded-full flex items-center shadow-md transition-all"
                             >
                               {checkingStatus[purchase._id] ? (
                                 <>
-                                  <Loader2 className="animate-spin h-3 w-3 mr-1" />
-                                  Checking
+                                  <Loader2 className="animate-spin h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                                  <span className="hidden xs:inline">Checking</span>
                                 </>
                               ) : (
                                 <>
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Check Status
+                                  <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                                  <span className="hidden xs:inline">Check</span>
                                 </>
                               )}
                             </button>
                           ) : (
-                            <span className={`px-3 py-1.5 inline-flex items-center text-xs font-bold rounded-full ${statusColors[purchase.status] || 'bg-gray-500 text-white'}`}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
+                            <span className={`px-2 sm:px-3 py-1 inline-flex items-center text-[10px] sm:text-xs font-bold rounded-full ${statusColors[purchase.status] || 'bg-gray-500 text-white'}`}>
+                              <StatusIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
                               {purchase.status || "Unknown"}
                             </span>
                           )}
                         </div>
                         
-                        {/* Date and expand indicator */}
-                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        {/* Date and expand */}
+                        <div className="flex items-center justify-between text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
+                            <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
                             {formatDate(purchase.createdAt).split(',')[0]}
                           </div>
-                          <div className="flex items-center text-red-500 font-medium">
+                          <div className="flex items-center text-[#FFCC08] font-medium">
                             {expandedId === purchase._id ? 'Hide' : 'View'} Details
                             {expandedId === purchase._id ? 
-                              <ChevronDown className="h-4 w-4 ml-1" /> : 
-                              <ChevronRight className="h-4 w-4 ml-1" />
+                              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-1" /> : 
+                              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
                             }
                           </div>
                         </div>
                       </div>
                       
-                      {/* Expanded details with premium design */}
+                      {/* Expanded details */}
                       {expandedId === purchase._id && (
-                        <div className="px-5 pb-5 pt-2 border-t-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                          <div className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 p-4 rounded-xl">
-                            <h4 className="font-bold text-red-800 dark:text-red-200 flex items-center mb-3">
-                              <Info className="h-5 w-5 mr-2" />
+                        <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+                          <div className="bg-gradient-to-r from-yellow-50 to-[#FFCC08]/10 dark:from-yellow-900/20 dark:to-[#FFCC08]/10 p-3 rounded-lg">
+                            <h4 className="font-bold text-[#FFCC08] dark:text-yellow-400 flex items-center mb-2 text-sm">
+                              <Info className="h-4 w-4 mr-1.5" />
                               Transaction Details
                             </h4>
                             
-                            <div className="space-y-3 text-sm">
-                              <div className="flex justify-between items-center py-2 border-b border-red-200/50 dark:border-red-800/30">
+                            <div className="space-y-2 text-xs sm:text-sm">
+                              <div className="flex justify-between items-center py-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
                                 <span className="text-gray-600 dark:text-gray-400">Date & Time</span>
                                 <span className="text-gray-900 dark:text-gray-100 font-semibold">
                                   {formatDate(purchase.createdAt)}
                                 </span>
                               </div>
                               
-                              <div className="flex justify-between items-center py-2 border-b border-red-200/50 dark:border-red-800/30">
+                              <div className="flex justify-between items-center py-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
                                 <span className="text-gray-600 dark:text-gray-400">Amount Paid</span>
-                                <span className="text-red-600 dark:text-red-400 font-bold text-lg">
+                                <span className="text-[#FFCC08] dark:text-yellow-400 font-bold">
                                   {formatCurrency(purchase.price)}
                                 </span>
                               </div>
                               
-                              <div className="flex justify-between items-center py-2 border-b border-red-200/50 dark:border-red-800/30">
+                              <div className="flex justify-between items-center py-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
                                 <span className="text-gray-600 dark:text-gray-400">Payment Method</span>
                                 <span className="text-gray-900 dark:text-gray-100 font-semibold capitalize">
                                   {purchase.method || "Not specified"}
                                 </span>
                               </div>
                               
-                              <div className="flex justify-between items-center py-2 border-b border-red-200/50 dark:border-red-800/30">
+                              <div className="flex justify-between items-center py-1.5 border-b border-yellow-200/50 dark:border-yellow-800/30">
                                 <span className="text-gray-600 dark:text-gray-400">Reference ID</span>
-                                <span className="text-gray-900 dark:text-gray-100 font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                                <span className="text-gray-900 dark:text-gray-100 font-mono text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                                   {purchase.geonetReference || "N/A"}
                                 </span>
                               </div>
                               
-                              <div className="flex justify-between items-center py-2">
-                                <span className="text-gray-600 dark:text-gray-400">Current Status</span>
-                                <span className={`px-3 py-1 text-xs font-bold rounded-full ${statusColors[purchase.status] || 'bg-gray-500 text-white'}`}>
+                              <div className="flex justify-between items-center py-1.5">
+                                <span className="text-gray-600 dark:text-gray-400">Status</span>
+                                <span className={`px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-bold rounded-full ${statusColors[purchase.status] || 'bg-gray-500 text-white'}`}>
                                   {purchase.status || "Unknown"}
                                 </span>
                               </div>
@@ -638,182 +640,41 @@ export default function DataPurchases() {
                 })}
               </div>
               
-              {/* Desktop table view with modern design */}
-              <div className="hidden lg:block">
-                <div className="overflow-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gradient-to-r from-gray-50 to-red-50/30 dark:from-gray-800 dark:to-red-950/20">
-                      <tr>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Network
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Data Package
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Phone Number
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Status/Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                      {purchases.map((purchase) => {
-                        const StatusIcon = statusIcons[purchase.status] || Info;
-                        return (
-                          <tr key={purchase._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-md ${networkColors[purchase.network] || 'bg-gray-500'}`}>
-                                  {getNetworkInitials(purchase.network)}
-                                </div>
-                                <span className="ml-3 text-sm font-semibold text-gray-900 dark:text-white">
-                                  {networkNames[purchase.network] || purchase.network}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white">
-                                <Database className="h-3 w-3 mr-1 text-red-500" />
-                                {formatDataSize(purchase.capacity)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
-                                <Phone className="h-4 w-4 mr-2 text-red-500" />
-                                {purchase.phoneNumber}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                                {formatDate(purchase.createdAt)}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                                {formatCurrency(purchase.price)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {purchase.geonetReference && purchase.network !== 'at' ? (
-                                <button
-                                  onClick={(e) => checkOrderStatus(purchase._id, purchase.geonetReference, purchase.network, e)}
-                                  disabled={checkingStatus[purchase._id]}
-                                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                                >
-                                  {checkingStatus[purchase._id] ? (
-                                    <>
-                                      <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                                      Checking Status
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Clock className="-ml-1 mr-2 h-4 w-4" />
-                                      {purchase.status ? `Update (${purchase.status})` : 'Check Status'}
-                                    </>
-                                  )}
-                                </button>
-                              ) : (
-                                <span className={`px-3 py-1.5 inline-flex items-center text-xs font-bold rounded-full ${statusColors[purchase.status] || 'bg-gray-500 text-white'}`}>
-                                  <StatusIcon className="h-3 w-3 mr-1" />
-                                  {purchase.status || "Unknown"}
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* Modern Pagination controls */}
+              {/* Pagination - MOBILE OPTIMIZED */}
               {pagination.totalPages > 1 && (
-                <div className="flex flex-col md:flex-row justify-between items-center pt-6 mt-6 border-t-2 border-gray-200 dark:border-gray-700 space-y-4 md:space-y-0">
+                <div className="flex flex-col sm:flex-row justify-between items-center pt-4 sm:pt-6 mt-4 sm:mt-6 border-t-2 border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-0">
                   <button
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
                     disabled={pagination.currentPage === 1}
-                    className={`flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                       pagination.currentPage === 1
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
-                        : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-red-500 hover:text-red-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:border-red-500'
+                        : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-[#FFCC08] hover:text-[#FFCC08] dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
                     }`}
                   >
-                    <ChevronRight className="h-4 w-4 mr-2 rotate-180" />
+                    <ChevronRight className="h-3.5 w-3.5 mr-1.5 rotate-180" />
                     Previous
                   </button>
                   
-                  {/* Page numbers - Desktop */}
-                  <div className="hidden md:flex items-center space-x-2">
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                      .filter(page => 
-                        page === 1 || 
-                        page === pagination.totalPages || 
-                        Math.abs(page - pagination.currentPage) <= 1
-                      )
-                      .map((page, index, array) => {
-                        if (index > 0 && page - array[index - 1] > 1) {
-                          return (
-                            <React.Fragment key={`ellipsis-${page}`}>
-                              <span className="px-3 py-2 text-gray-500 dark:text-gray-400">...</span>
-                              <button
-                                onClick={() => handlePageChange(page)}
-                                className={`min-w-[40px] px-3 py-2 rounded-lg font-bold transition-all duration-300 ${
-                                  pagination.currentPage === page
-                                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/25'
-                                    : 'text-gray-700 bg-white border-2 border-gray-300 hover:border-red-500 hover:text-red-600 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            </React.Fragment>
-                          );
-                        }
-                        
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`min-w-[40px] px-3 py-2 rounded-lg font-bold transition-all duration-300 ${
-                              pagination.currentPage === page
-                                ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/25'
-                                : 'text-gray-700 bg-white border-2 border-gray-300 hover:border-red-500 hover:text-red-600 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      })}
-                  </div>
-                  
-                  {/* Mobile page indicator */}
-                  <div className="flex items-center space-x-2 md:hidden">
-                    <span className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg font-bold shadow-lg">
+                  {/* Page indicator */}
+                  <div className="flex items-center space-x-2">
+                    <span className="px-3 py-1.5 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-lg font-bold shadow-md text-sm">
                       Page {pagination.currentPage}
                     </span>
-                    <span className="text-gray-500 dark:text-gray-400">of {pagination.totalPages}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">of {pagination.totalPages}</span>
                   </div>
                   
                   <button
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
                     disabled={pagination.currentPage === pagination.totalPages}
-                    className={`flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                       pagination.currentPage === pagination.totalPages
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
-                        : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-red-500 hover:text-red-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:border-red-500'
+                        : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-[#FFCC08] hover:text-[#FFCC08] dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
                     }`}
                   >
                     Next
-                    <ChevronRight className="h-4 w-4 ml-2" />
+                    <ChevronRight className="h-3.5 w-3.5 ml-1.5" />
                   </button>
                 </div>
               )}

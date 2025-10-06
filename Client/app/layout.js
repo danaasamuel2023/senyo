@@ -8,6 +8,7 @@ import WhatsAppLink from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
+import { ToastProvider } from "@/component/ToastNotification";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
@@ -129,7 +130,7 @@ export const metadata = {
   },
 };
 
-// Enhanced viewport configuration with modern settings
+// Enhanced viewport configuration with modern settings - OPTIMIZED FOR MOBILE
 export const viewport = {
   width: "device-width",
   initialScale: 1,
@@ -186,7 +187,7 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning
     >
       <head>
-        {/* Critical CSS for preventing FOUC and MTN brand colors */}
+        {/* Critical CSS for preventing FOUC - MOBILE OPTIMIZED */}
         <style dangerouslySetInnerHTML={{
           __html: `
             :root {
@@ -207,8 +208,6 @@ export default function RootLayout({ children }) {
               --color-border: #e5e7eb;
               --color-accent: #FFCC08;
               --color-accent-hover: #f5c500;
-              
-              /* Dark theme will override these */
             }
             
             /* Dark theme colors */
@@ -223,19 +222,24 @@ export default function RootLayout({ children }) {
               --color-accent-hover: #ffd633;
             }
             
-            /* Smooth theme transition */
+            /* Smooth theme transition - reduced for mobile performance */
             * {
-              transition: background-color 0.3s ease, 
-                          border-color 0.3s ease, 
-                          color 0.3s ease;
+              transition: background-color 0.2s ease, 
+                          border-color 0.2s ease, 
+                          color 0.2s ease;
             }
             
             /* Prevent flash of unstyled content */
             body { 
               opacity: 0; 
-              transition: opacity 0.3s ease-in-out;
+              transition: opacity 0.2s ease-in-out;
               background-color: var(--color-bg-primary);
               color: var(--color-text-primary);
+              /* Mobile optimizations */
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
+              -webkit-tap-highlight-color: rgba(255, 204, 8, 0.1);
             }
             body.ready { 
               opacity: 1; 
@@ -247,29 +251,64 @@ export default function RootLayout({ children }) {
               color: var(--color-black);
             }
             
-            /* Custom scrollbar with MTN colors */
-            ::-webkit-scrollbar {
-              width: 10px;
-              height: 10px;
+            /* Custom scrollbar with MTN colors - Desktop only */
+            @media (min-width: 768px) {
+              ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+              }
+              
+              ::-webkit-scrollbar-track {
+                background: var(--color-bg-secondary);
+              }
+              
+              ::-webkit-scrollbar-thumb {
+                background: linear-gradient(to bottom, var(--color-mtn-yellow), var(--color-mtn-yellow-dark));
+                border-radius: 4px;
+              }
+              
+              ::-webkit-scrollbar-thumb:hover {
+                background: var(--color-mtn-yellow-dark);
+              }
+              
+              /* Firefox scrollbar */
+              * {
+                scrollbar-width: thin;
+                scrollbar-color: var(--color-mtn-yellow) var(--color-bg-secondary);
+              }
             }
             
-            ::-webkit-scrollbar-track {
-              background: var(--color-bg-secondary);
+            /* Mobile-specific optimizations */
+            @media (max-width: 767px) {
+              /* Hide scrollbar on mobile for cleaner look */
+              ::-webkit-scrollbar {
+                display: none;
+              }
+              
+              * {
+                scrollbar-width: none;
+              }
+              
+              /* Optimize touch interactions */
+              button, a, input, select, textarea {
+                touch-action: manipulation;
+              }
+              
+              /* Prevent text size adjustment on orientation change */
+              html {
+                -webkit-text-size-adjust: 100%;
+                text-size-adjust: 100%;
+              }
             }
             
-            ::-webkit-scrollbar-thumb {
-              background: linear-gradient(to bottom, var(--color-mtn-yellow), var(--color-mtn-yellow-dark));
-              border-radius: 5px;
-            }
-            
-            ::-webkit-scrollbar-thumb:hover {
-              background: var(--color-mtn-yellow-dark);
-            }
-            
-            /* Firefox scrollbar */
-            * {
-              scrollbar-width: thin;
-              scrollbar-color: var(--color-mtn-yellow) var(--color-bg-secondary);
+            /* Safe area insets for notched devices */
+            @supports (padding: env(safe-area-inset-top)) {
+              body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+              }
             }
           `
         }} />
@@ -294,7 +333,7 @@ export default function RootLayout({ children }) {
           `
         }} />
         
-        {/* Modern PWA meta tags */}
+        {/* Modern PWA meta tags - MOBILE OPTIMIZED */}
         <meta name="application-name" content="UnlimitedData GH" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -302,6 +341,7 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-navbutton-color" content="#FFCC08" />
         <meta name="msapplication-starturl" content="/" />
+        <meta name="format-detection" content="telephone=no" />
         
         {/* Enhanced color scheme for modern browsers - MTN Colors */}
         <meta name="theme-color" content="#FFCC08" />
@@ -345,20 +385,20 @@ export default function RootLayout({ children }) {
           }}
         />
         
-        
         {/* Modern layout structure with error boundary */}
         <ThemeProvider>
-          <AuthGuard>
-            {/* Dynamic background based on theme */}
+          <ToastProvider>
+            <AuthGuard>
+            {/* Dynamic background based on theme - SIMPLIFIED FOR MOBILE */}
             <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
             
-            {/* Light theme background gradient */}
+            {/* Light theme background gradient - OPTIMIZED */}
             <div className="fixed inset-0 -z-10 bg-gradient-to-br from-white via-[#FFCC08]/5 to-white dark:from-black dark:via-[#FFCC08]/10 dark:to-black transition-opacity duration-300" />
             
-            {/* Animated background pattern */}
-            <div className="absolute inset-0 -z-10 overflow-hidden">
-              {/* Primary grid pattern with MTN yellow accent */}
-              <div className="absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-[#FFCC08]/20 dark:stroke-[#FFCC08]/10 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
+            {/* Animated background pattern - SIMPLIFIED FOR MOBILE PERFORMANCE */}
+            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+              {/* Primary grid pattern - Hidden on mobile for performance */}
+              <div className="hidden md:block absolute left-[max(50%,25rem)] top-0 h-[64rem] w-[128rem] -translate-x-1/2 stroke-[#FFCC08]/20 dark:stroke-[#FFCC08]/10 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]">
                 <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
                   <defs>
                     <pattern
@@ -376,8 +416,8 @@ export default function RootLayout({ children }) {
                 </svg>
               </div>
               
-              {/* Animated yellow accent dots */}
-              <div className="absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-[#FFCC08]/10 dark:stroke-[#FFCC08]/5 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
+              {/* Animated yellow accent dots - Hidden on mobile */}
+              <div className="hidden md:block absolute right-[max(50%,25rem)] bottom-0 h-[64rem] w-[128rem] translate-x-1/2 stroke-[#FFCC08]/10 dark:stroke-[#FFCC08]/5 [mask-image:radial-gradient(64rem_64rem_at_bottom,white,transparent)]">
                 <svg className="absolute inset-0 h-full w-full animate-pulse" aria-hidden="true">
                   <defs>
                     <pattern
@@ -393,17 +433,18 @@ export default function RootLayout({ children }) {
                 </svg>
               </div>
               
-              {/* MTN-style decorative elements */}
-              <div className="absolute top-20 left-10 w-32 h-32 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse dark:bg-[#FFCC08]/5" />
-              <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#FFCC08]/10 rounded-full blur-3xl animate-pulse delay-1000 dark:bg-[#FFCC08]/5" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
+              {/* MTN-style decorative elements - Simplified for mobile */}
+              <div className="absolute top-10 left-5 w-20 h-20 md:top-20 md:left-10 md:w-32 md:h-32 bg-[#FFCC08]/10 rounded-full blur-2xl md:blur-3xl animate-pulse dark:bg-[#FFCC08]/5" />
+              <div className="absolute bottom-10 right-5 w-24 h-24 md:bottom-20 md:right-10 md:w-48 md:h-48 bg-[#FFCC08]/10 rounded-full blur-2xl md:blur-3xl animate-pulse delay-1000 dark:bg-[#FFCC08]/5" />
+              <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
             </div>
             
             <Navbar />
             
-            <main className="flex-grow relative z-0 pb-20 md:pb-0">
-              {/* Noise texture overlay for premium feel */}
-              <div className="pointer-events-none absolute inset-0 opacity-[0.015] dark:opacity-[0.02]">
+            {/* Main content - MOBILE OPTIMIZED SPACING */}
+            <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
+              {/* Noise texture overlay - Reduced opacity on mobile */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.01] md:opacity-[0.015] dark:opacity-[0.015] dark:md:opacity-[0.02]">
                 <svg width="100%" height="100%">
                   <filter id="noiseFilter">
                     <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
@@ -413,23 +454,24 @@ export default function RootLayout({ children }) {
                 </svg>
               </div>
               
-              {/* Main content wrapper */}
-              <div className="relative">
+              {/* Main content wrapper - MOBILE FRIENDLY */}
+              <div className="relative max-w-7xl mx-auto">
                 {children}
               </div>
               
-              {/* WhatsApp floating button */}
+              {/* WhatsApp floating button - Mobile optimized position */}
               <WhatsAppLink />
             </main>
             
-            <Footer />
+            <Footer hideOnAdmin={true} />
             
-            {/* Bottom Navigation for Mobile */}
+            {/* Bottom Navigation for Mobile - ENHANCED */}
             <BottomNav />
             
             {/* PWA Install Prompt and Push Notifications */}
             <PWAInstaller />
-          </AuthGuard>
+            </AuthGuard>
+          </ToastProvider>
         </ThemeProvider>
         
         {/* Google Analytics with enhanced tracking */}

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 // Create axios instance with default config
 const api = axios.create({

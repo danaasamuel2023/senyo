@@ -7,8 +7,8 @@ const ASSETS_TO_CACHE = [
   '/',
   '/offline.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/icon-192.svg',
+  '/icon-512.svg'
 ];
 
 // Install event - cache essential assets
@@ -17,7 +17,17 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching assets');
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch((error) => {
+        console.log('[Service Worker] Cache addAll failed:', error);
+        // Cache individual files that exist
+        return Promise.allSettled(
+          ASSETS_TO_CACHE.map(url => 
+            cache.add(url).catch(err => 
+              console.log(`[Service Worker] Failed to cache ${url}:`, err)
+            )
+          )
+        );
+      });
     })
   );
   self.skipWaiting();
@@ -87,8 +97,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: event.data ? event.data.text() : 'New notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icon-192.svg',
+    badge: '/icon-192.svg',
     vibrate: [200, 100, 200],
     tag: 'unlimiteddata-notification',
     requireInteraction: false

@@ -1,17 +1,287 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Package, Search, Filter, Download, RefreshCw, ArrowLeft,
   CheckCircle, XCircle, Clock, AlertCircle, Eye, Calendar,
   Wifi, Phone, Hash, ChevronDown, TrendingUp, DollarSign,
-  Activity, BarChart3, FileText, Copy, ExternalLink, Star
+  Activity, BarChart3, FileText, Copy, ExternalLink, Star,
+  X, Loader2, Database, Zap, Globe, Smartphone, CreditCard,
+  Calendar as CalendarIcon, Filter as FilterIcon, MoreHorizontal
 } from 'lucide-react';
+
+// API Configuration
+const getApiEndpoint = (path) => {
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  return `${baseUrl}${path}`;
+};
+
+// Animation Components
+const AnimatedCounter = ({ value, duration = 1000 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value) || 0;
+    if (!end) {
+      setCount(0);
+      return;
+    }
+    const increment = Math.ceil(end / (duration / 16));
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+  
+  return <span>{count}</span>;
+};
+
+const CurrencyCounter = ({ value, duration = 1500 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value) || 0;
+    if (!end) {
+      setCount(0);
+      return;
+    }
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+  
+  return <span>₵{count.toFixed(2)}</span>;
+};
+
+// Skeleton Loader
+const SkeletonLoader = () => (
+  <div className="animate-pulse">
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex items-center space-x-4 p-4">
+          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+          </div>
+          <div className="w-20 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Empty State Component
+const EmptyState = ({ hasFilters, onClearFilters, onPurchase }) => (
+  <div className="text-center py-16">
+    <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#FFCC08]/20 to-yellow-600/20 flex items-center justify-center">
+      <Package className="w-12 h-12 text-[#FFCC08]" />
+    </div>
+    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+      {hasFilters ? 'No Orders Match Your Filters' : 'No Orders Yet'}
+    </h3>
+    <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+      {hasFilters 
+        ? 'Try adjusting your search criteria or clear filters to see all orders'
+        : 'Start your data journey by purchasing your first data bundle'
+      }
+    </p>
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      {hasFilters && (
+        <button
+          onClick={onClearFilters}
+          className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium"
+        >
+          Clear Filters
+        </button>
+      )}
+      <button
+        onClick={onPurchase}
+        className="px-6 py-3 bg-gradient-to-r from-[#FFCC08] to-yellow-600 text-black rounded-xl hover:from-yellow-500 hover:to-yellow-700 transition-all font-bold shadow-lg"
+      >
+        Purchase Data
+      </button>
+    </div>
+  </div>
+);
+
+// Order Details Modal
+const OrderDetailsModal = ({ order, isOpen, onClose }) => {
+  const [copied, setCopied] = useState('');
+
+  const copyToClipboard = async (text, type) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(type);
+      setTimeout(() => setCopied(''), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  if (!isOpen || !order) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-600 p-6 text-black">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-full bg-black/10 flex items-center justify-center">
+                <Package className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">Order Details</h3>
+                <p className="text-black/70">Reference: {order.geonetReference?.slice(0, 12)}...</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-black/10 hover:bg-black/20 transition-colors flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Status Badge */}
+          <div className="flex items-center justify-center">
+            <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+              order.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+              order.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+            }`}>
+              {order.status === 'completed' ? <CheckCircle className="w-4 h-4 mr-2" /> :
+               order.status === 'failed' ? <XCircle className="w-4 h-4 mr-2" /> :
+               order.status === 'pending' ? <Clock className="w-4 h-4 mr-2" /> :
+               <AlertCircle className="w-4 h-4 mr-2" />}
+              {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
+            </span>
+          </div>
+
+          {/* Order Info Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Hash className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Reference</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <p className="font-mono text-sm text-gray-900 dark:text-white flex-1">
+                  {order.geonetReference}
+                </p>
+                <button
+                  onClick={() => copyToClipboard(order.geonetReference, 'reference')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    copied === 'reference' 
+                      ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' 
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Wifi className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Network</span>
+              </div>
+              <p className="font-medium text-gray-900 dark:text-white">{order.network}</p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Database className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Data Capacity</span>
+              </div>
+              <p className="font-medium text-gray-900 dark:text-white">{order.capacity}GB</p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Phone className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Phone Number</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <p className="font-medium text-gray-900 dark:text-white flex-1">{order.phoneNumber}</p>
+                <button
+                  onClick={() => copyToClipboard(order.phoneNumber, 'phone')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    copied === 'phone' 
+                      ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' 
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <DollarSign className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Amount Paid</span>
+              </div>
+              <p className="font-bold text-lg text-gray-900 dark:text-white">₵{order.price?.toFixed(2)}</p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <CalendarIcon className="w-4 h-4 text-[#FFCC08]" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Date & Time</span>
+              </div>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {new Date(order.createdAt).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Payment Method */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <CreditCard className="w-4 h-4 text-[#FFCC08]" />
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Payment Method</span>
+            </div>
+            <p className="font-medium text-gray-900 dark:text-white capitalize">
+              {order.gateway || 'Wallet'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OrderHistoryPage = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  
+  // State Management
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +292,7 @@ const OrderHistoryPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [userData, setUserData] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [animateStats, setAnimateStats] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -33,16 +304,18 @@ const OrderHistoryPage = () => {
     totalData: 0
   });
 
-  useEffect(() => {
-    checkAuth();
-    loadOrders();
+  // Memoized values
+  const hasActiveFilters = useMemo(() => {
+    return searchTerm || filterStatus !== 'all' || filterNetwork !== 'all' || dateRange.start || dateRange.end;
+  }, [searchTerm, filterStatus, filterNetwork, dateRange]);
+
+  // Utility Functions
+  const showNotification = useCallback((message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [orders, searchTerm, filterStatus, filterNetwork, dateRange]);
-
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     const token = localStorage.getItem('authToken');
     const user = JSON.parse(localStorage.getItem('userData') || '{}');
     
@@ -53,41 +326,46 @@ const OrderHistoryPage = () => {
     
     setUserData(user);
     return true;
-  };
+  }, [router]);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (!checkAuth()) return;
     
-    setLoading(true);
+    setRefreshing(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
       const userId = JSON.parse(localStorage.getItem('userData')).id;
+      const authToken = localStorage.getItem('authToken');
 
       const response = await fetch(
-        `${API_URL}/api/v1/data/purchase-history/${userId}?limit=1000`,
+        getApiEndpoint(`/api/v1/data/purchase-history/${userId}?limit=1000`),
         {
           headers: {
-            'x-auth-token': localStorage.getItem('authToken')
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
           }
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        const purchases = data.data.purchases || [];
+        const purchases = data.data?.purchases || [];
         setOrders(purchases);
         calculateStats(purchases);
+        setAnimateStats(true);
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to load orders:', error);
-      showNotification('Failed to load order history', 'error');
+      showNotification('Failed to load order history. Please try again.', 'error');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [checkAuth, showNotification]);
 
-  const calculateStats = (ordersList) => {
-    const stats = {
+  const calculateStats = useCallback((ordersList) => {
+    const newStats = {
       totalOrders: ordersList.length,
       completed: ordersList.filter(o => o.status === 'completed').length,
       pending: ordersList.filter(o => o.status === 'pending').length,
@@ -95,10 +373,10 @@ const OrderHistoryPage = () => {
       totalSpent: ordersList.reduce((sum, o) => sum + (o.price || 0), 0),
       totalData: ordersList.reduce((sum, o) => sum + (o.capacity || 0), 0)
     };
-    setStats(stats);
-  };
+    setStats(newStats);
+  }, []);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...orders];
 
     // Search filter
@@ -134,19 +412,16 @@ const OrderHistoryPage = () => {
 
     setFilteredOrders(filtered);
     calculateStats(filtered);
-  };
+  }, [orders, searchTerm, filterStatus, filterNetwork, dateRange, calculateStats]);
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 5000);
-  };
+  const clearFilters = useCallback(() => {
+    setSearchTerm('');
+    setFilterStatus('all');
+    setFilterNetwork('all');
+    setDateRange({ start: '', end: '' });
+  }, []);
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    showNotification('Copied to clipboard', 'success');
-  };
-
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const csv = [
       ['Date', 'Reference', 'Network', 'Capacity', 'Phone', 'Price', 'Status'].join(','),
       ...filteredOrders.map(order => [
@@ -167,10 +442,10 @@ const OrderHistoryPage = () => {
     a.download = `order-history-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    showNotification('Order history exported', 'success');
-  };
+    showNotification('Order history exported successfully', 'success');
+  }, [filteredOrders, showNotification]);
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = useCallback((status) => {
     switch (status) {
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -181,9 +456,9 @@ const OrderHistoryPage = () => {
       default:
         return <AlertCircle className="w-4 h-4 text-gray-600" />;
     }
-  };
+  }, []);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = useCallback((status) => {
     switch (status) {
       case 'completed':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
@@ -194,16 +469,58 @@ const OrderHistoryPage = () => {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
-  };
+  }, []);
+
+  // Effects
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-[#FFCC08]/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FFCC08] animate-spin"></div>
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+              <Package className="w-6 h-6 text-black" strokeWidth={2.5} />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-[#FFCC08] mb-2">UNLIMITEDDATA GH</h1>
+          <div className="flex items-center justify-center space-x-2 text-yellow-400">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm font-medium">Loading order history...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-yellow-600/5 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-br from-yellow-600/5 to-black blur-3xl"></div>
+      </div>
+
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
-          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 backdrop-blur-xl ${
+          notification.type === 'success' 
+            ? 'bg-green-500/90 text-white' 
+            : 'bg-red-500/90 text-white'
         }`}>
-          {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {notification.type === 'success' ? 
+            <CheckCircle className="w-5 h-5" /> : 
+            <AlertCircle className="w-5 h-5" />
+          }
           <span className="font-medium">{notification.message}</span>
           <button onClick={() => setNotification(null)}>
             <X className="w-4 h-4" />
@@ -212,270 +529,202 @@ const OrderHistoryPage = () => {
       )}
 
       {/* Order Details Modal */}
-      {showDetailsModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Order Details</h3>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+      <OrderDetailsModal 
+        order={selectedOrder}
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+      />
+
+      {/* Main Content */}
+      <div className="relative z-10 px-3 sm:px-4 py-3 sm:py-4 max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="p-2.5 hover:bg-gray-800/50 rounded-xl transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#FFCC08]" />
+              </button>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Order History</h1>
+                <p className="text-gray-400 mt-1">Track all your data purchases</p>
+              </div>
+            </div>
+
+            <div className="mt-4 sm:mt-0 flex items-center space-x-3">
+              <button
+                onClick={exportToCSV}
+                disabled={filteredOrders.length === 0}
+                className="px-4 py-2.5 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              <button
+                onClick={loadOrders}
+                className="p-2.5 bg-gray-800/50 rounded-xl hover:bg-gray-700/50 transition-colors"
+              >
+                <RefreshCw className={`w-5 h-5 text-[#FFCC08] ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Total Orders</div>
+              <div className="text-lg sm:text-2xl font-bold text-white">
+                {animateStats ? <AnimatedCounter value={stats.totalOrders} /> : stats.totalOrders}
               </div>
             </div>
             
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Order Reference</p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <p className="font-medium text-gray-900 dark:text-white font-mono text-sm">
-                      {selectedOrder.geonetReference}
-                    </p>
-                    <button
-                      onClick={() => copyToClipboard(selectedOrder.geonetReference)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                  <div className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getStatusColor(selectedOrder.status)
-                    }`}>
-                      {getStatusIcon(selectedOrder.status)}
-                      <span className="ml-1 capitalize">{selectedOrder.status}</span>
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Network</p>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">{selectedOrder.network}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Data Capacity</p>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">{selectedOrder.capacity}GB</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <p className="font-medium text-gray-900 dark:text-white">{selectedOrder.phoneNumber}</p>
-                    <button
-                      onClick={() => copyToClipboard(selectedOrder.phoneNumber)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Amount Paid</p>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">GHS {selectedOrder.price?.toFixed(2)}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Date & Time</p>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">
-                    {new Date(selectedOrder.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Gateway</p>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1 capitalize">
-                    {selectedOrder.gateway || 'Wallet'}
-                  </p>
-                </div>
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border-l-4 border-green-500">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Completed</div>
+              <div className="text-lg sm:text-2xl font-bold text-green-400">
+                {animateStats ? <AnimatedCounter value={stats.completed} /> : stats.completed}
+              </div>
+            </div>
+            
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border-l-4 border-yellow-500">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Pending</div>
+              <div className="text-lg sm:text-2xl font-bold text-yellow-400">
+                {animateStats ? <AnimatedCounter value={stats.pending} /> : stats.pending}
+              </div>
+            </div>
+            
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border-l-4 border-red-500">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Failed</div>
+              <div className="text-lg sm:text-2xl font-bold text-red-400">
+                {animateStats ? <AnimatedCounter value={stats.failed} /> : stats.failed}
+              </div>
+            </div>
+            
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Total Spent</div>
+              <div className="text-lg sm:text-2xl font-bold text-purple-400">
+                {animateStats ? <CurrencyCounter value={stats.totalSpent} /> : `₵${stats.totalSpent.toFixed(0)}`}
+              </div>
+            </div>
+            
+            <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-gray-400 mb-1">Total Data</div>
+              <div className="text-lg sm:text-2xl font-bold text-blue-400">
+                {animateStats ? <AnimatedCounter value={stats.totalData} /> : stats.totalData}GB
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push('/')}
-              className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Order History</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">View all your data purchases</p>
-            </div>
-          </div>
+          {/* Filters */}
+          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-4 sm:p-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white placeholder-gray-400"
+                />
+              </div>
 
-          <div className="mt-4 md:mt-0 flex items-center space-x-3">
-            <button
-              onClick={exportToCSV}
-              className="px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium flex items-center space-x-2"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden md:inline">Export</span>
-            </button>
-            <button
-              onClick={loadOrders}
-              className="p-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"
+              >
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Orders</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalOrders}</div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-l-4 border-green-500">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Completed</div>
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-l-4 border-yellow-500">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pending</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-l-4 border-red-500">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Failed</div>
-            <div className="text-2xl font-bold text-red-600">{stats.failed}</div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Spent</div>
-            <div className="text-2xl font-bold text-purple-600">GHS {stats.totalSpent.toFixed(0)}</div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Data</div>
-            <div className="text-2xl font-bold text-blue-600">{stats.totalData}GB</div>
-          </div>
-        </div>
+              <select
+                value={filterNetwork}
+                onChange={(e) => setFilterNetwork(e.target.value)}
+                className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"
+              >
+                <option value="all">All Networks</option>
+                <option value="YELLO">MTN (YELLO)</option>
+                <option value="TELECEL">Telecel</option>
+                <option value="AT_PREMIUM">AirtelTigo Premium</option>
+                <option value="at">AirtelTigo</option>
+              </select>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
-                type="text"
-                placeholder="Search by phone or reference..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"
+              />
+
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"
               />
             </div>
-
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-            </select>
-
-            <select
-              value={filterNetwork}
-              onChange={(e) => setFilterNetwork(e.target.value)}
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
-            >
-              <option value="all">All Networks</option>
-              <option value="YELLO">MTN (YELLO)</option>
-              <option value="TELECEL">Telecel</option>
-              <option value="AT_PREMIUM">AirtelTigo Premium</option>
-              <option value="at">AirtelTigo</option>
-            </select>
-
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
-            />
-
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
-            />
           </div>
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />
+        <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl shadow-sm overflow-hidden">
+          {refreshing ? (
+            <div className="p-8">
+              <SkeletonLoader />
             </div>
           ) : filteredOrders.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Reference</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Network</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Capacity</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Phone</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Price</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Date</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Reference</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Network</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Capacity</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Phone</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Price</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Status</th>
+                    <th className="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-gray-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredOrders.map((order) => (
-                    <tr key={order._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                    <tr key={order._id} className="border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors">
+                      <td className="py-4 px-4 sm:px-6 text-sm text-gray-400">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center space-x-2">
-                          <Hash className="w-4 h-4 text-gray-400" />
-                          <span className="font-mono text-sm text-gray-900 dark:text-white">
-                            {order.geonetReference?.slice(0, 15)}...
+                          <Hash className="w-4 h-4 text-[#FFCC08]" />
+                          <span className="font-mono text-sm text-white">
+                            {order.geonetReference?.slice(0, 12)}...
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center space-x-2">
                           <Wifi className="w-4 h-4 text-[#FFCC08]" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">{order.network}</span>
+                          <span className="text-sm font-medium text-white">{order.network}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
+                      <td className="py-4 px-4 sm:px-6 font-medium text-white">
                         {order.capacity}GB
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center space-x-2">
                           <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{order.phoneNumber}</span>
+                          <span className="text-sm text-gray-400">{order.phoneNumber}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                        GHS {order.price?.toFixed(2)}
+                      <td className="py-4 px-4 sm:px-6 font-medium text-white">
+                        ₵{order.price?.toFixed(2)}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 sm:px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           getStatusColor(order.status)
                         }`}>
@@ -483,13 +732,13 @@ const OrderHistoryPage = () => {
                           <span className="ml-1 capitalize">{order.status}</span>
                         </span>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 sm:px-6">
                         <button
                           onClick={() => {
                             setSelectedOrder(order);
                             setShowDetailsModal(true);
                           }}
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium flex items-center space-x-1"
+                          className="text-[#FFCC08] hover:text-yellow-500 text-sm font-medium flex items-center space-x-1"
                         >
                           <Eye className="w-4 h-4" />
                           <span>View</span>
@@ -501,21 +750,11 @@ const OrderHistoryPage = () => {
               </table>
             </div>
           ) : (
-            <div className="p-12 text-center">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Orders Found</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {searchTerm || filterStatus !== 'all' || filterNetwork !== 'all'
-                  ? 'No orders match your filters'
-                  : 'You haven\'t made any purchases yet'}
-              </p>
-              <button
-                onClick={() => router.push('/mtnup2u')}
-                className="px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-bold"
-              >
-                Purchase Data
-              </button>
-            </div>
+            <EmptyState 
+              hasFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
+              onPurchase={() => router.push('/mtnup2u')}
+            />
           )}
         </div>
       </div>
