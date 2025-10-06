@@ -36,6 +36,9 @@ const auth = async (req, res, next) => {
     console.error('Auth middleware error:', err.message);
     
     if (err.name === 'JsonWebTokenError') {
+      if (err.message === 'jwt malformed') {
+        return res.status(401).json({ msg: 'Invalid token format' });
+      }
       return res.status(401).json({ msg: 'Token is not valid' });
     }
     

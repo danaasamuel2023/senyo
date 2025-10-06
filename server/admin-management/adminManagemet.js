@@ -121,7 +121,7 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
  * @desc    Get all users
  * @access  Admin
  */
-router.get('/users',auth, adminAuth, async (req, res) => {
+router.get('/admin/users',auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     
@@ -161,7 +161,7 @@ router.get('/users',auth, adminAuth, async (req, res) => {
  * @desc    Get user by ID
  * @access  Admin
  */
-router.get('/users/:id',auth, adminAuth, async (req, res) => {
+router.get('/admin/users/:id',auth, adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -428,7 +428,7 @@ router.delete('/users/:id',auth, adminAuth, async (req, res) => {
  * @desc    Get all data purchase orders
  * @access  Admin
  */
-router.get('/orders',auth, adminAuth, async (req, res) => {
+router.get('/admin/orders',auth, adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
@@ -491,7 +491,7 @@ router.get('/orders',auth, adminAuth, async (req, res) => {
  * @desc    Update order status
  * @access  Admin
  */
-router.put('/orders/:id/status', auth, adminAuth, async (req, res) => {
+router.put('/admin/orders/:id/status', auth, adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
     const orderId = req.params.id;
@@ -639,7 +639,7 @@ router.put('/orders/:id/status', auth, adminAuth, async (req, res) => {
  * @desc    Bulk update order statuses with improved error handling
  * @access  Admin
  */
-router.post('/orders/bulk-status-update', auth, adminAuth, async (req, res) => {
+router.post('/admin/orders/bulk-status-update', auth, adminAuth, async (req, res) => {
   try {
     const { orderIds, status } = req.body;
     
@@ -833,7 +833,7 @@ const DataPurchaseSchema = new mongoose.Schema({
 });
 */
 
-router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
+router.put('/admin/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -845,7 +845,7 @@ router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
       inventoryItem = new DataInventory({
         network,
         inStock: false, // Set to false since we're toggling from non-existent (assumed true)
-        skipGeonettech: false // Add default value
+        skipGeonettech: false
       });
     } else {
       // Toggle existing item
@@ -862,8 +862,11 @@ router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
       message: `${network} is now ${inventoryItem.inStock ? 'in stock' : 'out of stock'}`
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Error toggling inventory:', err.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: err.message
+    });
   }
 });
 
@@ -872,7 +875,7 @@ router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
  * @desc    Toggle Geonettech API for specific network
  * @access  Admin
  */
-router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
+router.put('/admin/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -901,8 +904,11 @@ router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req,
       message: `${network} Geonettech API is now ${inventoryItem.skipGeonettech ? 'disabled (orders will be pending)' : 'enabled (orders will be processed)'}`
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Error toggling Geonettech API:', err.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: err.message
+    });
   }
 });
 
@@ -911,7 +917,7 @@ router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req,
  * @desc    Get all inventory items with current status
  * @access  Admin
  */
-router.get('/inventory', auth, adminAuth, async (req, res) => {
+router.get('/admin/inventory', auth, adminAuth, async (req, res) => {
   try {
     const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
     
@@ -941,11 +947,15 @@ router.get('/inventory', auth, adminAuth, async (req, res) => {
     
     res.json({
       inventory,
-      totalNetworks: NETWORKS.length
+      totalNetworks: NETWORKS.length,
+      message: 'Inventory data retrieved successfully'
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Error fetching inventory:', err.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: err.message
+    });
   }
 });
 
@@ -954,7 +964,7 @@ router.get('/inventory', auth, adminAuth, async (req, res) => {
  * @desc    Get specific network inventory status
  * @access  Admin
  */
-router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
+router.get('/admin/inventory/:network', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -986,7 +996,7 @@ router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
  * @desc    Get all transactions with pagination, filtering and sorting
  * @access  Admin
  */
-router.get('/transactions', auth, adminAuth, async (req, res) => {
+router.get('/admin/transactions', auth, adminAuth, async (req, res) => {
   try {
     const {
       page = 1,
@@ -1093,7 +1103,7 @@ router.get('/transactions', auth, adminAuth, async (req, res) => {
  * @desc    Get transaction details by ID
  * @access  Admin
  */
-router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
+router.get('/admin/transactions/:id', auth, adminAuth, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
       .populate('userId', 'name email phoneNumber');
@@ -1117,7 +1127,7 @@ router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
  * @desc    Verify payment status from Paystack
  * @access  Admin
  */
-router.get('/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
+router.get('/admin/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
   try {
     const { reference } = req.params;
     
@@ -1206,7 +1216,7 @@ router.get('/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
  * @desc    Manually update transaction status
  * @access  Admin
  */
-router.put('/transactions/:id/update-status', auth, adminAuth, async (req, res) => {
+router.put('/admin/transactions/:id/update-status', auth, adminAuth, async (req, res) => {
   try {
     const { status, adminNotes } = req.body;
     
@@ -1332,7 +1342,7 @@ router.put('/users/:id/toggle-status', auth, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/daily-summary', auth, adminAuth, async (req, res) => {
+router.get('/admin/daily-summary', auth, adminAuth, async (req, res) => {
   try {
     const { date = new Date().toISOString().split('T')[0] } = req.query;
     
@@ -1463,7 +1473,7 @@ router.get('/daily-summary', auth, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/user-orders/:userId', auth, adminAuth, async (req, res) => {
+router.get('/admin/user-orders/:userId', auth, adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { page = 1, limit = 100 } = req.query;
@@ -1489,7 +1499,7 @@ router.get('/user-orders/:userId', auth, adminAuth, async (req, res) => {
     
     // Calculate total spent by the user
     const totalSpent = await DataPurchase.aggregate([
-      { $match: { userId: mongoose.Types.ObjectId(userId), status: 'completed' } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'completed' } },
       { $group: { _id: null, total: { $sum: '$price' } } }
     ]);
     
@@ -1511,7 +1521,7 @@ router.get('/user-orders/:userId', auth, adminAuth, async (req, res) => {
  * @desc    Get admin dashboard statistics
  * @access  Admin
  */
-router.get('/dashboard/statistics', auth, adminAuth, async (req, res) => {
+router.get('/admin/dashboard/statistics', auth, adminAuth, async (req, res) => {
   try {
     // Get total users count
     const totalUsers = await User.countDocuments();
@@ -1941,7 +1951,8 @@ router.get('/public/agent-store/:identifier', async (req, res) => {
     
     // Get agent catalog
     const catalog = await AgentCatalog.findOne({ agentId: agent._id });
-    const items = catalog ? catalog.items.filter(item => item.enabled) : [];
+    // Use new products array if available, fallback to legacy items
+    const items = catalog ? (catalog.products || catalog.items || []) : [];
     
     res.json({
       success: true,

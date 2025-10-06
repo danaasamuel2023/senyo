@@ -485,7 +485,6 @@ function arrayLimit100(val) {
 // Optimized Compound Indexes
 UserSchema.index({ approvalStatus: 1, createdAt: -1 });
 UserSchema.index({ role: 1, isDisabled: 1 });
-UserSchema.index({ referralCode: 1 }, { sparse: true });
 UserSchema.index({ isOnline: 1, lastSeen: -1 });
 UserSchema.index({ 'pushTokens.token': 1 }, { sparse: true });
 UserSchema.index({ 'compliance.kycVerified': 1, role: 1 });
@@ -626,7 +625,6 @@ const NotificationSchema = new Schema({
 // Optimized compound indexes
 NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 NotificationSchema.index({ userId: 1, type: 1 });
-NotificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // ============================================
 // EFFICIENT NOTIFICATION QUEUE
@@ -765,6 +763,11 @@ const DataPurchaseSchema = new Schema({
     required: true,
     index: true
   },
+  agentId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    index: true
+  },
   phoneNumber: { 
     type: String, 
     required: true,
@@ -773,7 +776,7 @@ const DataPurchaseSchema = new Schema({
   },
   network: { 
     type: String, 
-    enum: ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+    enum: ["MTN", "YELLO", "VODAFONE", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
     required: true,
     index: true
   },
@@ -790,9 +793,56 @@ const DataPurchaseSchema = new Schema({
   
   status: { 
     type: String, 
-    enum: ["pending", "processing", "completed", "failed", "refunded"],
+    enum: ["pending", "processing", "completed", "failed", "refunded", "cancelled"],
     default: "pending",
     index: true
+  },
+  
+  // Payment fields
+  paymentMethod: { 
+    type: String, 
+    enum: ['wallet', 'mobile_money', 'card', 'bank_transfer'], 
+    index: true
+  },
+  paymentProvider: { 
+    type: String, 
+    maxlength: 100 
+  },
+  paymentReference: { 
+    type: String, 
+    maxlength: 200, 
+    index: true 
+  },
+  paystackReference: { 
+    type: String, 
+    maxlength: 200, 
+    index: true 
+  },
+  paystackTransactionId: { 
+    type: String, 
+    maxlength: 200 
+  },
+  paystackFees: { 
+    type: Number, 
+    min: 0 
+  },
+  paymentFailureReason: { 
+    type: String, 
+    maxlength: 500 
+  },
+  paidAt: { 
+    type: Date 
+  },
+  refundedAt: { 
+    type: Date 
+  },
+  refundReference: { 
+    type: String, 
+    maxlength: 200 
+  },
+  refundReason: { 
+    type: String, 
+    maxlength: 500 
   },
   
   // Prevent double processing
@@ -868,7 +918,6 @@ const TransactionSchema = new Schema({
 
 // Optimized indexes
 TransactionSchema.index({ userId: 1, type: 1, createdAt: -1 });
-TransactionSchema.index({ reference: 1 });
 TransactionSchema.index({ status: 1, createdAt: -1 });
 
 // ============================================
@@ -910,7 +959,7 @@ const ReferralBonusSchema = new Schema({
 const DataInventorySchema = new Schema({
   network: { 
     type: String, 
-    enum: ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+    enum: ["MTN", "YELLO", "VODAFONE", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
     required: true,
     unique: true
   },
@@ -926,7 +975,7 @@ const DataInventorySchema = new Schema({
 const ProductPricingSchema = new Schema({
   network: { 
     type: String, 
-    enum: ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+    enum: ["MTN", "YELLO", "VODAFONE", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
     required: true,
     index: true
   },
@@ -942,6 +991,79 @@ const ProductPricingSchema = new Schema({
 ProductPricingSchema.index({ network: 1, capacity: 1 }, { unique: true });
 
 // ============================================
+// REVIEWS AND RATINGS SCHEMA
+// ============================================
+
+const ReviewSchema = new Schema({
+  customerId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    index: true
+  },
+  agentId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    index: true
+  },
+  orderId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "DataPurchasedataunlimited", 
+    required: true,
+    index: true
+  },
+  productId: { 
+    type: String, 
+    required: true 
+  },
+  rating: { 
+    type: Number, 
+    required: true, 
+    min: 1, 
+    max: 5,
+    index: true
+  },
+  title: { 
+    type: String, 
+    maxlength: 100, 
+    trim: true 
+  },
+  comment: { 
+    type: String, 
+    maxlength: 1000, 
+    trim: true 
+  },
+  images: [{ 
+    type: String, 
+    maxlength: 500 
+  }],
+  verified: { 
+    type: Boolean, 
+    default: false 
+  },
+  helpful: { 
+    type: Number, 
+    default: 0 
+  },
+  reported: { 
+    type: Boolean, 
+    default: false 
+  },
+  response: {
+    agentId: { type: Schema.Types.ObjectId, ref: "Userdataunlimited" },
+    comment: { type: String, maxlength: 1000 },
+    respondedAt: { type: Date }
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+ReviewSchema.index({ agentId: 1, createdAt: -1 });
+ReviewSchema.index({ productId: 1, rating: -1 });
+ReviewSchema.index({ customerId: 1, agentId: 1, orderId: 1 }, { unique: true });
+
+// ============================================
 // AGENT CATALOG SCHEMA
 // ============================================
 
@@ -953,6 +1075,7 @@ const AgentCatalogSchema = new Schema({
     index: true,
     unique: true
   },
+  // Legacy items array for backward compatibility
   items: [{
     _id: false,
     id: { type: Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
@@ -965,11 +1088,101 @@ const AgentCatalogSchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
   }],
+  // New enhanced products array
+  products: [{
+    _id: { type: Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    name: { type: String, required: true, maxlength: 100, trim: true },
+    description: { type: String, maxlength: 500, trim: true },
+    network: { 
+      type: String, 
+      enum: ["MTN", "AT", "Telecel", "YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+      required: true 
+    },
+    capacity: { type: String, required: true }, // Changed to String to support "5GB", "10GB" etc
+    basePrice: { type: Number, required: true, min: 0 }, // Admin-set minimum price
+    agentPrice: { type: Number, required: true, min: 0 }, // Agent's custom price
+    stock: { type: Number, default: 0 }, // 0 = unlimited
+    isActive: { type: Boolean, default: true },
+    category: { 
+      type: String, 
+      enum: ["data", "voice", "sms", "bundle"], 
+      default: "data" 
+    },
+    tags: [{ type: String, maxlength: 50 }],
+    images: [{ type: String, maxlength: 500 }], // URLs to product images
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+  }],
+  // Store analytics
+  analytics: {
+    totalOrders: { type: Number, default: 0 },
+    totalRevenue: { type: Number, default: 0 },
+    averageOrderValue: { type: Number, default: 0 },
+    conversionRate: { type: Number, default: 0 },
+    topProducts: [{ type: String }],
+    customerCount: { type: Number, default: 0 },
+    lastUpdated: { type: Date, default: Date.now }
+  },
+  // Store settings
+  settings: {
+    acceptGuestCheckout: { type: Boolean, default: true },
+    requirePhoneVerification: { type: Boolean, default: false },
+    autoAcceptOrders: { type: Boolean, default: false },
+    businessHours: {
+      monday: { 
+        open: { type: String, default: "08:00" }, 
+        close: { type: String, default: "18:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      tuesday: { 
+        open: { type: String, default: "08:00" }, 
+        close: { type: String, default: "18:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      wednesday: { 
+        open: { type: String, default: "08:00" }, 
+        close: { type: String, default: "18:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      thursday: { 
+        open: { type: String, default: "08:00" }, 
+        close: { type: String, default: "18:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      friday: { 
+        open: { type: String, default: "08:00" }, 
+        close: { type: String, default: "18:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      saturday: { 
+        open: { type: String, default: "09:00" }, 
+        close: { type: String, default: "16:00" }, 
+        isOpen: { type: Boolean, default: true } 
+      },
+      sunday: { 
+        open: { type: String, default: "10:00" }, 
+        close: { type: String, default: "14:00" }, 
+        isOpen: { type: Boolean, default: false } 
+      }
+    },
+    deliveryOptions: [{
+      name: { type: String, maxlength: 100 },
+      description: { type: String, maxlength: 300 },
+      price: { type: Number, min: 0 },
+      estimatedTime: { type: String, maxlength: 50 }
+    }],
+    paymentMethods: [{ 
+      type: String, 
+      enum: ["mobile_money", "bank_transfer", "cash", "card"] 
+    }]
+  },
   updatedAt: { type: Date, default: Date.now }
 });
 
-AgentCatalogSchema.index({ agentId: 1 });
 AgentCatalogSchema.index({ "items.network": 1, "items.capacity": 1 });
+AgentCatalogSchema.index({ "products.network": 1, "products.capacity": 1 });
+AgentCatalogSchema.index({ "products.isActive": 1 });
+AgentCatalogSchema.index({ "products.category": 1 });
 
 // ============================================
 // API KEY SCHEMA
@@ -1081,6 +1294,7 @@ const DataInventory = getModel("DataInventorydataunlimited", DataInventorySchema
 const ProductPricing = getModel("ProductPricing", ProductPricingSchema);
 const OrderReport = getModel("OrderReportunlimited", OrderReportSchema);
 const AgentCatalog = getModel("AgentCatalog", AgentCatalogSchema);
+const Review = getModel("Review", ReviewSchema);
 const Notification = getModel("Notification", NotificationSchema);
 const NotificationQueue = getModel("NotificationQueue", NotificationQueueSchema);
 const SiteSettings = getModel("SiteSettings", SiteSettingsSchema);
@@ -1140,6 +1354,7 @@ module.exports = {
   NotificationQueue,
   SiteSettings,
   AgentCatalog,
+  Review,
   
   // Performance helpers
   bulkWrite,
@@ -1148,3 +1363,309 @@ module.exports = {
   // Mongoose instance for raw operations
   mongoose
 };
+
+// ============================================
+// WALLET SCHEMA
+// ============================================
+const WalletSchema = new Schema({
+  userId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true, 
+    unique: true,
+    index: true 
+  },
+  balance: { 
+    type: Number, 
+    default: 0, 
+    min: 0,
+    get: v => parseFloat(v.toFixed(2)),
+    set: v => parseFloat(v.toFixed(2))
+  },
+  currency: { 
+    type: String, 
+    default: 'GHS',
+    enum: ['GHS']
+  },
+  transactions: [{
+    type: { 
+      type: String, 
+      enum: ['deposit', 'purchase', 'refund', 'bonus', 'referral', 'withdrawal'],
+      required: true 
+    },
+    amount: { 
+      type: Number, 
+      required: true,
+      get: v => parseFloat(v.toFixed(2))
+    },
+    balanceBefore: { 
+      type: Number, 
+      required: true,
+      get: v => parseFloat(v.toFixed(2))
+    },
+    balanceAfter: { 
+      type: Number, 
+      required: true,
+      get: v => parseFloat(v.toFixed(2))
+    },
+    description: { 
+      type: String, 
+      maxlength: 500 
+    },
+    reference: { 
+      type: String, 
+      maxlength: 100,
+      index: true 
+    },
+    status: { 
+      type: String, 
+      enum: ['pending', 'completed', 'failed'],
+      default: 'completed' 
+    },
+    metadata: { 
+      type: Map, 
+      of: Schema.Types.Mixed 
+    },
+    createdAt: { 
+      type: Date, 
+      default: Date.now 
+    }
+  }],
+  frozen: { 
+    type: Boolean, 
+    default: false 
+  },
+  freezeReason: { 
+    type: String, 
+    maxlength: 500 
+  },
+  lastTransaction: { 
+    type: Date 
+  }
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
+
+// Indexes for wallet
+WalletSchema.index({ userId: 1, 'transactions.createdAt': -1 });
+
+const Wallet = mongoose.model("Wallet", WalletSchema);
+
+// ============================================
+// REFERRAL SCHEMA
+// ============================================
+const ReferralSchema = new Schema({
+  referrerId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    index: true 
+  },
+  referredUserId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    unique: true,
+    index: true 
+  },
+  referralCode: { 
+    type: String, 
+    required: true,
+    maxlength: 20,
+    index: true 
+  },
+  status: { 
+    type: String, 
+    enum: ['pending', 'active', 'completed', 'expired'],
+    default: 'pending',
+    index: true 
+  },
+  bonusAwarded: { 
+    type: Boolean, 
+    default: false 
+  },
+  bonusAmount: { 
+    type: Number, 
+    default: 0,
+    get: v => parseFloat(v.toFixed(2))
+  },
+  referredUserFirstPurchase: { 
+    type: Date 
+  },
+  referredUserTotalSpent: { 
+    type: Number, 
+    default: 0,
+    get: v => parseFloat(v.toFixed(2))
+  },
+  expiresAt: { 
+    type: Date,
+    default: () => new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
+  }
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
+
+// Compound indexes for referral
+ReferralSchema.index({ referrerId: 1, status: 1 });
+ReferralSchema.index({ referralCode: 1, createdAt: -1 });
+
+const Referral = mongoose.model("Referral", ReferralSchema);
+
+// ============================================
+// PROMO CODE SCHEMA
+// ============================================
+const PromoCodeSchema = new Schema({
+  code: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    uppercase: true,
+    trim: true,
+    maxlength: 50,
+    index: true 
+  },
+  description: { 
+    type: String, 
+    maxlength: 500 
+  },
+  discountType: { 
+    type: String, 
+    enum: ['percentage', 'fixed'],
+    required: true 
+  },
+  discountValue: { 
+    type: Number, 
+    required: true,
+    min: 0 
+  },
+  minPurchase: { 
+    type: Number, 
+    default: 0,
+    min: 0 
+  },
+  maxDiscount: { 
+    type: Number,
+    min: 0 
+  },
+  usageLimit: { 
+    type: Number,
+    min: 1 
+  },
+  usageCount: { 
+    type: Number, 
+    default: 0,
+    min: 0 
+  },
+  usedBy: [{
+    userId: { 
+      type: Schema.Types.ObjectId, 
+      ref: "Userdataunlimited" 
+    },
+    usedAt: { 
+      type: Date, 
+      default: Date.now 
+    },
+    orderAmount: { 
+      type: Number 
+    },
+    discountApplied: { 
+      type: Number 
+    }
+  }],
+  perUserLimit: { 
+    type: Number,
+    default: 1,
+    min: 1 
+  },
+  validFrom: { 
+    type: Date, 
+    required: true 
+  },
+  validUntil: { 
+    type: Date, 
+    required: true 
+  },
+  isActive: { 
+    type: Boolean, 
+    default: true,
+    index: true 
+  },
+  applicableNetworks: [{ 
+    type: String, 
+    enum: ['MTN', 'VODAFONE', 'AIRTELTIGO', 'ALL'] 
+  }],
+  createdBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited" 
+  }
+}, { 
+  timestamps: true 
+});
+
+// Indexes for promo codes
+PromoCodeSchema.index({ code: 1, isActive: 1 });
+PromoCodeSchema.index({ validFrom: 1, validUntil: 1 });
+PromoCodeSchema.index({ 'usedBy.userId': 1 });
+
+const PromoCode = mongoose.model("PromoCode", PromoCodeSchema);
+
+// ============================================
+// 2FA SCHEMA
+// ============================================
+const TwoFactorAuthSchema = new Schema({
+  userId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    unique: true,
+    index: true 
+  },
+  enabled: { 
+    type: Boolean, 
+    default: false 
+  },
+  method: { 
+    type: String, 
+    enum: ['email', 'sms', 'authenticator'],
+    default: 'email' 
+  },
+  secret: { 
+    type: String,
+    select: false // Don't return in queries by default
+  },
+  backupCodes: [{ 
+    type: String,
+    select: false 
+  }],
+  verificationCode: { 
+    type: String,
+    select: false 
+  },
+  codeExpiresAt: { 
+    type: Date 
+  },
+  lastUsed: { 
+    type: Date 
+  },
+  failedAttempts: { 
+    type: Number, 
+    default: 0 
+  },
+  lockedUntil: { 
+    type: Date 
+  }
+}, { 
+  timestamps: true 
+});
+
+const TwoFactorAuth = mongoose.model("TwoFactorAuth", TwoFactorAuthSchema);
+
+// Export new models
+module.exports.Wallet = Wallet;
+module.exports.Referral = Referral;
+module.exports.PromoCode = PromoCode;
+module.exports.TwoFactorAuth = TwoFactorAuth;

@@ -21,28 +21,78 @@ const waiting_orders_export = require('./waitingorders/waiting.js')
 const phoneVerification = require('./PhoneVerifyRoutes/Verification.js')
 const settingsRoutes = require('./settingsRoutes/settings.js')
 const agentRoutes = require('./agentRoutes/agentManagement.js')
+const agentStoreRoutes = require('./agentRoutes/agentStoreManagement.js')
+const agentDashboardRoutes = require('./agentRoutes/agentDashboard.js')
+const reviewRoutes = require('./reviewRoutes/reviews.js')
+const paymentRoutes = require('./paymentRoutes/payments.js')
+const adminAgentRoutes = require('./adminRoutes/agentManagement.js')
+const bulkMessagingRoutes = require('./adminRoutes/bulkMessaging.js')
+const packageManagementRoutes = require('./adminRoutes/packageManagement.js')
+const storeRoutes = require('./storeRoutes/store.js')
+
+// New feature routes
+const walletRoutes = require('./walletRoutes/wallet.js')
+const referralRoutes = require('./referralRoutes/referral.js')
+const twoFactorRoutes = require('./authRoutes/twoFactor.js')
+const promoRoutes = require('./promoRoutes/promo.js')
+
+// Security middleware
+const { 
+  generalLimiter, 
+  authLimiter, 
+  paymentLimiter,
+  securityHeaders,
+  sanitizeData 
+} = require('./middleware/security.js');
+
 dotenv.config();
 
 // Initialize Express app
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// Security middleware (should be first)
+app.use(securityHeaders);
+app.use(sanitizeData);
+
+// Body parser middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3004',
+    'https://unlimitedata.onrender.com',
+    'https://www.unlimitedata.onrender.com'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Apply general rate limiting to all routes
+app.use(generalLimiter);
 
 // Connect to Database
 ConnectDB();
 
-// Routes
-app.use('/api/v1', authRouter); // Use the router property
-app.use('/api/v1/data', dataOrderRoutes);
-app.use('/api/v1', Deposit);
+// Routes with specific rate limiters
+// Auth routes with stricter rate limiting
+app.use('/api/v1', authLimiter, authRouter); // Use the router property
+
+// Payment-related routes with payment limiter
+app.use('/api/v1/data', paymentLimiter, dataOrderRoutes);
+app.use('/api/v1', paymentLimiter, Deposit);
+app.use('/api/v1', paymentLimiter, DepositeMorle);
+
+// Other routes
 app.use('/api/developer', Developer)
 app.use('/api/v1', HubnetAt);
 app.use('/api',AdminManagement)
 app.use('/api/v1', passreset);
 app.use('/api/reports', Report);
-app.use('/api/v1', DepositeMorle);
 app.use('/api', approveuser)
 app.use('/api', registerFriend);
 app.use('/api', bulkUpload);
@@ -52,7 +102,104 @@ app.use('/api/orders', waiting_orders_export);
 app.use('/api/verifications', phoneVerification);
 app.use('/api/user', settingsRoutes);
 app.use('/api/agent', agentRoutes);
+app.use('/api/agent', agentStoreRoutes);
+app.use('/api/agent', agentDashboardRoutes);
+const agentWithdrawalRoutes = require('./agentRoutes/withdrawals');
+app.use('/api/agent', agentWithdrawalRoutes);
 app.use('/api/public', agentRoutes);
+
+// New feature routes
+app.use('/api/wallet', walletRoutes);
+app.use('/api/referral', referralRoutes);
+app.use('/api/2fa', twoFactorRoutes);
+app.use('/api/promo', promoRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/payments', paymentRoutes);
+const agentPaymentRoutes = require('./paymentRoutes/agentPayments');
+app.use('/api/agent/payments', agentPaymentRoutes);
+app.use('/api/v1/admin', adminAgentRoutes);
+app.use('/api/v1/admin', bulkMessagingRoutes);
+app.use('/api/v1/admin', packageManagementRoutes);
+const agentApprovalRoutes = require('./adminRoutes/agentApproval');
+app.use('/api/admin/agents', agentApprovalRoutes);
+const productAssignmentRoutes = require('./adminRoutes/productAssignment');
+app.use('/api/admin/products', productAssignmentRoutes);
+app.use('/api/store', storeRoutes);
+
+// Legacy endpoint handlers - redirect to admin endpoints
+app.get('/api/transactions', (req, res) => {
+  res.redirect(301, '/api/admin/transactions');
+});
+
+app.get('/api/transactions/:id', (req, res) => {
+  res.redirect(301, `/api/admin/transactions/${req.params.id}`);
+});
+
+app.put('/api/transactions/:id/update-status', (req, res) => {
+  res.redirect(301, `/api/admin/transactions/${req.params.id}/update-status`);
+});
+
+// Legacy orders endpoints
+app.get('/api/orders', (req, res) => {
+  res.redirect(301, '/api/admin/orders');
+});
+
+app.put('/api/orders/:id/status', (req, res) => {
+  res.redirect(301, `/api/admin/orders/${req.params.id}/status`);
+});
+
+// Legacy users endpoints
+app.get('/api/users', (req, res) => {
+  res.redirect(301, '/api/admin/users');
+});
+
+app.get('/api/users/:id', (req, res) => {
+  res.redirect(301, `/api/admin/users/${req.params.id}`);
+});
+
+// Legacy dashboard endpoints
+app.get('/api/dashboard/statistics', (req, res) => {
+  res.redirect(301, '/api/admin/dashboard/statistics');
+});
+
+app.get('/api/dashboard/daily-summary', (req, res) => {
+  res.redirect(301, '/api/admin/daily-summary');
+});
+
+// Legacy daily-summary endpoint (direct)
+app.get('/api/daily-summary', (req, res) => {
+  res.redirect(301, '/api/admin/daily-summary');
+});
+
+// Legacy inventory endpoints
+app.get('/api/inventory', (req, res) => {
+  res.redirect(301, '/api/admin/inventory');
+});
+
+app.get('/api/inventory/:network', (req, res) => {
+  res.redirect(301, `/api/admin/inventory/${req.params.network}`);
+});
+
+app.put('/api/inventory/:network/toggle', (req, res) => {
+  res.redirect(301, `/api/admin/inventory/${req.params.network}/toggle`);
+});
+
+app.put('/api/inventory/:network/toggle-geonettech', (req, res) => {
+  res.redirect(301, `/api/admin/inventory/${req.params.network}/toggle-geonettech`);
+});
+
+// Additional legacy endpoints that might be called
+app.get('/api/user-orders/:userId', (req, res) => {
+  res.redirect(301, `/api/admin/user-orders/${req.params.userId}`);
+});
+
+app.get('/api/verify-paystack/:reference', (req, res) => {
+  res.redirect(301, `/api/admin/verify-paystack/${req.params.reference}`);
+});
+
+app.post('/api/orders/bulk-status-update', (req, res) => {
+  res.redirect(301, '/api/admin/orders/bulk-status-update');
+});
 
 // Default Route
 app.get('/', (req, res) => {

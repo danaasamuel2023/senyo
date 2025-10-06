@@ -3,7 +3,7 @@ const crypto = require('crypto');
 // Rate limiting for payment endpoints
 const paymentRateLimiter = {};
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 5;
+const MAX_REQUESTS_PER_WINDOW = process.env.NODE_ENV === 'development' ? 50 : 5;
 
 // Track suspicious activities
 const suspiciousActivities = {};
@@ -16,6 +16,12 @@ const BLOCK_DURATION = 3600000; // 1 hour
 const rateLimitPayments = (req, res, next) => {
   const identifier = req.ip || req.connection.remoteAddress;
   const now = Date.now();
+
+  // Skip rate limiting for localhost in development
+  if (process.env.NODE_ENV === 'development' && 
+      (identifier === '127.0.0.1' || identifier === '::1' || identifier === '::ffff:127.0.0.1')) {
+    return next();
+  }
 
   if (!paymentRateLimiter[identifier]) {
     paymentRateLimiter[identifier] = [];
