@@ -1,0 +1,813 @@
+/* Enhanced Mobile Optimizations for UnlimitedData GH */
+/* This file contains comprehensive mobile optimizations for perfect mobile experience */
+
+/* ============================= */
+/* 1. FOUNDATION & RESET */
+/* ============================= */
+
+/* Prevent iOS text size adjustment and optimize text rendering */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Smooth scrolling with momentum */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Box sizing for all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ============================= */
+/* 2. SAFE AREA HANDLING */
+/* ============================= */
+
+/* Handle notched devices (iPhone X+, newer Android) */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Main layout safe areas */
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  
+  /* Fixed headers with safe area */
+  .fixed-header {
+    top: env(safe-area-inset-top);
+    padding-top: 0.5rem;
+  }
+  
+  /* Fixed bottom nav with safe area */
+  .fixed-bottom-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+  }
+}
+
+/* ============================= */
+/* 3. TOUCH OPTIMIZATION */
+/* ============================= */
+
+/* Optimize tap highlight color */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 8, 0.1);
+  -webkit-touch-callout: none;
+}
+
+/* Interactive elements tap highlight */
+button, a, input, select, textarea, .touchable {
+  -webkit-tap-highlight-color: rgba(255, 204, 8, 0.2);
+  touch-action: manipulation; /* Disable double-tap zoom */
+}
+
+/* Minimum touch target size (44x44px as per Apple/Google guidelines) */
+@media (max-width: 768px) {
+  button, a, .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Small buttons need padding adjustment */
+  .btn-sm {
+    padding: 0.75rem 1rem;
+    min-height: 40px;
+  }
+  
+  /* Icon buttons */
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+}
+
+/* ============================= */
+/* 4. INPUT OPTIMIZATION */
+/* ============================= */
+
+/* Prevent zoom on input focus (iOS) - 16px minimum */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="search"],
+  input[type="time"],
+  input[type="url"],
+  input[type="week"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+  
+  /* Focus states for better visibility */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #FFCC08;
+    box-shadow: 0 0 0 3px rgba(255, 204, 8, 0.1);
+  }
+  
+  /* Number input spinner buttons larger for mobile */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    height: 44px;
+    width: 44px;
+  }
+}
+
+/* ============================= */
+/* 5. SCROLLING OPTIMIZATION */
+/* ============================= */
+
+/* Smooth momentum scrolling */
+.scroll-container,
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Horizontal scroll containers */
+.scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.scroll-x > * {
+  scroll-snap-align: start;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ============================= */
+/* 6. RESPONSIVE TYPOGRAPHY */
+/* ============================= */
+
+/* Mobile-first fluid typography */
+@media (max-width: 640px) {
+  /* Headings */
+  h1, .text-4xl { 
+    font-size: clamp(1.5rem, 5vw, 2rem); 
+    line-height: 1.2;
+  }
+  
+  h2, .text-3xl { 
+    font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+    line-height: 1.25;
+  }
+  
+  h3, .text-2xl { 
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+    line-height: 1.3;
+  }
+  
+  h4, .text-xl { 
+    font-size: clamp(1rem, 3.5vw, 1.25rem);
+    line-height: 1.35;
+  }
+  
+  /* Body text */
+  p, .text-base { 
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .text-sm { 
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .text-xs { 
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  
+  /* Prevent text orphans */
+  p, li {
+    text-wrap: pretty;
+  }
+}
+
+/* ============================= */
+/* 7. NAVIGATION OPTIMIZATION */
+/* ============================= */
+
+/* Mobile navigation header */
+@media (max-width: 768px) {
+  .nav-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .nav-header {
+    background: rgba(0, 0, 0, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Bottom navigation optimization */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .dark .bottom-nav {
+    background: rgba(0, 0, 0, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Navigation items */
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    min-height: 56px;
+  }
+  
+  /* Active state with haptic feedback simulation */
+  .nav-item:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+}
+
+/* ============================= */
+/* 8. MODAL & OVERLAY OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Full-screen modals on mobile */
+  .modal-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  /* Bottom sheet style modals */
+  .modal-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Swipe handle for bottom sheets */
+  .swipe-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    margin: 0.75rem auto;
+  }
+  
+  .dark .swipe-handle {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ============================= */
+/* 9. CARD & CONTENT OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Card spacing and layout */
+  .card {
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Horizontal card scroll */
+  .card-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 0 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .card-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .card-scroll-item {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+  
+  /* Content padding */
+  .content-mobile {
+    padding: 1rem;
+  }
+  
+  /* Grid to stack on mobile */
+  .grid-mobile {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ============================= */
+/* 10. BUTTON OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Primary buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    min-height: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Button press effect */
+  .btn-primary:active {
+    transform: scale(0.98);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Floating action button */
+  .fab {
+    position: fixed;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    right: 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 30;
+  }
+  
+  /* Button group */
+  .btn-group-mobile {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .btn-group-mobile > * {
+    flex: 1;
+  }
+}
+
+/* ============================= */
+/* 11. LOADING & SKELETON */
+/* ============================= */
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #1f2937 25%,
+    #374151 50%,
+    #1f2937 75%
+  );
+}
+
+/* Pull to refresh indicator */
+.pull-to-refresh {
+  position: fixed;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFCC08;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: top 0.3s;
+  z-index: 50;
+}
+
+.pull-to-refresh.visible {
+  top: calc(env(safe-area-inset-top) + 10px);
+}
+
+/* ============================= */
+/* 12. TABLE OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Responsive tables */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+  
+  /* Card-style table rows on mobile */
+  .table-cards tbody {
+    display: block;
+  }
+  
+  .table-cards tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .table-cards td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none;
+  }
+  
+  .table-cards td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: 1rem;
+  }
+}
+
+/* ============================= */
+/* 13. FORM OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Form layout */
+  .form-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  /* Form groups */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Labels */
+  .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+  
+  /* Checkbox and radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  
+  /* Checkbox/radio with label */
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+  
+  .form-check:active {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Switch toggle */
+  .switch {
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .switch-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    transition: transform 0.2s;
+  }
+  
+  .switch.checked .switch-thumb {
+    transform: translateX(20px);
+  }
+}
+
+/* ============================= */
+/* 14. IMAGE OPTIMIZATION */
+/* ============================= */
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Lazy loading placeholder */
+img[loading="lazy"] {
+  background: #f0f0f0;
+}
+
+.dark img[loading="lazy"] {
+  background: #1f2937;
+}
+
+/* Image gallery */
+@media (max-width: 768px) {
+  .image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .image-gallery img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+  }
+}
+
+/* ============================= */
+/* 15. ANIMATION OPTIMIZATION */
+/* ============================= */
+
+/* Reduce animations on low-end devices */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  /* Simpler animations for mobile */
+  .animate-mobile {
+    animation-duration: 0.2s;
+    animation-timing-function: ease-out;
+  }
+  
+  /* Page transitions */
+  .page-enter {
+    animation: slideInRight 0.3s ease-out;
+  }
+  
+  .page-exit {
+    animation: slideOutLeft 0.3s ease-out;
+  }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; }
+}
+
+/* Disable animations for performance */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================= */
+/* 16. ACCESSIBILITY */
+/* ============================= */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #FFCC08;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #FFCC08;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  top: 10px;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================= */
+/* 17. PERFORMANCE OPTIMIZATION */
+/* ============================= */
+
+/* Hardware acceleration for transforms */
+.will-transform {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize repaints */
+.optimize-repaint {
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ============================= */
+/* 18. DARK MODE OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 768px) {
+  /* Dark mode specific mobile styles */
+  .dark {
+    /* Adjust colors for OLED screens */
+    --mobile-bg: #000000;
+    --mobile-surface: #0a0a0a;
+    --mobile-border: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark body {
+    background: var(--mobile-bg);
+  }
+  
+  .dark .card {
+    background: var(--mobile-surface);
+    border-color: var(--mobile-border);
+  }
+}
+
+/* ============================= */
+/* 19. LANDSCAPE ORIENTATION */
+/* ============================= */
+
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Adjust layout for landscape mobile */
+  .nav-header {
+    padding: 0.5rem 1rem;
+  }
+  
+  .bottom-nav {
+    padding: 0.25rem 0;
+    min-height: 48px;
+  }
+  
+  .content-mobile {
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Hide less important elements in landscape */
+  .hide-landscape {
+    display: none;
+  }
+}
+
+/* ============================= */
+/* 20. PRINT STYLES */
+/* ============================= */
+
+@media print {
+  /* Hide mobile-only elements */
+  .bottom-nav,
+  .fab,
+  .mobile-only,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Reset colors for printing */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}
