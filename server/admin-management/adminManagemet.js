@@ -6,7 +6,10 @@ const auth = require('../middlewareUser/middleware');
 const adminAuth = require('../adminMiddleware/middleware');
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
-const PAYSTACK_SECRET_KEY = 'sk_live_0fba72fb9c4fc71200d2e0cdbb4f2b37c1de396c'; 
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY; 
+if (!PAYSTACK_SECRET_KEY) {
+  console.warn('PAYSTACK_SECRET_KEY not set. Admin Paystack operations may fail.');
+}
 
 
 

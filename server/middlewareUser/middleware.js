@@ -17,8 +17,12 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, 'DatAmArt');
+    // Verify token with environment secret
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ msg: 'Server JWT misconfiguration' });
+    }
+    const decoded = jwt.verify(token, jwtSecret);
 
     // Find user by id
     const user = await User.findById(decoded.userId).select('-password');

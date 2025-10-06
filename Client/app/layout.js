@@ -1,7 +1,7 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import Navbar from "@/compoenent/nav";
+import ConditionalNavbar from "@/component/ConditionalNavbar";
 import Footer from "@/compoenent/footer";
 import AuthGuard from "@/component/AuthGuide";
 import WhatsAppLink from "@/component/groupIcon";
@@ -439,7 +439,7 @@ export default function RootLayout({ children }) {
               <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
             </div>
             
-            <Navbar />
+            <ConditionalNavbar />
             
             {/* Main content - MOBILE OPTIMIZED SPACING */}
             <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
@@ -474,96 +474,104 @@ export default function RootLayout({ children }) {
           </ToastProvider>
         </ThemeProvider>
         
-        {/* Google Analytics with enhanced tracking */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                page_path: window.location.pathname,
-                cookie_flags: 'SameSite=None;Secure'
-              });
-            `,
-          }}
-        />
-        
-        {/* Enhanced Web Vitals monitoring */}
-        <Script
-          id="web-vitals"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
-                const observer = new PerformanceObserver((list) => {
-                  const entries = list.getEntries();
-                  entries.forEach(entry => {
-                    // Send to analytics
-                    if (window.gtag) {
-                      window.gtag('event', entry.name, {
-                        value: Math.round(entry.value),
-                        metric_id: entry.id,
-                        metric_value: entry.value,
-                        metric_delta: entry.delta,
-                      });
-                    }
+        {/* Google Analytics with enhanced tracking - only load if GA ID is configured */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script
+              id="gtag-init"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                    page_path: window.location.pathname,
+                    cookie_flags: 'SameSite=None;Secure'
                   });
+                `,
+              }}
+            />
+          </>
+        )}
+        
+        {/* Enhanced Web Vitals monitoring - only if GA is configured */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <Script
+            id="web-vitals"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+                  const observer = new PerformanceObserver((list) => {
+                    const entries = list.getEntries();
+                    entries.forEach(entry => {
+                      // Send to analytics
+                      if (window.gtag) {
+                        window.gtag('event', entry.name, {
+                          value: Math.round(entry.value),
+                          metric_id: entry.id,
+                          metric_value: entry.value,
+                          metric_delta: entry.delta,
+                        });
+                      }
+                    });
+                  });
+                  
+                  // Observe all Core Web Vitals
+                  try {
+                    observer.observe({ type: 'web-vital', buffered: true });
+                    observer.observe({ type: 'paint', buffered: true });
+                    observer.observe({ type: 'layout-shift', buffered: true });
+                    observer.observe({ type: 'largest-contentful-paint', buffered: true });
+                    observer.observe({ type: 'first-input', buffered: true });
+                  } catch (e) {
+                    console.error('[Performance Observer]', e);
+                  }
+                }
+              `,
+            }}
+          />
+        )}
+        
+        {/* Error tracking - only if GA is configured */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <Script
+            id="error-tracking"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.addEventListener('error', (e) => {
+                  if (window.gtag) {
+                    window.gtag('event', 'exception', {
+                      description: e.message,
+                      fatal: false,
+                      error: {
+                        message: e.message,
+                        filename: e.filename,
+                        lineno: e.lineno,
+                        colno: e.colno,
+                      }
+                    });
+                  }
                 });
                 
-                // Observe all Core Web Vitals
-                try {
-                  observer.observe({ type: 'web-vital', buffered: true });
-                  observer.observe({ type: 'paint', buffered: true });
-                  observer.observe({ type: 'layout-shift', buffered: true });
-                  observer.observe({ type: 'largest-contentful-paint', buffered: true });
-                  observer.observe({ type: 'first-input', buffered: true });
-                } catch (e) {
-                  console.error('[Performance Observer]', e);
-                }
-              }
-            `,
-          }}
-        />
-        
-        {/* Error tracking */}
-        <Script
-          id="error-tracking"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.addEventListener('error', (e) => {
-                if (window.gtag) {
-                  window.gtag('event', 'exception', {
-                    description: e.message,
-                    fatal: false,
-                    error: {
-                      message: e.message,
-                      filename: e.filename,
-                      lineno: e.lineno,
-                      colno: e.colno,
-                    }
-                  });
-                }
-              });
-              
-              window.addEventListener('unhandledrejection', (e) => {
-                if (window.gtag) {
-                  window.gtag('event', 'exception', {
-                    description: e.reason,
-                    fatal: false,
-                  });
-                }
-              });
-            `,
-          }}
-        />
+                window.addEventListener('unhandledrejection', (e) => {
+                  if (window.gtag) {
+                    window.gtag('event', 'exception', {
+                      description: e.reason,
+                      fatal: false,
+                    });
+                  }
+                });
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   );

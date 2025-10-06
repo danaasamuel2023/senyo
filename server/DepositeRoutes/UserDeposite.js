@@ -15,7 +15,10 @@ const {
 } = require('../middleware/paystackSecurity');
 
 // Paystack configuration
-const PAYSTACK_SECRET_KEY = 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b'; 
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY; 
+if (!PAYSTACK_SECRET_KEY) {
+  console.warn('PAYSTACK_SECRET_KEY not set. Payment operations will fail.');
+}
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 // Initiate Deposit

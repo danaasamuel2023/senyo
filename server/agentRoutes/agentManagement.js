@@ -11,7 +11,11 @@ const verifyAgentAuth = async (req, res, next) => {
       return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, 'DatAmArt');
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return res.status(500).json({ msg: 'Server JWT misconfiguration' });
+  }
+  const decoded = jwt.verify(token, jwtSecret);
     const user = await User.findById(decoded.userId);
     
     if (!user) {

@@ -50,6 +50,9 @@ const handleResponse = async (response) => {
       throw new Error('Access denied. Admin privileges required.');
     } else if (response.status === 404) {
       throw new Error('API endpoint not found. Please check the server configuration.');
+    } else if (response.status === 429) {
+      const retryAfter = response.headers.get('retry-after') || '60';
+      throw new Error(`Too many requests from this IP, please try again after ${retryAfter} seconds.`);
     } else if (response.status >= 500) {
       throw new Error('Server error. Please try again later.');
     } else {

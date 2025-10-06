@@ -17,14 +17,23 @@ const {
 } = require('../schema/schema');
 
 // Constants
-const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.warn('JWT_SECRET is not set. Set JWT_SECRET in environment.');
+}
 
 const GEONETTECH_BASE_URL = 'https://posapi.geonettech.com/api/v1';
-const GEONETTECH_API_KEY = process.env.GEONETTECH_API_KEY || '21|rkrw7bcoGYjK8irAOTMaZ8sc1LRHYcwjuZnZmMNw4a6196f1';
+const GEONETTECH_API_KEY = process.env.GEONETTECH_API_KEY;
+if (!GEONETTECH_API_KEY) {
+  console.warn('GEONETTECH_API_KEY not set. Requests to Geonettech will fail.');
+}
 
 // Add Telcel API constants
 const TELCEL_API_URL = 'https://iget.onrender.com/api/developer/orders';
-const TELCEL_API_KEY = 'b7975f5ce918b4a253a9c227f651339555094eaee8696ae168e195d09f74617f';
+const TELCEL_API_KEY = process.env.TELCEL_API_KEY;
+if (!TELCEL_API_KEY) {
+  console.warn('TELCEL_API_KEY not set. Telecel requests will fail.');
+}
 
 // Create Geonettech client
 const geonetClient = axios.create({

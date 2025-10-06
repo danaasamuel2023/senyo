@@ -64,12 +64,34 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
+  // Rate limiting state
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
+  const [lastLoginAttempt, setLastLoginAttempt] = useState(0);
+  
   // Toast state
   const [toast, setToast] = useState({
     visible: false,
     message: '',
     type: 'success'
   });
+
+  // Rate limiting countdown effect
+  useEffect(() => {
+    let interval;
+    if (isRateLimited && rateLimitTimeLeft > 0) {
+      interval = setInterval(() => {
+        setRateLimitTimeLeft(prev => {
+          if (prev <= 1) {
+            setIsRateLimited(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRateLimited, rateLimitTimeLeft]);
 
   // Add CSS for animations
   useEffect(() => {
@@ -125,8 +147,25 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    // Check if user is rate limited
+    if (isRateLimited) {
+      setError(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`);
+      showToast(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`, 'error');
+      return;
+    }
+
+    // Check for rapid successive attempts (client-side rate limiting)
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastLoginAttempt;
+    if (timeSinceLastAttempt < 2000) { // 2 seconds minimum between attempts
+      setError('Please wait a moment before trying again.');
+      showToast('Please wait a moment before trying again.', 'error');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
+    setLastLoginAttempt(now);
 
     try {
       // Get API URL using utility function
@@ -142,6 +181,19 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
+        
+        // Handle 429 rate limiting specifically
+        if (response.status === 429) {
+          const rateLimitMinutes = 15; // Default 15 minutes from server
+          const rateLimitSeconds = rateLimitMinutes * 60;
+          
+          setIsRateLimited(true);
+          setRateLimitTimeLeft(rateLimitSeconds);
+          setError(`Too many login attempts. Please try again after ${rateLimitMinutes} minutes.`);
+          showToast(`Too many login attempts. Please try again after ${rateLimitMinutes} minutes.`, 'error');
+          return;
+        }
+        
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
@@ -194,6 +246,12 @@ export default function LoginPage() {
       
       if (err.message.includes('Failed to fetch')) {
         errorMessage = 'Unable to connect to server. Please check your internet connection.';
+      } else if (err.message.includes('HTTP 401')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (err.message.includes('HTTP 403')) {
+        errorMessage = 'Account is disabled. Please contact support.';
+      } else if (err.message.includes('HTTP 429')) {
+        errorMessage = 'Too many login attempts. Please try again later.';
       } else if (err.message.includes('HTTP')) {
         errorMessage = err.message;
       } else if (err.message) {
@@ -255,6 +313,23 @@ export default function LoginPage() {
 
           {/* Form Section */}
           <div className="p-6">
+            {/* Rate Limiting Warning */}
+            {isRateLimited && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/20 backdrop-blur-sm border border-red-500/30">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <div className="flex-grow">
+                    <p className="text-red-200 text-sm font-medium">
+                      Too many login attempts
+                    </p>
+                    <p className="text-red-300 text-xs">
+                      Please wait {Math.floor(rateLimitTimeLeft / 60)}:{(rateLimitTimeLeft % 60).toString().padStart(2, '0')} before trying again
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Error Display */}
             {error && (
               <div className="mb-4 p-3 rounded-xl flex items-start bg-red-600/20 border border-red-600/40 backdrop-blur-sm">
@@ -334,10 +409,19 @@ export default function LoginPage() {
               {/* Login Button */}
               <button
                 onClick={handleLogin}
-                disabled={isLoading || !email || !password}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black bg-[#FFCC08] hover:bg-[#FFCC08]/90 focus:outline-none focus:ring-4 focus:ring-[#FFCC08]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 font-bold"
+                disabled={isLoading || !email || !password || isRateLimited}
+                className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black transition-all duration-300 transform hover:scale-105 font-bold ${
+                  isRateLimited 
+                    ? 'bg-gray-500 cursor-not-allowed opacity-50' 
+                    : 'bg-[#FFCC08] hover:bg-[#FFCC08]/90 focus:outline-none focus:ring-4 focus:ring-[#FFCC08]/50'
+                } ${isLoading || !email || !password ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isLoading ? (
+                {isRateLimited ? (
+                  <>
+                    <AlertTriangle className="animate-spin mr-2 w-4 h-4" />
+                    Rate Limited ({Math.floor(rateLimitTimeLeft / 60)}:{(rateLimitTimeLeft % 60).toString().padStart(2, '0')})
+                  </>
+                ) : isLoading ? (
                   <>
                     <Loader2 className="animate-spin mr-2 w-4 h-4" />
                     Signing In...

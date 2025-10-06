@@ -57,6 +57,19 @@ const agentLimiter = rateLimit({
   }
 });
 
+// Very lenient rate limiter for admin routes
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isDevelopment ? 10000 : 1000, // Very lenient for admin operations
+  message: 'Too many admin requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for localhost in development
+    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+  }
+});
+
 // Security headers configuration
 const securityHeaders = helmet({
   contentSecurityPolicy: {
@@ -84,6 +97,7 @@ module.exports = {
   authLimiter,
   paymentLimiter,
   agentLimiter,
+  adminLimiter,
   securityHeaders,
   sanitizeData,
 };

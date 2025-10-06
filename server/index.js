@@ -39,8 +39,10 @@ const promoRoutes = require('./promoRoutes/promo.js')
 // Security middleware
 const { 
   generalLimiter, 
-  authLimiter, 
+  authLimiter,
   paymentLimiter,
+  agentLimiter,
+  adminLimiter,
   securityHeaders,
   sanitizeData 
 } = require('./middleware/security.js');
@@ -117,15 +119,15 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
 const agentPaymentRoutes = require('./paymentRoutes/agentPayments');
 app.use('/api/agent/payments', agentPaymentRoutes);
-app.use('/api/v1/admin', adminAgentRoutes);
-app.use('/api/v1/admin', bulkMessagingRoutes);
-app.use('/api/v1/admin', packageManagementRoutes);
+app.use('/api/v1/admin', adminLimiter, adminAgentRoutes);
+app.use('/api/v1/admin', adminLimiter, bulkMessagingRoutes);
+app.use('/api/v1/admin', adminLimiter, packageManagementRoutes);
 const agentApprovalRoutes = require('./adminRoutes/agentApproval');
-app.use('/api/admin/agents', agentApprovalRoutes);
+app.use('/api/admin/agents', adminLimiter, agentApprovalRoutes);
 const productAssignmentRoutes = require('./adminRoutes/productAssignment');
-app.use('/api/admin/products', productAssignmentRoutes);
+app.use('/api/admin/products', adminLimiter, productAssignmentRoutes);
 const adminDashboardRoutes = require('./adminRoutes/dashboard');
-app.use('/api/v1/admin', adminDashboardRoutes);
+app.use('/api/v1/admin', adminLimiter, adminDashboardRoutes);
 app.use('/api/store', storeRoutes);
 
 // Legacy endpoint handlers - redirect to admin endpoints

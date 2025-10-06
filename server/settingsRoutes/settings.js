@@ -3,26 +3,25 @@ const router = express.Router();
 const { User } = require('../schema/schema');
 const bcrypt = require('bcryptjs');
 
-// Middleware to verify user authentication
+// Middleware to verify user authentication via JWT
+const jwt = require('jsonwebtoken');
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
-    
-    // TODO: Implement proper JWT verification
-    // For now, assuming userId is passed in headers
-    const userId = req.headers['user-id'];
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'User ID required' });
+    const token = authHeader.slice(7);
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ success: false, message: 'Server misconfiguration' });
     }
-    
-    req.userId = userId;
+    const decoded = jwt.verify(token, jwtSecret);
+    req.userId = decoded.userId;
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
-    res.status(401).json({ success: false, message: 'Authentication failed' });
+    console.error('Authentication error:', error.message);
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
 

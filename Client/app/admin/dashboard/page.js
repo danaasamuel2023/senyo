@@ -108,6 +108,23 @@ const AdminDashboard = () => {
     }
   }, [router]);
 
+  // Retry function with exponential backoff
+  const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (error.message.includes('Too many requests') && attempt < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.log(`Rate limited, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+  };
+
   // Load statistics
   const loadStats = useCallback(async () => {
     try {
@@ -120,13 +137,13 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Fetch in parallel for speed
+      // Fetch in parallel for speed with retry mechanism
       const [dashboardStats, todaySummary] = await Promise.all([
-        adminAPI.dashboard.getStatistics().catch(err => {
+        retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
           console.error('Dashboard stats error:', err);
           return { userStats: {}, orderStats: {}, financialStats: {} };
         }),
-        adminAPI.dashboard.getDailySummary(new Date().toISOString().split('T')[0]).catch(err => {
+        retryWithBackoff(() => adminAPI.dashboard.getDailySummary(new Date().toISOString().split('T')[0])).catch(err => {
           console.error('Daily summary error:', err);
           return { summary: {}, networkSummary: [] };
         })
@@ -256,9 +273,22 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  // Debounce mechanism to prevent rapid successive calls
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
+  const REFRESH_DEBOUNCE_DELAY = 3000; // 3 seconds
+
   // Load dashboard data (Ultra-fast parallel loading)
   const loadDashboardData = useCallback(async () => {
     if (!checkAuth()) return;
+    
+    // Check debounce to prevent rapid successive requests
+    const now = Date.now();
+    if (now - lastRefreshTime < REFRESH_DEBOUNCE_DELAY) {
+      const remainingTime = Math.ceil((REFRESH_DEBOUNCE_DELAY - (now - lastRefreshTime)) / 1000);
+      showNotification(`Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before refreshing again.`, 'warning');
+      return;
+    }
+    setLastRefreshTime(now);
     
     setLoading(true);
     try {
@@ -273,7 +303,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [checkAuth, loadStats, loadRecentActivities, loadChartData]);
+  }, [checkAuth, loadStats, loadRecentActivities, loadChartData, lastRefreshTime]);
 
   // Load orders
   const loadOrders = useCallback(async () => {
