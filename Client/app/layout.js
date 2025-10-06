@@ -1,8 +1,8 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import Navbar from "@/compoenent/nav";
-import Footer from "@/compoenent/footer";
+import Navbar from "@/component/nav";
+import Footer from "@/component/footer";
 import AuthGuard from "@/component/AuthGuide";
 import WhatsAppLink from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
