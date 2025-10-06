@@ -333,7 +333,8 @@ const NavItem = ({
       onClick();
     } else if (path) {
       router.push(path);
-      setIsMobileMenuOpen(false);
+      // Optional chaining to avoid errors if not provided
+      setIsMobileMenuOpen?.(false);
     }
   };
 
@@ -465,11 +466,12 @@ const MobileNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isNavbarHidden, setIsNavbarHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [forceHideNavbar, setForceHideNavbar] = useState(false);
   
   const menuRef = useRef(null);
   const notificationRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+  const tickingRef = useRef(false);
 
   // Check if current page should auto-hide navbar
   useEffect(() => {
@@ -483,33 +485,40 @@ const MobileNavbar = () => {
     setShowNotifications(false);
   }, [pathname]);
 
-  // Auto-hide navbar on scroll
+  // Auto-hide navbar on scroll (optimized with rAF)
   useEffect(() => {
     if (forceHideNavbar) {
       setIsNavbarHidden(true);
       return;
     }
 
+    lastScrollYRef.current = window.scrollY;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsNavbarHidden(true);
-      } else if (currentScrollY < lastScrollY || currentScrollY <= 100) {
-        setIsNavbarHidden(false);
+      const currentY = window.scrollY;
+      if (!tickingRef.current) {
+        window.requestAnimationFrame(() => {
+          const lastY = lastScrollYRef.current;
+          if (currentY > lastY && currentY > 100) {
+            setIsNavbarHidden(true);
+          } else if (currentY < lastY || currentY <= 100) {
+            setIsNavbarHidden(false);
+          }
+          lastScrollYRef.current = currentY;
+          tickingRef.current = false;
+        });
+        tickingRef.current = true;
       }
-      
-      setLastScrollY(currentScrollY);
     };
 
-    // Only add scroll listener if not force hiding
-    if (!forceHideNavbar) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      setIsNavbarHidden(false); // Show navbar when not force hiding
-    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    setIsNavbarHidden(false);
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, forceHideNavbar]);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      tickingRef.current = false;
+    };
+  }, [forceHideNavbar]);
 
   // Handle body scroll lock
   useEffect(() => {
