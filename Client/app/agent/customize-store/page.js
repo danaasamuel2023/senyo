@@ -490,8 +490,10 @@ const CustomizeStorePage = () => {
               <img 
                 src={customization.bannerUrl} 
                 alt="Banner" 
-                className="w-full h-32 object-cover rounded-lg mb-4"
+                className="w-full h-32 max-w-full object-cover rounded-lg mb-4"
                 onError={(e) => e.target.style.display = 'none'}
+                loading="lazy"
+                decoding="async"
               />
             )}
             
@@ -500,8 +502,10 @@ const CustomizeStorePage = () => {
                 <img 
                   src={customization.logoUrl} 
                   alt="Logo" 
-                  className="w-16 h-16 rounded-full object-cover"
+                  className="w-16 h-16 max-w-full rounded-full object-cover"
                   onError={(e) => e.target.src = ''}
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <div 

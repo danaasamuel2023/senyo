@@ -39,13 +39,7 @@ export default function SEO({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={`${baseUrl}${ogImage}`} />
       
-      {/* Mobile Optimization */}
-      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
-      <meta name="format-detection" content="telephone=no" />
-      <meta name="mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      <meta name="apple-mobile-web-app-title" content="UnlimitedData GH" />
+      {/* Mobile meta handled globally via app/layout.js viewport and head */}
       
       {/* Theme Color */}
       <meta name="theme-color" content="#FFCC08" media="(prefers-color-scheme: light)" />
