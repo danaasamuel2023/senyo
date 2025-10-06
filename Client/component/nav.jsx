@@ -61,11 +61,10 @@ const USER_DATA_KEY = 'userData';
 const AUTH_TOKEN_KEY = 'authToken';
 const NOTIFICATION_CHECK_INTERVAL = 60000;
 
-// Pages where navbar should auto-hide
+// Pages where navbar should auto-hide on scroll
 const AUTO_HIDE_PAGES = [
   '/checkout',
   '/payment',
-  '/admin',
   '/settings',
   '/profile',
   '/reports',
@@ -471,7 +470,20 @@ const MobileNavbar = () => {
   const menuRef = useRef(null);
   const notificationRef = useRef(null);
 
-  // Check if current page should auto-hide navbar
+  // Check if current page should completely hide navbar
+  const shouldHideCompletely = useMemo(() => {
+    if (!pathname) return false;
+    
+    // List of routes where navbar should be completely hidden
+    const hideOnRoutes = [
+      '/admin',      // All admin pages
+      '/agent/dashboard',  // Agent dashboard if it has its own navigation
+    ];
+    
+    return hideOnRoutes.some(route => pathname.startsWith(route));
+  }, [pathname]);
+
+  // Check if current page should auto-hide navbar on scroll
   useEffect(() => {
     const shouldAutoHide = AUTO_HIDE_PAGES.some(page => pathname.startsWith(page));
     setForceHideNavbar(shouldAutoHide);
@@ -556,6 +568,11 @@ const MobileNavbar = () => {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isMobileMenuOpen, showNotifications]);
+
+  // Don't render navbar at all on admin pages
+  if (shouldHideCompletely) {
+    return null;
+  }
 
   return (
     <>
