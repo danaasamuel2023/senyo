@@ -375,6 +375,7 @@ export default function RootLayout({ children }) {
       <body
         className="font-sans antialiased min-h-screen flex flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] selection:bg-[#FFCC08] selection:text-black relative overflow-x-hidden transition-colors duration-300"
         suppressHydrationWarning
+        style={{ minHeight: '100dvh' }}
       >
         {/* Initialize body opacity */}
         <Script
