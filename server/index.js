@@ -124,6 +124,8 @@ const agentApprovalRoutes = require('./adminRoutes/agentApproval');
 app.use('/api/admin/agents', agentApprovalRoutes);
 const productAssignmentRoutes = require('./adminRoutes/productAssignment');
 app.use('/api/admin/products', productAssignmentRoutes);
+const adminDashboardRoutes = require('./adminRoutes/dashboard');
+app.use('/api/v1/admin', adminDashboardRoutes);
 app.use('/api/store', storeRoutes);
 
 // Legacy endpoint handlers - redirect to admin endpoints

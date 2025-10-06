@@ -10,10 +10,7 @@ const ConnectDB = () => {
     
     const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
 
-    mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    }).then(() => {
+    mongoose.connect(uri).then(() => {
         console.log('Connected to MongoDB');
     }).catch(err => {
         console.error('Failed to connect to MongoDB', err);
