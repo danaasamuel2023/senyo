@@ -442,7 +442,7 @@ export default function RootLayout({ children }) {
             <Navbar />
             
             {/* Main content - MOBILE OPTIMIZED SPACING */}
-            <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
+            <main className="flex-grow relative z-0 pt-14 sm:pt-16 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
               {/* Noise texture overlay - Reduced opacity on mobile */}
               <div className="pointer-events-none absolute inset-0 opacity-[0.01] md:opacity-[0.015] dark:opacity-[0.015] dark:md:opacity-[0.02]">
                 <svg width="100%" height="100%">
