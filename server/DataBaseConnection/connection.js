@@ -16,8 +16,6 @@ const ConnectDB = () => {
         serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
         socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
         bufferCommands: true, // Enable mongoose buffering
-        useNewUrlParser: false, // Deprecated option removed
-        useUnifiedTopology: false, // Deprecated option removed
     };
 
     mongoose.connect(uri, options).then(() => {

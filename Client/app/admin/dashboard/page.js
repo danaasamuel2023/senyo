@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userData, setUserData] = useState(null);
   
@@ -65,17 +66,27 @@ const AdminDashboard = () => {
   // Initialize sidebar state based on screen size
   useEffect(() => {
     const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 768);
+      if (typeof window !== 'undefined') {
+        const isDesktopView = window.innerWidth >= 768;
+        setIsDesktop(isDesktopView);
+        setSidebarOpen(isDesktopView);
+      }
     };
     
     // Set initial state
     handleResize();
     
     // Add event listener
-    window.addEventListener('resize', handleResize);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+    }
     
     // Cleanup
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
   }, []);
 
   // Check authentication
@@ -1322,7 +1333,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Mobile Overlay */}
-      {sidebarOpen && window.innerWidth < 768 && (
+      {sidebarOpen && !isDesktop && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
@@ -1332,7 +1343,7 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-xl transition-all duration-300 z-40 ${
         sidebarOpen ? 'w-64' : 'w-20'
-      } ${sidebarOpen || window.innerWidth >= 768 ? 'translate-x-0' : '-translate-x-full'}`}>
+      } ${sidebarOpen || isDesktop ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -1360,7 +1371,7 @@ const AdminDashboard = () => {
                 onClick={() => {
                   setActiveTab(item.id);
                   // Close sidebar on mobile after selection
-                  if (window.innerWidth < 768) {
+                  if (!isDesktop) {
                     setSidebarOpen(false);
                   }
                 }}

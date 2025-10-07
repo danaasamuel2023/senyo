@@ -20,8 +20,7 @@ const MobileNavbar = () => {
     </nav>
   );
 };
-import Footer from "@/compoenent/footer";
-import AuthGuard from "@/component/AuthGuide";
+import Footer from "@/component/footer";
 import WhatsAppLink from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
@@ -380,9 +379,8 @@ export default function RootLayout({ children }) {
         {/* Modern favicon setup with dark mode support */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon-dark.ico" sizes="32x32" media="(prefers-color-scheme: dark)" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#FFCC08" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.svg" />
+        <link rel="mask-icon" href="/icon.svg" color="#FFCC08" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* Structured data */}
@@ -407,7 +405,6 @@ export default function RootLayout({ children }) {
         {/* Modern layout structure with error boundary */}
         <ThemeProvider>
           <ToastProvider>
-            <AuthGuard>
             {/* Dynamic background based on theme - SIMPLIFIED FOR MOBILE */}
             <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
             
@@ -491,7 +488,6 @@ export default function RootLayout({ children }) {
             
             {/* PWA Install Prompt and Push Notifications */}
             <PWAInstaller />
-            </AuthGuard>
           </ToastProvider>
         </ThemeProvider>
         

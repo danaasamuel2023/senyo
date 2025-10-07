@@ -1,5 +1,5 @@
 // Service Worker for UnlimitedData GH PWA
-const CACHE_NAME = 'unlimiteddata-v1';
+const CACHE_NAME = 'unlimiteddata-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -63,6 +63,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-GET requests (POST, PUT, DELETE, etc.)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
@@ -70,17 +75,22 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((response) => {
-        // Don't cache non-successful responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        // Don't cache non-successful responses or non-GET requests
+        if (!response || response.status !== 200 || response.type !== 'basic' || event.request.method !== 'GET') {
           return response;
         }
 
         // Clone the response
         const responseToCache = response.clone();
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
+        // Only cache GET requests
+        if (event.request.method === 'GET') {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache).catch((error) => {
+              console.log('[Service Worker] Cache put failed:', error);
+            });
+          });
+        }
 
         return response;
       }).catch(() => {

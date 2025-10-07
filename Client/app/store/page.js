@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ShoppingCart, Zap, Wifi, Phone, ArrowRight, CheckCircle,
@@ -747,4 +747,20 @@ const StorePage = () => {
   );
 };
 
-export default StorePage;
+// Wrapper component with Suspense boundary
+const StorePageWithSuspense = () => {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-yellow-400/20 border-t-yellow-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-yellow-400 font-medium">Loading store...</p>
+        </div>
+      </div>
+    }>
+      <StorePage />
+    </Suspense>
+  );
+};
+
+export default StorePageWithSuspense;

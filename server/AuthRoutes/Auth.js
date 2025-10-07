@@ -90,9 +90,10 @@ router.post("/register", async (req, res) => {
     }
 
     // Generate initial token for auto-login after registration
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     const token = jwt.sign(
       { userId: newUser._id },
-      'DatAmArt',
+      jwtSecret,
       { expiresIn: "7d" }
     );
 
@@ -134,12 +135,13 @@ router.post("/login", async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate JWT Token with user role for authorization
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     const token = jwt.sign(
       { 
         userId: user._id,
         role: user.role 
       },
-      'DatAmArt',
+      jwtSecret,
       { expiresIn: "7d" }
     );
 
@@ -178,7 +180,8 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
     
     // Verify token
-    const decoded = jwt.verify(token, 'DatAmArt');
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
+    const decoded = jwt.verify(token, jwtSecret);
     
     // Add user data to request
     req.user = {

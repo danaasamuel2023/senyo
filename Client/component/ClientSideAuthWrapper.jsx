@@ -1,6 +1,6 @@
 'use client'
 import { usePathname } from 'next/navigation';
-import AuthGuard from '@/component/AuthGuide';
+import AuthGuard from '@/component/AuthGuard';
 
 export default function ClientSideAuthWrapper({ children }) {
   const pathname = usePathname();

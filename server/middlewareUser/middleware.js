@@ -17,8 +17,9 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
-    // Verify token with hardcoded secret
-    const decoded = jwt.verify(token, 'DatAmArt');
+    // Verify token with consistent secret
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
+    const decoded = jwt.verify(token, jwtSecret);
 
     // Find user by id
     const user = await User.findById(decoded.userId).select('-password');

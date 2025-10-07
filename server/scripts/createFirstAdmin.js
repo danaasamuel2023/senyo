@@ -61,7 +61,12 @@ async function createFirstAdmin() {
   try {
     // Connect to MongoDB
     console.log('🔌 Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: true,
+    });
     console.log('✅ Connected to MongoDB\n');
 
     // Check if any admin exists

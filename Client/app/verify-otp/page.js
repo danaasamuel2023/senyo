@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
 import OtpInput from '@/component/optinput';
-import AuthGuard from '@/component/AuthGuide';
+import AuthGuard from '@/component/AuthGuard';
 
 // Create a client component that safely uses useSearchParams
 const VerifyAndResetContent = ({ initialPhone }) => {

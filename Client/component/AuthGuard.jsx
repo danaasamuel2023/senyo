@@ -22,15 +22,16 @@ const AuthGuard = ({ children }) => {
     }
     
     // Check if user is authenticated
-    const userData = localStorage.getItem('userData');
+    const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
     
     if (!userData) {
       router.push('/SignUp');
+      setLoading(false); // Set loading to false to allow redirect
+      return;
     } else {
       setIsAuthenticated(true);
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, [router, isPublicPath, pathname]);
 
   if (loading) {

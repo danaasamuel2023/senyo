@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, ArrowUp, ArrowDown, Database, Users, Activity, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import for navigation
+import { getApiUrl } from '../../utils/apiConfig'; // Import API configuration
 
 // Fetch dashboard data
 const getDashboardData = async (date) => {
@@ -21,7 +22,7 @@ const getDashboardData = async (date) => {
     }
     
     // Replace with your actual API endpoint
-    const response = await fetch(`https://unlimitedata.onrender.com/api/daily-summary?date=${date}`, {
+    const response = await fetch(`${getApiUrl()}/api/daily-summary?date=${date}`, {
       headers: {
         'x-auth-token': authToken
       }

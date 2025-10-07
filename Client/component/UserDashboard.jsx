@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from './ToastNotification';
+import MobileNavbar from './nav';
 import { 
   CreditCard, Package, Database, DollarSign, TrendingUp, X, 
   AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
@@ -245,6 +246,21 @@ const DashboardPage = () => {
     },
     verificationServices: () => {
       router.push('/verification-services');
+    },
+    store: () => {
+      router.push('/store');
+    },
+    profile: () => {
+      router.push('/profile');
+    },
+    settings: () => {
+      router.push('/settings');
+    },
+    analytics: () => {
+      router.push('/reports');
+    },
+    support: () => {
+      router.push('/support');
     },
     network: (networkId) => {
       if (!networkId) return;
@@ -516,6 +532,9 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black relative overflow-hidden pb-20">
+        {/* Navigation Component */}
+        <MobileNavbar />
+        
         {/* Premium Background - Static for better performance */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-[#FFCC08]/5 to-yellow-600/5 blur-3xl"></div>
@@ -589,7 +608,7 @@ const DashboardPage = () => {
                   <span>Store</span>
                 </button>
                 <button 
-                  onClick={() => router.push('/agent/dashboard')}
+                  onClick={() => router.push('/agent-signup')}
                   className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors flex items-center space-x-1"
                 >
                   <Award className="w-3 h-3" />
@@ -794,18 +813,45 @@ const DashboardPage = () => {
           <div className="mb-4">
             <h2 className="text-sm font-bold text-white mb-3">Quick Actions</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {QUICK_ACTIONS.slice(0, 6).map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => router.push(action.path)}
-                  className="flex flex-col items-center space-y-2 group"
-                >
-                  <div className={`w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg transform transition-all duration-300 group-hover:scale-110 group-active:scale-95`}>
-                    <action.icon className="w-5 sm:w-6 h-5 sm:h-6 text-white" strokeWidth={2} />
-                  </div>
-                  <p className="text-xs text-gray-300 font-medium">{action.label}</p>
-                </button>
-              ))}
+              {QUICK_ACTIONS.slice(0, 6).map((action, index) => {
+                const handleClick = () => {
+                  switch(action.label.toLowerCase()) {
+                    case 'store':
+                      navigationHandlers.store();
+                      break;
+                    case 'analytics':
+                      navigationHandlers.analytics();
+                      break;
+                    case 'history':
+                      navigationHandlers.orders();
+                      break;
+                    case 'top up':
+                      navigationHandlers.topup();
+                      break;
+                    case 'support':
+                      navigationHandlers.support();
+                      break;
+                    case 'profile':
+                      navigationHandlers.profile();
+                      break;
+                    default:
+                      router.push(action.path);
+                  }
+                };
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={handleClick}
+                    className="flex flex-col items-center space-y-2 group"
+                  >
+                    <div className={`w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg transform transition-all duration-300 group-hover:scale-110 group-active:scale-95`}>
+                      <action.icon className="w-5 sm:w-6 h-5 sm:h-6 text-white" strokeWidth={2} />
+                    </div>
+                    <p className="text-xs text-gray-300 font-medium">{action.label}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -867,7 +913,10 @@ const DashboardPage = () => {
         {/* Bottom Navigation - Mobile Only */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl" style={{ zIndex: 50 }}>
           <div className="grid grid-cols-5 py-2">
-            <button className="flex flex-col items-center py-1.5">
+            <button 
+              onClick={() => router.push('/')}
+              className="flex flex-col items-center py-1.5"
+            >
               <Home className="w-5 h-5 text-[#FFCC08]" />
               <span className="text-xs text-[#FFCC08] mt-0.5 font-medium">Home</span>
             </button>
@@ -879,11 +928,11 @@ const DashboardPage = () => {
               <span className="text-xs text-gray-400 mt-0.5">Store</span>
             </button>
             <button 
-              onClick={() => router.push('/agent/dashboard')}
+              onClick={() => router.push('/orders')}
               className="flex flex-col items-center py-1.5"
             >
-              <Award className="w-5 h-5 text-gray-400" />
-              <span className="text-xs text-gray-400 mt-0.5">Agent</span>
+              <BarChart2 className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Orders</span>
             </button>
             <button 
               onClick={() => router.push('/profile')}
@@ -892,9 +941,12 @@ const DashboardPage = () => {
               <User className="w-5 h-5 text-gray-400" />
               <span className="text-xs text-gray-400 mt-0.5">Profile</span>
             </button>
-            <button className="flex flex-col items-center py-1.5">
-              <Menu className="w-5 h-5 text-gray-400" />
-              <span className="text-xs text-gray-400 mt-0.5">Menu</span>
+            <button 
+              onClick={() => router.push('/settings')}
+              className="flex flex-col items-center py-1.5"
+            >
+              <Settings className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-400 mt-0.5">Settings</span>
             </button>
           </div>
         </div>
