@@ -24,6 +24,11 @@ const AdminDashboard = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   
   // Orders state
   const [orders, setOrders] = useState([]);
@@ -89,13 +94,35 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // Check authentication
+  // Update time and date on client side only
+  useEffect(() => {
+    setMounted(true);
+    
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentDate(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      setCurrentTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+    };
+
+    // Update immediately
+    updateTime();
+    
+    // Update every minute
+    const interval = setInterval(updateTime, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check authentication (same process as SignIn page)
   const checkAuth = useCallback(() => {
+    // Use the same token verification as SignIn page
     const token = localStorage.getItem('authToken');
     const userDataStr = localStorage.getItem('userData');
     
     if (!token) {
-      console.log('No token found, redirecting to login');
+      console.log('No authToken found in localStorage, redirecting to SignIn');
+      setIsAuthenticated(false);
+      setAuthChecked(true);
       router.push('/SignIn');
       return false;
     }
@@ -103,17 +130,33 @@ const AdminDashboard = () => {
     try {
       const user = JSON.parse(userDataStr || '{}');
       
-      if (user.role !== 'admin') {
-        console.log('User is not admin, role:', user.role);
-        showNotification('Access denied. Admin privileges required.', 'error');
+      // Verify the token is valid by checking if user data exists and has admin role
+      if (!user.id || !user.role) {
+        console.log('Invalid user data in localStorage, redirecting to SignIn');
+        setIsAuthenticated(false);
+        setAuthChecked(true);
         router.push('/SignIn');
         return false;
       }
       
+      if (user.role !== 'admin') {
+        console.log('User is not admin, role:', user.role, 'redirecting to SignIn');
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+        router.push('/SignIn');
+        return false;
+      }
+      
+      // Token and user data are valid
       setUserData(user);
+      setIsAuthenticated(true);
+      setAuthChecked(true);
+      console.log('Authentication successful for admin user:', user.name);
       return true;
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.error('Error parsing user data from localStorage:', error);
+      setIsAuthenticated(false);
+      setAuthChecked(true);
       router.push('/SignIn');
       return false;
     }
@@ -328,7 +371,7 @@ const AdminDashboard = () => {
 
   // Load dashboard data (Ultra-fast parallel loading)
   const loadDashboardData = useCallback(async () => {
-    if (!checkAuth()) return;
+    if (!isAuthenticated || !authChecked) return;
     
     // Check debounce to prevent rapid successive requests
     const now = Date.now();
@@ -352,10 +395,12 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [checkAuth, loadStats, loadRecentActivities, loadChartData, lastRefreshTime]);
+  }, [isAuthenticated, authChecked, loadStats, loadRecentActivities, loadChartData, lastRefreshTime]);
 
   // Load orders
   const loadOrders = useCallback(async () => {
+    if (!isAuthenticated || !authChecked) return;
+    
     try {
       const response = await adminAPI.order.getOrders({ 
         limit: 100,
@@ -378,10 +423,12 @@ const AdminDashboard = () => {
       console.error('Failed to load orders:', error);
       showNotification('Failed to load orders', 'error');
     }
-  }, [filterStatus]);
+  }, [filterStatus, isAuthenticated, authChecked]);
 
   // Load users
   const loadUsers = useCallback(async () => {
+    if (!isAuthenticated || !authChecked) return;
+    
     try {
       const response = await adminAPI.user.getUsers(1, 50, userSearchTerm);
       const formattedUsers = response.users?.map(user => ({
@@ -400,27 +447,33 @@ const AdminDashboard = () => {
       console.error('Failed to load users:', error);
       showNotification('Failed to load users', 'error');
     }
-  }, [userSearchTerm]);
+  }, [userSearchTerm, isAuthenticated, authChecked]);
 
   // Initialize dashboard
   useEffect(() => {
     checkAuth();
-    loadDashboardData();
-  }, [checkAuth, loadDashboardData]);
+  }, [checkAuth]);
+
+  // Load dashboard data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && authChecked) {
+      loadDashboardData();
+    }
+  }, [isAuthenticated, authChecked, loadDashboardData]);
 
   // Load orders when filterStatus changes or when orders tab is active
   useEffect(() => {
-    if (activeTab === 'orders') {
+    if (activeTab === 'orders' && isAuthenticated && authChecked) {
       loadOrders();
     }
-  }, [filterStatus, activeTab, loadOrders]);
+  }, [filterStatus, activeTab, loadOrders, isAuthenticated, authChecked]);
 
   // Load users when users tab is active
   useEffect(() => {
-    if (activeTab === 'users') {
+    if (activeTab === 'users' && isAuthenticated && authChecked) {
       loadUsers();
     }
-  }, [activeTab, loadUsers]);
+  }, [activeTab, loadUsers, isAuthenticated, authChecked]);
 
   // Notification system
   const showNotification = useCallback((message, type = 'success') => {
@@ -533,7 +586,7 @@ const AdminDashboard = () => {
                   Welcome back, {userData?.name || 'Admin'}! 👋
                 </h2>
                 <p className="text-black/80 text-sm md:text-base">
-                  Here's your platform overview for {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  Here's your platform overview for {mounted && currentDate ? currentDate.split(',')[0] : 'today'}
                 </p>
               </div>
             </div>
@@ -747,6 +800,8 @@ const AdminDashboard = () => {
     };
 
     const handleToggleUserStatus = async (user) => {
+      if (!isAuthenticated || !authChecked) return;
+      
       try {
         const reason = user.isDisabled ? '' : 'Administrative action';
         await adminAPI.user.toggleUserStatus(user.id, reason);
@@ -762,6 +817,8 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteUser = async (user) => {
+      if (!isAuthenticated || !authChecked) return;
+      
       if (confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
         try {
           await adminAPI.user.deleteUser(user.id);
@@ -1465,10 +1522,10 @@ const AdminDashboard = () => {
               <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  {mounted ? currentDate : 'Loading...'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {mounted ? currentTime : '--:--'}
                 </p>
               </div>
             </div>

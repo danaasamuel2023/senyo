@@ -3,13 +3,25 @@ import { getApiUrl, isDevelopment } from './envConfig';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || getApiUrl();
 
-// Helper function to get auth headers
+// Helper function to get auth headers (same as SignIn page)
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
-  // Only log token info in development
+  const userData = localStorage.getItem('userData');
+  
+  // Enhanced debugging for development
   if (process.env.NODE_ENV === 'development') {
-    console.log('Sending token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+    console.log('AdminAPI - Token check:', {
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+      hasUserData: !!userData,
+      userData: userData ? JSON.parse(userData) : null
+    });
   }
+  
+  if (!token) {
+    console.warn('AdminAPI - No authToken found in localStorage');
+  }
+  
   return {
     'Content-Type': 'application/json',
     'x-auth-token': token
@@ -447,51 +459,22 @@ export const inventoryAPI = {
 export const dashboardAPI = {
   // Get dashboard statistics
   getStatistics: async () => {
-    // Try the correct admin endpoint first
-    try {
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/dashboard/statistics' : '/api/admin/dashboard/statistics';
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin dashboard endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/statistics`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the correct admin endpoint
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/statistics`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Get daily summary
   getDailySummary: async (date) => {
     const params = new URLSearchParams({ date });
     
-    // Try the correct admin endpoint first
-    try {
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/daily-summary' : '/api/admin/daily-summary';
-      const response = await fetch(`${API_BASE_URL}${endpoint}?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin daily summary endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/daily-summary?${params}`, {
-          headers: getAuthHeaders()
-        });
-        return handleResponse(response);
-      } catch (fallbackError) {
-        console.warn('Legacy daily summary endpoint also failed, trying dashboard endpoint:', fallbackError.message);
-        // Final fallback to dashboard endpoint
-        const response = await fetch(`${API_BASE_URL}/api/dashboard/daily-summary?${params}`, {
-          headers: getAuthHeaders()
-        });
-        return handleResponse(response);
-      }
-    }
+    // Use the correct admin endpoint
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/daily-summary?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 
