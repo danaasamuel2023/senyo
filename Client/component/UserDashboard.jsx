@@ -136,12 +136,12 @@ const NETWORKS = [
 // Quick Actions Configuration
 const QUICK_ACTIONS = [
 { icon: Package, label: 'Store', path: '/store', gradient: 'from-[#FFCC08] to-yellow-600' },
-{ icon: BarChart2, label: 'Analytics', path: '/reports', gradient: 'from-gray-700 to-gray-900' },
+{ icon: BarChart2, label: 'Analytics', path: '/reports', gradient: 'from-black to-gray-900' },
 { icon: Clock, label: 'History', path: '/orders', gradient: 'from-yellow-600 to-yellow-700' },
 { icon: CreditCard, label: 'Top Up', path: '/topup', gradient: 'from-black to-gray-800' },
 { icon: Shield, label: 'Support', path: '/support', gradient: 'from-[#FFCC08] to-yellow-600' },
 { icon: User, label: 'Profile', path: '/profile', gradient: 'from-gray-800 to-black' },
-{ icon: Award, label: 'Become Agent', path: '/agent-signup', gradient: 'from-green-600 to-green-800' }
+{ icon: Award, label: 'Become Agent', path: '/agent-signup', gradient: 'from-[#FFCC08] to-yellow-600' }
 ];
 
 const DashboardPage = () => {
@@ -574,7 +574,7 @@ return (
               </button>
               <button 
                 onClick={() => router.push('/agent-signup')}
-                className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors flex items-center space-x-1"
+                className="bg-[#FFCC08] hover:bg-yellow-500 text-black text-xs font-bold py-2 px-3 rounded-xl transition-colors flex items-center space-x-1"
               >
                 <Award className="w-3 h-3" />
                 <span>Agent</span>
@@ -636,8 +636,8 @@ return (
 
           {/* Circular Stat Cards */}
           <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mb-2">
-              <Package className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center mb-2">
+              <Package className="w-6 sm:w-7 h-6 sm:h-7 text-black" />
             </div>
             <div className="text-base sm:text-lg font-bold text-white">
               {animateStats ? <AnimatedCounter value={stats.todayOrders} /> : "0"}
@@ -646,8 +646,8 @@ return (
           </div>
 
           <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center mb-2">
-              <TrendingUp className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center mb-2">
+              <TrendingUp className="w-6 sm:w-7 h-6 sm:h-7 text-black" />
             </div>
             <div className="text-base sm:text-lg font-bold text-white">
               {animateStats ? <CurrencyCounter value={stats.todayRevenue} /> : "₵0"}
@@ -656,8 +656,8 @@ return (
           </div>
 
           <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-2">
-              <Database className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center mb-2">
+              <Database className="w-6 sm:w-7 h-6 sm:h-7 text-black" />
             </div>
             <div className="text-base sm:text-lg font-bold text-white">
               {animateStats ? <AnimatedCounter value={stats.todayGbSold} /> : "0"} GB
@@ -666,8 +666,8 @@ return (
           </div>
 
           <div className="flex flex-col items-center justify-center bg-gray-800/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 h-28 sm:h-32">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center mb-2">
-              <Activity className="w-6 sm:w-7 h-6 sm:h-7 text-white" />
+            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center mb-2">
+              <Activity className="w-6 sm:w-7 h-6 sm:h-7 text-black" />
             </div>
             <div className="text-base sm:text-lg font-bold text-white">
               {animateStats ? <AnimatedCounter value={stats.weeklyTrend} /> : "0"}%
@@ -704,20 +704,20 @@ return (
         </div>
 
         {/* Become Agent - Mobile Compact */}
-        <div className="mb-4 bg-gradient-to-br from-green-600/20 to-green-800/10 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
+        <div className="mb-4 bg-gradient-to-br from-[#FFCC08]/20 to-yellow-600/10 backdrop-blur-xl rounded-2xl p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-                <Award className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
+              <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+                <Award className="w-5 sm:w-6 h-5 sm:h-6 text-black" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">Become an Agent</h3>
-                <p className="text-xs text-green-400">Earn 5-10% commission</p>
+                <p className="text-xs text-[#FFCC08]">Earn 5-10% commission</p>
               </div>
             </div>
             <button 
               onClick={() => router.push('/agent-signup')}
-              className="bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-full text-xs sm:text-sm hover:bg-green-500 transition-colors"
+              className="bg-[#FFCC08] text-black font-bold py-2 px-3 sm:px-4 rounded-full text-xs sm:text-sm hover:bg-yellow-500 transition-colors"
             >
               Apply
             </button>
@@ -761,8 +761,8 @@ return (
             
             <div className="flex items-center justify-between p-2 bg-gray-800/30 rounded-xl">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-                  <Award className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
+                  <Award className="w-4 h-4 text-black" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-white">Agent Stores</p>
@@ -771,7 +771,7 @@ return (
               </div>
               <button 
                 onClick={() => router.push('/agent-signup')}
-                className="bg-green-600 text-white text-xs font-bold py-1 px-2 rounded-lg hover:bg-green-500 transition-colors"
+                className="bg-[#FFCC08] text-black text-xs font-bold py-1 px-2 rounded-lg hover:bg-yellow-500 transition-colors"
               >
                 Become Agent
               </button>

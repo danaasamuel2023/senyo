@@ -1466,9 +1466,28 @@ router.get('/user-dashboard/:userId', async (req, res) => {
       });
     }
 
+    // Get actual wallet balance from Wallet collection
+    const { Wallet } = require('../schema/schema');
+    let wallet = await Wallet.findOne({ userId: userId });
+    
+    // Create wallet if it doesn't exist
+    if (!wallet) {
+      wallet = new Wallet({ 
+        userId: userId,
+        balance: 0,
+        currency: 'GHS',
+        frozen: false,
+        transactions: []
+      });
+      await wallet.save();
+    }
+
+    const actualBalance = wallet.balance;
+
     logOperation('USER_DASHBOARD_USER_FOUND', {
       userId,
-      walletBalance: user.walletBalance
+      walletBalance: actualBalance,
+      oldWalletBalance: user.walletBalance
     });
 
     // Get today's start and end
@@ -1519,7 +1538,7 @@ router.get('/user-dashboard/:userId', async (req, res) => {
     res.json({
       status: 'success',
       data: {
-        userBalance: user.walletBalance,
+        userBalance: actualBalance,
         todayOrders: {
           count: todayOrders.length,
           totalValue: todayTotalOrderValue,
