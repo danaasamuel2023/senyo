@@ -44,11 +44,17 @@ const handleResponse = async (response) => {
   
   if (!response.ok) {
     let errorMessage;
+    // Clone the response to avoid "body stream already read" error
+    const responseClone = response.clone();
     try {
-      const errorData = await response.json();
+      const errorData = await responseClone.json();
       errorMessage = errorData.msg || errorData.error || errorData.message;
     } catch {
-      errorMessage = await response.text();
+      try {
+        errorMessage = await responseClone.text();
+      } catch {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
     }
     
     // Only log errors in development to reduce console noise
@@ -229,20 +235,12 @@ export const userAPI = {
   // Get user orders
   getUserOrders: async (userId, page = 1, limit = 100) => {
     const params = new URLSearchParams({ page, limit });
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/user-orders/${userId}?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin user orders endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/user-orders/${userId}?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    
+    // Use the working admin endpoint directly
+    const response = await fetch(`${API_BASE_URL}/api/admin/user-orders/${userId}?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 
@@ -380,78 +378,40 @@ export const transactionAPI = {
 export const inventoryAPI = {
   // Get all inventory status
   getInventory: async () => {
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin inventory endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint directly
+    const response = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Get specific network inventory
   getNetworkInventory: async (network) => {
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin network inventory endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint directly
+    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Toggle network stock status
   toggleNetworkStock: async (network) => {
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle`, {
-        method: 'PUT',
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin toggle stock endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle`, {
-        method: 'PUT',
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint directly
+    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Toggle Geonettech API for network
   toggleGeonettech: async (network) => {
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle-geonettech`, {
-        method: 'PUT',
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin toggle API endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle-geonettech`, {
-        method: 'PUT',
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint directly
+    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle-geonettech`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 

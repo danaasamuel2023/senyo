@@ -83,19 +83,28 @@ const AnalyticsPage = () => {
   };
 
   const processAnalytics = (stats, orders, users) => {
-    // Calculate revenue analytics
-    const totalRevenue = stats.financialStats.totalRevenue;
+    // Safety check for undefined parameters
+    if (!stats || !orders || !users) {
+      console.warn('Analytics data is incomplete:', { stats, orders, users });
+      return;
+    }
+
+    // Calculate revenue analytics with multiple fallbacks
+    const totalRevenue = stats?.data?.overview?.todayRevenue || 
+                        stats?.financialStats?.totalRevenue || 
+                        orders?.totalRevenue || 
+                        0;
     const previousRevenue = totalRevenue * 0.85; // Simulated previous period
-    const revenueChange = ((totalRevenue - previousRevenue) / previousRevenue) * 100;
+    const revenueChange = totalRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
     // Calculate order analytics
-    const totalOrders = orders.orders.length;
-    const completedOrders = orders.orders.filter(o => o.status === 'completed').length;
-    const successRate = (completedOrders / totalOrders) * 100;
+    const totalOrders = orders.orders?.length || 0;
+    const completedOrders = orders.orders?.filter(o => o.status === 'completed').length || 0;
+    const successRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
 
     // Network distribution
     const networkCounts = {};
-    orders.orders.forEach(order => {
+    orders.orders?.forEach(order => {
       if (order.network) {
         networkCounts[order.network] = (networkCounts[order.network] || 0) + 1;
       }
@@ -104,12 +113,12 @@ const AnalyticsPage = () => {
     const networkDistribution = Object.entries(networkCounts).map(([network, count]) => ({
       network,
       count,
-      percentage: (count / totalOrders) * 100
+      percentage: totalOrders > 0 ? (count / totalOrders) * 100 : 0
     }));
 
     // Top selling products
     const productCounts = {};
-    orders.orders.forEach(order => {
+    orders.orders?.forEach(order => {
       const key = `${order.network} ${order.capacity}GB`;
       productCounts[key] = (productCounts[key] || 0) + 1;
     });
@@ -132,7 +141,7 @@ const AnalyticsPage = () => {
         data: generateChartData('orders', 7)
       },
       users: {
-        total: users.totalUsers,
+        total: users.totalUsers || users.data?.overview?.totalUsers || 0,
         change: 5.2,
         data: generateChartData('users', 7)
       },
@@ -142,7 +151,7 @@ const AnalyticsPage = () => {
       },
       performance: {
         successRate,
-        avgOrderValue: stats.financialStats.averageOrderValue,
+        avgOrderValue: stats.financialStats?.averageOrderValue || 0,
         conversionRate: 68.5
       }
     });

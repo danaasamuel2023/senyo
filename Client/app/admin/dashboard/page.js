@@ -107,8 +107,8 @@ const AdminDashboard = () => {
     // Update immediately
     updateTime();
     
-    // Update every minute
-    const interval = setInterval(updateTime, 60000);
+    // Update every 10 seconds for faster time updates
+    const interval = setInterval(updateTime, 10000);
     
     return () => clearInterval(interval);
   }, []);
@@ -242,16 +242,19 @@ const AdminDashboard = () => {
       ]);
       
       const statsData = {
-        totalUsers: dashboardStats.userStats?.totalUsers || 0,
-        activeUsers: Math.floor((dashboardStats.userStats?.totalUsers || 0) * 0.6),
-        totalOrders: dashboardStats.orderStats?.totalOrders || 0,
-        totalRevenue: dashboardStats.financialStats?.totalRevenue || 0,
+        totalUsers: dashboardStats.data?.overview?.totalUsers || dashboardStats.userStats?.totalUsers || 0,
+        activeUsers: Math.floor((dashboardStats.data?.overview?.totalUsers || dashboardStats.userStats?.totalUsers || 0) * 0.6),
+        totalOrders: dashboardStats.data?.overview?.totalOrders || dashboardStats.orderStats?.totalOrders || 0,
+        totalRevenue: dashboardStats.data?.overview?.todayRevenue || dashboardStats.financialStats?.totalRevenue || 0,
         growthRate: 12.5,
         pendingOrders: dashboardStats.orderStats?.pendingOrders || 0,
         completedOrders: dashboardStats.orderStats?.completedOrders || 0,
-        totalProducts: todaySummary.networkSummary?.length || 5
+        totalProducts: todaySummary.networkSummary?.length || 5,
+        todayOrders: dashboardStats.data?.overview?.todayOrders || 0,
+        todayRevenue: dashboardStats.data?.overview?.todayRevenue || 0
       };
       
+      console.log('Dashboard stats loaded:', statsData);
       setStats(statsData);
       
       // Cache the data
@@ -367,7 +370,12 @@ const AdminDashboard = () => {
 
   // Debounce mechanism to prevent rapid successive calls
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
-  const REFRESH_DEBOUNCE_DELAY = 3000; // 3 seconds
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastAutoRefresh, setLastAutoRefresh] = useState(Date.now());
+  const [lastRefreshDisplay, setLastRefreshDisplay] = useState('');
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  const [prefetchedRoutes, setPrefetchedRoutes] = useState(new Set());
+  const REFRESH_DEBOUNCE_DELAY = 1000; // 1 second for faster refresh
 
   // Load dashboard data (Ultra-fast parallel loading)
   const loadDashboardData = useCallback(async () => {
@@ -380,7 +388,11 @@ const AdminDashboard = () => {
       showNotification(`Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before refreshing again.`, 'warning');
       return;
     }
+    
+    setIsRefreshing(true);
     setLastRefreshTime(now);
+    setLastAutoRefresh(now);
+    setLastRefreshDisplay(new Date().toLocaleTimeString());
     
     setLoading(true);
     try {
@@ -394,6 +406,7 @@ const AdminDashboard = () => {
       showNotification('Failed to load dashboard data', 'error');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [isAuthenticated, authChecked, loadStats, loadRecentActivities, loadChartData, lastRefreshTime]);
 
@@ -454,26 +467,107 @@ const AdminDashboard = () => {
     checkAuth();
   }, [checkAuth]);
 
-  // Load dashboard data when authenticated
+  // Load dashboard data when authenticated with auto-refresh
   useEffect(() => {
     if (isAuthenticated && authChecked) {
       loadDashboardData();
+      
+      // Auto-refresh dashboard data every 30 seconds
+      const refreshInterval = setInterval(() => {
+        loadDashboardData();
+      }, 30000);
+      
+      return () => clearInterval(refreshInterval);
     }
   }, [isAuthenticated, authChecked, loadDashboardData]);
 
-  // Load orders when filterStatus changes or when orders tab is active
+  // Load orders when filterStatus changes or when orders tab is active with auto-refresh
   useEffect(() => {
     if (activeTab === 'orders' && isAuthenticated && authChecked) {
       loadOrders();
+      
+      // Auto-refresh orders every 20 seconds when orders tab is active
+      const ordersRefreshInterval = setInterval(() => {
+        if (activeTab === 'orders') {
+          loadOrders();
+        }
+      }, 20000);
+      
+      return () => clearInterval(ordersRefreshInterval);
     }
   }, [filterStatus, activeTab, loadOrders, isAuthenticated, authChecked]);
 
-  // Load users when users tab is active
+  // Load users when users tab is active with auto-refresh
   useEffect(() => {
     if (activeTab === 'users' && isAuthenticated && authChecked) {
       loadUsers();
+      
+      // Auto-refresh users every 25 seconds when users tab is active
+      const usersRefreshInterval = setInterval(() => {
+        if (activeTab === 'users') {
+          loadUsers();
+        }
+      }, 25000);
+      
+      return () => clearInterval(usersRefreshInterval);
     }
   }, [activeTab, loadUsers, isAuthenticated, authChecked]);
+
+  // Route prefetching for ultra-fast navigation
+  const prefetchRoute = useCallback(async (route) => {
+    if (prefetchedRoutes.has(route)) return;
+    
+    try {
+      // Prefetch the route using Next.js router
+      await router.prefetch(route);
+      setPrefetchedRoutes(prev => new Set([...prev, route]));
+      console.log(`Route prefetched: ${route}`);
+    } catch (error) {
+      console.warn(`Failed to prefetch route ${route}:`, error);
+    }
+  }, [router, prefetchedRoutes]);
+
+  // Prefetch all admin routes on component mount
+  useEffect(() => {
+    if (isAuthenticated && authChecked) {
+      const routesToPrefetch = [
+        '/admin/control-center',
+        '/admin/products',
+        '/admin/bulk-messaging',
+        '/admin/package-management',
+        '/admin/analytics',
+        '/admin/agents',
+        '/admin/agent-stores',
+        '/admin/transactions',
+        '/admin/reports',
+        '/admin/settings'
+      ];
+      
+      // Prefetch routes with a small delay to avoid blocking initial load
+      setTimeout(() => {
+        routesToPrefetch.forEach(route => prefetchRoute(route));
+      }, 1000);
+    }
+  }, [isAuthenticated, authChecked, prefetchRoute]);
+
+  // Keyboard shortcuts for faster refresh
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Ctrl/Cmd + R for refresh dashboard
+      if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+        event.preventDefault();
+        loadDashboardData();
+      }
+      // F5 for refresh dashboard
+      if (event.key === 'F5') {
+        event.preventDefault();
+        loadDashboardData();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [loadDashboardData]);
 
   // Notification system
   const showNotification = useCallback((message, type = 'success') => {
@@ -506,7 +600,7 @@ const AdminDashboard = () => {
   ], [stats.activeUsers, stats.pendingOrders]);
 
   // Handle navigation for tabs that go to separate pages
-  const handleTabClick = (tabId) => {
+  const handleTabClick = useCallback(async (tabId) => {
     const navigationTabs = {
       'control-center': '/admin/control-center',
       'products': '/admin/products',
@@ -521,20 +615,35 @@ const AdminDashboard = () => {
     };
 
     if (navigationTabs[tabId]) {
-      router.push(navigationTabs[tabId]);
+      setNavigationLoading(true);
+      try {
+        // Prefetch the route if not already prefetched
+        if (!prefetchedRoutes.has(navigationTabs[tabId])) {
+          await prefetchRoute(navigationTabs[tabId]);
+        }
+        
+        // Navigate with optimized transition
+        await router.push(navigationTabs[tabId]);
+      } catch (error) {
+        console.error('Navigation error:', error);
+        showNotification('Failed to navigate to page', 'error');
+      } finally {
+        setNavigationLoading(false);
+      }
     } else {
+      // Instant tab switching for dashboard tabs
       setActiveTab(tabId);
     }
-  };
+  }, [router, prefetchedRoutes, prefetchRoute]);
 
   // Components
-  const StatCard = ({ title, value, change, icon: Icon, color }) => (
+  const StatCard = ({ title, value, change, icon: Icon, color, loading = false }) => (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-xl bg-gradient-to-r ${color}`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
-        {change !== undefined && (
+        {change !== undefined && !loading && (
           <div className={`flex items-center text-sm font-medium ${
             change >= 0 ? 'text-green-600' : 'text-red-600'
           }`}>
@@ -542,9 +651,16 @@ const AdminDashboard = () => {
             <span>{Math.abs(change)}%</span>
           </div>
         )}
+        {loading && (
+          <div className="animate-spin">
+            <RefreshCw className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
       </div>
       <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+        {loading ? 'Loading...' : value}
+      </p>
     </div>
   );
 
@@ -607,17 +723,27 @@ const AdminDashboard = () => {
           </div>
           <div className="mt-4 md:mt-0 flex md:flex-col items-center md:items-end space-x-3 md:space-x-0 md:space-y-2">
             <button
-              onClick={() => setActiveTab('control-center')}
+              onClick={() => handleTabClick('control-center')}
               className="px-4 py-2 bg-black text-[#FFCC08] rounded-xl hover:bg-gray-900 transition-all font-bold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              disabled={navigationLoading}
             >
-              <Shield className="w-4 h-4 inline mr-2" />
+              {navigationLoading ? (
+                <RefreshCw className="w-4 h-4 inline mr-2 animate-spin" />
+              ) : (
+                <Shield className="w-4 h-4 inline mr-2" />
+              )}
               Control Center
             </button>
             <button
-              onClick={() => setActiveTab('reports')}
+              onClick={() => handleTabClick('reports')}
               className="px-4 py-2 bg-white/20 backdrop-blur-sm text-black rounded-xl hover:bg-white/30 transition-all font-semibold text-sm"
+              disabled={navigationLoading}
             >
-              <FileText className="w-4 h-4 inline mr-2" />
+              {navigationLoading ? (
+                <RefreshCw className="w-4 h-4 inline mr-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 inline mr-2" />
+              )}
               Reports
             </button>
           </div>
@@ -625,13 +751,14 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <StatCard
           title="Total Users"
           value={stats.totalUsers.toLocaleString()}
           change={8.5}
           icon={Users}
           color="from-blue-500 to-blue-600"
+          loading={loading}
         />
         <StatCard
           title="Total Orders"
@@ -639,6 +766,7 @@ const AdminDashboard = () => {
           change={stats.growthRate}
           icon={Package}
           color="from-green-500 to-green-600"
+          loading={loading}
         />
         <StatCard
           title="Revenue"
@@ -646,6 +774,7 @@ const AdminDashboard = () => {
           change={15.3}
           icon={DollarSign}
           color="from-yellow-500 to-yellow-600"
+          loading={loading}
         />
         <StatCard
           title="Active Users"
@@ -653,6 +782,23 @@ const AdminDashboard = () => {
           change={-2.4}
           icon={Activity}
           color="from-purple-500 to-purple-600"
+          loading={loading}
+        />
+        <StatCard
+          title="Today's Orders"
+          value={stats.todayOrders.toLocaleString()}
+          change={12.5}
+          icon={Package}
+          color="from-indigo-500 to-indigo-600"
+          loading={loading}
+        />
+        <StatCard
+          title="Today's Revenue"
+          value={`GHS ${stats.todayRevenue.toLocaleString()}`}
+          change={8.2}
+          icon={DollarSign}
+          color="from-emerald-500 to-emerald-600"
+          loading={loading}
         />
       </div>
 
@@ -743,21 +889,21 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={() => setActiveTab('users')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all"
+            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
           >
             <UserCheck className="w-8 h-8 text-black mx-auto mb-2" />
             <span className="text-sm font-medium text-black">Add User</span>
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all"
+            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
           >
             <Package className="w-8 h-8 text-black mx-auto mb-2" />
             <span className="text-sm font-medium text-black">New Order</span>
           </button>
           <button 
             onClick={() => setActiveTab('products')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all"
+            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
           >
             <Package2 className="w-8 h-8 text-black mx-auto mb-2" />
             <span className="text-sm font-medium text-black">Add Product</span>
@@ -1426,10 +1572,29 @@ const AdminDashboard = () => {
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveTab(item.id);
+                  handleTabClick(item.id);
                   // Close sidebar on mobile after selection
                   if (!isDesktop) {
                     setSidebarOpen(false);
+                  }
+                }}
+                onMouseEnter={() => {
+                  // Prefetch route on hover for faster navigation
+                  const navigationTabs = {
+                    'control-center': '/admin/control-center',
+                    'products': '/admin/products',
+                    'bulk-messaging': '/admin/bulk-messaging',
+                    'package-management': '/admin/package-management',
+                    'analytics': '/admin/analytics',
+                    'agents': '/admin/agents',
+                    'agent-stores': '/admin/agent-stores',
+                    'transactions': '/admin/transactions',
+                    'reports': '/admin/reports',
+                    'settings': '/admin/settings'
+                  };
+                  
+                  if (navigationTabs[item.id] && !prefetchedRoutes.has(navigationTabs[item.id])) {
+                    prefetchRoute(navigationTabs[item.id]);
                   }
                 }}
                 className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all mb-2 ${
@@ -1516,8 +1681,9 @@ const AdminDashboard = () => {
               <button
                 onClick={loadDashboardData}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Refresh dashboard data"
               >
-                <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
               <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
               <div className="text-right hidden md:block">
@@ -1526,6 +1692,15 @@ const AdminDashboard = () => {
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {mounted ? currentTime : '--:--'}
+                  {isRefreshing && (
+                    <span className="ml-2 text-green-500 text-xs">● Refreshing</span>
+                  )}
+                  {lastRefreshDisplay && !isRefreshing && (
+                    <span className="ml-2 text-blue-500 text-xs">● Last: {lastRefreshDisplay}</span>
+                  )}
+                  {navigationLoading && (
+                    <span className="ml-2 text-purple-500 text-xs">● Navigating...</span>
+                  )}
                 </p>
               </div>
             </div>

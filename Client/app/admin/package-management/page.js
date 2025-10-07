@@ -130,9 +130,9 @@ const AdminPackageManagement = () => {
       // Update stats
       const activePackages = data.packages?.filter(p => p.isActive) || [];
       const lowStockPackages = data.packages?.filter(p => p.stock < 10) || [];
-      const topSelling = data.packages?.reduce((prev, current) => 
+      const topSelling = data.packages?.length > 0 ? data.packages.reduce((prev, current) => 
         (prev.salesCount || 0) > (current.salesCount || 0) ? prev : current
-      );
+      ) : null;
       
       setStats({
         totalPackages: data.packages?.length || 0,
@@ -283,6 +283,38 @@ const AdminPackageManagement = () => {
   // Toggle package status
   const togglePackageStatus = (packageId, currentStatus) => {
     updatePackage(packageId, { isActive: !currentStatus });
+  };
+
+  // Bulk toggle packages
+  const bulkTogglePackages = async (action) => {
+    const selectedPackages = filteredPackages.filter(pkg => 
+      action === 'activate' ? !pkg.isActive : pkg.isActive
+    );
+    
+    if (selectedPackages.length === 0) {
+      showNotification(`No packages to ${action}`, 'error');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to ${action} ${selectedPackages.length} package(s)?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const promises = selectedPackages.map(pkg => 
+        updatePackage(pkg._id, { isActive: action === 'activate' })
+      );
+      
+      await Promise.all(promises);
+      showNotification(`${selectedPackages.length} package(s) ${action}d successfully`, 'success');
+    } catch (error) {
+      console.error('Error in bulk toggle:', error);
+      showNotification('Failed to update packages', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Initialize
@@ -470,9 +502,25 @@ const AdminPackageManagement = () => {
         {/* Packages Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Packages ({filteredPackages.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Packages ({filteredPackages.length})
+              </h2>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => bulkTogglePackages('activate')}
+                  className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors text-sm font-medium"
+                >
+                  Activate All
+                </button>
+                <button
+                  onClick={() => bulkTogglePackages('deactivate')}
+                  className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors text-sm font-medium"
+                >
+                  Deactivate All
+                </button>
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -553,10 +601,10 @@ const AdminPackageManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => togglePackageStatus(pkg._id, pkg.isActive)}
-                          className={`flex items-center space-x-2 ${
+                          className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all hover:scale-105 ${
                             pkg.isActive 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-gray-400 dark:text-gray-500'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
                           }`}
                         >
                           {pkg.isActive ? (
@@ -564,7 +612,7 @@ const AdminPackageManagement = () => {
                           ) : (
                             <ToggleLeft className="w-5 h-5" />
                           )}
-                          <span className="text-sm">
+                          <span className="text-sm font-medium">
                             {pkg.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </button>

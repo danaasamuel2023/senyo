@@ -180,6 +180,45 @@ const ProductsPage = () => {
     }
   };
 
+  const handleToggleProduct = async (product) => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      
+      if (product.globalPriceId) {
+        // Toggle existing product
+        await fetch(`${API_URL}/api/products/${product.globalPriceId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem('authToken')
+          },
+          body: JSON.stringify({ enabled: !product.enabled })
+        });
+      } else {
+        // Create new product with enabled: false
+        await fetch(`${API_URL}/api/products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem('authToken')
+          },
+          body: JSON.stringify({
+            network: product.network,
+            capacity: product.capacity,
+            price: product.price,
+            enabled: false
+          })
+        });
+      }
+      
+      showNotification(`Product ${product.enabled ? 'deactivated' : 'activated'} successfully`, 'success');
+      loadInventory();
+    } catch (error) {
+      console.error('Failed to toggle product:', error);
+      showNotification('Failed to toggle product', 'error');
+    }
+  };
+
   const filteredProducts = products.filter(product =>
     product.network.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.capacity.toString().includes(searchTerm)
@@ -367,17 +406,36 @@ const ProductsPage = () => {
                           {product?.hasCustomPrice && (
                             <p className="text-xs text-blue-600 dark:text-blue-400">Custom Price</p>
                           )}
-                          <div className={`mt-2 text-xs font-medium ${
-                            isAvailable ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {isAvailable ? 'Available' : 'Unavailable'}
+                          <div className="mt-2 space-y-1">
+                            <div className={`text-xs font-medium ${
+                              isAvailable ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {isAvailable ? 'Available' : 'Unavailable'}
+                            </div>
+                            {product?.enabled === false && (
+                              <div className="text-xs font-medium text-orange-600">
+                                ● Disabled
+                              </div>
+                            )}
                           </div>
-                          <button
-                            onClick={() => handleUpdatePrice(product || {network: networkGroup.id, capacity: pkg.capacity, price: pkg.price})}
-                            className="mt-2 w-full px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Edit Price
-                          </button>
+                          <div className="mt-2 space-y-1">
+                            <button
+                              onClick={() => handleUpdatePrice(product || {network: networkGroup.id, capacity: pkg.capacity, price: pkg.price})}
+                              className="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              Edit Price
+                            </button>
+                            <button
+                              onClick={() => handleToggleProduct(product || {network: networkGroup.id, capacity: pkg.capacity, price: pkg.price, enabled: true})}
+                              className={`w-full px-2 py-1 text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${
+                                product?.enabled !== false
+                                  ? 'bg-green-600 text-white hover:bg-green-700'
+                                  : 'bg-gray-600 text-white hover:bg-gray-700'
+                              }`}
+                            >
+                              {product?.enabled !== false ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

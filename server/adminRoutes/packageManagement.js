@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middlewareUser/middleware');
 const adminAuth = require('../adminMiddleware/middleware');
 const mongoose = require('mongoose');
 
@@ -33,7 +34,7 @@ const PackageSchema = new mongoose.Schema({
 const Package = mongoose.model('Package', PackageSchema);
 
 // Get all packages
-router.get('/packages', adminAuth, async (req, res) => {
+router.get('/packages', auth, adminAuth, async (req, res) => {
   try {
     const packages = await Package.find({}).sort({ createdAt: -1 });
 
@@ -51,7 +52,7 @@ router.get('/packages', adminAuth, async (req, res) => {
 });
 
 // Get single package
-router.get('/packages/:id', adminAuth, async (req, res) => {
+router.get('/packages/:id', auth, adminAuth, async (req, res) => {
   try {
     const packageId = req.params.id;
     
@@ -85,7 +86,7 @@ router.get('/packages/:id', adminAuth, async (req, res) => {
 });
 
 // Create new package
-router.post('/packages', adminAuth, async (req, res) => {
+router.post('/packages', auth, adminAuth, async (req, res) => {
   try {
     const {
       name,
@@ -147,7 +148,7 @@ router.post('/packages', adminAuth, async (req, res) => {
 });
 
 // Update package
-router.put('/packages/:id', adminAuth, async (req, res) => {
+router.put('/packages/:id', auth, adminAuth, async (req, res) => {
   try {
     const packageId = req.params.id;
     
@@ -197,7 +198,7 @@ router.put('/packages/:id', adminAuth, async (req, res) => {
 });
 
 // Delete package
-router.delete('/packages/:id', adminAuth, async (req, res) => {
+router.delete('/packages/:id', auth, adminAuth, async (req, res) => {
   try {
     const packageId = req.params.id;
     
@@ -231,7 +232,7 @@ router.delete('/packages/:id', adminAuth, async (req, res) => {
 });
 
 // Toggle package status
-router.patch('/packages/:id/toggle', adminAuth, async (req, res) => {
+router.patch('/packages/:id/toggle', auth, adminAuth, async (req, res) => {
   try {
     const packageId = req.params.id;
     
@@ -270,7 +271,7 @@ router.patch('/packages/:id/toggle', adminAuth, async (req, res) => {
 });
 
 // Bulk update packages
-router.put('/packages/bulk', adminAuth, async (req, res) => {
+router.put('/packages/bulk', auth, adminAuth, async (req, res) => {
   try {
     const { packageIds, updates } = req.body;
 
@@ -310,7 +311,7 @@ router.put('/packages/bulk', adminAuth, async (req, res) => {
 });
 
 // Get package statistics
-router.get('/packages/stats', adminAuth, async (req, res) => {
+router.get('/packages/stats', auth, adminAuth, async (req, res) => {
   try {
     const stats = await Package.aggregate([
       {

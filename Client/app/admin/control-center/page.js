@@ -145,11 +145,11 @@ const ControlCenterPage = () => {
       const today = await adminAPI.dashboard.getDailySummary(new Date().toISOString().split('T')[0]);
 
       setRealTimeStats({
-        usersOnline: Math.floor(stats.userStats.totalUsers * 0.1),
-        ordersToday: today.summary.totalOrders || 0,
-        revenueToday: today.summary.totalRevenue || 0,
+        usersOnline: Math.floor((stats.data?.overview?.totalUsers || stats.userStats?.totalUsers || 0) * 0.1),
+        ordersToday: today.summary?.totalOrders || today.data?.overview?.todayOrders || 0,
+        revenueToday: today.summary?.totalRevenue || today.data?.overview?.todayRevenue || 0,
         newUsersToday: Math.floor(Math.random() * 20) + 5,
-        pendingOrders: stats.orderStats.pendingOrders || 0,
+        pendingOrders: stats.orderStats?.pendingOrders || 0,
         pendingAgents: agents.agents?.filter(a => a.agentMetadata?.agentStatus === 'pending').length || 0,
         activeAgents: agents.agents?.filter(a => a.agentMetadata?.agentStatus === 'active').length || 0,
         totalCommissions: agents.agents?.reduce((sum, a) => sum + (a.agentMetadata?.totalCommissions || 0), 0) || 0
