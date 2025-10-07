@@ -6,7 +6,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || getApiUrl();
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
-  console.log('Sending token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+  // Only log token info in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Sending token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+  }
   return {
     'Content-Type': 'application/json',
     'x-auth-token': token
@@ -36,12 +39,15 @@ const handleResponse = async (response) => {
       errorMessage = await response.text();
     }
     
-    console.error('API Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: response.url,
-      error: errorMessage
-    });
+    // Only log errors in development to reduce console noise
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        error: errorMessage
+      });
+    }
     
     // Provide more specific error messages
     if (response.status === 401) {
@@ -68,34 +74,27 @@ export const userAPI = {
   getUsers: async (page = 1, limit = 10, search = '') => {
     const params = new URLSearchParams({ page, limit, search });
     
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/users?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin users endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/users?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint
+    const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Get user by ID
   getUserById: async (userId) => {
     // Try the correct admin endpoint first
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
     } catch (error) {
       console.warn('Admin user endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
@@ -115,7 +114,8 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin update user endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(userData)
@@ -137,7 +137,8 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin add money endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/add-money`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/add-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ amount })
@@ -159,7 +160,8 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin deduct money endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/deduct-money`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/deduct-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ amount, reason })
@@ -181,7 +183,8 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin toggle status endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/toggle-status`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/toggle-status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ disableReason })
@@ -202,7 +205,8 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin delete user endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -236,20 +240,11 @@ export const orderAPI = {
   getOrders: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/orders?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin orders endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/orders?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint
+    const response = await fetch(`${API_BASE_URL}/api/admin/orders?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Update order status
@@ -303,20 +298,11 @@ export const transactionAPI = {
   getTransactions: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/transactions?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin transactions endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/transactions?${params}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the working admin endpoint
+    const response = await fetch(`${API_BASE_URL}/api/admin/transactions?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Get transaction by ID
@@ -463,7 +449,8 @@ export const dashboardAPI = {
   getStatistics: async () => {
     // Try the correct admin endpoint first
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/statistics`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/dashboard/statistics' : '/api/admin/dashboard/statistics';
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
@@ -483,7 +470,8 @@ export const dashboardAPI = {
     
     // Try the correct admin endpoint first
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/daily-summary?${params}`, {
+      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/daily-summary' : '/api/admin/daily-summary';
+      const response = await fetch(`${API_BASE_URL}${endpoint}?${params}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);

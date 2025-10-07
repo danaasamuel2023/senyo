@@ -23,7 +23,7 @@ const YelloOrders = () => {
 
       try {
         // Fetch all orders and filter on client side for YELLO network with 1GB capacity
-        const res = await fetch(`http://localhost:5001/api/orders?page=${currentPage}&limit=${ordersPerPage}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/orders?page=${currentPage}&limit=${ordersPerPage}`, {
           headers: {
             'x-auth-token': authToken
           }
@@ -64,7 +64,7 @@ const YelloOrders = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/orders/${orderId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ const YelloOrders = () => {
     try {
       // Create an array of promises for each order update
       const updatePromises = selectedOrders.map(orderId => 
-        fetch(`http://localhost:5001/api/orders/${orderId}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/orders/${orderId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

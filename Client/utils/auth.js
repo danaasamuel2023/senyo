@@ -200,7 +200,7 @@ export const logout = (redirectUrl = '/SignIn') => {
       fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`
+          'x-auth-token': getAuthToken()
         }
       }).catch(() => {
         // Silently fail - user is logging out anyway
@@ -270,7 +270,7 @@ export const authenticatedFetch = async (url, options = {}) => {
   };
   
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['x-auth-token'] = token;
   }
   
   try {
@@ -288,9 +288,9 @@ export const authenticatedFetch = async (url, options = {}) => {
         const refreshed = await refreshAuthToken();
         
         if (refreshed) {
-          // Retry the original request with new token
-          const newToken = getAuthToken();
-          headers['Authorization'] = `Bearer ${newToken}`;
+        // Retry the original request with new token
+        const newToken = getAuthToken();
+        headers['x-auth-token'] = newToken;
           
           return fetch(url, {
             ...options,

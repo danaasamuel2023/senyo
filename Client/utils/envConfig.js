@@ -3,7 +3,7 @@ export const ENV_CONFIG = {
   // API URLs
   DEVELOPMENT: {
     API_URL: 'http://localhost:5001',
-    FRONTEND_URL: 'http://localhost:3004'
+    FRONTEND_URL: 'http://localhost:3001'
   },
   PRODUCTION: {
     API_URL: 'https://unlimitedata.onrender.com',
@@ -44,8 +44,7 @@ export const getApiEndpoint = (endpoint) => {
 export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
-    'http://localhost:3001', 
-    'http://localhost:3004',
+    'http://localhost:3001',
     'https://unlimitedata.onrender.com'
   ];
 };

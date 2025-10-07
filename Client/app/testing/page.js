@@ -33,7 +33,7 @@ export default function PurchaseData() {
   // Fetch available data packages
   const fetchDataPackages = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/developer/data-packages');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/developer/data-packages`);
       const data = await response.json();
       
       if (data.status === 'success') {
@@ -62,7 +62,7 @@ export default function PurchaseData() {
     setResult(null);
 
     try {
-      const response = await fetch('http://localhost:5001/api/developer/purchase', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/developer/purchase`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

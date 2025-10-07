@@ -38,10 +38,12 @@ const geonetClient = axios.create({
 const TELECEL_API_URL = 'https://iget.onrender.com/api/developer/orders/place';
 const TELECEL_API_KEY = '76013fa9c8bf774ac7fb35db5e586fb7852a618cbf57b9ddb072fc2c465e5fe8';
 
-// Enhanced logging function
+// Enhanced logging function - only log in development
 const logOperation = (operation, data) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] [${operation}]`, JSON.stringify(data, null, 2));
+  if (process.env.NODE_ENV === 'development') {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [${operation}]`, JSON.stringify(data, null, 2));
+  }
 };
 
 // ========== NETWORK MAPPING FOR DATAMART ==========

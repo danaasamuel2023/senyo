@@ -221,6 +221,9 @@ const useAuth = () => {
   useEffect(() => {
     const checkAuth = () => {
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') return;
+        
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         const user = JSON.parse(localStorage.getItem(USER_DATA_KEY) || '{}');
         
@@ -237,18 +240,23 @@ const useAuth = () => {
 
     checkAuth();
     
-    const handleStorageChange = () => checkAuth();
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Only add event listener on client side
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = () => checkAuth();
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
   }, []);
 
   const logout = useCallback(() => {
-    [AUTH_TOKEN_KEY, USER_DATA_KEY, 'data.user', 'user', 'token'].forEach(key => {
-      localStorage.removeItem(key);
-    });
-    setIsAuthenticated(false);
-    setUserData(null);
-    window.location.href = '/';
+    if (typeof window !== 'undefined') {
+      [AUTH_TOKEN_KEY, USER_DATA_KEY, 'data.user', 'user', 'token'].forEach(key => {
+        localStorage.removeItem(key);
+      });
+      setIsAuthenticated(false);
+      setUserData(null);
+      window.location.href = '/';
+    }
   }, []);
 
   return { isAuthenticated, userData, isLoading, logout };

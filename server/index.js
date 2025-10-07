@@ -65,7 +65,6 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://localhost:3004',
     'https://unlimitedata.onrender.com',
     'https://www.unlimitedata.onrender.com'
   ],
@@ -93,6 +92,7 @@ app.use('/api/v1', paymentLimiter, DepositeMorle);
 app.use('/api/developer', Developer)
 app.use('/api/v1', HubnetAt);
 app.use('/api',AdminManagement)
+app.use('/api/v1/admin', adminLimiter, AdminManagement)
 app.use('/api/v1', passreset);
 app.use('/api/reports', Report);
 app.use('/api', approveuser)
@@ -127,7 +127,9 @@ app.use('/api/admin/agents', adminLimiter, agentApprovalRoutes);
 const productAssignmentRoutes = require('./adminRoutes/productAssignment');
 app.use('/api/admin/products', adminLimiter, productAssignmentRoutes);
 const adminDashboardRoutes = require('./adminRoutes/dashboard');
+const adminV1Routes = require('./adminRoutes/adminV1Routes');
 app.use('/api/v1/admin', adminLimiter, adminDashboardRoutes);
+app.use('/api/v1/admin', adminLimiter, adminV1Routes);
 app.use('/api/store', storeRoutes);
 
 // Legacy endpoint handlers - redirect to admin endpoints

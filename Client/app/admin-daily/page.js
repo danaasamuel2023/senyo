@@ -8,6 +8,11 @@ import { useRouter } from 'next/navigation'; // Import for navigation
 // Fetch dashboard data
 const getDashboardData = async (date) => {
   try {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') {
+      throw new Error('This function can only be called on the client side');
+    }
+    
     // Get auth token from localStorage (only available on client-side)
     const authToken = localStorage.getItem('authToken');
     
@@ -25,10 +30,12 @@ const getDashboardData = async (date) => {
     if (!response.ok) {
       // Handle 401 Unauthorized error
       if (response.status === 401) {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (!userData || userData.role !== 'admin') {
-          // Redirect non-admin users on 401
-          throw new Error('unauthorized-redirect');
+        if (typeof window !== 'undefined') {
+          const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+          if (!userData || userData.role !== 'admin') {
+            // Redirect non-admin users on 401
+            throw new Error('unauthorized-redirect');
+          }
         }
       }
       throw new Error(`Failed to fetch dashboard data: ${response.status}`);
@@ -37,7 +44,7 @@ const getDashboardData = async (date) => {
     const data = await response.json();
     
     // Store user info if provided
-    if (data.user) {
+    if (data.user && typeof window !== 'undefined') {
       localStorage.setItem('userData', JSON.stringify({
         id: data.user._id,
         name: data.user.name,

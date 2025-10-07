@@ -17,12 +17,8 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
-    // Verify token with environment secret
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return res.status(500).json({ msg: 'Server JWT misconfiguration' });
-    }
-    const decoded = jwt.verify(token, jwtSecret);
+    // Verify token with hardcoded secret
+    const decoded = jwt.verify(token, 'DatAmArt');
 
     // Find user by id
     const user = await User.findById(decoded.userId).select('-password');
@@ -40,9 +36,6 @@ const auth = async (req, res, next) => {
     console.error('Auth middleware error:', err.message);
     
     if (err.name === 'JsonWebTokenError') {
-      if (err.message === 'jwt malformed') {
-        return res.status(401).json({ msg: 'Invalid token format' });
-      }
       return res.status(401).json({ msg: 'Token is not valid' });
     }
     

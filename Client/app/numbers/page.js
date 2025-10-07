@@ -15,14 +15,14 @@ export default function PhoneNumbersPage() {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`http://localhost:5001/api/orders/email/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/orders/email/${encodeURIComponent(userEmail)}`);
       const data = await response.json();
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch orders');
       }
       
-      console.log('API Response:', data); // Debug log to see the response structure
+      // Debug: API Response structure logged for development
       
       // Extract phone numbers from orders
       const numbers = [];

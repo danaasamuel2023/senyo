@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 // Constants
-const API_BASE_URL = 'http://localhost:5001/api/v1';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/v1`;
 const TABS = ['overview', 'orders', 'financial', 'achievements'];
 
 // Animated Logo Component
@@ -208,6 +208,9 @@ function UserStatsPage() {
   useEffect(() => {
     const initAuth = () => {
       try {
+        // Check if we're on the client side
+        if (typeof window === 'undefined') return;
+        
         const token = localStorage.getItem('authToken');
         const userDataStr = localStorage.getItem('userData');
 
@@ -235,8 +238,10 @@ function UserStatsPage() {
 
   // Logout function
   const logout = useCallback(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+    }
     router.push('/login');
   }, [router]);
 

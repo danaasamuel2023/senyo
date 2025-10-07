@@ -4,7 +4,7 @@ const axios = require('axios');
 const { User } = require('../schema/schema'); 
 const bcrypt = require("bcryptjs");
 
-const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
+const JWT_SECRET = 'DatAmArt';
 
 // mNotify SMS configuration
 const SMS_CONFIG = {

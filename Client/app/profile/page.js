@@ -283,7 +283,7 @@ const ProfilePage = () => {
     if (userData) {
       loadUserStats();
     }
-  }, [userData, loadUserStats]);
+  }, [userData]); // Remove loadUserStats from dependencies to avoid circular dependency
   
   // Function to show toast
   const showToast = (message, type = 'success') => {

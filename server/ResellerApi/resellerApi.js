@@ -17,10 +17,7 @@ const {
 } = require('../schema/schema');
 
 // Constants
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.warn('JWT_SECRET is not set. Set JWT_SECRET in environment.');
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
 
 const GEONETTECH_BASE_URL = 'https://posapi.geonettech.com/api/v1';
 const GEONETTECH_API_KEY = process.env.GEONETTECH_API_KEY;

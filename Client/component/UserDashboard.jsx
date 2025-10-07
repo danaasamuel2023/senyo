@@ -281,7 +281,7 @@ const DashboardPage = () => {
       const response = await fetch(getApiEndpoint(`${API_ENDPOINTS.DASHBOARD}${userId}`), {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          'x-auth-token': authToken,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Request-ID': Date.now().toString()
@@ -415,12 +415,20 @@ const DashboardPage = () => {
 
   // Effects
   useEffect(() => {
+    let isMounted = true;
+    let refreshInterval = null;
+    
     const initializeDashboard = async () => {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') return;
+      
       const userDataString = localStorage.getItem('userData');
       
       if (!userDataString) {
-        setError('Please login to access your dashboard');
-        router.push('/SignIn');
+        if (isMounted) {
+          setError('Please login to access your dashboard');
+          router.push('/SignIn');
+        }
         return;
       }
 
@@ -428,40 +436,55 @@ const DashboardPage = () => {
         const userData = JSON.parse(userDataString);
         
         if (!userData?.id && !userData?._id) {
-          setError('Invalid user data. Please login again.');
-          localStorage.removeItem('userData');
-          localStorage.removeItem('authToken');
-          router.push('/SignIn');
+          if (isMounted) {
+            setError('Invalid user data. Please login again.');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('authToken');
+            router.push('/SignIn');
+          }
           return;
         }
         
-        setUserName(userData.name || 'User');
-        await fetchDashboardData(userData.id || userData._id);
+        if (isMounted) {
+          setUserName(userData.name || 'User');
+          await fetchDashboardData(userData.id || userData._id);
+        }
       } catch (err) {
         console.error('Initialization error:', err);
-        setError('Failed to load user data. Please login again.');
-        localStorage.removeItem('userData');
-        localStorage.removeItem('authToken');
-        router.push('/SignIn');
+        if (isMounted) {
+          setError('Failed to load user data. Please login again.');
+          localStorage.removeItem('userData');
+          localStorage.removeItem('authToken');
+          router.push('/SignIn');
+        }
       }
     };
 
     initializeDashboard();
 
-    const noticeDismissed = localStorage.getItem('dataDeliveryNoticeDismissed');
-    if (noticeDismissed === 'true') {
-      setShowNotice(false);
+    if (typeof window !== 'undefined') {
+      const noticeDismissed = localStorage.getItem('dataDeliveryNoticeDismissed');
+      if (noticeDismissed === 'true') {
+        setShowNotice(false);
+      }
     }
 
-    // Auto-refresh every 5 minutes
-    const refreshInterval = setInterval(() => {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (userData.id || userData._id) {
-        fetchDashboardData(userData.id || userData._id);
+    // Auto-refresh every 5 minutes (only if component is still mounted)
+    refreshInterval = setInterval(() => {
+      if (isMounted && typeof window !== 'undefined') {
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        if (userData.id || userData._id) {
+          fetchDashboardData(userData.id || userData._id);
+        }
       }
     }, 5 * 60 * 1000);
 
-    return () => clearInterval(refreshInterval);
+    return () => {
+      isMounted = false;
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
   }, [router, fetchDashboardData]);
 
   // Loading State

@@ -1,7 +1,25 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import MobileNavbar from "@/compoenent/nav.jsx";
+// Temporary simple navbar to fix runtime error
+const MobileNavbar = () => {
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold text-[#FFCC08]">UnlimitedData</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button className="text-gray-600 dark:text-gray-300">
+              Menu
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
 import Footer from "@/compoenent/footer";
 import AuthGuard from "@/component/AuthGuide";
 import WhatsAppLink from "@/component/groupIcon";
@@ -9,6 +27,7 @@ import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
+import ErrorBoundary from "@/component/ErrorBoundary";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
@@ -456,7 +475,9 @@ export default function RootLayout({ children }) {
               
               {/* Main content wrapper - MOBILE FRIENDLY */}
               <div className="relative max-w-7xl mx-auto">
-                {children}
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
               </div>
               
               {/* WhatsApp floating button - Mobile optimized position */}
