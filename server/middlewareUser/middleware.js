@@ -9,8 +9,16 @@ const { User } = require('../schema/schema');
  */
 const auth = async (req, res, next) => {
   try {
-    // Get token from header
-    const token = req.header('x-auth-token');
+    // Get token from header - check both x-auth-token and Authorization header
+    let token = req.header('x-auth-token');
+    
+    // If no x-auth-token, check Authorization header
+    if (!token) {
+      const authHeader = req.header('Authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
 
     // Check if no token
     if (!token) {

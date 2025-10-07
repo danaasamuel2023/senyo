@@ -1,25 +1,6 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-// Temporary simple navbar to fix runtime error
-const MobileNavbar = () => {
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-[#FFCC08]">UnlimitedData</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="text-gray-600 dark:text-gray-300">
-              Menu
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
 import Footer from "@/component/footer";
 import WhatsAppLink from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
@@ -455,7 +436,6 @@ export default function RootLayout({ children }) {
               <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#FFCC08]/5 rounded-full blur-3xl animate-pulse delay-500 dark:bg-[#FFCC08]/3" />
             </div>
             
-            <MobileNavbar />
             
             {/* Main content - MOBILE OPTIMIZED SPACING */}
             <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
