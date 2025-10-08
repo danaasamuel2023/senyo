@@ -168,8 +168,8 @@ export default function LoginPage() {
     setLastLoginAttempt(now);
 
     try {
-      // Use Next.js API proxy to avoid CORS issues in production
-      const API_URL = '/api/backend/api/v1/login';
+      // Use Next.js API route to avoid CORS issues in production
+      const API_URL = '/api/login';
 
       const response = await fetch(API_URL, {
         method: 'POST',

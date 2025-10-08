@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || (() => {
-  // Default to localhost for development, production URL for production
-  return process.env.NODE_ENV === 'production' ? 'https://unlimitedata.onrender.com' : 'http://localhost:5001';
-})();
+// Direct API URL - no environment variable dependencies
+const API_BASE_URL = 'https://unlimitedata.onrender.com';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    console.log('🔐 Login API route called');
     
-    // Forward the register request to the backend server
-    const response = await fetch(`${API_BASE_URL}/api/v1/register`, {
+    const body = await request.json();
+    console.log('📝 Login request body:', { email: body.email, hasPassword: !!body.password });
+    
+    // Forward the login request to the backend server
+    const response = await fetch(`${API_BASE_URL}/api/v1/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,12 +19,15 @@ export async function POST(request) {
       body: JSON.stringify(body),
     });
 
+    console.log('📊 Backend response status:', response.status);
+    
     const data = await response.json();
+    console.log('📄 Backend response data:', { success: data.success, hasToken: !!data.token });
     
     // Return the response with the same status code
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Register API route error:', error);
+    console.error('❌ Login API route error:', error);
     return NextResponse.json(
       { 
         success: false, 

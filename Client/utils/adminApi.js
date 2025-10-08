@@ -7,7 +7,7 @@ const API_BASE_URL = getNextPublicApiUrl();
 const getApiUrl = (endpoint) => {
   // In production, use the API proxy to avoid CORS issues
   if (!isDevelopment()) {
-    return `/api/backend${endpoint}`;
+    return `/api/backend?path=${encodeURIComponent(endpoint)}`;
   }
   // In development, use direct API calls
   return `${API_BASE_URL}${endpoint}`;
