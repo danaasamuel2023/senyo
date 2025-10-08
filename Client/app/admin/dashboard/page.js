@@ -139,8 +139,8 @@ const AdminDashboard = () => {
   const checkAuth = useCallback(() => {
     try {
       // Use the same token verification as SignIn page with mobile-friendly error handling
-      const token = localStorage.getItem('authToken');
-      const userDataStr = localStorage.getItem('userData');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const userDataStr = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
       
       // Better error handling for mobile browsers
       if (!token) {
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
       }
 
       // Check if we have a valid token before making API calls
-      const token = localStorage.getItem('authToken');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       if (!token) {
         console.warn('No authentication token found, redirecting to login');
         router.push('/admin/login');
@@ -636,8 +636,10 @@ const AdminDashboard = () => {
 
   // Logout
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+    }
     router.push('/SignIn');
   }, [router]);
 
