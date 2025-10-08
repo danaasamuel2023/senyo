@@ -89,6 +89,10 @@ app.use('/api/v1/data', paymentLimiter, dataOrderRoutes);
 app.use('/api/v1', paymentLimiter, Deposit);
 app.use('/api/v1', paymentLimiter, DepositeMorle);
 
+// Mobile Money Deposit routes
+const MobileMoneyDeposit = require('./DepositeRoutes/MobileMoneyDeposit');
+app.use('/api/v1', paymentLimiter, MobileMoneyDeposit);
+
 // Other routes
 app.use('/api/developer', Developer)
 app.use('/api/v1', HubnetAt);
@@ -129,9 +133,17 @@ const productAssignmentRoutes = require('./adminRoutes/productAssignment');
 app.use('/api/admin/products', adminLimiter, productAssignmentRoutes);
 const adminDashboardRoutes = require('./adminRoutes/dashboard');
 const adminV1Routes = require('./adminRoutes/adminV1Routes');
+const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings');
 app.use('/api/v1/admin', adminLimiter, adminDashboardRoutes);
 app.use('/api/v1/admin', adminLimiter, adminV1Routes);
+app.use('/api/v1/admin', adminLimiter, paymentGatewaySettingsRoutes);
 app.use('/api/store', storeRoutes);
+
+// BulkClix withdrawal and deposit routes
+const withdrawalRoutes = require('./walletRoutes/withdrawals');
+const mobileMoneyDepositRoutes = require('./walletRoutes/mobileMoneyDeposits');
+app.use('/api/wallet', withdrawalRoutes);
+app.use('/api/wallet', mobileMoneyDepositRoutes);
 
 // Legacy endpoint handlers - redirect to admin endpoints
 app.get('/api/transactions', (req, res) => {

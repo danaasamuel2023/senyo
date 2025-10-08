@@ -1337,6 +1337,55 @@ mongoose.connection.on('error', (err) => {
 });
 
 // ============================================
+// SETTINGS SCHEMA
+// ============================================
+
+const SettingsSchema = new Schema({
+  type: {
+    type: String,
+    required: true,
+    unique: true,
+    enum: ['payment_gateway', 'system', 'api', 'notification']
+  },
+  data: {
+    type: Schema.Types.Mixed,
+    required: true,
+    default: {}
+  },
+  version: {
+    type: Number,
+    default: 1
+  }
+}, {
+  timestamps: true
+});
+
+// Index for faster lookups
+SettingsSchema.index({ type: 1 });
+
+// Static method to get settings by type
+SettingsSchema.statics.getByType = async function(type) {
+  return await this.findOne({ type });
+};
+
+// Static method to update settings by type
+SettingsSchema.statics.updateByType = async function(type, data) {
+  return await this.findOneAndUpdate(
+    { type },
+    { 
+      data,
+      $inc: { version: 1 }
+    },
+    { 
+      upsert: true, 
+      new: true 
+    }
+  );
+};
+
+const Settings = getModel("Settings", SettingsSchema);
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -1353,6 +1402,7 @@ module.exports = {
   Notification,
   NotificationQueue,
   SiteSettings,
+  Settings,
   AgentCatalog,
   Review,
   

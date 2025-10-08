@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from './ToastNotification';
 import { useTheme } from '../app/providers/ThemeProvider';
 import MobileNavbar from './nav';
+import MobileMoneyDepositModal from './MobileMoneyDepositModal';
 import { 
   CreditCard, Package, Database, DollarSign, TrendingUp, X, 
   AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
@@ -159,6 +160,7 @@ const [animateStats, setAnimateStats] = useState(false);
 const [selectedNetwork, setSelectedNetwork] = useState(null);
 const [showSalesChart, setShowSalesChart] = useState(false);
 const [salesPeriod, setSalesPeriod] = useState('7d');
+const [showMobileMoneyDeposit, setShowMobileMoneyDeposit] = useState(false);
 
 // API Data State
 const [stats, setStats] = useState({
@@ -625,12 +627,29 @@ return (
                   </div>
                 </div>
               </div>
-              <button
-                onClick={navigationHandlers.topup}
-                className="bg-[#FFCC08] text-black font-bold py-2 px-4 rounded-full text-xs sm:text-sm hover:bg-yellow-500 transition-colors"
-              >
-                Add Funds
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => router.push('/topup')}
+                  className="bg-[#FFCC08] text-black font-bold py-2 px-3 rounded-full text-xs sm:text-sm hover:bg-yellow-500 transition-colors flex items-center space-x-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Topup</span>
+                </button>
+                <button
+                  onClick={() => router.push('/momo-deposit')}
+                  className="bg-gray-800 text-white font-bold py-2 px-3 rounded-full text-xs sm:text-sm hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                >
+                  <Smartphone className="w-3 h-3" />
+                  <span>MoMo</span>
+                </button>
+                <button
+                  onClick={navigationHandlers.topup}
+                  className="bg-gray-800 text-white font-bold py-2 px-3 rounded-full text-xs sm:text-sm hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                >
+                  <CreditCard className="w-3 h-3" />
+                  <span>Card</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -920,6 +939,18 @@ return (
           </button>
         </div>
       </div>
+
+      {/* Mobile Money Deposit Modal */}
+      <MobileMoneyDepositModal
+        isOpen={showMobileMoneyDeposit}
+        onClose={() => setShowMobileMoneyDeposit(false)}
+        currentBalance={stats.balance}
+        onDepositSuccess={(data) => {
+          // Refresh dashboard data after successful deposit
+          handleRefresh();
+        }}
+      />
+
 
     </div>
 );

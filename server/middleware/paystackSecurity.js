@@ -243,8 +243,8 @@ const validateReference = (req, res, next) => {
     });
   }
 
-  // Validate reference format (should start with DEP- for deposits)
-  const validFormats = /^(DEP|TRX|PAY|REF)-[a-f0-9]{20}-\d{13}$/;
+  // Validate reference format (should start with DEP-, MOMO-, TRX-, PAY-, or REF-)
+  const validFormats = /^(DEP|MOMO|TRX|PAY|REF)-[a-f0-9]{20}-\d{13}$/;
   
   if (!validFormats.test(reference)) {
     console.log(`[SECURITY] ⚠️ Invalid reference format: ${reference}`);
