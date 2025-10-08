@@ -43,18 +43,29 @@ const handleResponse = async (response) => {
   }
   
   if (!response.ok) {
-    let errorMessage;
+    let errorMessage = '';
+    let errorData = null;
+    
     // Clone the response to avoid "body stream already read" error
     const responseClone = response.clone();
+    
     try {
-      const errorData = await responseClone.json();
-      errorMessage = errorData.msg || errorData.error || errorData.message;
-    } catch {
-      try {
-        errorMessage = await responseClone.text();
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      const text = await responseClone.text();
+      if (text) {
+        try {
+          errorData = JSON.parse(text);
+          errorMessage = errorData.msg || errorData.error || errorData.message || errorData.msg || '';
+        } catch {
+          errorMessage = text;
+        }
       }
+    } catch (parseError) {
+      console.warn('Failed to parse error response:', parseError);
+    }
+    
+    // Fallback to status text if no error message found
+    if (!errorMessage) {
+      errorMessage = response.statusText || `HTTP ${response.status}`;
     }
     
     // Only log errors in development to reduce console noise
@@ -63,7 +74,8 @@ const handleResponse = async (response) => {
         status: response.status,
         statusText: response.statusText,
         url: response.url,
-        error: errorMessage
+        error: errorMessage,
+        errorData: errorData
       });
     }
     

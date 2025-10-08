@@ -64,6 +64,9 @@ const AdminDashboard = () => {
   // API Configuration
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
   
+  // Debug mode for development
+  const DEBUG_MODE = process.env.NODE_ENV === 'development';
+  
   // Cache for performance
   const [dataCache, setDataCache] = useState({});
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -213,64 +216,78 @@ const AdminDashboard = () => {
       // Check if we have a valid token before making API calls
       const token = localStorage.getItem('authToken');
       if (!token) {
-        console.warn('No authentication token found, using mock data');
-        // Set mock data when no token is available
-        const mockStats = {
-          totalUsers: 150,
-          activeUsers: 120,
-          totalOrders: 450,
-          totalRevenue: 12500.75,
-          growthRate: 15.5,
-          pendingOrders: 15,
-          completedOrders: 420,
-          totalProducts: 25,
-          totalAgents: 25,
-          activeAgents: 20,
-          totalCommissions: 2500.00,
-          todayRevenue: 350.25,
-          todayOrders: 25,
-          systemHealth: 'excellent'
-        };
-        setStats(mockStats);
+        console.warn('No authentication token found, redirecting to login');
+        router.push('/admin/login');
         return;
       }
 
+      if (DEBUG_MODE) {
+        console.log('Loading dashboard statistics...');
+        console.log('API Base URL:', API_BASE_URL);
+        console.log('Auth Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+      }
+      
       // Fetch in parallel for speed with retry mechanism
       const [dashboardStats, todaySummary] = await Promise.all([
         retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
-          console.warn('Dashboard stats error (using fallback):', err.message);
-          // Return mock data for development
+          console.error('Dashboard stats API error:', err.message);
+          if (err.message.includes('Authentication required')) {
+            showNotification('Please sign in again', 'error');
+            router.push('/admin/login');
+            return { success: false, data: null };
+          }
+          showNotification(`Failed to load dashboard statistics: ${err.message}`, 'error');
+          // Return empty data structure instead of mock data
           return {
-            userStats: { totalUsers: 150, activeUsers: 120, totalAgents: 25 },
-            orderStats: { totalOrders: 450, pendingOrders: 15, completedOrders: 420 },
-            financialStats: { totalRevenue: 12500.75, todayRevenue: 350.25 }
+            success: false,
+            data: {
+              overview: {
+                totalUsers: 0,
+                totalOrders: 0,
+                todayOrders: 0,
+                todayRevenue: 0
+              }
+            }
           };
         }),
         retryWithBackoff(() => adminAPI.dashboard.getDailySummary(new Date().toISOString().split('T')[0])).catch(err => {
-          console.warn('Daily summary error (using fallback):', err.message);
-          // Return mock data for development
+          console.error('Daily summary API error:', err.message);
+          if (err.message.includes('Authentication required')) {
+            showNotification('Please sign in again', 'error');
+            router.push('/admin/login');
+            return { success: false, data: null };
+          }
+          showNotification(`Failed to load daily summary: ${err.message}`, 'error');
+          // Return empty data structure instead of mock data
           return {
-            summary: { totalOrders: 25, totalRevenue: 1250.50, totalDeposits: 2100.00 },
-            networkSummary: [
-              { network: 'YELLO', count: 15, totalGB: 45, revenue: 750.25 },
-              { network: 'TELECEL', count: 8, totalGB: 25, revenue: 400.00 },
-              { network: 'AT_PREMIUM', count: 2, totalGB: 10, revenue: 100.25 }
-            ]
+            success: false,
+            data: {
+              summary: { totalOrders: 0, totalRevenue: 0, totalDeposits: 0 },
+              networkBreakdown: []
+            }
           };
         })
       ]);
       
+      // Check if authentication failed
+      if (dashboardStats.data === null || todaySummary.data === null) {
+        console.warn('Authentication failed, redirecting to login');
+        return;
+      }
+
+      // Process real API data
       const statsData = {
-        totalUsers: dashboardStats.data?.overview?.totalUsers || dashboardStats.userStats?.totalUsers || 0,
-        activeUsers: Math.floor((dashboardStats.data?.overview?.totalUsers || dashboardStats.userStats?.totalUsers || 0) * 0.6),
-        totalOrders: dashboardStats.data?.overview?.totalOrders || dashboardStats.orderStats?.totalOrders || 0,
-        totalRevenue: dashboardStats.data?.overview?.todayRevenue || dashboardStats.financialStats?.totalRevenue || 0,
-        growthRate: 12.5,
-        pendingOrders: dashboardStats.orderStats?.pendingOrders || 0,
-        completedOrders: dashboardStats.orderStats?.completedOrders || 0,
-        totalProducts: todaySummary.networkSummary?.length || 5,
-        todayOrders: dashboardStats.data?.overview?.todayOrders || 0,
-        todayRevenue: dashboardStats.data?.overview?.todayRevenue || 0
+        totalUsers: dashboardStats.success ? (dashboardStats.data?.overview?.totalUsers || 0) : 0,
+        activeUsers: dashboardStats.success ? Math.floor((dashboardStats.data?.overview?.totalUsers || 0) * 0.6) : 0,
+        totalOrders: dashboardStats.success ? (dashboardStats.data?.overview?.totalOrders || 0) : 0,
+        totalRevenue: dashboardStats.success ? (dashboardStats.data?.overview?.todayRevenue || 0) : 0,
+        growthRate: 12.5, // This would come from a separate API call for growth calculation
+        pendingOrders: 0, // This would come from order status breakdown
+        completedOrders: 0, // This would come from order status breakdown
+        totalProducts: todaySummary.success ? (todaySummary.data?.networkBreakdown?.length || 0) : 0,
+        todayOrders: dashboardStats.success ? (dashboardStats.data?.overview?.todayOrders || 0) : 0,
+        todayRevenue: dashboardStats.success ? (dashboardStats.data?.overview?.todayRevenue || 0) : 0,
+        systemHealth: dashboardStats.success && todaySummary.success ? 'excellent' : 'error'
       };
       
       console.log('Dashboard stats loaded:', statsData);
@@ -281,11 +298,34 @@ const AdminDashboard = () => {
         ...prev,
         [cacheKey]: { data: statsData, timestamp: now }
       }));
+      
+      // Show success notification if data was loaded successfully
+      if (dashboardStats.success || todaySummary.success) {
+        showNotification('Dashboard data refreshed successfully', 'success');
+      }
     } catch (error) {
       console.error('Failed to load stats:', error);
-      showNotification('Failed to load statistics', 'error');
+      showNotification('Failed to load dashboard statistics', 'error');
+      
+      // Set empty stats on error
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        growthRate: 0,
+        pendingOrders: 0,
+        completedOrders: 0,
+        totalProducts: 0,
+        totalAgents: 0,
+        activeAgents: 0,
+        totalCommissions: 0,
+        todayRevenue: 0,
+        todayOrders: 0,
+        systemHealth: 'error'
+      });
     }
-  }, [dataCache, CACHE_DURATION]);
+  }, [dataCache, CACHE_DURATION, router]);
 
   // Helper function to get time ago
   const getTimeAgo = useCallback((date) => {
@@ -1741,6 +1781,34 @@ const AdminDashboard = () => {
             </div>
           </div>
         </header>
+
+        {/* Debug Panel - Only show in development */}
+        {DEBUG_MODE && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-4">
+                <span className="font-medium text-yellow-800 dark:text-yellow-200">Debug Mode</span>
+                <span className="text-yellow-700 dark:text-yellow-300">API: {API_BASE_URL}</span>
+                <span className="text-yellow-700 dark:text-yellow-300">
+                  Token: {typeof window !== 'undefined' && localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing'}
+                </span>
+                <span className="text-yellow-700 dark:text-yellow-300">
+                  Server: {stats.systemHealth === 'error' ? '❌ Error' : '✅ Connected'}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  console.log('Current stats:', stats);
+                  console.log('API Base URL:', API_BASE_URL);
+                  console.log('Auth Token:', typeof window !== 'undefined' ? localStorage.getItem('authToken') : 'N/A (SSR)');
+                }}
+                className="text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
+              >
+                Log Debug Info
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Page Content with better mobile padding */}
         <div className="p-2 sm:p-4 md:p-6 pb-20">
