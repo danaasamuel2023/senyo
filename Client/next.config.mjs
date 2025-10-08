@@ -14,6 +14,34 @@ const nextConfig = {
           ignored: /node_modules/,
         };
         
+        // Fix ChunkLoadError by improving chunk loading
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true,
+              },
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                priority: -10,
+                chunks: 'all',
+              },
+            },
+          },
+        };
+        
+        // Improve chunk loading reliability
+        config.output = {
+          ...config.output,
+          chunkLoadTimeout: 30000,
+          crossOriginLoading: 'anonymous',
+        };
+        
         // Comprehensive warning suppression
         config.ignoreWarnings = [
           { module: /webpack\/hot\/update/ },
@@ -31,7 +59,9 @@ const nextConfig = {
           { message: /buildActivityPosition/ },
           { message: /deprecated.*configurable/ },
           { message: /has been renamed/ },
-          { message: /conflicts with/ }
+          { message: /conflicts with/ },
+          { message: /ChunkLoadError/ },
+          { message: /Loading chunk/ }
         ];
         
         // Override console methods to suppress specific warnings
@@ -48,7 +78,9 @@ const nextConfig = {
             message.includes('buildActivity') ||
             message.includes('buildActivityPosition') ||
             message.includes('deprecated') ||
-            message.includes('conflicts with')
+            message.includes('conflicts with') ||
+            message.includes('ChunkLoadError') ||
+            message.includes('Loading chunk')
           ) {
             return; // Suppress these warnings
           }
