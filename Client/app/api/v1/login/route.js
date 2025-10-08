@@ -7,6 +7,10 @@ const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL
 
 export async function POST(request) {
   try {
+    console.log('🔐 Login API v1 route called');
+    console.log('🌐 API_BASE_URL:', API_BASE_URL);
+    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+    
     const body = await request.json();
     
     // Forward the login request to the backend server

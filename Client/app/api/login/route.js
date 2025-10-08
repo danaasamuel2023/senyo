@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 
-// Direct API URL - no environment variable dependencies
-const API_BASE_URL = 'https://unlimitedata.onrender.com';
+// API URL with environment variable support
+const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || (() => {
+  // Default to localhost for development, production URL for production
+  return process.env.NODE_ENV === 'production' ? 'https://unlimitedata.onrender.com' : 'http://localhost:5001';
+})();
 
 export async function POST(request) {
   try {
     console.log('🔐 Login API route called');
+    console.log('🌐 API_BASE_URL:', API_BASE_URL);
+    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
     
     const body = await request.json();
     console.log('📝 Login request body:', { email: body.email, hasPassword: !!body.password });
