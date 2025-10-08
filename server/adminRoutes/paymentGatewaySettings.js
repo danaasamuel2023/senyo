@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { Settings, Transactiondataunlimited } = require('../schema/schema');
+const adminAuth = require('../adminMiddleware/middleware');
+const authMiddleware = require('../middlewareUser/middleware');
+const paymentGatewayService = require('../services/paymentGatewayService');
 
 // Get payment gateway settings
-router.get('/payment-gateway-settings', async (req, res) => {
+router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
   try {
     // Find or create payment gateway settings
     let settings = await Settings.findOne({ type: 'payment_gateway' });
@@ -40,7 +43,7 @@ router.get('/payment-gateway-settings', async (req, res) => {
 });
 
 // Update payment gateway settings
-router.put('/payment-gateway-settings', async (req, res) => {
+router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
   try {
     const {
       activeGateway,
@@ -108,14 +111,17 @@ router.put('/payment-gateway-settings', async (req, res) => {
 
     await settings.save();
 
+    // Clear payment gateway service cache to ensure immediate effect
+    paymentGatewayService.clearCache();
+
     // Update environment variables if provided
-    if (paystackPublicKey) {
+    if (paystackPublicKey && paystackPublicKey.trim()) {
       process.env.PAYSTACK_PUBLIC_KEY = paystackPublicKey;
     }
-    if (paystackSecretKey) {
+    if (paystackSecretKey && paystackSecretKey.trim()) {
       process.env.PAYSTACK_SECRET_KEY = paystackSecretKey;
     }
-    if (bulkclixApiKey) {
+    if (bulkclixApiKey && bulkclixApiKey.trim()) {
       process.env.BULKCLIX_API_KEY = bulkclixApiKey;
     }
 
@@ -136,7 +142,7 @@ router.put('/payment-gateway-settings', async (req, res) => {
 });
 
 // Test payment gateway connection
-router.post('/payment-gateway-settings/test', async (req, res) => {
+router.post('/payment-gateway-settings/test', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { gateway, apiKey } = req.body;
 
@@ -221,7 +227,7 @@ router.post('/payment-gateway-settings/test', async (req, res) => {
 });
 
 // Get current active gateway
-router.get('/payment-gateway-settings/active', async (req, res) => {
+router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async (req, res) => {
   try {
     const settings = await Settings.findOne({ type: 'payment_gateway' });
     
@@ -254,7 +260,7 @@ router.get('/payment-gateway-settings/active', async (req, res) => {
 });
 
 // Clear pending transactions (Admin only)
-router.post('/payment-gateway-settings/clear-pending', async (req, res) => {
+router.post('/payment-gateway-settings/clear-pending', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { userId, reference } = req.body;
     
