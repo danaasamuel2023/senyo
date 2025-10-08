@@ -3,6 +3,16 @@ import { getNextPublicApiUrl, isDevelopment } from './envConfig';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
+// Helper function to get the correct API URL (proxy for production, direct for development)
+const getApiUrl = (endpoint) => {
+  // In production, use the API proxy to avoid CORS issues
+  if (!isDevelopment()) {
+    return `/api/backend${endpoint}`;
+  }
+  // In development, use direct API calls
+  return `${API_BASE_URL}${endpoint}`;
+};
+
 // Helper function to get auth headers (same as SignIn page)
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -105,7 +115,7 @@ export const userAPI = {
     const params = new URLSearchParams({ page, limit, search });
     
     // Use the working admin endpoint
-    const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/admin/users')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -432,7 +442,7 @@ export const dashboardAPI = {
   // Get dashboard statistics
   getStatistics: async () => {
     // Use the correct admin endpoint
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/statistics`, {
+    const response = await fetch(getApiUrl('/api/v1/admin/statistics'), {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -443,7 +453,7 @@ export const dashboardAPI = {
     const params = new URLSearchParams({ date });
     
     // Use the correct admin endpoint
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/daily-summary?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/daily-summary')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

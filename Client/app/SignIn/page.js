@@ -168,8 +168,8 @@ export default function LoginPage() {
     setLastLoginAttempt(now);
 
     try {
-      // Get API URL using utility function
-      const API_URL = getApiEndpoint('/api/v1/login');
+      // Use Next.js API proxy to avoid CORS issues in production
+      const API_URL = '/api/backend/api/v1/login';
 
       const response = await fetch(API_URL, {
         method: 'POST',
