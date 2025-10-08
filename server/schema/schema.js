@@ -121,8 +121,7 @@ const UserSchema = new Schema({
     type: String, 
     required: true, 
     trim: true, 
-    maxlength: 100,
-    index: true 
+    maxlength: 100
   },
   email: { 
     type: String, 
@@ -131,8 +130,7 @@ const UserSchema = new Schema({
     lowercase: true, 
     trim: true,
     maxlength: 255,
-    validate: emailValidator,
-    index: true
+    validate: emailValidator
   },
   password: { 
     type: String, 
@@ -145,8 +143,7 @@ const UserSchema = new Schema({
     required: true, 
     trim: true,
     maxlength: 20,
-    validate: phoneValidator,
-    index: true
+    validate: phoneValidator
   },
   role: { 
     type: String, 
