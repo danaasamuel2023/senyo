@@ -180,7 +180,14 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, try to get text response
+          const errorText = await response.text();
+          errorData = { error: errorText, details: 'Non-JSON response' };
+        }
         
         // Handle 429 rate limiting specifically
         if (response.status === 429) {
@@ -189,12 +196,15 @@ export default function LoginPage() {
           
           setIsRateLimited(true);
           setRateLimitTimeLeft(rateLimitSeconds);
-          setError(`Too many login attempts. Please try again after ${rateLimitMinutes} minutes.`);
-          showToast(`Too many login attempts. Please try again after ${rateLimitMinutes} minutes.`, 'error');
+          const errorMessage = errorData.error || `Too many login attempts. Please try again after ${rateLimitMinutes} minutes.`;
+          setError(errorMessage);
+          showToast(errorMessage, 'error');
           return;
         }
         
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        // Handle other HTTP errors with improved error messages
+        const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${errorData.details || 'Unknown error'}`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

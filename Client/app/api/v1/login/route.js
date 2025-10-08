@@ -18,6 +18,38 @@ export async function POST(request) {
       body: JSON.stringify(body),
     });
 
+    // Check if response is ok before trying to parse JSON
+    if (!response.ok) {
+      // Handle rate limiting and other HTTP errors
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (jsonError) {
+        // If JSON parsing fails, it might be a rate limit plain text response
+        const textResponse = await response.text();
+        console.log('📄 Non-JSON response:', textResponse);
+        
+        if (response.status === 429) {
+          // Rate limiting error
+          errorData = {
+            success: false,
+            error: 'Too many login attempts. Please wait 15 minutes before trying again.',
+            details: textResponse
+          };
+        } else {
+          // Other HTTP errors
+          errorData = {
+            success: false,
+            error: 'Server error occurred. Please try again later.',
+            details: textResponse
+          };
+        }
+      }
+      
+      return NextResponse.json(errorData, { status: response.status });
+    }
+    
+    // Parse successful response
     const data = await response.json();
     
     // Return the response with the same status code
