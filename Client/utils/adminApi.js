@@ -30,11 +30,13 @@ const getAuthHeaders = () => {
   
   if (!token) {
     console.warn('AdminAPI - No authToken found in localStorage');
+    throw new Error('Authentication required. Please sign in again.');
   }
   
   return {
     'Content-Type': 'application/json',
-    'x-auth-token': token
+    'x-auth-token': token,
+    'Authorization': `Bearer ${token}` // Add both headers for compatibility
   };
 };
 
@@ -114,8 +116,8 @@ export const userAPI = {
   getUsers: async (page = 1, limit = 10, search = '') => {
     const params = new URLSearchParams({ page, limit, search });
     
-    // Use the working admin endpoint
-    const response = await fetch(`${getApiUrl('/api/admin/users')}?${params}`, {
+    // Use the correct admin endpoint with proper authentication
+    const response = await fetch(`${getApiUrl('/api/v1/admin/users')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -123,45 +125,22 @@ export const userAPI = {
 
   // Get user by ID
   getUserById: async (userId) => {
-    // Try the correct admin endpoint first
-    try {
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
-      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin user endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
-      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
-    }
+    // Use the correct admin endpoint
+    const response = await fetch(`${getApiUrl('/api/v1/admin/users')}/${userId}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   },
 
   // Update user details
   updateUser: async (userId, userData) => {
-    // Try the correct admin endpoint first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(userData)
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.warn('Admin update user endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
-      const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(userData)
-      });
-      return handleResponse(response);
-    }
+    // Use the correct admin endpoint
+    const response = await fetch(`${getApiUrl('/api/v1/admin/users')}/${userId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(userData)
+    });
+    return handleResponse(response);
   },
 
   // Add money to user wallet
@@ -272,8 +251,8 @@ export const orderAPI = {
   getOrders: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     
-    // Use the working admin endpoint
-    const response = await fetch(`${API_BASE_URL}/api/admin/orders?${params}`, {
+    // Use the correct admin endpoint
+    const response = await fetch(`${getApiUrl('/api/v1/admin/orders')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -330,8 +309,8 @@ export const transactionAPI = {
   getTransactions: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     
-    // Use the working admin endpoint
-    const response = await fetch(`${API_BASE_URL}/api/admin/transactions?${params}`, {
+    // Use the correct admin endpoint
+    const response = await fetch(`${getApiUrl('/api/v1/admin/transactions')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

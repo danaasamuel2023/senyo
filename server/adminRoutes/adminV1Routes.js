@@ -40,6 +40,59 @@ router.get('/users', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Get user by ID
+router.get('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    res.status(500).send('Server Error');
+  }
+});
+
+// Update user details
+router.put('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const { name, email, phoneNumber, role, walletBalance, referralCode } = req.body;
+    
+    // Build user object
+    const userFields = {};
+    if (name) userFields.name = name;
+    if (email) userFields.email = email;
+    if (phoneNumber) userFields.phoneNumber = phoneNumber;
+    if (role) userFields.role = role;
+    if (walletBalance !== undefined) userFields.walletBalance = walletBalance;
+    if (referralCode) userFields.referralCode = referralCode;
+    
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: userFields },
+      { new: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    res.status(500).send('Server Error');
+  }
+});
+
 // Orders Management Routes
 router.get('/orders', auth, adminAuth, async (req, res) => {
   try {
@@ -154,6 +207,26 @@ router.get('/transactions', auth, adminAuth, async (req, res) => {
     });
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Get transaction by ID
+router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id)
+      .populate('userId', 'name email phoneNumber');
+    
+    if (!transaction) {
+      return res.status(404).json({ msg: 'Transaction not found' });
+    }
+    
+    res.json(transaction);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Transaction not found' });
+    }
     res.status(500).send('Server Error');
   }
 });
