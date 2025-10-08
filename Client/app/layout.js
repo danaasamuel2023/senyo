@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
 import errorMonitor from "@/utils/errorMonitor";
+import "@/utils/consoleErrorSuppression";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({

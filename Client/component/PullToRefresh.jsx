@@ -101,7 +101,7 @@ const PullToRefresh = ({
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [shouldRefresh, isRefreshing, disabled, handleRefresh, resistance]);
+  }, [shouldRefresh, isRefreshing, disabled, handleRefresh, resistance, threshold]);
 
   // Auto-reset when not refreshing
   useEffect(() => {

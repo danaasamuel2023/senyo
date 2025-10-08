@@ -461,7 +461,11 @@ const MyOrdersPage = () => {
   // Listen for pull-to-refresh events
   useEffect(() => {
     const handleRefreshOrders = () => {
-      loadOrders();
+      try {
+        loadOrders();
+      } catch (error) {
+        console.error('Error refreshing orders:', error);
+      }
     };
 
     window.addEventListener('refreshOrders', handleRefreshOrders);

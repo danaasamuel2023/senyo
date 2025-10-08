@@ -402,9 +402,13 @@ useEffect(() => {
 // Listen for pull-to-refresh events
 useEffect(() => {
   const handleRefreshDashboard = () => {
-    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    if (userData.id || userData._id) {
-      fetchDashboardData(userData.id || userData._id);
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      if (userData.id || userData._id) {
+        fetchDashboardData(userData.id || userData._id);
+      }
+    } catch (error) {
+      console.error('Error refreshing dashboard:', error);
     }
   };
 

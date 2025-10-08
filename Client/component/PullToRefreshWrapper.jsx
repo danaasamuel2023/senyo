@@ -1,12 +1,13 @@
 'use client';
 
+import { useCallback } from 'react';
 import { usePageRefresh } from '@/utils/useRefresh';
 import PullToRefresh from './PullToRefresh';
 
 const PullToRefreshWrapper = ({ children }) => {
   const { isRefreshing, refreshCurrentPage } = usePageRefresh();
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     try {
       await refreshCurrentPage();
     } catch (error) {
@@ -16,7 +17,7 @@ const PullToRefreshWrapper = ({ children }) => {
         window.location.reload();
       }
     }
-  };
+  }, [refreshCurrentPage]);
 
   return (
     <PullToRefresh

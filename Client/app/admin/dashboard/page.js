@@ -632,7 +632,11 @@ const AdminDashboard = () => {
   // Listen for pull-to-refresh events
   useEffect(() => {
     const handleRefreshAdminDashboard = () => {
-      loadDashboardData();
+      try {
+        loadDashboardData();
+      } catch (error) {
+        console.error('Error refreshing admin dashboard:', error);
+      }
     };
 
     window.addEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
