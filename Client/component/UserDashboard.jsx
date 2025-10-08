@@ -4,6 +4,7 @@ import { useToast } from './ToastNotification';
 import { useTheme } from '../app/providers/ThemeProvider';
 import MobileNavbar from './nav';
 import MobileMoneyDepositModal from './MobileMoneyDepositModal';
+import { getApiEndpoint as getCentralizedApiEndpoint } from '../utils/envConfig';
 import { 
   CreditCard, Package, Database, DollarSign, TrendingUp, X, 
   AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
@@ -72,11 +73,9 @@ return <span>₵{count.toFixed(2)}</span>;
 
 
 
-// API Configuration - Dynamic based on environment
+// API Configuration - Use centralized config
 const getApiEndpoint = (path) => {
-const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
-return `${baseUrl}${path}`;
+  return getCentralizedApiEndpoint(path);
 };
 
 const API_ENDPOINTS = {

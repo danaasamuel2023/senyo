@@ -1,25 +1,25 @@
 // API Configuration Utility
+// Import from centralized config
+import { getApiUrl as getCentralizedApiUrl } from './envConfig';
+
+// Use centralized API URL configuration
 export const getApiUrl = () => {
-  // Check if we're running on localhost (development)
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:5001';
-  }
-  
-  // Production URL
-  return 'https://unlimitedata.onrender.com';
+  return getCentralizedApiUrl();
 };
 
 export const getApiEndpoint = (endpoint) => {
   return `${getApiUrl()}${endpoint}`;
 };
 
-// Environment detection
+// Environment detection - use centralized config
+import { isDevelopment as getIsDevelopment, isProduction as getIsProduction } from './envConfig';
+
 export const isDevelopment = () => {
-  return typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  return getIsDevelopment();
 };
 
 export const isProduction = () => {
-  return typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+  return getIsProduction();
 };
 
 // API Health Check

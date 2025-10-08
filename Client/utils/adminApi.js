@@ -1,7 +1,7 @@
 // Admin API Service
-import { getApiUrl, isDevelopment } from './envConfig';
+import { getNextPublicApiUrl, isDevelopment } from './envConfig';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || getApiUrl();
+const API_BASE_URL = getNextPublicApiUrl();
 
 // Helper function to get auth headers (same as SignIn page)
 const getAuthHeaders = () => {

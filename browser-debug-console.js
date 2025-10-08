@@ -15,7 +15,13 @@ async function debugBrowserConsoleErrors() {
     return;
   }
   
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  // Use centralized API configuration
+  const API_BASE_URL = (() => {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      return 'http://localhost:5001';
+    }
+    return 'https://unlimitedata.onrender.com';
+  })();
   console.log('🔗 API Base URL:', API_BASE_URL);
   console.log('🔑 Token found:', token ? 'Yes' : 'No');
   

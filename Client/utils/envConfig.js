@@ -1,15 +1,8 @@
 // Environment Configuration
-export const ENV_CONFIG = {
-  // API URLs
-  DEVELOPMENT: {
-    API_URL: 'http://localhost:5001',
-    FRONTEND_URL: 'http://localhost:3001'
-  },
-  PRODUCTION: {
-    API_URL: 'https://unlimitedata.onrender.com',
-    FRONTEND_URL: 'https://unlimitedata.onrender.com'
-  }
-};
+// Import from centralized API URLs
+import { API_URLS } from './apiUrls';
+
+export const ENV_CONFIG = API_URLS;
 
 // Get current environment
 export const getCurrentEnv = () => {
@@ -21,14 +14,30 @@ export const getCurrentEnv = () => {
 
 // Get API URL for current environment
 export const getApiUrl = () => {
+  // Check for environment variable first
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
   const env = getCurrentEnv();
-  return ENV_CONFIG[env].API_URL;
+  return ENV_CONFIG[env].BASE;
 };
 
 // Get Frontend URL for current environment
 export const getFrontendUrl = () => {
   const env = getCurrentEnv();
-  return ENV_CONFIG[env].FRONTEND_URL;
+  return ENV_CONFIG[env].FRONTEND;
+};
+
+// Get NEXT_PUBLIC_API_URL for current environment
+export const getNextPublicApiUrl = () => {
+  // Check for environment variable first
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  const env = getCurrentEnv();
+  return ENV_CONFIG[env].NEXT_PUBLIC;
 };
 
 // Environment checks
@@ -37,7 +46,10 @@ export const isProduction = () => getCurrentEnv() === 'PRODUCTION';
 
 // API endpoint builder
 export const getApiEndpoint = (endpoint) => {
-  return `${getApiUrl()}${endpoint}`;
+  const baseUrl = getApiUrl();
+  // Remove leading slash if present to avoid double slashes
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `${baseUrl}/${cleanEndpoint}`;
 };
 
 // CORS configuration for backend
@@ -45,7 +57,8 @@ export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://unlimitedata.onrender.com'
+    'https://unlimitedata.onrender.com',
+    'https://www.unlimitedata.onrender.com'
   ];
 };
 
@@ -78,6 +91,7 @@ export default {
   getCurrentEnv,
   getApiUrl,
   getFrontendUrl,
+  getNextPublicApiUrl,
   isDevelopment,
   isProduction,
   getApiEndpoint,

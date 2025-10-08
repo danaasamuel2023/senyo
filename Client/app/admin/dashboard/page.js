@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { getNextPublicApiUrl } from '../../../utils/envConfig';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
@@ -62,7 +63,7 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState([]);
 
   // API Configuration
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  const API_BASE_URL = getNextPublicApiUrl();
   
   // Debug mode for development
   const DEBUG_MODE = process.env.NODE_ENV === 'development';
