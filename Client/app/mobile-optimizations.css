@@ -60,9 +60,9 @@ body {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   
-  /* Prevent pull-to-refresh but allow natural bounce */
-  overscroll-behavior-y: contain;
-  -webkit-overscroll-behavior-y: contain;
+  /* Allow pull-to-refresh for better UX */
+  overscroll-behavior-y: auto;
+  -webkit-overscroll-behavior-y: auto;
   
   /* Safe area support */
   padding-top: var(--safe-top);
@@ -128,9 +128,9 @@ button, .no-select {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     
-    /* Allow natural scroll bounce but prevent pull-to-refresh */
-    overscroll-behavior-y: contain;
-    -webkit-overscroll-behavior-y: contain;
+    /* Allow natural scroll bounce and pull-to-refresh */
+    overscroll-behavior-y: auto;
+    -webkit-overscroll-behavior-y: auto;
     
     /* Touch actions for smooth scrolling */
     touch-action: pan-y pinch-zoom;
@@ -156,9 +156,9 @@ button, .no-select {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     
-    /* Dynamic scroll momentum */
-    overscroll-behavior-y: contain;
-    -webkit-overscroll-behavior-y: contain;
+    /* Dynamic scroll momentum with pull-to-refresh */
+    overscroll-behavior-y: auto;
+    -webkit-overscroll-behavior-y: auto;
   }
 }
 
@@ -791,6 +791,60 @@ textarea:focus-visible {
     padding-left: var(--mobile-spacing-sm);
     padding-right: var(--mobile-spacing-sm);
   }
+}
+
+/* ============================================
+   Pull-to-Refresh Styles
+   ============================================ */
+.pull-to-refresh-enabled {
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pull-to-refresh-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(135deg, #FFCC08, #fbbf24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pull-to-refresh-indicator.active {
+  transform: translateY(0);
+}
+
+.pull-to-refresh-content {
+  transition: transform 0.2s ease-out;
+}
+
+.pull-to-refresh-content.pulling {
+  transform: translateY(10px);
+  opacity: 0.8;
+}
+
+/* Pull-to-refresh animation keyframes */
+@keyframes pullToRefreshPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+.pull-to-refresh-pulse {
+  animation: pullToRefreshPulse 1s ease-in-out infinite;
 }
 
 /* ============================================

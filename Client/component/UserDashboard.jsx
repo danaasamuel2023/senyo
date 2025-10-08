@@ -399,6 +399,19 @@ useEffect(() => {
   }
 }, [error]);
 
+// Listen for pull-to-refresh events
+useEffect(() => {
+  const handleRefreshDashboard = () => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    if (userData.id || userData._id) {
+      fetchDashboardData(userData.id || userData._id);
+    }
+  };
+
+  window.addEventListener('refreshDashboard', handleRefreshDashboard);
+  return () => window.removeEventListener('refreshDashboard', handleRefreshDashboard);
+}, [fetchDashboardData]);
+
 // Effects
 useEffect(() => {
   let isMounted = true;

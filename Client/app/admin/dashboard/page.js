@@ -629,6 +629,16 @@ const AdminDashboard = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [loadDashboardData]);
 
+  // Listen for pull-to-refresh events
+  useEffect(() => {
+    const handleRefreshAdminDashboard = () => {
+      loadDashboardData();
+    };
+
+    window.addEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
+    return () => window.removeEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
+  }, [loadDashboardData]);
+
   // Notification system
   const showNotification = useCallback((message, type = 'success') => {
     setNotification({ message, type });

@@ -5,6 +5,7 @@ import Footer from "@/component/footer";
 import WhatsAppLink from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
+import PullToRefreshWrapper from "@/component/PullToRefreshWrapper";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
@@ -446,26 +447,29 @@ export default function RootLayout({ children }) {
             
             {/* Main content - MOBILE OPTIMIZED SPACING */}
             <main className="flex-grow relative z-0 pb-20 md:pb-6 px-3 sm:px-4 md:px-6">
-              {/* Noise texture overlay - Reduced opacity on mobile */}
-              <div className="pointer-events-none absolute inset-0 opacity-[0.01] md:opacity-[0.015] dark:opacity-[0.015] dark:md:opacity-[0.02]">
-                <svg width="100%" height="100%">
-                  <filter id="noiseFilter">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
-                    <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
-                  </filter>
-                  <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-                </svg>
-              </div>
-              
-              {/* Main content wrapper - MOBILE FRIENDLY */}
-              <div className="relative max-w-7xl mx-auto">
-                <ErrorBoundary>
-                  {children}
-                </ErrorBoundary>
-              </div>
-              
-              {/* WhatsApp floating button - Mobile optimized position */}
-              <WhatsAppLink />
+              {/* Pull-to-refresh wrapper for mobile */}
+              <PullToRefreshWrapper>
+                {/* Noise texture overlay - Reduced opacity on mobile */}
+                <div className="pointer-events-none absolute inset-0 opacity-[0.01] md:opacity-[0.015] dark:opacity-[0.015] dark:md:opacity-[0.02]">
+                  <svg width="100%" height="100%">
+                    <filter id="noiseFilter">
+                      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
+                      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
+                    </filter>
+                    <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+                  </svg>
+                </div>
+                
+                {/* Main content wrapper - MOBILE FRIENDLY */}
+                <div className="relative max-w-7xl mx-auto">
+                  <ErrorBoundary>
+                    {children}
+                  </ErrorBoundary>
+                </div>
+                
+                {/* WhatsApp floating button - Mobile optimized position */}
+                <WhatsAppLink />
+              </PullToRefreshWrapper>
             </main>
             
             <Footer hideOnAdmin={true} />

@@ -458,6 +458,16 @@ const MyOrdersPage = () => {
     applyFilters();
   }, [applyFilters]);
 
+  // Listen for pull-to-refresh events
+  useEffect(() => {
+    const handleRefreshOrders = () => {
+      loadOrders();
+    };
+
+    window.addEventListener('refreshOrders', handleRefreshOrders);
+    return () => window.removeEventListener('refreshOrders', handleRefreshOrders);
+  }, [loadOrders]);
+
   // Loading State
   if (loading) {
     return (
