@@ -33,7 +33,7 @@ const storeRoutes = require('./storeRoutes/store.js')
 // New feature routes
 const walletRoutes = require('./walletRoutes/wallet.js')
 const referralRoutes = require('./referralRoutes/referral.js')
-const twoFactorRoutes = require('./authRoutes/twoFactor.js')
+const twoFactorRoutes = require('./AuthRoutes/twoFactor.js')
 const promoRoutes = require('./promoRoutes/promo.js')
 
 // Security middleware
