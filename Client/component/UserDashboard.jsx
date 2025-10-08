@@ -257,7 +257,9 @@ const fetchDashboardData = useCallback(async (userId, retryCount = 0) => {
     
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
-      throw new Error('No authentication token found');
+      console.warn('No authentication token found, redirecting to login');
+      handleAuthenticationError();
+      return;
     }
     
     const controller = new AbortController();

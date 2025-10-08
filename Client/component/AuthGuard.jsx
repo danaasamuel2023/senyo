@@ -22,14 +22,20 @@ const AuthGuard = ({ children }) => {
     }
     
     // Check if user is authenticated
-    const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
-    
-    if (!userData) {
+    try {
+      const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
+      
+      if (!userData) {
+        router.push('/SignUp');
+        setLoading(false); // Set loading to false to allow redirect
+        return;
+      } else {
+        setIsAuthenticated(true);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.warn('AuthGuard localStorage access error:', error);
       router.push('/SignUp');
-      setLoading(false); // Set loading to false to allow redirect
-      return;
-    } else {
-      setIsAuthenticated(true);
       setLoading(false);
     }
   }, [router, isPublicPath, pathname]);

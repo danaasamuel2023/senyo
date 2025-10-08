@@ -8,6 +8,7 @@ import BottomNav from "@/component/BottomNav";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
+import errorMonitor from "@/utils/errorMonitor";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
@@ -374,12 +375,18 @@ export default function RootLayout({ children }) {
         className="font-sans antialiased min-h-screen flex flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] selection:bg-[#FFCC08] selection:text-black relative overflow-x-hidden transition-colors duration-300"
         suppressHydrationWarning
       >
-        {/* Initialize body opacity */}
+        {/* Initialize body opacity and error monitoring */}
         <Script
           id="body-ready"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `document.body.classList.add('ready');`
+            __html: `
+              document.body.classList.add('ready');
+              // Initialize error monitoring
+              if (typeof window !== 'undefined' && window.errorMonitor) {
+                window.errorMonitor.init();
+              }
+            `
           }}
         />
         

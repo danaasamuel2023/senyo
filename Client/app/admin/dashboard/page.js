@@ -68,28 +68,47 @@ const AdminDashboard = () => {
   const [dataCache, setDataCache] = useState({});
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-  // Initialize sidebar state based on screen size
+  // Initialize sidebar state based on screen size with better mobile detection
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== 'undefined') {
-        const isDesktopView = window.innerWidth >= 768;
+        // Better mobile detection using multiple methods
+        const width = window.innerWidth;
+        const isMobile = width < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isDesktopView = !isMobile;
+        
         setIsDesktop(isDesktopView);
-        setSidebarOpen(isDesktopView);
+        // Only auto-open sidebar on desktop, keep mobile closed by default
+        if (isDesktopView) {
+          setSidebarOpen(true);
+        } else {
+          setSidebarOpen(false);
+        }
       }
     };
     
     // Set initial state
     handleResize();
     
-    // Add event listener
+    // Add event listener with debouncing for better performance
+    let timeoutId;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 150);
+    };
+    
     if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
+      window.addEventListener('resize', debouncedResize);
+      // Also listen for orientation changes on mobile
+      window.addEventListener('orientationchange', debouncedResize);
     }
     
     // Cleanup
     return () => {
       if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('resize', debouncedResize);
+        window.removeEventListener('orientationchange', debouncedResize);
+        clearTimeout(timeoutId);
       }
     };
   }, []);
@@ -113,52 +132,52 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Check authentication (same process as SignIn page)
+  // Check authentication with better mobile support
   const checkAuth = useCallback(() => {
-    // Use the same token verification as SignIn page
-    const token = localStorage.getItem('authToken');
-    const userDataStr = localStorage.getItem('userData');
-    
-    if (!token) {
-      console.log('No authToken found in localStorage, redirecting to SignIn');
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      router.push('/SignIn');
-      return false;
-    }
-    
     try {
-      const user = JSON.parse(userDataStr || '{}');
+      // Use the same token verification as SignIn page with mobile-friendly error handling
+      const token = localStorage.getItem('authToken');
+      const userDataStr = localStorage.getItem('userData');
       
-      // Verify the token is valid by checking if user data exists and has admin role
-      if (!user.id || !user.role) {
-        console.log('Invalid user data in localStorage, redirecting to SignIn');
-        setIsAuthenticated(false);
-        setAuthChecked(true);
-        router.push('/SignIn');
-        return false;
+      // Better error handling for mobile browsers
+      if (!token) {
+        console.warn('No auth token found - redirecting to login');
+        router.push('/admin/login');
+        return;
       }
       
-      if (user.role !== 'admin') {
-        console.log('User is not admin, role:', user.role, 'redirecting to SignIn');
-        setIsAuthenticated(false);
-        setAuthChecked(true);
-        router.push('/SignIn');
-        return false;
+      if (!userDataStr) {
+        console.warn('No user data found - redirecting to login');
+        router.push('/admin/login');
+        return;
       }
       
-      // Token and user data are valid
-      setUserData(user);
+      // Parse user data with error handling
+      let userData;
+      try {
+        userData = JSON.parse(userDataStr);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        router.push('/admin/login');
+        return;
+      }
+      
+      // Check if user has admin role
+      if (!userData.role || !['admin', 'superadmin'].includes(userData.role)) {
+        console.warn('User does not have admin privileges');
+        router.push('/admin/login');
+        return;
+      }
+      
+      setUserData(userData);
       setIsAuthenticated(true);
       setAuthChecked(true);
-      console.log('Authentication successful for admin user:', user.name);
-      return true;
+      
     } catch (error) {
-      console.error('Error parsing user data from localStorage:', error);
+      console.error('Authentication check failed:', error);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      router.push('/SignIn');
-      return false;
+      router.push('/admin/login');
     }
   }, [router]);
 
@@ -1519,7 +1538,10 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" style={{ 
+      WebkitOverflowScrolling: 'touch',
+      touchAction: 'manipulation'
+    }}>
       {/* Notification Toast */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
@@ -1535,11 +1557,16 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay with better touch handling */}
       {sidebarOpen && !isDesktop && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
+          onTouchStart={(e) => {
+            // Prevent scrolling when overlay is touched
+            e.preventDefault();
+          }}
+          style={{ touchAction: 'none' }}
         />
       )}
 
@@ -1664,7 +1691,15 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onTouchStart={(e) => {
+                  // Better touch handling for mobile
+                  e.currentTarget.style.transform = 'scale(0.95)';
+                }}
+                onTouchEnd={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 active:scale-95 touch-manipulation"
+                style={{ minWidth: '44px', minHeight: '44px' }} // Better touch target size
               >
                 <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
@@ -1707,8 +1742,17 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="p-4 md:p-6 pb-20">
+        {/* Page Content with better mobile padding */}
+        <div className="p-2 sm:p-4 md:p-6 pb-20">
+          {/* Mobile Debug Info (only in development) */}
+          {process.env.NODE_ENV === 'development' && !isDesktop && (
+            <div className="mb-4 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg text-xs">
+              <p>Mobile View: {window.innerWidth}x{window.innerHeight}</p>
+              <p>Sidebar: {sidebarOpen ? 'Open' : 'Closed'}</p>
+              <p>Desktop: {isDesktop ? 'Yes' : 'No'}</p>
+            </div>
+          )}
+          
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />

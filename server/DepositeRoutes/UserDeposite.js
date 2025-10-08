@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Transaction, User } = require('../schema/schema');
+const { Transaction, User, Wallet } = require('../schema/schema');
 const axios = require('axios');
 const crypto = require('crypto');
 const {
@@ -88,7 +88,7 @@ router.post('/deposit',
         amount: paystackAmount, // Convert to pesewas (smallest currency unit for GHS)
         currency: 'GHS',
         reference,
-        callback_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}`
+        callback_url: `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}&source=unlimiteddata`
       },
       {
         headers: {
@@ -165,20 +165,33 @@ async function processSuccessfulPayment(reference) {
     await transaction.save();
     console.log(`[PAYMENT] Transaction ${reference} marked as completed`);
 
-    // Update user's wallet balance with the original amount (without fee)
+    // Update user's wallet balance using the new Wallet collection
     const user = await User.findById(transaction.userId);
     if (user) {
-      const previousBalance = user.walletBalance;
-      user.walletBalance += transaction.amount; 
-      await user.save();
+      // Find or create wallet for the user
+      let wallet = await Wallet.findOne({ userId: transaction.userId });
+      if (!wallet) {
+        wallet = new Wallet({
+          userId: transaction.userId,
+          balance: 0,
+          currency: 'GHS'
+        });
+        console.log(`[PAYMENT] Created new wallet for user ${transaction.userId}`);
+      }
+      
+      const previousBalance = wallet.balance;
+      wallet.balance += transaction.amount;
+      await wallet.save();
+      
       console.log(`[PAYMENT] ✅ User ${user._id} wallet updated successfully!`);
       console.log(`[PAYMENT]    Previous balance: GHS ${previousBalance}`);
       console.log(`[PAYMENT]    Deposit amount: GHS ${transaction.amount}`);
-      console.log(`[PAYMENT]    New balance: GHS ${user.walletBalance}`);
+      console.log(`[PAYMENT]    New balance: GHS ${wallet.balance}`);
+      
       return { 
         success: true, 
         message: 'Deposit successful',
-        newBalance: user.walletBalance 
+        newBalance: wallet.balance 
       };
     } else {
       console.error(`[PAYMENT] ❌ User not found for transaction ${reference}`);

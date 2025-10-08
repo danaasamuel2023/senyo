@@ -46,7 +46,9 @@ const nextConfig = {
             message.includes('hot-update') ||
             message.includes('devIndicators') ||
             message.includes('buildActivity') ||
-            message.includes('buildActivityPosition')
+            message.includes('buildActivityPosition') ||
+            message.includes('deprecated') ||
+            message.includes('conflicts with')
           ) {
             return; // Suppress these warnings
           }

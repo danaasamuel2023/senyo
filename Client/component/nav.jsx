@@ -547,7 +547,11 @@ const MobileNavbar = memo(() => {
       setIsNavbarHidden(false);
     }
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      if (!forceHideNavbar) {
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, [forceHideNavbar, handleScroll]);
 
   // Handle body scroll lock and focus management

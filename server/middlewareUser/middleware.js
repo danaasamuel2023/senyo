@@ -42,7 +42,10 @@ const auth = async (req, res, next) => {
     // Proceed to next middleware
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err.message);
+    // Only log non-JWT errors to reduce console spam
+    if (err.name !== 'JsonWebTokenError' && err.name !== 'TokenExpiredError') {
+      console.error('Auth middleware error:', err.message);
+    }
     
     if (err.name === 'JsonWebTokenError') {
       return res.status(401).json({ msg: 'Token is not valid' });

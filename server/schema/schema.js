@@ -1344,7 +1344,6 @@ const SettingsSchema = new Schema({
   type: {
     type: String,
     required: true,
-    unique: true,
     enum: ['payment_gateway', 'system', 'api', 'notification']
   },
   data: {
@@ -1360,8 +1359,8 @@ const SettingsSchema = new Schema({
   timestamps: true
 });
 
-// Index for faster lookups
-SettingsSchema.index({ type: 1 });
+// Index for faster lookups with uniqueness
+SettingsSchema.index({ type: 1 }, { unique: true });
 
 // Static method to get settings by type
 SettingsSchema.statics.getByType = async function(type) {

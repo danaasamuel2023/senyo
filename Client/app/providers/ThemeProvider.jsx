@@ -27,33 +27,44 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     setMounted(true);
     
-    // Get saved theme or detect system preference
-    const savedTheme = localStorage.getItem('app_theme');
-    
-    if (savedTheme) {
-      setThemeState(savedTheme);
-      applyTheme(savedTheme);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? 'dark' : 'light';
-      setThemeState(systemTheme);
-      applyTheme(systemTheme);
-    }
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => {
+    try {
+      // Get saved theme or detect system preference
       const savedTheme = localStorage.getItem('app_theme');
-      if (savedTheme === 'auto' || !savedTheme) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        setThemeState(newTheme);
-        applyTheme(newTheme);
+      
+      if (savedTheme) {
+        setThemeState(savedTheme);
+        applyTheme(savedTheme);
+      } else {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const systemTheme = prefersDark ? 'dark' : 'light';
+        setThemeState(systemTheme);
+        applyTheme(systemTheme);
       }
-    };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => {
+        try {
+          const savedTheme = localStorage.getItem('app_theme');
+          if (savedTheme === 'auto' || !savedTheme) {
+            const newTheme = e.matches ? 'dark' : 'light';
+            setThemeState(newTheme);
+            applyTheme(newTheme);
+          }
+        } catch (error) {
+          console.warn('Theme change handler error:', error);
+        }
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } catch (error) {
+      console.warn('Theme initialization error:', error);
+      // Fallback to light theme
+      setThemeState('light');
+      applyTheme('light');
+    }
   }, []);
 
   // Apply theme to document

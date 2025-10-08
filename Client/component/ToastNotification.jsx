@@ -138,7 +138,8 @@ const Toast = ({ toast, onRemove }) => {
           className="h-full bg-current opacity-60 rounded-t-xl transition-all ease-linear"
           style={{
             width: '100%',
-            animation: `shrink ${toast.duration}ms linear forwards`
+            animation: `shrink ${toast.duration}ms linear forwards`,
+            transformOrigin: 'left'
           }}
         />
       </div>

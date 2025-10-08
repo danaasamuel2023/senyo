@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Settings, Transaction } = require('../schema/schema');
+const { Settings, Transactiondataunlimited } = require('../schema/schema');
 
 // Get payment gateway settings
 router.get('/payment-gateway-settings', async (req, res) => {
@@ -266,7 +266,7 @@ router.post('/payment-gateway-settings/clear-pending', async (req, res) => {
     }
 
     // Find and update pending transactions
-    const updateResult = await Transaction.updateMany(
+    const updateResult = await Transactiondataunlimited.updateMany(
       { 
         userId, 
         status: 'pending',

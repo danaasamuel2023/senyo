@@ -12,10 +12,13 @@ const ConnectDB = () => {
 
     // Connection options for better performance and reliability
     const options = {
-        maxPoolSize: 10, // Maintain up to 10 socket connections
-        serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        bufferCommands: true, // Enable mongoose buffering
+        maxPoolSize: 5, // Reduce pool size to avoid timeouts
+        serverSelectionTimeoutMS: 10000, // Increase timeout to 10 seconds
+        socketTimeoutMS: 30000, // Reduce socket timeout to 30 seconds
+        connectTimeoutMS: 10000, // Add connection timeout
+        bufferCommands: false, // Disable mongoose buffering to prevent timeouts
+        retryWrites: true,
+        w: 'majority'
     };
 
     mongoose.connect(uri, options).then(() => {
@@ -23,6 +26,26 @@ const ConnectDB = () => {
         console.log('Connected to MongoDB');
     }).catch(err => {
         console.error('Failed to connect to MongoDB', err);
+    });
+
+    // Add connection event listeners for better monitoring
+    mongoose.connection.on('connected', () => {
+        console.log('MongoDB connection established');
+    });
+
+    mongoose.connection.on('error', (err) => {
+        console.error('MongoDB connection error:', err.message);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+        console.warn('MongoDB disconnected');
+    });
+
+    // Handle process termination
+    process.on('SIGINT', async () => {
+        await mongoose.connection.close();
+        console.log('MongoDB connection closed through app termination');
+        process.exit(0);
     });
 }
 

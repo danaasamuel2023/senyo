@@ -186,7 +186,7 @@ class PaymentGatewayService {
           amount: paystackAmount,
           currency: 'GHS',
           reference,
-          callback_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}`,
+          callback_url: `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}&source=unlimiteddata`,
           metadata: {
             custom_fields: [
               {

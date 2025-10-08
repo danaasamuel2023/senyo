@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const ConnectDB = require('./DataBaseConnection/connection.js');
 // Either import just the router or destructure it from the object
-const authRouter = require('./AuthRoutes/Auth.js').router; 
+const authRouter = require('./AuthRoutes/Auth.js').router || require('./AuthRoutes/Auth.js'); 
 const dataOrderRoutes = require('./orderRou/order.js');
 const Deposit = require('./DepositeRoutes/UserDeposite.js');
 const Developer = require('./ResellerApi/resellerApi.js')
