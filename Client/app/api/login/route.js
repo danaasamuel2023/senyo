@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 
-// API URL with environment variable support
-const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || (() => {
-  // Default to localhost for development, production URL for production
-  return process.env.NODE_ENV === 'production' ? 'https://unlimitedata.onrender.com' : 'http://localhost:5001';
-})();
+// Direct API URL - no environment variable dependencies
+const API_BASE_URL = 'https://unlimitedata.onrender.com';
 
 export async function POST(request) {
   try {
