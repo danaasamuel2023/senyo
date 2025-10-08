@@ -458,21 +458,29 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, onWithdrawalSuccess 
                       Mobile Money Network
                     </label>
                     <div className="grid grid-cols-3 gap-3">
-                      {['MTN', 'VODAFONE', 'AIRTELTIGO'].map((network) => (
+                      {[
+                        { name: 'MTN', logo: '/logos/mtn-logo.svg' },
+                        { name: 'VODAFONE', logo: '/logos/vodafone-logo.svg' },
+                        { name: 'AIRTELTIGO', logo: '/logos/airteltigo-logo.svg' }
+                      ].map((network) => (
                         <button
-                          key={network}
-                          onClick={() => handleInputChange('network', network)}
+                          key={network.name}
+                          onClick={() => handleInputChange('network', network.name)}
                           className={`p-3 rounded-xl border-2 transition-all ${
-                            formData.network === network
+                            formData.network === network.name
                               ? 'border-[#FFCC08] bg-[#FFCC08]/10'
                               : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                           }`}
                         >
                           <div className="text-center">
-                            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gradient-to-br from-[#FFCC08] to-yellow-600 flex items-center justify-center">
-                              <Signal className="w-4 h-4 text-black" />
+                            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center p-1">
+                              <img 
+                                src={network.logo} 
+                                alt={`${network.name} logo`}
+                                className="w-6 h-6 object-contain"
+                              />
                             </div>
-                            <p className="text-xs font-medium text-white">{network}</p>
+                            <p className="text-xs font-medium text-white">{network.name}</p>
                           </div>
                         </button>
                       ))}

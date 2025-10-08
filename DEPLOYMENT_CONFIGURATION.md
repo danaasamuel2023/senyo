@@ -8,7 +8,7 @@
 **Fix**: Updated callback URL in `server/DepositeRoutes/UserDeposite.js`
 ```javascript
 // OLD (hardcoded):
-callback_url: 'https://www.datahustle.shop/payment/callback?reference=${reference}'
+callback_url: 'https:///payment/callback?reference=${reference}'
 
 // NEW (environment variable):
 callback_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}`

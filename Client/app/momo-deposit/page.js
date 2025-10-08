@@ -26,7 +26,7 @@ const MomoDepositPage = () => {
       color: 'bg-yellow-500',
       textColor: 'text-yellow-500',
       borderColor: 'border-yellow-500',
-      logo: '📱',
+      logo: '/logos/mtn-logo.svg',
       prefix: '024, 054, 055, 059',
       description: 'Ghana\'s leading mobile money service'
     },
@@ -37,7 +37,7 @@ const MomoDepositPage = () => {
       color: 'bg-red-500',
       textColor: 'text-red-500',
       borderColor: 'border-red-500',
-      logo: '📱',
+      logo: '/logos/vodafone-logo.svg',
       prefix: '020, 050',
       description: 'Fast and secure mobile money'
     },
@@ -48,7 +48,7 @@ const MomoDepositPage = () => {
       color: 'bg-blue-500',
       textColor: 'text-blue-500',
       borderColor: 'border-blue-500',
-      logo: '📱',
+      logo: '/logos/airteltigo-logo.svg',
       prefix: '026, 027, 056, 057',
       description: 'Reliable mobile money service'
     }
@@ -312,8 +312,12 @@ const MomoDepositPage = () => {
                 }`}
               >
                 <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-lg ${network.color} text-white text-xl`}>
-                    {network.logo}
+                  <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                    <img 
+                      src={network.logo} 
+                      alt={`${network.name} logo`}
+                      className="w-8 h-8 object-contain"
+                    />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-white">{network.name}</h3>

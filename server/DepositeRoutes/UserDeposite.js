@@ -88,7 +88,9 @@ router.post('/deposit',
         amount: paystackAmount, // Convert to pesewas (smallest currency unit for GHS)
         currency: 'GHS',
         reference,
-        callback_url: `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/callback?reference=${reference}&source=unlimiteddata`
+        callback_url: process.env.NODE_ENV === 'production' 
+          ? `https://unlimiteddata.gh/payment/callback?reference=${reference}&source=unlimiteddata`
+          : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimiteddata`
       },
       {
         headers: {
@@ -556,6 +558,177 @@ router.post('/verify-pending-transaction/:transactionId', async (req, res) => {
     
   } catch (error) {
     console.error('Verify Pending Transaction Error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Mobile Money Deposit using Paystack
+router.post('/mobile-money-deposit',
+  checkBlocked,
+  rateLimitPayments,
+  sanitizeInput,
+  validateDepositAmount,
+  preventDuplicateDeposits(Transaction),
+  auditLog('MOBILE_MONEY_DEPOSIT_INITIATED'),
+  async (req, res) => {
+  try {
+    const { userId, amount, phoneNumber, network, email } = req.body;
+
+    // Validate input
+    if (!userId || !amount || amount <= 0 || !phoneNumber || !network) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid mobile money deposit details. Phone number and network are required.' 
+      });
+    }
+
+    // Validate network
+    const validNetworks = ['MTN', 'VODAFONE', 'AIRTELTIGO'];
+    if (!validNetworks.includes(network.toUpperCase())) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid network. Supported networks: MTN, VODAFONE, AIRTELTIGO' 
+      });
+    }
+
+    // Find user to get their email and check account status
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+
+    // Use user's email if not provided
+    const userEmail = email || user.email;
+    if (!userEmail) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email is required for mobile money deposit' 
+      });
+    }
+
+    // Generate unique reference
+    const reference = `MOMO-${crypto.randomBytes(8).toString('hex')}-${Date.now()}`;
+
+    // Calculate total amount with Paystack fees (2.9% + GHS 0.30)
+    const paystackFee = (parseFloat(amount) * 0.029) + 0.30;
+    const totalAmountWithFee = parseFloat(amount) + paystackFee;
+    const paystackAmount = Math.round(totalAmountWithFee * 100); // Convert to pesewas
+
+    // Create transaction record
+    const transaction = new Transaction({
+      userId: userId,
+      amount: parseFloat(amount),
+      totalAmount: totalAmountWithFee,
+      fees: paystackFee,
+      reference: reference,
+      gateway: 'paystack',
+      type: 'deposit',
+      status: 'pending',
+      paymentMethod: 'mobile_money',
+      metadata: {
+        phoneNumber: phoneNumber,
+        network: network.toUpperCase(),
+        email: userEmail,
+        currency: 'GHS'
+      }
+    });
+
+    await transaction.save();
+
+    // Initialize Paystack mobile money payment
+    const paystackData = {
+      email: userEmail,
+      amount: paystackAmount,
+      currency: 'GHS',
+      reference: reference,
+      callback_url: process.env.NODE_ENV === 'production' 
+        ? `https://unlimiteddata.gh/payment/callback?reference=${reference}&source=mobile_money`
+        : `http://localhost:3000/payment/callback?reference=${reference}&source=mobile_money`,
+      channels: ['mobile_money'],
+      metadata: {
+        custom_fields: [
+          {
+            display_name: 'Phone Number',
+            variable_name: 'phone_number',
+            value: phoneNumber
+          },
+          {
+            display_name: 'Network',
+            variable_name: 'network',
+            value: network.toUpperCase()
+          },
+          {
+            display_name: 'Payment Method',
+            variable_name: 'payment_method',
+            value: 'mobile_money'
+          },
+          {
+            display_name: 'User ID',
+            variable_name: 'user_id',
+            value: userId
+          }
+        ]
+      }
+    };
+
+    const paystackResponse = await axios.post(
+      `${PAYSTACK_BASE_URL}/transaction/initialize`,
+      paystackData,
+      {
+        headers: {
+          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (paystackResponse.data.status) {
+      // Update transaction with Paystack reference
+      transaction.externalRef = paystackResponse.data.data.reference;
+      await transaction.save();
+
+      return res.json({
+        success: true,
+        message: 'Mobile money deposit initiated successfully',
+        data: {
+          authorization_url: paystackResponse.data.data.authorization_url,
+          access_code: paystackResponse.data.data.access_code,
+          reference: reference,
+          amount: amount,
+          totalAmount: totalAmountWithFee,
+          fees: paystackFee,
+          network: network.toUpperCase(),
+          phoneNumber: phoneNumber
+        }
+      });
+    } else {
+      // Update transaction status to failed
+      transaction.status = 'failed';
+      transaction.failureReason = paystackResponse.data.message || 'Paystack initialization failed';
+      await transaction.save();
+
+      return res.status(400).json({
+        success: false,
+        error: paystackResponse.data.message || 'Failed to initialize mobile money payment'
+      });
+    }
+
+  } catch (error) {
+    console.error('Mobile money deposit error:', error);
+    
+    // Update transaction status to failed if it exists
+    if (error.transaction) {
+      error.transaction.status = 'failed';
+      error.transaction.failureReason = error.message;
+      await error.transaction.save();
+    }
+
     return res.status(500).json({
       success: false,
       error: 'Internal server error'

@@ -4,12 +4,12 @@ const { Transaction, User } = require('../schema/schema');
 const axios = require('axios');
 const crypto = require('crypto');
 
-// Moolre configuration
-const MOOLRE_API_USER = 'datamart'; 
-const MOOLRE_API_PUBKEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyaWQiOjEwNjYxMSwiZXhwIjoxOTI1MDA5OTk5fQ.YXgxzLhfhtTCd_R5b7uenbv0guNwr8RJ63X4NcP3JGw'; // Your Moolre public API key
-const MOOLRE_API_KEY = 'HiYwjNe9XUWlOYVzMYwkDCryV9JTziYxMsn5YrNOEyZHyrVjuZIJDHHK5OfThpDZ'; // Your Moolre private API key
-const MOOLRE_ACCOUNT_NUMBER = '10661106047264'; // Your Moolre account number
-const MOOLRE_BASE_URL = 'https://api.moolre.com';
+// Moolre configuration - Use environment variables for production
+const MOOLRE_API_USER = process.env.MOOLRE_API_USER || 'datamart'; 
+const MOOLRE_API_PUBKEY = process.env.MOOLRE_API_PUBKEY || 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyaWQiOjEwNjYxMSwiZXhwIjoxOTI1MDA5OTk5fQ.YXgxzLhfhtTCd_R5b7uenbv0guNwr8RJ63X4NcP3JGw'; // Your Moolre public API key
+const MOOLRE_API_KEY = process.env.MOOLRE_API_KEY || 'HiYwjNe9XUWlOYVzMYwkDCryV9JTziYxMsn5YrNOEyZHyrVjuZIJDHHK5OfThpDZ'; // Your Moolre private API key
+const MOOLRE_ACCOUNT_NUMBER = process.env.MOOLRE_ACCOUNT_NUMBER || '10661106047264'; // Your Moolre account number
+const MOOLRE_BASE_URL = process.env.MOOLRE_BASE_URL || 'https://api.moolre.com';
 
 // Initiate Deposit via Moolre (Mobile Money)
 router.post('/depositsmoolre', async (req, res) => {
@@ -67,6 +67,10 @@ router.post('/depositsmoolre', async (req, res) => {
     await transaction.save();
 
     // Step 1: Initiate the payment request
+    console.log(`[MOOLRE] Initiating payment request for ${phoneNumber}, amount: ${amount}, network: ${network}`);
+    console.log(`[MOOLRE] Using API URL: ${MOOLRE_BASE_URL}`);
+    console.log(`[MOOLRE] Account: ${MOOLRE_ACCOUNT_NUMBER}`);
+    
     const paymentResponse = await axios.post(
       `${MOOLRE_BASE_URL}/open/transact/payment`,
       {
@@ -88,6 +92,9 @@ router.post('/depositsmoolre', async (req, res) => {
       }
     );
 
+    // Log the full response for debugging
+    console.log('[MOOLRE] Payment Response:', JSON.stringify(paymentResponse.data, null, 2));
+
     // Check if OTP verification is required (code TP14)
     if (paymentResponse.data.status === 1 && paymentResponse.data.code === 'TP14') {
       // Update transaction with OTP requirement
@@ -99,7 +106,8 @@ router.post('/depositsmoolre', async (req, res) => {
         message: 'OTP verification required',
         requiresOtp: true,
         reference,
-        externalRef
+        externalRef,
+        note: 'If you don\'t receive an OTP, this might be a test/sandbox environment. Check with your Moolre account status.'
       });
     } 
     // If direct payment request was sent without OTP requirement
@@ -157,7 +165,7 @@ router.post('/verify-otp', async (req, res) => {
         type: 1,
         channel: transaction.metadata.network === 'mtn' ? 13 : 
                 (transaction.metadata.network === 'vodafone' ? 6 : 7),
-        currency: transaction.metadata.currency,
+        currency: transaction.metadata.currency || 'GHS',
         payer: transaction.metadata.phoneNumber || phoneNumber,
         amount: transaction.amount.toFixed(2),
         externalref: transaction.metadata.externalRef,
@@ -182,7 +190,7 @@ router.post('/verify-otp', async (req, res) => {
           type: 1,
           channel: transaction.metadata.network === 'mtn' ? 13 : 
                   (transaction.metadata.network === 'vodafone' ? 6 : 7),
-          currency: transaction.metadata.currency,
+          currency: transaction.metadata.currency || 'GHS',
           payer: transaction.metadata.phoneNumber || phoneNumber,
           amount: transaction.amount.toFixed(2),
           externalref: transaction.metadata.externalRef,
@@ -212,10 +220,22 @@ router.post('/verify-otp', async (req, res) => {
         });
       }
     } else {
+      // Handle specific Moolre error messages
+      let errorMessage = otpResponse.data.message;
+      let isTestMode = false;
+      
+      if (errorMessage.includes('Invalid Phone no. Verification Code') || 
+          errorMessage.includes('Please request a code')) {
+        errorMessage = 'OTP code is invalid or expired. This might be a test environment. Please try with a real mobile money number or contact support.';
+        isTestMode = true;
+      }
+      
       return res.status(400).json({
         success: false,
-        message: otpResponse.data.message,
-        reference
+        message: errorMessage,
+        reference,
+        isTestMode,
+        originalMessage: otpResponse.data.message
       });
     }
   } catch (error) {
@@ -534,6 +554,118 @@ router.get('/user-transactions/:userId', async (req, res) => {
       success: false,
       error: 'Internal server error'
     });
+  }
+});
+
+// Test endpoint to check Moolre API status
+router.get('/moolre/status', async (req, res) => {
+  try {
+    console.log('[MOOLRE] Testing API connection...');
+    console.log(`[MOOLRE] Base URL: ${MOOLRE_BASE_URL}`);
+    console.log(`[MOOLRE] Account: ${MOOLRE_ACCOUNT_NUMBER}`);
+    console.log(`[MOOLRE] API User: ${MOOLRE_API_USER}`);
+    
+    // Test with a minimal request
+    const testResponse = await axios.post(
+      `${MOOLRE_BASE_URL}/open/transact/status`,
+      {
+        type: 1,
+        idtype: 1,
+        id: 'TEST123',
+        accountnumber: MOOLRE_ACCOUNT_NUMBER
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-USER': MOOLRE_API_USER,
+          'X-API-PUBKEY': MOOLRE_API_PUBKEY
+        }
+      }
+    );
+    
+    return res.json({
+      success: true,
+      message: 'Moolre API is accessible',
+      data: {
+        baseUrl: MOOLRE_BASE_URL,
+        accountNumber: MOOLRE_ACCOUNT_NUMBER,
+        apiUser: MOOLRE_API_USER,
+        testResponse: testResponse.data
+      }
+    });
+  } catch (error) {
+    console.error('[MOOLRE] API Test Error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Moolre API test failed',
+      error: error.message,
+      data: {
+        baseUrl: MOOLRE_BASE_URL,
+        accountNumber: MOOLRE_ACCOUNT_NUMBER,
+        apiUser: MOOLRE_API_USER
+      }
+    });
+  }
+});
+
+// Test endpoint for OTP bypass (for development/testing)
+router.post('/test-otp-bypass', async (req, res) => {
+  // Disable in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      success: false,
+      message: 'Test mode bypass is disabled in production. Please use real OTP verification.',
+      note: 'This endpoint is only available in development mode.'
+    });
+  }
+  
+  try {
+    const { reference, testOtp = '123456' } = req.body;
+    
+    if (!reference) {
+      return res.status(400).json({ error: 'Reference is required' });
+    }
+    
+    // Find transaction
+    const transaction = await Transaction.findOne({ reference });
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    
+    if (transaction.status !== 'pending') {
+      return res.status(400).json({ 
+        error: `Transaction is already ${transaction.status}` 
+      });
+    }
+    
+    // Simulate successful OTP verification for testing
+    console.log(`[MOOLRE] TEST MODE: Bypassing OTP for reference ${reference}`);
+    
+    // Update transaction status to simulate successful payment
+    transaction.status = 'completed';
+    transaction.metadata.testMode = true;
+    transaction.metadata.testOtpUsed = testOtp;
+    await transaction.save();
+    
+    // Update user wallet balance
+    const user = await User.findById(transaction.userId);
+    if (user) {
+      user.walletBalance += transaction.amount;
+      await user.save();
+      console.log(`[MOOLRE] TEST MODE: User ${user._id} wallet updated, new balance: ${user.walletBalance}`);
+    }
+    
+    return res.json({
+      success: true,
+      message: 'TEST MODE: OTP bypassed successfully. Payment completed.',
+      reference,
+      note: 'This is a test endpoint. In production, real OTP verification is required.',
+      walletUpdated: true,
+      newBalance: user?.walletBalance
+    });
+  } catch (error) {
+    console.error('Test OTP Bypass Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

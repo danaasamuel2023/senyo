@@ -898,7 +898,7 @@ const TransactionSchema = new Schema({
   },
   gateway: {
     type: String,
-    enum: ['paystack', 'momo', 'manual', 'system', 'wallet'],
+    enum: ['paystack', 'momo', 'moolre', 'bulkclix', 'bulkclix_momo', 'manual', 'system', 'wallet'],
     default: 'system'
   },
   

@@ -7,7 +7,7 @@ import {
   CreditCard, Smartphone, CheckCircle2, XCircle, Loader2,
   ArrowRight, Phone, AlertCircle, RefreshCw, Info, Zap, Star,
   Flame, Shield, Target, TrendingUp, Wallet, DollarSign, Eye,
-  EyeOff, Copy, History, Settings, HelpCircle, ExternalLink,
+  EyeOff, Copy, History, Settings, HelpCircle, ExternalLink, TestTube,
   Download, Upload, Lock, BadgeCheck, Timer, Gift, Sparkles
 } from 'lucide-react';
 
@@ -75,9 +75,9 @@ const Toast = ({ message, type, onClose }) => {
 // Network Selection Component
 const NetworkSelector = ({ selectedNetwork, onNetworkChange }) => {
   const networks = [
-    { value: 'mtn', label: 'MTN Mobile Money', color: 'from-yellow-500 to-yellow-600', icon: 'M' },
-    { value: 'vodafone', label: 'Vodafone Cash', color: 'from-red-500 to-red-600', icon: 'V' },
-    { value: 'at', label: 'AirtelTigo Money', color: 'from-blue-500 to-blue-600', icon: 'A' }
+    { value: 'mtn', label: 'MTN Mobile Money', color: 'from-yellow-500 to-yellow-600', logo: '/logos/mtn-logo.svg' },
+    { value: 'vodafone', label: 'Vodafone Cash', color: 'from-red-500 to-red-600', logo: '/logos/vodafone-logo.svg' },
+    { value: 'at', label: 'AirtelTigo Money', color: 'from-blue-500 to-blue-600', logo: '/logos/airteltigo-logo.svg' }
   ];
 
   return (
@@ -98,8 +98,12 @@ const NetworkSelector = ({ selectedNetwork, onNetworkChange }) => {
             }`}
           >
             <div className="flex items-center space-x-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${network.color} flex items-center justify-center`}>
-                <span className="text-white font-bold text-lg">{network.icon}</span>
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center p-1">
+                <img 
+                  src={network.logo} 
+                  alt={`${network.label} logo`}
+                  className="w-8 h-8 object-contain"
+                />
               </div>
               <div className="flex-grow text-left">
                 <p className="text-white font-semibold">{network.label}</p>
@@ -238,6 +242,7 @@ const DataHustleDeposit = () => {
   const [externalRef, setExternalRef] = useState('');
   const [userId, setUserId] = useState('');
   const [transactionStatus, setTransactionStatus] = useState('');
+  const [showTestMode, setShowTestMode] = useState(false);
   const [step, setStep] = useState(1);
   const [checkReminder, setCheckReminder] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(null);
@@ -420,32 +425,30 @@ const DataHustleDeposit = () => {
     setError('');
     
     try {
-      const response = await axios.post(getApiEndpoint('/api/v1/depositsmoolre'), {
+      const response = await axios.post(getApiEndpoint('/api/v1/mobile-money-deposit'), {
         userId,
         amount: parseFloat(amount),
         phoneNumber,
         network,
-        currency: 'GHS'
+        email: 'user@example.com' // You can get this from user context
       });
       
       console.log('Deposit response:', response.data);
       
-      if (response.data.success && response.data.requiresOtp) {
-        setOtpRequired(true);
-        setReference(response.data.reference);
-        setExternalRef(response.data.externalRef);
-        setSuccess('OTP code has been sent to your phone. Please enter it below.');
-        setStep(2);
-        showToast('OTP code sent to your phone', 'success');
-      } else if (response.data.success) {
-        setSuccess('Deposit initiated! Please check your phone to approve the payment.');
-        setReference(response.data.reference);
-        setCheckReminder(true);
+      if (response.data.success && response.data.data) {
+        // Paystack mobile money - redirect to payment page
+        setSuccess('Redirecting to mobile money payment...');
+        setReference(response.data.data.reference);
         setStep(3);
-        showToast('Deposit initiated successfully', 'success');
+        showToast('Redirecting to payment page', 'success');
+        
+        // Redirect to Paystack payment page
+        if (response.data.data.authorization_url) {
+          window.location.href = response.data.data.authorization_url;
+        }
       } else {
-        setError(response.data.message || 'Failed to initiate deposit');
-        showToast(response.data.message || 'Failed to initiate deposit', 'error');
+        setError(response.data.message || 'Failed to initiate mobile money deposit');
+        showToast(response.data.message || 'Failed to initiate mobile money deposit', 'error');
       }
     } catch (err) {
       console.error('Deposit error:', err);
@@ -457,6 +460,51 @@ const DataHustleDeposit = () => {
         setError('Network error. Please check your connection and try again.');
         showToast('Network error. Please check your connection and try again.', 'error');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle test mode OTP bypass
+  const handleTestModeBypass = async () => {
+    if (!reference) {
+      setError('No transaction reference found');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await axios.post(getApiEndpoint('/api/v1/test-otp-bypass'), {
+        reference: reference
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('Test mode bypass response:', response.data);
+      
+      if (response.data.success) {
+        setSuccess('TEST MODE: Payment completed successfully! Your wallet has been updated.');
+        setOtpRequired(false);
+        setCheckReminder(false);
+        setStep(3);
+        showToast('TEST MODE: Payment completed successfully!', 'success');
+        
+        // Refresh user data to show updated balance
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setError(response.data.message || 'Test mode bypass failed');
+        showToast(response.data.message || 'Test mode bypass failed', 'error');
+      }
+    } catch (err) {
+      console.error('Test mode bypass error:', err);
+      setError('Test mode bypass failed. Please try again.');
+      showToast('Test mode bypass failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -508,8 +556,19 @@ const DataHustleDeposit = () => {
         console.error('Error response data:', err.response.data);
         
         if (err.response.status === 400) {
-          const errorMsg = err.response.data.error || 'Invalid OTP code or format';
-          setError(`Verification failed: ${errorMsg}. Please check the code and try again.`);
+          const errorData = err.response.data;
+          let errorMsg = errorData.error || errorData.message || 'Invalid OTP code or format';
+          
+          // Handle test mode errors
+          if (errorData.isTestMode) {
+            errorMsg = 'This appears to be a test environment. OTP codes are not being sent to real phone numbers.';
+            showToast('Test Environment Detected - Use Test Mode Button', 'warning');
+            
+            // Show test mode option
+            setShowTestMode(true);
+          }
+          
+          setError(`Verification failed: ${errorMsg}`);
           showToast(`Verification failed: ${errorMsg}`, 'error');
         } else if (err.response.status === 404) {
           setError('Transaction not found. Please start a new deposit.');
@@ -793,6 +852,12 @@ const DataHustleDeposit = () => {
                 <p className="text-white/70 font-medium">
                   We sent a 6-digit code to {phoneNumber}
                 </p>
+                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <p className="text-yellow-400 text-sm">
+                    <strong>Note:</strong> If you don't receive an OTP, this might be a test environment. 
+                    Try using a real mobile money number or contact support.
+                  </p>
+                </div>
               </div>
 
               <form onSubmit={handleOtpSubmit} className="space-y-6">
@@ -831,6 +896,37 @@ const DataHustleDeposit = () => {
                   )}
                 </button>
               </form>
+
+              {/* Test Mode Button - Only show in development */}
+              {showTestMode && process.env.NODE_ENV !== 'production' && (
+                <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                  <div className="text-center">
+                    <h4 className="text-orange-400 font-bold mb-2">🧪 Test Environment Detected</h4>
+                    <p className="text-orange-300 text-sm mb-4">
+                      OTP codes are not being sent in this test environment. Use the test mode button to complete the transaction.
+                    </p>
+                    <button
+                      onClick={handleTestModeBypass}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center py-3 px-6 rounded-xl shadow-xl text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-4 focus:ring-orange-500/50 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 font-bold"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="mr-3 animate-spin">
+                            <Loader2 className="w-5 h-5" />
+                          </div>
+                          Processing Test Mode...
+                        </>
+                      ) : (
+                        <>
+                          <TestTube className="mr-3 w-5 h-5" />
+                          Complete Payment (Test Mode)
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -391,29 +391,67 @@ const TopUpPage = () => {
     }));
   };
   
-  // Retry function with exponential backoff
-  const retryRequest = async (requestFn, maxRetries = 3, baseDelay = 1000) => {
+  // Enhanced retry function with exponential backoff and retry-after header support
+  const retryRequest = async (requestFn, maxRetries = 3, baseDelay = 5000) => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         return await requestFn();
       } catch (error) {
         if (error.response?.status === 429 && attempt < maxRetries - 1) {
-          const delay = baseDelay * Math.pow(2, attempt);
-          console.log(`Rate limited, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+          // Check for retry-after header first
+          const retryAfter = error.response.headers['retry-after'];
+          let delay = baseDelay * Math.pow(2, attempt);
+          
+          if (retryAfter) {
+            delay = parseInt(retryAfter) * 1000; // Convert to milliseconds
+          }
+          
+          // Cap the delay at 60 seconds for better rate limit handling
+          delay = Math.min(delay, 60000);
+          
+          console.log(`Rate limited, retrying in ${delay/1000}s... (attempt ${attempt + 1}/${maxRetries})`);
+          showToast(`Rate limited. Retrying in ${Math.ceil(delay/1000)} seconds...`, 'warning');
+          
+          // Show loading state during retry
+          setIsLoading(true);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
         throw error;
       }
     }
+    throw new Error('Max retries exceeded due to rate limiting');
   };
 
   // Debounce function to prevent rapid successive requests
   const [lastRequestTime, setLastRequestTime] = useState(0);
-  const DEBOUNCE_DELAY = 2000; // 2 seconds between requests
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [requestCount, setRequestCount] = useState(0);
+  const [windowStart, setWindowStart] = useState(Date.now());
+  const [circuitBreakerOpen, setCircuitBreakerOpen] = useState(false);
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
+  const DEBOUNCE_DELAY = 30000; // 30 seconds between requests to prevent rate limiting
+  const MAX_REQUESTS_PER_MINUTE = 3; // Very conservative limit to match server
+  const RATE_LIMIT_WINDOW = 60000; // 1 minute window
+  const CIRCUIT_BREAKER_THRESHOLD = 3; // Open circuit after 3 consecutive failures
+  const CIRCUIT_BREAKER_TIMEOUT = 300000; // 5 minutes before trying again
 
   const handleDeposit = async (e) => {
     e.preventDefault();
+    
+    // Check circuit breaker
+    if (circuitBreakerOpen) {
+      setError('Service temporarily unavailable due to repeated failures. Please try again later.');
+      showToast('Service temporarily unavailable. Please try again later.', 'error');
+      return;
+    }
+    
+    // Check if currently rate limited
+    if (isRateLimited) {
+      setError('Please wait before making another request. Rate limit is currently active.');
+      showToast('Rate limit is active. Please wait before trying again.', 'error');
+      return;
+    }
     
     // Check debounce to prevent rapid successive requests
     const now = Date.now();
@@ -421,6 +459,30 @@ const TopUpPage = () => {
       const remainingTime = Math.ceil((DEBOUNCE_DELAY - (now - lastRequestTime)) / 1000);
       setError(`Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before making another request.`);
       showToast(`Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before trying again.`, 'error');
+      return;
+    }
+    
+    // Check rate limiting window
+    if (now - windowStart > RATE_LIMIT_WINDOW) {
+      // Reset window
+      setWindowStart(now);
+      setRequestCount(0);
+    }
+    
+    if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
+      const remainingTime = Math.ceil((RATE_LIMIT_WINDOW - (now - windowStart)) / 1000);
+      setError(`Rate limit exceeded. Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before trying again.`);
+      showToast(`Rate limit exceeded. Please wait ${remainingTime} second${remainingTime > 1 ? 's' : ''} before trying again.`, 'error');
+      setIsRateLimited(true);
+      
+      // Auto-clear rate limit after window expires
+      setTimeout(() => {
+        setIsRateLimited(false);
+        setRequestCount(0);
+        setWindowStart(Date.now());
+        setError('');
+        showToast('Rate limit cleared. You can try again now.', 'success');
+      }, RATE_LIMIT_WINDOW - (now - windowStart));
       return;
     }
     
@@ -440,6 +502,7 @@ const TopUpPage = () => {
     setError('');
     setSuccess('');
     setLastRequestTime(now);
+    setRequestCount(prev => prev + 1);
     
     try {
       const token = localStorage.getItem('authToken');
@@ -462,12 +525,34 @@ const TopUpPage = () => {
       if (response.data.paystackUrl) {
         setSuccess('Redirecting to secure payment...');
         showToast('Redirecting to secure payment...', 'success');
+        // Reset consecutive failures on success
+        setConsecutiveFailures(0);
         setTimeout(() => {
           window.location.href = response.data.paystackUrl;
         }, 1000);
       }
     } catch (error) {
       console.error('Deposit error:', error);
+      
+      // Increment consecutive failures
+      setConsecutiveFailures(prev => {
+        const newCount = prev + 1;
+        
+        // Open circuit breaker if threshold reached
+        if (newCount >= CIRCUIT_BREAKER_THRESHOLD) {
+          setCircuitBreakerOpen(true);
+          showToast('Service temporarily unavailable due to repeated failures. Please try again later.', 'error');
+          
+          // Auto-close circuit breaker after timeout
+          setTimeout(() => {
+            setCircuitBreakerOpen(false);
+            setConsecutiveFailures(0);
+            showToast('Service restored. You can try again now.', 'success');
+          }, CIRCUIT_BREAKER_TIMEOUT);
+        }
+        
+        return newCount;
+      });
       
       if (error.response) {
         const status = error.response.status;
@@ -483,8 +568,16 @@ const TopUpPage = () => {
         } else if (status === 403) {
           setError('Access denied. Please contact support.');
         } else if (status === 429) {
+          setIsRateLimited(true);
           setError('Too many requests. Please wait a moment and try again.');
           showToast('Rate limit exceeded. Please wait before trying again.', 'error');
+          
+          // Auto-clear rate limit after 2 minutes
+          setTimeout(() => {
+            setIsRateLimited(false);
+            setError('');
+            showToast('Rate limit cleared. You can try again now.', 'success');
+          }, 120000);
         } else if (status === 500 || status === 502 || status === 503) {
           setError('Server error. Please try again later.');
         } else if (errorData?.error === 'Account is disabled') {
@@ -633,8 +726,49 @@ const TopUpPage = () => {
             </div>
           </div>
 
+          {/* Circuit Breaker Status */}
+          {circuitBreakerOpen && (
+            <div className="mb-6 animate-fade-in">
+              <div className="p-4 rounded-xl bg-red-50/10 backdrop-blur-sm border border-red-500/30">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-grow">
+                    <span className="text-red-200 text-sm font-medium">
+                      Service temporarily unavailable due to repeated failures. Please try again in 5 minutes.
+                    </span>
+                    <div className="mt-2 w-full bg-red-500/20 rounded-full h-2">
+                      <div className="bg-red-400 h-2 rounded-full animate-pulse" style={{width: '100%'}}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rate Limit Status */}
+          {isRateLimited && !circuitBreakerOpen && (
+            <div className="mb-6 animate-fade-in">
+              <div className="p-4 rounded-xl bg-orange-50/10 backdrop-blur-sm border border-orange-500/30">
+                <div className="flex items-start space-x-3">
+                  <Timer className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-grow">
+                    <span className="text-orange-200 text-sm font-medium">
+                      Rate limit is active. Please wait before trying again.
+                    </span>
+                    <div className="mt-2 w-full bg-orange-500/20 rounded-full h-2">
+                      <div className="bg-orange-400 h-2 rounded-full animate-pulse" style={{width: '100%'}}></div>
+                    </div>
+                    <div className="mt-2 text-xs text-orange-300">
+                      Requests used: {requestCount}/{MAX_REQUESTS_PER_MINUTE} per minute
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Error Display */}
-          {error && (
+          {error && !isRateLimited && !circuitBreakerOpen && (
             <div className="mb-6 animate-fade-in">
               <div className="p-4 rounded-xl bg-red-50/10 backdrop-blur-sm border border-red-500/30">
                 <div className="flex items-start space-x-3 mb-3">
@@ -702,9 +836,9 @@ const TopUpPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !amount || parseFloat(amount) < 10}
+              disabled={isLoading || !amount || parseFloat(amount) < 10 || isRateLimited || circuitBreakerOpen}
               className={`w-full flex items-center justify-center py-4 px-6 rounded-xl text-black font-bold transition-all duration-300 transform ${
-                isLoading || !amount || parseFloat(amount) < 10
+                isLoading || !amount || parseFloat(amount) < 10 || isRateLimited || circuitBreakerOpen
                   ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-gradient-to-r from-[#FFCC08] to-[#FFD700] hover:from-[#FFD700] hover:to-[#FFCC08] hover:scale-105 shadow-lg hover:shadow-xl'
               }`}
@@ -715,6 +849,16 @@ const TopUpPage = () => {
                     <div className="w-5 h-5 border-3 border-black/30 border-t-black rounded-full"></div>
                   </div>
                   Processing Payment...
+                </>
+              ) : circuitBreakerOpen ? (
+                <>
+                  <AlertTriangle className="mr-2 w-5 h-5" />
+                  Service Unavailable
+                </>
+              ) : isRateLimited ? (
+                <>
+                  <Timer className="mr-2 w-5 h-5" />
+                  Rate Limited - Please Wait
                 </>
               ) : (
                 <>

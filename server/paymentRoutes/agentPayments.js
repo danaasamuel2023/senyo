@@ -73,7 +73,9 @@ router.post('/process', auth, async (req, res) => {
       amount: order.totalAmount * 100, // Convert to kobo
       email: req.user.email,
       reference: transaction._id.toString(),
-      callback_url: `${process.env.FRONTEND_URL}/payment/callback`,
+      callback_url: process.env.NODE_ENV === 'production' 
+        ? `https://unlimiteddata.gh/payment/callback`
+        : `http://localhost:3000/payment/callback`,
       metadata: {
         orderId: orderId,
         agentCode: agentCode,
