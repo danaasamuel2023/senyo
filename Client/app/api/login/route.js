@@ -25,26 +25,29 @@ export async function POST(request) {
     if (!response.ok) {
       // Handle rate limiting and other HTTP errors
       let errorData;
+      
+      // Get the response text first, then try to parse as JSON
+      const responseText = await response.text();
+      console.log('📄 Response text:', responseText);
+      
       try {
-        errorData = await response.json();
+        // Try to parse the text as JSON
+        errorData = JSON.parse(responseText);
       } catch (jsonError) {
-        // If JSON parsing fails, it might be a rate limit plain text response
-        const textResponse = await response.text();
-        console.log('📄 Non-JSON response:', textResponse);
-        
+        // If JSON parsing fails, it's likely a plain text error response
         if (response.status === 429) {
           // Rate limiting error
           errorData = {
             success: false,
             error: 'Too many login attempts. Please wait 15 minutes before trying again.',
-            details: textResponse
+            details: responseText
           };
         } else {
           // Other HTTP errors
           errorData = {
             success: false,
             error: 'Server error occurred. Please try again later.',
-            details: textResponse
+            details: responseText
           };
         }
       }
