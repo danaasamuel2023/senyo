@@ -1817,7 +1817,7 @@ const AdminDashboard = () => {
           {/* Mobile Debug Info (only in development) */}
           {process.env.NODE_ENV === 'development' && !isDesktop && (
             <div className="mb-4 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg text-xs">
-              <p>Mobile View: {window.innerWidth}x{window.innerHeight}</p>
+              <p>Mobile View: {typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'Loading...'}</p>
               <p>Sidebar: {sidebarOpen ? 'Open' : 'Closed'}</p>
               <p>Desktop: {isDesktop ? 'Yes' : 'No'}</p>
             </div>
