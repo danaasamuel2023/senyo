@@ -120,11 +120,11 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
 
 
 /**
- * @route   GET /api/admin/users
+ * @route   GET /api/v1/admin/users
  * @desc    Get all users
  * @access  Admin
  */
-router.get('/admin/users',auth, adminAuth, async (req, res) => {
+router.get('/users',auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     
@@ -160,11 +160,11 @@ router.get('/admin/users',auth, adminAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/admin/users/:id
+ * @route   GET /api/v1/admin/users/:id
  * @desc    Get user by ID
  * @access  Admin
  */
-router.get('/admin/users/:id',auth, adminAuth, async (req, res) => {
+router.get('/users/:id',auth, adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -183,7 +183,7 @@ router.get('/admin/users/:id',auth, adminAuth, async (req, res) => {
 });
 
 /**
- * @route   PUT /api/admin/users/:id
+ * @route   PUT /api/v1/admin/users/:id
  * @desc    Update user details
  * @access  Admin
  */
@@ -221,7 +221,7 @@ router.put('/users/:id',auth, adminAuth, async (req, res) => {
 });
 
 /**
- * @route   PUT /api/admin/users/:id/add-money
+ * @route   PUT /api/v1/admin/users/:id/add-money
  * @desc    Add money to user wallet
  * @access  Admin
  */

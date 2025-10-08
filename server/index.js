@@ -96,7 +96,7 @@ app.use('/api/v1', paymentLimiter, MobileMoneyDeposit);
 // Other routes
 app.use('/api/developer', Developer)
 app.use('/api/v1', HubnetAt);
-app.use('/api',AdminManagement)
+// app.use('/api',AdminManagement) // Commented out to avoid conflicts
 app.use('/api/v1/admin', adminLimiter, AdminManagement)
 app.use('/api/v1', passreset);
 app.use('/api/reports', Report);
