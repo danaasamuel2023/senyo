@@ -191,12 +191,11 @@ export default function LoginPage() {
         
         // Handle 429 rate limiting specifically
         if (response.status === 429) {
-          const rateLimitMinutes = 1; // Reduced to 1 minute from server
-          const rateLimitSeconds = rateLimitMinutes * 60;
+          const rateLimitSeconds = 5; // Reduced to 5 seconds from server
           
           setIsRateLimited(true);
           setRateLimitTimeLeft(rateLimitSeconds);
-          const errorMessage = errorData.error || `Too many login attempts. Please try again after ${rateLimitMinutes} minute.`;
+          const errorMessage = errorData.error || `Too many login attempts. Please try again after ${rateLimitSeconds} seconds.`;
           setError(errorMessage);
           showToast(errorMessage, 'error');
           return;

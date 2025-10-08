@@ -20,11 +20,11 @@ const generalLimiter = rateLimit({
 
 // Stricter rate limiter for authentication routes
 const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute (reduced from 15 minutes)
+  windowMs: 5 * 1000, // 5 seconds (reduced from 1 minute)
   max: isDevelopment ? 50 : 10, // Increased from 5 to 10 for mobile users
   message: {
     success: false,
-    error: 'Too many login attempts, please try again after 1 minute.',
+    error: 'Too many login attempts, please try again after 5 seconds.',
     details: 'Rate limit exceeded'
   },
   standardHeaders: true,
