@@ -18,6 +18,7 @@ import {
   XCircle
 } from 'lucide-react';
 import adminAPI from '../../../utils/adminApi';
+import apiClient from '../../../utils/apiClient.js';
 
 const AdminUsersPage = () => {
   const router = useRouter();
@@ -83,7 +84,7 @@ const AdminUsersPage = () => {
       setLoading(true);
       console.log('Loading users with params:', { page, search, role });
       
-      const response = await adminAPI.user.getUsers(page, 20, search);
+      const response = await apiClient.getUsers({ page, limit: 20, search });
       console.log('Users API response:', response);
       
       setUsers(response.users || []);

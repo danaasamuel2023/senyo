@@ -13,10 +13,10 @@ console.log('🔧 Environment Debug:', {
   isProduction
 });
 
-// Rate limiter for general API requests - COMPLETELY DISABLED
+// Rate limiter for general API requests - COMPLETELY DISABLED FOR PRODUCTION
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100000, // Extremely high limit
+  max: isDevelopment ? 1000 : 1000000, // Extremely high limit for production
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -25,9 +25,16 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // COMPLETELY DISABLE RATE LIMITING FOR ALL REQUESTS
-    console.log('🔧 Rate limiting DISABLED for all requests');
-    return true;
+    // COMPLETELY DISABLE RATE LIMITING FOR PRODUCTION
+    if (isProduction) {
+      console.log('🔧 General rate limiting DISABLED for production');
+      return true;
+    }
+    // Skip rate limiting for localhost in development
+    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    return false;
   }
 });
 
@@ -74,11 +81,15 @@ const agentLimiter = rateLimit({
   }
 });
 
-// Very lenient rate limiter for admin routes
+// Very lenient rate limiter for admin routes - DISABLED FOR PRODUCTION
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 10000 : 10000, // Very high limit for production admin operations
-  message: 'Too many admin requests from this IP, please try again later.',
+  max: isDevelopment ? 10000 : 100000, // Extremely high limit for production admin operations
+  message: {
+    success: false,
+    error: 'Admin rate limit exceeded',
+    details: 'Too many admin requests from this IP, please try again later.'
+  },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
@@ -86,8 +97,9 @@ const adminLimiter = rateLimit({
     if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return true;
     }
-    // Skip rate limiting for production
+    // COMPLETELY DISABLE rate limiting for production admin operations
     if (isProduction) {
+      console.log('🔧 Admin rate limiting DISABLED for production');
       return true;
     }
     return false;

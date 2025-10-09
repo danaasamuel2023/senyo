@@ -525,7 +525,7 @@ const AdminDashboard = () => {
     if (!isAuthenticated || !authChecked) return;
     
     try {
-      const response = await adminAPI.user.getUsers(1, 50, userSearchTerm);
+      const response = await apiClient.getUsers({ page: 1, limit: 50, search: userSearchTerm });
       const formattedUsers = response.users?.map(user => ({
         id: user._id,
         name: user.name || 'Unknown',
