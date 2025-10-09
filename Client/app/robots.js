@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.unlimiteddata.gh';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.unlimitedata.onrender.com';
   
   return {
     rules: [

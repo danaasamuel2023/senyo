@@ -9,7 +9,7 @@ export default function SEO({
   canonical,
   noindex = false
 }) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.unlimiteddata.gh';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.unlimitedata.onrender.com';
   const fullUrl = canonical ? `${baseUrl}${canonical}` : baseUrl;
 
   return (

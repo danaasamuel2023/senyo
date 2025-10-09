@@ -34,7 +34,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 // Enhanced metadata configuration with structured data
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddata.gh"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimitedata.onrender.com"),
   title: {
     default: "UnlimitedData GH | Premium Data Marketplace",
     template: "%s | UnlimitedData GH",
@@ -53,7 +53,7 @@ export const metadata = {
     "Vodafone data packages",
     "AirtelTigo data deals",
   ],
-  authors: [{ name: "UnlimitedData GH Team", url: "https://www.unlimiteddata.gh" }],
+  authors: [{ name: "UnlimitedData GH Team", url: "https://www.unlimitedata.onrender.com" }],
   creator: "UnlimitedData GH",
   publisher: "UnlimitedData GH",
   formatDetection: {
@@ -69,7 +69,7 @@ export const metadata = {
   openGraph: {
     title: "UnlimitedData GH | Ghana's Premium Data Marketplace",
     description: "Connect with top data resellers across Ghana. Experience unlimited data possibilities with secure, fast, and reliable transactions.",
-    url: "https://www.unlimiteddata.gh",
+    url: "https://www.unlimitedata.onrender.com",
     siteName: "UnlimitedData GH",
     images: [
       {
@@ -116,14 +116,14 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: "https://www.unlimiteddata.gh",
+    canonical: "https://www.unlimitedata.onrender.com",
     languages: {
-      "en-GH": "https://www.unlimiteddata.gh",
-      "en": "https://www.unlimiteddata.gh/en",
-      "tw-GH": "https://www.unlimiteddata.gh/tw",
+      "en-GH": "https://www.unlimitedata.onrender.com",
+      "en": "https://www.unlimitedata.onrender.com/en",
+      "tw-GH": "https://www.unlimitedata.onrender.com/tw",
     },
     types: {
-      "application/rss+xml": "https://www.unlimiteddata.gh/feed.xml",
+      "application/rss+xml": "https://www.unlimitedata.onrender.com/feed.xml",
     },
   },
   category: "Technology",
@@ -154,12 +154,12 @@ const structuredData = {
   "@type": "WebSite",
   name: "UnlimitedData GH",
   description: "Ghana's premier platform for data resellers",
-  url: "https://www.unlimiteddata.gh",
+  url: "https://www.unlimitedata.onrender.com",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://www.unlimiteddata.gh/search?q={search_term_string}"
+      urlTemplate: "https://www.unlimitedata.onrender.com/search?q={search_term_string}"
     },
     "query-input": "required name=search_term_string"
   },
@@ -170,7 +170,7 @@ const structuredData = {
     telephone: "+233256702995",
     logo: {
       "@type": "ImageObject",
-      url: "https://www.unlimiteddata.gh/logo.png"
+      url: "https://www.unlimitedata.onrender.com/logo.png"
     },
     contactPoint: {
       "@type": "ContactPoint",
