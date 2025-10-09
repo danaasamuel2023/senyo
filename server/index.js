@@ -187,6 +187,16 @@ ConnectDB();
 
 // CRITICAL: Define specific routes BEFORE any middleware that might intercept them
 
+// Simple test route to verify routing works
+app.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Test route working', timestamp: new Date().toISOString() });
+});
+
+// Another test route
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API test route working', timestamp: new Date().toISOString() });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
