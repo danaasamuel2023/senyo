@@ -197,6 +197,17 @@ app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API test route working', timestamp: new Date().toISOString() });
 });
 
+// Debug route to check if server is running latest code
+app.get('/debug', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Debug route working', 
+    timestamp: new Date().toISOString(),
+    version: '6b4731e',
+    routes: ['/test', '/api/test', '/api/health', '/api/admin/statistics']
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
