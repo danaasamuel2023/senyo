@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, XCircle, Loader2, ArrowRight, Clock, Wallet } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowRight, Clock, Wallet, RefreshCw } from 'lucide-react';
 
 const PaymentCallbackPage = () => {
   const router = useRouter();
@@ -41,7 +41,18 @@ const PaymentCallbackPage = () => {
         }
       });
 
-      const data = await response.json();
+      console.log('Payment verification response status:', response.status);
+      console.log('Payment verification response headers:', response.headers);
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        const textResponse = await response.text();
+        console.error('Raw response:', textResponse);
+        throw new Error('Invalid response from server');
+      }
       console.log('Payment verification response:', data);
 
       if (data.success) {
@@ -75,6 +86,13 @@ const PaymentCallbackPage = () => {
         } else {
           setStatus('error');
           setMessage(data.message || 'Payment verification failed');
+          
+          // Add a manual retry button for failed verifications
+          setTimeout(() => {
+            if (status === 'error') {
+              setMessage('Payment verification failed. Click "Try Again" to retry verification.');
+            }
+          }, 3000);
         }
       }
     } catch (error) {
@@ -86,6 +104,15 @@ const PaymentCallbackPage = () => {
 
   const handleGoToDashboard = () => {
     router.push('/');
+  };
+
+  const handleRetryVerification = () => {
+    const reference = searchParams.get('reference');
+    if (reference) {
+      setStatus('loading');
+      setMessage('Retrying payment verification...');
+      verifyPayment(reference);
+    }
   };
 
   return (
@@ -172,7 +199,7 @@ const PaymentCallbackPage = () => {
 
           {/* Action Button */}
           <button
-            onClick={handleGoToDashboard}
+            onClick={status === 'success' ? handleGoToDashboard : handleRetryVerification}
             className="w-full flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105"
           >
             {status === 'success' ? (
@@ -181,7 +208,10 @@ const PaymentCallbackPage = () => {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </>
             ) : (
-              'Try Again'
+              <>
+                Try Again
+                <RefreshCw className="ml-2 w-5 h-5" />
+              </>
             )}
           </button>
 

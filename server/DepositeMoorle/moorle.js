@@ -17,8 +17,8 @@ router.post('/depositsmoolre', async (req, res) => {
     const { userId, amount, phoneNumber, network, currency = 'GHS' } = req.body;
 
     // Validate input
-    if (!userId || !amount || amount <= 0 || !phoneNumber) {
-      return res.status(400).json({ error: 'Invalid deposit details' });
+    if (!userId || !amount || amount < 10 || !phoneNumber) {
+      return res.status(400).json({ error: 'Minimum deposit amount is ₵10' });
     }
 
     // Find user

@@ -18,20 +18,20 @@ const generalLimiter = rateLimit({
   }
 });
 
-// Stricter rate limiter for authentication routes
+// Rate limiter for authentication routes - DISABLED (very high limit)
 const authLimiter = rateLimit({
-  windowMs: 5 * 1000, // 5 seconds (reduced from 1 minute)
-  max: isDevelopment ? 50 : 10, // Increased from 5 to 10 for mobile users
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10000, // Very high limit - effectively disabled
   message: {
     success: false,
-    error: 'Too many login attempts, please try again after 5 seconds.',
+    error: 'Rate limit exceeded',
     details: 'Rate limit exceeded'
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for localhost in development
-    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+    // Skip rate limiting for all requests
+    return true;
   }
 });
 

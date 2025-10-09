@@ -9,8 +9,9 @@ const getApiUrl = (endpoint) => {
   if (!isDevelopment()) {
     return `/api/backend?path=${encodeURIComponent(endpoint)}`;
   }
-  // In development, use direct API calls
-  return `${API_BASE_URL}${endpoint}`;
+  // In development, use direct API calls to localhost:5001
+  const devApiUrl = 'http://localhost:5001';
+  return `${devApiUrl}${endpoint}`;
 };
 
 // Helper function to get auth headers (same as SignIn page)
@@ -42,6 +43,13 @@ const getAuthHeaders = () => {
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
+  // Check if response is ok first
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`API Error ${response.status}:`, errorText);
+    throw new Error(`HTTP ${response.status}: ${errorText}`);
+  }
+  
   // Handle redirects
   if (response.status === 301 || response.status === 302) {
     const redirectUrl = response.headers.get('Location');

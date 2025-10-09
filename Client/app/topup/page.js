@@ -134,7 +134,7 @@ const AmountInput = ({ value, onChange, onQuickSelect, selectedAmount, quickAmou
               onChange={onChange}
               placeholder="Enter amount"
               className="pl-12 pr-4 py-4 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/50 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-bold text-lg transition-all"
-              min="10"
+              min="1"
               max="10000"
               step="0.01"
             />
@@ -145,7 +145,7 @@ const AmountInput = ({ value, onChange, onQuickSelect, selectedAmount, quickAmou
         )}
         
         <p className="mt-2 text-xs text-white/60">
-          Minimum: ₵10 • Maximum: ₵10,000
+          Minimum: ₵1 • Maximum: ₵10,000
         </p>
       </div>
     </div>

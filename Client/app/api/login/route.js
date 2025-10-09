@@ -41,7 +41,7 @@ export async function POST(request) {
           // Rate limiting error
           errorData = {
             success: false,
-            error: 'Too many login attempts. Please wait 5 seconds before trying again.',
+            error: 'Too many login attempts. Please try again later.',
             details: responseText
           };
         } else {

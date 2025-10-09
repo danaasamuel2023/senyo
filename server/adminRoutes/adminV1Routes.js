@@ -4,6 +4,124 @@ const { User, DataPurchase, Transaction, ReferralBonus, DataInventory, AgentCata
 const auth = require('../middlewareUser/middleware');
 const adminAuth = require('../adminMiddleware/middleware');
 
+// Dashboard Statistics Routes
+router.get('/dashboard/statistics', auth, adminAuth, async (req, res) => {
+  try {
+    // Get total users
+    const totalUsers = await User.countDocuments();
+    
+    // Get total orders
+    const totalOrders = await DataPurchase.countDocuments();
+    
+    // Get today's orders
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayOrders = await DataPurchase.countDocuments({
+      createdAt: { $gte: today }
+    });
+    
+    // Get today's revenue
+    const todayRevenueData = await DataPurchase.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: today }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$amount' }
+        }
+      }
+    ]);
+    
+    const todayRevenue = todayRevenueData.length > 0 ? todayRevenueData[0].totalRevenue : 0;
+    
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalUsers,
+          totalOrders,
+          todayOrders,
+          todayRevenue
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard statistics error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch dashboard statistics'
+    });
+  }
+});
+
+// Daily Summary Route
+router.get('/dashboard/daily-summary/:date', auth, adminAuth, async (req, res) => {
+  try {
+    const { date } = req.params;
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    // Get daily orders
+    const dailyOrders = await DataPurchase.countDocuments({
+      createdAt: { $gte: startDate, $lte: endDate }
+    });
+    
+    // Get daily revenue
+    const dailyRevenueData = await DataPurchase.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$amount' }
+        }
+      }
+    ]);
+    
+    const dailyRevenue = dailyRevenueData.length > 0 ? dailyRevenueData[0].totalRevenue : 0;
+    
+    // Get daily deposits
+    const dailyDeposits = await Transaction.countDocuments({
+      type: 'deposit',
+      createdAt: { $gte: startDate, $lte: endDate }
+    });
+    
+    // Get network breakdown (mock data for now)
+    const networkBreakdown = [
+      { network: 'MTN', orders: Math.floor(dailyOrders * 0.4), revenue: Math.floor(dailyRevenue * 0.4) },
+      { network: 'Airtel', orders: Math.floor(dailyOrders * 0.3), revenue: Math.floor(dailyRevenue * 0.3) },
+      { network: 'Glo', orders: Math.floor(dailyOrders * 0.2), revenue: Math.floor(dailyRevenue * 0.2) },
+      { network: '9mobile', orders: Math.floor(dailyOrders * 0.1), revenue: Math.floor(dailyRevenue * 0.1) }
+    ];
+    
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalOrders: dailyOrders,
+          totalRevenue: dailyRevenue,
+          totalDeposits: dailyDeposits
+        },
+        networkBreakdown
+      }
+    });
+  } catch (error) {
+    console.error('Daily summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch daily summary'
+    });
+  }
+});
+
 // Users Management Routes
 router.get('/users', auth, adminAuth, async (req, res) => {
   try {

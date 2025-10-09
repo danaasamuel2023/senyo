@@ -34,10 +34,10 @@ router.post('/deposit',
     const { userId, amount, totalAmountWithFee, email } = req.body;
 
     // Validate input
-    if (!userId || !amount || amount <= 0) {
+    if (!userId || !amount || amount < 10) {
       return res.status(400).json({ 
         success: false,
-        error: 'Invalid deposit details' 
+        error: 'Minimum deposit amount is ₵10' 
       });
     }
 
@@ -89,8 +89,8 @@ router.post('/deposit',
         currency: 'GHS',
         reference,
         callback_url: process.env.NODE_ENV === 'production' 
-          ? `https://unlimiteddata.gh/payment/callback?reference=${reference}&source=unlimiteddata`
-          : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimiteddata`
+          ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=unlimitedata`
+          : `http://localhost:3002/payment/callback?reference=${reference}&source=unlimitedata`
       },
       {
         headers: {

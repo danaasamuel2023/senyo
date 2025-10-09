@@ -232,12 +232,18 @@ const AdminDashboard = () => {
       const [dashboardStats, todaySummary] = await Promise.all([
         retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
           console.error('Dashboard stats API error:', err.message);
-          if (err.message.includes('Authentication required')) {
-            showNotification('Please sign in again', 'error');
-            router.push('/admin/login');
-            return { success: false, data: null };
+          if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
+            if (err.message.includes('Failed to fetch')) {
+              console.warn('Server connection failed, using fallback data');
+              showNotification('Server connection issue, showing cached data', 'warning');
+            } else {
+              showNotification('Please sign in again', 'error');
+              router.push('/admin/login');
+              return { success: false, data: null };
+            }
+          } else {
+            showNotification(`Failed to load dashboard statistics: ${err.message}`, 'error');
           }
-          showNotification(`Failed to load dashboard statistics: ${err.message}`, 'error');
           // Return empty data structure instead of mock data
           return {
             success: false,
@@ -253,12 +259,17 @@ const AdminDashboard = () => {
         }),
         retryWithBackoff(() => adminAPI.dashboard.getDailySummary(new Date().toISOString().split('T')[0])).catch(err => {
           console.error('Daily summary API error:', err.message);
-          if (err.message.includes('Authentication required')) {
-            showNotification('Please sign in again', 'error');
-            router.push('/admin/login');
-            return { success: false, data: null };
+          if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
+            if (err.message.includes('Failed to fetch')) {
+              console.warn('Server connection failed for daily summary, using fallback data');
+            } else {
+              showNotification('Please sign in again', 'error');
+              router.push('/admin/login');
+              return { success: false, data: null };
+            }
+          } else {
+            showNotification(`Failed to load daily summary: ${err.message}`, 'error');
           }
-          showNotification(`Failed to load daily summary: ${err.message}`, 'error');
           // Return empty data structure instead of mock data
           return {
             success: false,
