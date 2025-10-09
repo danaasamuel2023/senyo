@@ -50,7 +50,7 @@ const authLimiter = rateLimit({
 
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 100 : 20, // More lenient in development
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
@@ -63,9 +63,9 @@ const paymentLimiter = rateLimit({
 
 // Rate limiter for agent store creation
 const agentLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 50 : 3, // More lenient in development
-  message: 'Too many store modifications, please try again tomorrow.',
+  message: 'Too many store modifications, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
