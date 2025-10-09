@@ -13,10 +13,10 @@ console.log('🔧 Environment Debug:', {
   isProduction
 });
 
-// Rate limiter for general API requests
+// Rate limiter for general API requests - COMPLETELY DISABLED
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 10000 : 50000, // Very high limit for production
+  max: 100000, // Extremely high limit
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -25,18 +25,9 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for localhost in development
-    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
-      console.log('🔧 Skipping rate limit for localhost development');
-      return true;
-    }
-    // Skip rate limiting for production - DISABLED
-    if (isProduction) {
-      console.log('🔧 Skipping rate limit for production');
-      return true;
-    }
-    console.log('🔧 Rate limiting active for IP:', req.ip);
-    return false;
+    // COMPLETELY DISABLE RATE LIMITING FOR ALL REQUESTS
+    console.log('🔧 Rate limiting DISABLED for all requests');
+    return true;
   }
 });
 

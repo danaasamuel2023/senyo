@@ -60,19 +60,30 @@ app.use(sanitizeData);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS configuration
+// CORS configuration - Allow all origins for now to fix immediate issues
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'https://unlimitedata.onrender.com',
-    'https://www.unlimitedata.onrender.com',
-    'https://unlimiteddatagh.com',
-    'https://www.unlimiteddatagh.com',
-    'https://unlimitedata.onrender.com', // Add exact match for the failing URL
-    'https://www.unlimitedata.onrender.com' // Add exact match for the failing URL
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'https://unlimitedata.onrender.com',
+      'https://www.unlimitedata.onrender.com',
+      'https://unlimiteddatagh.com',
+      'https://www.unlimiteddatagh.com'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // For now, allow all origins to fix CORS issues
+      console.log('CORS: Allowing origin:', origin);
+      callback(null, true);
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -247,8 +258,9 @@ app.post('/api/orders/bulk-status-update', (req, res) => {
   res.redirect(301, '/api/admin/orders/bulk-status-update');
 });
 
-// Backend proxy endpoint handler
-app.get('/api/backend', (req, res) => {
+// Backend proxy endpoint handler - NO RATE LIMITING
+app.get('/api/backend', (req, res, next) => {
+  // Skip rate limiting for backend proxy
   const { path } = req.query;
   if (!path) {
     return res.status(400).json({ error: 'Path parameter is required' });
