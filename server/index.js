@@ -183,6 +183,11 @@ app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'Test route working' });
 });
 
+// Another test route
+app.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Simple test route working' });
+});
+
 // Direct daily-summary endpoint handler (before rate limiting)
 app.get('/api/admin/daily-summary/:date', async (req, res) => {
   try {
