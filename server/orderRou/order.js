@@ -1443,6 +1443,11 @@ router.get('/user-transactions/:userId', async (req, res) => {
 
 router.get('/user-dashboard/:userId', async (req, res) => {
   try {
+    // Set CORS headers for this specific endpoint
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID');
+    
     const userId = req.params.userId;
 
     logOperation('USER_DASHBOARD_REQUEST', { userId });

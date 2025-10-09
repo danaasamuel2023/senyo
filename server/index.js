@@ -88,11 +88,31 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-auth-token'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-auth-token', 'X-Request-ID'],
   exposedHeaders: ['x-auth-token', 'x-ratelimit-limit', 'x-ratelimit-remaining'],
-  maxAge: 86400 // 24 hours
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 app.use(cors(corsOptions));
+
+// Global CORS middleware to ensure headers are always set
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).send();
+    return;
+  }
+  
+  next();
+});
 
 // Apply general rate limiting to all routes
 app.use(generalLimiter);
@@ -107,6 +127,35 @@ app.use('/api/v1', authLimiter, authRouter); // Use the router property
 // Payment-related routes with payment limiter
 app.use('/api/v1/data', paymentLimiter, dataOrderRoutes);
 app.use('/api/v1', paymentLimiter, Deposit);
+
+// Specific CORS handler for user dashboard endpoint
+app.options('/api/v1/data/user-dashboard/:userId', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  res.status(204).send();
+});
+
+// CORS middleware for user dashboard GET requests
+app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID');
+  next();
+});
+
+// Direct route handler for user dashboard to ensure it's accessible
+app.get('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID');
+  
+  // Forward to the actual route handler
+  next();
+});
 app.use('/api/v1', paymentLimiter, DepositeMorle);
 
 // Mobile Money Deposit routes
