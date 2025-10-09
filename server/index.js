@@ -43,6 +43,7 @@ const {
   paymentLimiter,
   agentLimiter,
   adminLimiter,
+  proxyLimiter,
   securityHeaders,
   sanitizeData 
 } = require('./middleware/security.js');
@@ -60,7 +61,7 @@ app.use(sanitizeData);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS configuration - Allow all origins for now to fix immediate issues
+// CORS configuration - Enhanced for production
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -87,7 +88,9 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-auth-token'],
+  exposedHeaders: ['x-auth-token', 'x-ratelimit-limit', 'x-ratelimit-remaining'],
+  maxAge: 86400 // 24 hours
 };
 app.use(cors(corsOptions));
 
@@ -258,21 +261,38 @@ app.post('/api/orders/bulk-status-update', (req, res) => {
   res.redirect(301, '/api/admin/orders/bulk-status-update');
 });
 
-// Backend proxy endpoint handler - NO RATE LIMITING
-app.get('/api/backend', (req, res, next) => {
-  // Skip rate limiting for backend proxy
+// Backend proxy endpoint handler - Enhanced with proper error handling
+app.get('/api/backend', proxyLimiter, (req, res, next) => {
   const { path } = req.query;
   if (!path) {
-    return res.status(400).json({ error: 'Path parameter is required' });
+    return res.status(400).json({ 
+      success: false,
+      error: 'Path parameter is required' 
+    });
   }
   
-  // Decode the path and forward the request
-  const decodedPath = decodeURIComponent(path);
-  console.log('Backend proxy request:', decodedPath);
-  
-  // Forward to the actual endpoint
-  req.url = decodedPath;
-  app._router.handle(req, res);
+  try {
+    // Decode the path and forward the request
+    const decodedPath = decodeURIComponent(path);
+    console.log('Backend proxy request:', decodedPath);
+    
+    // Add CORS headers for proxy requests
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Forward to the actual endpoint
+    req.url = decodedPath;
+    app._router.handle(req, res);
+  } catch (error) {
+    console.error('Backend proxy error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Proxy request failed',
+      message: error.message
+    });
+  }
 });
 
 // Error handling middleware

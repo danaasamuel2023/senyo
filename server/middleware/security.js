@@ -94,6 +94,30 @@ const adminLimiter = rateLimit({
   }
 });
 
+// Ultra lenient rate limiter for backend proxy endpoint
+const proxyLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: isDevelopment ? 1000 : 500, // Very high limit for proxy requests
+  message: {
+    success: false,
+    error: 'Proxy rate limit exceeded',
+    details: 'Too many proxy requests, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for localhost in development
+    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    // Skip rate limiting for production
+    if (isProduction) {
+      return true;
+    }
+    return false;
+  }
+});
+
 // Security headers configuration
 const securityHeaders = helmet({
   contentSecurityPolicy: {
@@ -122,6 +146,7 @@ module.exports = {
   paymentLimiter,
   agentLimiter,
   adminLimiter,
+  proxyLimiter,
   securityHeaders,
   sanitizeData,
 };

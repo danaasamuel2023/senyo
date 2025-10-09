@@ -444,6 +444,17 @@ export const dashboardAPI = {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
+  },
+
+  // Get batch daily summary for multiple days
+  getBatchDailySummary: async (days = 7) => {
+    const params = new URLSearchParams({ days });
+    
+    // Use the batch endpoint to reduce API calls
+    const response = await fetch(`${getApiUrl('/api/v1/admin/daily-summary-batch')}?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 

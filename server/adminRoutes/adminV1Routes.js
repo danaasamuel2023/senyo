@@ -122,6 +122,67 @@ router.get('/dashboard/daily-summary/:date', auth, adminAuth, async (req, res) =
   }
 });
 
+// Batch Daily Summary Route - Get multiple days in one request
+router.get('/dashboard/daily-summary-batch', auth, adminAuth, async (req, res) => {
+  try {
+    const { days = 7 } = req.query;
+    const results = [];
+    
+    for (let i = parseInt(days) - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      // Get daily orders
+      const dailyOrders = await DataPurchase.countDocuments({
+        createdAt: { $gte: startDate, $lte: endDate }
+      });
+      
+      // Get daily revenue
+      const dailyRevenueData = await DataPurchase.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$amount' }
+          }
+        }
+      ]);
+      
+      const dailyRevenue = dailyRevenueData.length > 0 ? dailyRevenueData[0].totalRevenue : 0;
+      
+      results.push({
+        date: dateStr,
+        summary: {
+          totalOrders: dailyOrders,
+          totalRevenue: dailyRevenue,
+          totalDeposits: 0 // Skip deposits for batch to reduce load
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    console.error('Batch daily summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch batch daily summary'
+    });
+  }
+});
+
 // Users Management Routes
 router.get('/users', auth, adminAuth, async (req, res) => {
   try {
