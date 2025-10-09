@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   Mail, 
   Lock, 
@@ -60,6 +60,7 @@ const Toast = ({ message, type, onClose }) => {
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const redirectPath = searchParams.get('redirect') || '/';
   
   const [email, setEmail] = useState('');
