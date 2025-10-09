@@ -178,6 +178,11 @@ app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
 // Connect to Database
 ConnectDB();
 
+// Test route to verify routing works
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'Test route working' });
+});
+
 // Direct daily-summary endpoint handler (before rate limiting)
 app.get('/api/admin/daily-summary/:date', async (req, res) => {
   try {
