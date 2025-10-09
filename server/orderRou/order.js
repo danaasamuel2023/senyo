@@ -1441,12 +1441,33 @@ router.get('/user-transactions/:userId', async (req, res) => {
 // [Keep all other routes unchanged from the original file]
 // Including: user-dashboard, sales-report, users-leaderboard, daily-sales
 
+// OPTIONS handler for user dashboard
+router.options('/user-dashboard/:userId', (req, res) => {
+  const origin = req.headers.origin;
+  console.log('User Dashboard OPTIONS request - Origin:', origin, 'User ID:', req.params.userId);
+  
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', 'x-auth-token');
+  
+  res.status(204).send();
+});
+
 router.get('/user-dashboard/:userId', async (req, res) => {
   try {
-    // Set CORS headers for this specific endpoint
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    // Set comprehensive CORS headers for this specific endpoint
+    const origin = req.headers.origin;
+    console.log('User Dashboard endpoint - Origin:', origin, 'User ID:', req.params.userId);
+    
+    res.header('Access-Control-Allow-Origin', origin || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Max-Age', '86400');
+    res.header('Access-Control-Expose-Headers', 'x-auth-token');
     
     const userId = req.params.userId;
 

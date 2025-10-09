@@ -96,17 +96,74 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Global CORS middleware to ensure headers are always set
-app.use((req, res, next) => {
-  // Set CORS headers for all responses
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+// Catch-all OPTIONS handler for all routes
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  console.log('Catch-all OPTIONS request for:', req.url, 'from origin:', origin);
+  
+  res.header('Access-Control-Allow-Origin', origin || '*');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', 'x-auth-token, x-ratelimit-limit, x-ratelimit-remaining');
+  
+  res.status(204).send();
+});
+
+// Global CORS middleware to ensure headers are always set
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'https://unlimitedata.onrender.com',
+    'https://www.unlimitedata.onrender.com',
+    'https://unlimiteddatagh.com',
+    'https://www.unlimiteddatagh.com'
+  ];
+  
+  // Allow the origin if it's in the allowed list, or allow all for now
+  if (allowedOrigins.includes(origin) || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', 'x-auth-token, x-ratelimit-limit, x-ratelimit-remaining');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('CORS Preflight request for:', req.url, 'from origin:', origin);
+    res.status(204).send();
+    return;
+  }
+  
+  next();
+});
+
+// Specific CORS middleware for user dashboard endpoint (before rate limiting)
+app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
+  const origin = req.headers.origin;
+  console.log('User Dashboard CORS middleware - Origin:', origin, 'URL:', req.url);
+  
+  // Set specific CORS headers for user dashboard
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, X-Request-ID, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', 'x-auth-token');
+  
+  // Handle preflight requests specifically
+  if (req.method === 'OPTIONS') {
+    console.log('User Dashboard OPTIONS request handled');
     res.status(204).send();
     return;
   }
