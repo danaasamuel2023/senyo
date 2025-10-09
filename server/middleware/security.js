@@ -5,7 +5,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs (increased for testing)
+  max: 100, // limit each IP to 100 requests per windowMs
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -13,6 +13,18 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health checks and admin endpoints
+    if (req.path === '/api/health' || req.path.startsWith('/api/admin/')) {
+      return true;
+    }
+    // Skip for localhost in development
+    if (process.env.NODE_ENV !== 'production' && 
+        (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    return false;
+  }
 });
 
 // Rate limiter for authentication routes - Skip for admin users
@@ -37,6 +49,11 @@ const authLimiter = rateLimit({
       ];
       return adminEmails.includes(body.email);
     }
+    // Skip for localhost in development
+    if (process.env.NODE_ENV !== 'production' && 
+        (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
     return false;
   }
 });
@@ -44,10 +61,18 @@ const authLimiter = rateLimit({
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 200, // limit each IP to 200 payment requests per windowMs (increased for testing)
+  max: 20, // limit each IP to 20 payment requests per windowMs
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip for localhost in development
+    if (process.env.NODE_ENV !== 'production' && 
+        (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    return false;
+  }
 });
 
 // Rate limiter for agent store creation
@@ -62,7 +87,7 @@ const agentLimiter = rateLimit({
 // Very lenient rate limiter for admin routes
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // limit each IP to 5000 admin requests per windowMs (increased for testing)
+  max: 1000, // limit each IP to 1000 admin requests per windowMs
   message: {
     success: false,
     error: 'Admin rate limit exceeded',
@@ -70,6 +95,14 @@ const adminLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip for localhost in development
+    if (process.env.NODE_ENV !== 'production' && 
+        (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    return false;
+  }
 });
 
 // Ultra lenient rate limiter for backend proxy endpoint

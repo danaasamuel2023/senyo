@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const ConnectDB = require('./DataBaseConnection/connection.js');
-const { DataPurchase, Transaction } = require('./schema/schema');
+const { DataPurchase, Transaction, User } = require('./schema/schema');
 // Either import just the router or destructure it from the object
 const authRouter = require('./AuthRoutes/Auth.js').router || require('./AuthRoutes/Auth.js'); 
 const dataOrderRoutes = require('./orderRou/order.js');
@@ -49,10 +49,17 @@ const {
   sanitizeData 
 } = require('./middleware/security.js');
 
+// Error handling middleware
+const { errorHandler, asyncHandler } = require('./middleware/errorHandler.js');
+
 // Authentication middleware
 const { authMiddleware, adminAuth, agentAuth, optionalAuth } = require('./middleware/auth.js');
 
 dotenv.config();
+
+// Validate environment variables
+const { validateEnvironment } = require('./utils/envValidation.js');
+validateEnvironment();
 
 // Initialize Express app
 const app = express();
@@ -179,6 +186,79 @@ app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
 ConnectDB();
 
 // CRITICAL: Define specific routes BEFORE any middleware that might intercept them
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    status: 'healthy', 
+    timestamp: new Date().toISOString() 
+  });
+});
+
+// Statistics endpoint
+app.get('/api/admin/statistics', async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalOrders = await DataPurchase.countDocuments();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayOrders = await DataPurchase.countDocuments({
+      createdAt: { $gte: today }
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        totalOrders,
+        todayOrders
+      }
+    });
+  } catch (error) {
+    console.error('Statistics error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch statistics'
+    });
+  }
+});
+
+// Pricing endpoint
+app.get('/api/v1/data/pricing', async (req, res) => {
+  try {
+    // Mock pricing data - replace with actual pricing logic
+    const pricing = {
+      MTN: [
+        { size: '100MB', price: 5, validity: '1 day' },
+        { size: '500MB', price: 15, validity: '7 days' },
+        { size: '1GB', price: 25, validity: '30 days' }
+      ],
+      Airtel: [
+        { size: '100MB', price: 4, validity: '1 day' },
+        { size: '500MB', price: 12, validity: '7 days' },
+        { size: '1GB', price: 20, validity: '30 days' }
+      ],
+      Glo: [
+        { size: '100MB', price: 6, validity: '1 day' },
+        { size: '500MB', price: 18, validity: '7 days' },
+        { size: '1GB', price: 30, validity: '30 days' }
+      ]
+    };
+    
+    res.json({
+      success: true,
+      data: pricing
+    });
+  } catch (error) {
+    console.error('Pricing error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch pricing'
+    });
+  }
+});
+
 // Direct daily-summary endpoint handler
 app.get('/api/admin/daily-summary/:date', async (req, res) => {
   try {
@@ -498,6 +578,9 @@ app.use('*', (req, res) => {
     path: req.originalUrl
   });
 });
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5001;
