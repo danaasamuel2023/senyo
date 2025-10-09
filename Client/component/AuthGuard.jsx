@@ -22,22 +22,55 @@ const AuthGuard = ({ children }) => {
     }
     
     // Check if user is authenticated
-    try {
-      const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
-      
-      if (!userData) {
+    const checkAuth = () => {
+      try {
+        const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
+        const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+        
+        console.log('AuthGuard check:', { 
+          hasUserData: !!userData, 
+          hasAuthToken: !!authToken,
+          pathname 
+        });
+        
+        if (!userData || !authToken) {
+          console.log('AuthGuard: Missing auth data, redirecting to SignIn');
+          router.push('/SignIn');
+          setLoading(false);
+          return;
+        }
+        
+        // Parse user data to validate it
+        try {
+          const parsedUserData = JSON.parse(userData);
+          if (!parsedUserData._id && !parsedUserData.id) {
+            console.log('AuthGuard: Invalid user data, redirecting to SignIn');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('authToken');
+            router.push('/SignIn');
+            setLoading(false);
+            return;
+          }
+          
+          console.log('AuthGuard: User authenticated successfully');
+          setIsAuthenticated(true);
+          setLoading(false);
+        } catch (parseError) {
+          console.warn('AuthGuard: Error parsing user data:', parseError);
+          localStorage.removeItem('userData');
+          localStorage.removeItem('authToken');
+          router.push('/SignIn');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.warn('AuthGuard localStorage access error:', error);
         router.push('/SignIn');
-        setLoading(false); // Set loading to false to allow redirect
-        return;
-      } else {
-        setIsAuthenticated(true);
         setLoading(false);
       }
-    } catch (error) {
-      console.warn('AuthGuard localStorage access error:', error);
-      router.push('/SignIn');
-      setLoading(false);
-    }
+    };
+    
+    // Add a small delay to ensure localStorage is updated
+    setTimeout(checkAuth, 50);
   }, [router, isPublicPath, pathname]);
 
   if (loading) {

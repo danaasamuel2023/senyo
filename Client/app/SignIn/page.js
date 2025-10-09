@@ -248,6 +248,9 @@ export default function LoginPage() {
 
         showToast('Login successful! Redirecting...', 'success');
         
+        // Wait for localStorage to be updated before redirecting
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Redirect based on user role and redirect parameter
         setTimeout(() => {
           try {
@@ -267,13 +270,13 @@ export default function LoginPage() {
               }
             }
             
-            // Navigate to the determined URL
-            window.location.href = redirectUrl;
+            // Use router.push for better navigation
+            router.push(redirectUrl);
           } catch (err) {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
           }
-        }, 2000);
+        }, 1000);
       } else {
         setError(data.message || 'Login failed');
         showToast(data.message || 'Login failed', 'error');
