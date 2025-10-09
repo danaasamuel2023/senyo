@@ -1,13 +1,13 @@
 // Environment Variable Validation
 const requiredEnvVars = [
-  'MONGODB_URI'
-  // JWT_SECRET and NODE_ENV are optional for deployment
+  // All variables are optional for deployment - Render provides MONGODB_URI
 ];
 
 const optionalEnvVars = [
   'PORT',
   'JWT_SECRET',
   'NODE_ENV',
+  'MONGODB_URI',
   'PAYSTACK_SECRET_KEY',
   'PAYSTACK_PUBLIC_KEY',
   'EMAIL_USER',
