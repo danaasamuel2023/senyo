@@ -64,6 +64,28 @@ validateEnvironment();
 // Initialize Express app
 const app = express();
 
+// CRITICAL: Define basic routes BEFORE any middleware
+// Simple test route to verify routing works
+app.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Test route working', timestamp: new Date().toISOString() });
+});
+
+// Another test route
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API test route working', timestamp: new Date().toISOString() });
+});
+
+// Debug route to check if server is running latest code
+app.get('/debug', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Debug route working', 
+    timestamp: new Date().toISOString(),
+    version: '58d34fe',
+    routes: ['/test', '/api/test', '/api/health', '/api/admin/statistics']
+  });
+});
+
 // Security middleware (should be first)
 app.use(securityHeaders);
 app.use(sanitizeData);
@@ -186,27 +208,7 @@ app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
 ConnectDB();
 
 // CRITICAL: Define specific routes BEFORE any middleware that might intercept them
-
-// Simple test route to verify routing works
-app.get('/test', (req, res) => {
-  res.json({ success: true, message: 'Test route working', timestamp: new Date().toISOString() });
-});
-
-// Another test route
-app.get('/api/test', (req, res) => {
-  res.json({ success: true, message: 'API test route working', timestamp: new Date().toISOString() });
-});
-
-// Debug route to check if server is running latest code
-app.get('/debug', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'Debug route working', 
-    timestamp: new Date().toISOString(),
-    version: '6b4731e',
-    routes: ['/test', '/api/test', '/api/health', '/api/admin/statistics']
-  });
-});
+// MOVED TO TOP TO AVOID MIDDLEWARE INTERFERENCE
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
