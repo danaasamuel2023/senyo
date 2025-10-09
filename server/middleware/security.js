@@ -96,7 +96,7 @@ const adminLimiter = rateLimit({
 
 // Ultra lenient rate limiter for backend proxy endpoint
 const proxyLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 1000 : 500, // Very high limit for proxy requests
   message: {
     success: false,
