@@ -433,10 +433,8 @@ export const dashboardAPI = {
 
   // Get daily summary
   getDailySummary: async (date) => {
-    const params = new URLSearchParams({ date });
-    
-    // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/daily-summary')}?${params}`, {
+    // Use the correct admin endpoint with date as path parameter
+    const response = await fetch(`${getApiUrl('/api/v1/admin/dashboard/daily-summary')}/${date}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

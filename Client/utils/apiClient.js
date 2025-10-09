@@ -137,7 +137,7 @@ class ApiClient {
   }
 
   async getAdminDailySummary(date) {
-    return this.get(`/api/v1/admin/daily-summary?date=${date}`);
+    return this.get(`/api/v1/admin/dashboard/daily-summary/${date}`);
   }
 
   async getAdminBatchDailySummary(days = 7) {

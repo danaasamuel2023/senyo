@@ -105,7 +105,7 @@ export const API_ENDPOINTS = {
   DATA_PRICING: '/api/v1/data/pricing',
   
   // Reports
-  DAILY_SUMMARY: '/api/v1/admin/daily-summary',
+  DAILY_SUMMARY: '/api/v1/admin/dashboard/daily-summary',
   REPORTS: '/api/v1/reports'
 };
 
