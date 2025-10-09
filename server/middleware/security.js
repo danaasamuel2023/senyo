@@ -6,6 +6,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined;
 
+// Debug logging
+console.log('🔧 Environment Debug:', {
+  NODE_ENV: process.env.NODE_ENV,
+  isDevelopment,
+  isProduction
+});
+
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -16,12 +23,15 @@ const generalLimiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for localhost in development
     if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      console.log('🔧 Skipping rate limit for localhost development');
       return true;
     }
     // Skip rate limiting for production
     if (isProduction) {
+      console.log('🔧 Skipping rate limit for production');
       return true;
     }
+    console.log('🔧 Rate limiting active for IP:', req.ip);
     return false;
   }
 });
