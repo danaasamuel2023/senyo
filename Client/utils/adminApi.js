@@ -1,32 +1,35 @@
 // Admin API Service
 import { getNextPublicApiUrl, isDevelopment } from './envConfig';
+import { getAuthToken, getCurrentUser, isAuthenticated, logout } from './auth';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
-// Helper function to get the correct API URL (always use production backend)
+// Helper function to get the correct API URL (use production backend)
 const getApiUrl = (endpoint) => {
-  // Always use production backend
-  const apiUrl = 'https://unlimitedata.onrender.com';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
   return `${apiUrl}${endpoint}`;
 };
 
-// Helper function to get auth headers (same as SignIn page)
+// Helper function to get auth headers (using centralized auth utilities)
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
-  const userData = localStorage.getItem('userData');
+  // Use centralized auth utilities for consistency
+  const token = getAuthToken();
+  const user = getCurrentUser();
   
   // Enhanced debugging for development
   if (process.env.NODE_ENV === 'development') {
     console.log('AdminAPI - Token check:', {
       hasToken: !!token,
       tokenPreview: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
-      hasUserData: !!userData,
-      userData: userData ? JSON.parse(userData) : null
+      hasUser: !!user,
+      userRole: user?.role,
+      isAuthenticated: isAuthenticated()
     });
   }
   
   if (!token) {
-    console.warn('AdminAPI - No authToken found in localStorage');
+    console.warn('AdminAPI - No authToken found, redirecting to login');
+    logout('/SignIn');
     throw new Error('Authentication required. Please sign in again.');
   }
   
@@ -42,6 +45,13 @@ const handleResponse = async (response) => {
   // Check if response is ok first
   if (!response.ok) {
     const errorText = await response.text();
+    
+    // Handle rate limiting gracefully in development
+    if (response.status === 429 && process.env.NODE_ENV === 'development') {
+      console.warn(`Rate limit encountered in development (${response.status}):`, errorText);
+      throw new Error(`Rate limit bypassed in development: ${errorText}`);
+    }
+    
     console.error(`API Error ${response.status}:`, errorText);
     throw new Error(`HTTP ${response.status}: ${errorText}`);
   }
@@ -256,7 +266,7 @@ export const orderAPI = {
     const params = new URLSearchParams(filters);
     
     // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/orders')}?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/admin/orders')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -314,7 +324,7 @@ export const transactionAPI = {
     const params = new URLSearchParams(filters);
     
     // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/transactions')}?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/admin/transactions')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -340,41 +350,31 @@ export const transactionAPI = {
 
   // Verify Paystack payment
   verifyPaystackPayment: async (reference) => {
-    // Try the correct admin endpoint first
+    // Use local backend for admin features
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/verify-paystack/${reference}`, {
+      const response = await fetch(getApiUrl(`/api/v1/admin/verify-paystack/${reference}`), {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
     } catch (error) {
-      console.warn('Admin verify paystack endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/verify-paystack/${reference}`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(response);
+      console.warn('Admin verify paystack endpoint failed:', error.message);
+      throw error;
     }
   },
 
   // Update transaction status
   updateTransactionStatus: async (transactionId, status, adminNotes = '') => {
-    // Try the correct admin endpoint first
+    // Use local backend for admin features
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/transactions/${transactionId}/update-status`, {
+      const response = await fetch(getApiUrl(`/api/v1/admin/transactions/${transactionId}/update-status`), {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status, adminNotes })
       });
       return handleResponse(response);
     } catch (error) {
-      console.warn('Admin update transaction status endpoint failed, trying legacy endpoint:', error.message);
-      // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/transactions/${transactionId}/update-status`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status, adminNotes })
-      });
-      return handleResponse(response);
+      console.warn('Admin update transaction status endpoint failed:', error.message);
+      throw error;
     }
   }
 };
@@ -383,8 +383,8 @@ export const transactionAPI = {
 export const inventoryAPI = {
   // Get all inventory status
   getInventory: async () => {
-    // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory`, {
+    // Use local backend for admin features
+    const response = await fetch(getApiUrl('/api/v1/admin/inventory'), {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -392,8 +392,8 @@ export const inventoryAPI = {
 
   // Get specific network inventory
   getNetworkInventory: async (network) => {
-    // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}`, {
+    // Use local backend for admin features
+    const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}`), {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -401,8 +401,8 @@ export const inventoryAPI = {
 
   // Toggle network stock status
   toggleNetworkStock: async (network) => {
-    // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle`, {
+    // Use local backend for admin features
+    const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}/toggle`), {
       method: 'PUT',
       headers: getAuthHeaders()
     });
@@ -411,8 +411,8 @@ export const inventoryAPI = {
 
   // Toggle Geonettech API for network
   toggleGeonettech: async (network) => {
-    // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle-geonettech`, {
+    // Use local backend for admin features
+    const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}/toggle-geonettech`), {
       method: 'PUT',
       headers: getAuthHeaders()
     });
@@ -425,7 +425,7 @@ export const dashboardAPI = {
   // Get dashboard statistics
   getStatistics: async () => {
     // Use the correct admin endpoint
-    const response = await fetch(getApiUrl('/api/v1/admin/statistics'), {
+    const response = await fetch(getApiUrl('/api/v1/admin/dashboard/statistics'), {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -445,7 +445,7 @@ export const dashboardAPI = {
     const params = new URLSearchParams({ days });
     
     // Use the batch endpoint to reduce API calls
-    const response = await fetch(`${getApiUrl('/api/v1/admin/daily-summary-batch')}?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/dashboard/daily-summary-batch')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
