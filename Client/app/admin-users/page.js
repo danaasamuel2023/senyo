@@ -167,7 +167,7 @@ const AdminUsers = () => {
   const fetchPendingUsers = useCallback(async () => {
     try {
       updateState({ refreshing: true });
-      const response = await api.get('/api/admin/users/pending');
+      const response = await api.get('/api/v1/admin/users/pending');
       
       updateState({
         pendingUsers: response.data.data || [],
@@ -273,7 +273,7 @@ const AdminUsers = () => {
       // Process approvals in parallel with error handling
       const results = await Promise.allSettled(
         state.selectedPendingUsers.map(userId =>
-          api.put(`/api/admin/users/${userId}/approve`)
+          api.put(`/api/v1/admin/users/${userId}/approve`)
         )
       );
       
@@ -335,7 +335,7 @@ const AdminUsers = () => {
   // Export users to CSV
   const handleExportUsers = useCallback(async () => {
     try {
-      const response = await api.get('/api/admin/users/export', {
+      const response = await api.get('/api/v1/admin/users/export', {
         responseType: 'blob'
       });
       

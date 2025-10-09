@@ -8,7 +8,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 1000 : 100, // More lenient in development
+  max: isDevelopment ? 1000 : 500, // Increased for production
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -64,7 +64,7 @@ const agentLimiter = rateLimit({
 // Very lenient rate limiter for admin routes
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 10000 : 1000, // Very lenient for admin operations
+  max: isDevelopment ? 10000 : 2000, // Increased for production admin operations
   message: 'Too many admin requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,

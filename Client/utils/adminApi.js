@@ -164,7 +164,7 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin add money endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const endpoint = '/api/v1/admin/users';
       const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/add-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -187,7 +187,7 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin deduct money endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const endpoint = '/api/v1/admin/users';
       const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/deduct-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -210,7 +210,7 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin toggle status endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const endpoint = '/api/v1/admin/users';
       const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/toggle-status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -232,7 +232,7 @@ export const userAPI = {
     } catch (error) {
       console.warn('Admin delete user endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const endpoint = API_BASE_URL.includes('localhost') ? '/api/admin/users' : '/api/users';
+      const endpoint = '/api/v1/admin/users';
       const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
@@ -246,7 +246,7 @@ export const userAPI = {
     const params = new URLSearchParams({ page, limit });
     
     // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/admin/user-orders/${userId}?${params}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/user-orders/${userId}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -279,7 +279,7 @@ export const orderAPI = {
     } catch (error) {
       console.warn('Admin update order status endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status })
@@ -301,7 +301,7 @@ export const orderAPI = {
     } catch (error) {
       console.warn('Admin bulk update status endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/orders/bulk-status-update`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/orders/bulk-status-update`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ orderIds, status })
@@ -335,7 +335,7 @@ export const transactionAPI = {
     } catch (error) {
       console.warn('Admin transaction by ID endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/transactions/${transactionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/transactions/${transactionId}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
@@ -353,7 +353,7 @@ export const transactionAPI = {
     } catch (error) {
       console.warn('Admin verify paystack endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/verify-paystack/${reference}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/verify-paystack/${reference}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
@@ -373,7 +373,7 @@ export const transactionAPI = {
     } catch (error) {
       console.warn('Admin update transaction status endpoint failed, trying legacy endpoint:', error.message);
       // Fallback to legacy endpoint
-      const response = await fetch(`${API_BASE_URL}/api/admin/transactions/${transactionId}/update-status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/transactions/${transactionId}/update-status`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status, adminNotes })
@@ -388,7 +388,7 @@ export const inventoryAPI = {
   // Get all inventory status
   getInventory: async () => {
     // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -397,7 +397,7 @@ export const inventoryAPI = {
   // Get specific network inventory
   getNetworkInventory: async (network) => {
     // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -406,7 +406,7 @@ export const inventoryAPI = {
   // Toggle network stock status
   toggleNetworkStock: async (network) => {
     // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle`, {
       method: 'PUT',
       headers: getAuthHeaders()
     });
@@ -416,7 +416,7 @@ export const inventoryAPI = {
   // Toggle Geonettech API for network
   toggleGeonettech: async (network) => {
     // Use the working admin endpoint directly
-    const response = await fetch(`${API_BASE_URL}/api/admin/inventory/${network}/toggle-geonettech`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/inventory/${network}/toggle-geonettech`, {
       method: 'PUT',
       headers: getAuthHeaders()
     });

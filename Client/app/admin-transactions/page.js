@@ -147,7 +147,7 @@ const fetchTransactions = async () => {
     // Convert to URLSearchParams
     const params = new URLSearchParams(queryParams);
 
-    const response = await axios.get(`${API_BASE_URL}/api/admin/transactions?${params}`, {
+    const response = await axios.get(`${API_BASE_URL}/api/v1/admin/transactions?${params}`, {
       headers: {
         'x-auth-token': authToken
       }
@@ -215,7 +215,7 @@ const fetchTransactions = async () => {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/api/admin/transactions/${id}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/transactions/${id}`, {
         headers: {
           'x-auth-token': authToken
         }
@@ -247,7 +247,7 @@ const fetchTransactions = async () => {
       }
 
       await axios.put(
-        `${API_BASE_URL}/api/admin/transactions/${statusUpdateData.id}/update-status`,
+        `${API_BASE_URL}/api/v1/admin/transactions/${statusUpdateData.id}/update-status`,
         {
           status: statusUpdateData.status,
           adminNotes: statusUpdateData.adminNotes
@@ -354,7 +354,7 @@ const fetchTransactions = async () => {
       });
 
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/admin/transactions?${params}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/transactions?${params}`, {
         headers: {
           'x-auth-token': authToken
         }

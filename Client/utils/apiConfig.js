@@ -25,7 +25,7 @@ export const isProduction = () => {
 // API Health Check
 export const checkApiHealth = async () => {
   try {
-    const response = await fetch(`${getApiUrl()}/api/admin/dashboard/statistics`, {
+    const response = await fetch(`${getApiUrl()}/api/v1/admin/dashboard/statistics`, {
       method: 'HEAD',
       headers: {
         'x-auth-token': localStorage.getItem('authToken') || 'test'
