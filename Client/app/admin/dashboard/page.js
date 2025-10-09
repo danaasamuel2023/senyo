@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
 import { getNextPublicApiUrl } from '../../../utils/envConfig';
+import apiClient from '../../../utils/apiClient.js';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
@@ -229,7 +230,7 @@ const AdminDashboard = () => {
       }
       
       // Only fetch dashboard statistics, skip daily summary to reduce API calls
-      const dashboardStats = await retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
+      const dashboardStats = await retryWithBackoff(() => apiClient.getAdminStatistics()).catch(err => {
         console.error('Dashboard stats API error:', err.message);
         if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
           if (err.message.includes('Failed to fetch')) {
@@ -399,7 +400,7 @@ const AdminDashboard = () => {
       }
       
       // Use batch API to get 7 days of data in one request
-      const batchData = await adminAPI.dashboard.getBatchDailySummary(7);
+      const batchData = await apiClient.getAdminBatchDailySummary(7);
       
       if (batchData.success && batchData.data) {
         const chartData = batchData.data.map(item => ({

@@ -48,6 +48,9 @@ const {
   sanitizeData 
 } = require('./middleware/security.js');
 
+// Authentication middleware
+const { authMiddleware, adminAuth, agentAuth, optionalAuth } = require('./middleware/auth.js');
+
 dotenv.config();
 
 // Initialize Express app

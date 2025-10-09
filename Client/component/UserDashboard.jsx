@@ -5,6 +5,7 @@ import { useTheme } from '../app/providers/ThemeProvider';
 import MobileNavbar from './nav';
 import MobileMoneyDepositModal from './MobileMoneyDepositModal';
 import { getApiEndpoint as getCentralizedApiEndpoint } from '../utils/envConfig';
+import apiClient from '../utils/apiClient.js';
 import { 
   CreditCard, Package, Database, DollarSign, TrendingUp, X, 
   AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
@@ -77,6 +78,7 @@ return <span>₵{count.toFixed(2)}</span>;
 const getApiEndpoint = (path) => {
   return getCentralizedApiEndpoint(path);
 };
+
 
 const API_ENDPOINTS = {
 DASHBOARD: '/api/v1/data/user-dashboard/',
@@ -239,7 +241,7 @@ const navigationHandlers = useMemo(() => ({
   }
 }), [router]);
 
-// Enhanced API call with retry logic
+// Enhanced API call with new API client
 const fetchDashboardData = useCallback(async (userId, retryCount = 0) => {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000 * Math.pow(2, retryCount);
@@ -254,50 +256,8 @@ const fetchDashboardData = useCallback(async (userId, retryCount = 0) => {
       throw new Error('User ID is required');
     }
     
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      console.warn('No authentication token found, redirecting to login');
-      handleAuthenticationError();
-      return;
-    }
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-    
-    const response = await fetch(getApiEndpoint(`${API_ENDPOINTS.DASHBOARD}${userId}`), {
-      method: 'GET',
-      headers: {
-        'x-auth-token': authToken,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Request-ID': Date.now().toString()
-      },
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        handleAuthenticationError();
-        return;
-      }
-      
-      if (response.status === 429) {
-        setError('Too many requests. Please wait a moment and try again.');
-        return;
-      }
-      
-      if (response.status >= 500 && retryCount < MAX_RETRIES) {
-        console.warn(`Server error, retrying... (${retryCount + 1}/${MAX_RETRIES})`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        return fetchDashboardData(userId, retryCount + 1);
-      }
-      
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const responseData = await response.json();
+    // Use the new API client for authenticated requests
+    const responseData = await apiClient.getUserDashboard(userId);
     
     if (responseData?.status === 'success' && responseData?.data) {
       const data = responseData.data;

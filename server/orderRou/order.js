@@ -1441,6 +1441,9 @@ router.get('/user-transactions/:userId', async (req, res) => {
 // [Keep all other routes unchanged from the original file]
 // Including: user-dashboard, sales-report, users-leaderboard, daily-sales
 
+// Import authentication middleware
+const { authMiddleware } = require('../middleware/auth.js');
+
 // OPTIONS handler for user dashboard
 router.options('/user-dashboard/:userId', (req, res) => {
   const origin = req.headers.origin;
@@ -1456,7 +1459,7 @@ router.options('/user-dashboard/:userId', (req, res) => {
   res.status(204).send();
 });
 
-router.get('/user-dashboard/:userId', async (req, res) => {
+router.get('/user-dashboard/:userId', authMiddleware, async (req, res) => {
   try {
     // Set comprehensive CORS headers for this specific endpoint
     const origin = req.headers.origin;
@@ -1470,8 +1473,9 @@ router.get('/user-dashboard/:userId', async (req, res) => {
     res.header('Access-Control-Expose-Headers', 'x-auth-token');
     
     const userId = req.params.userId;
+    const authenticatedUserId = req.userId;
 
-    logOperation('USER_DASHBOARD_REQUEST', { userId });
+    logOperation('USER_DASHBOARD_REQUEST', { userId, authenticatedUserId });
 
     // Validate userId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -1479,6 +1483,15 @@ router.get('/user-dashboard/:userId', async (req, res) => {
       return res.status(400).json({
         status: 'error',
         message: 'Invalid user ID'
+      });
+    }
+
+    // Check if user is accessing their own dashboard or is admin
+    if (userId !== authenticatedUserId && req.user.role !== 'admin') {
+      logOperation('USER_DASHBOARD_UNAUTHORIZED', { userId, authenticatedUserId });
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied. You can only access your own dashboard.'
       });
     }
 
