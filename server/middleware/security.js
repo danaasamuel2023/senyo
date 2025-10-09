@@ -5,7 +5,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased for testing)
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -44,7 +44,7 @@ const authLimiter = rateLimit({
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // limit each IP to 20 payment requests per windowMs
+  max: 200, // limit each IP to 200 payment requests per windowMs (increased for testing)
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -62,7 +62,7 @@ const agentLimiter = rateLimit({
 // Very lenient rate limiter for admin routes
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 admin requests per windowMs
+  max: 5000, // limit each IP to 5000 admin requests per windowMs (increased for testing)
   message: {
     success: false,
     error: 'Admin rate limit exceeded',

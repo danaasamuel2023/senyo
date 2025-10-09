@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "unlimiteddata-gh",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -31,8 +31,10 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^15.5.4",
     "@tailwindcss/postcss": "^4.1.14",
     "autoprefixer": "^10.4.21",
+    "eslint": "^9.37.0",
     "tailwindcss": "^4.1.14"
   }
 }
