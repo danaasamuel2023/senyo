@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Admin Token</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .token-display { background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 12px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Set Admin Token</h1>
+        
+        <div class="info">
+            <strong>Current Token:</strong>
+            <div class="token-display" id="currentToken">No token found</div>
+        </div>
+        
+        <div>
+            <label for="tokenInput">Admin Token:</label>
+            <input type="text" id="tokenInput" placeholder="Enter admin JWT token">
+            <button onclick="setToken()">Set Token</button>
+            <button onclick="clearToken()">Clear Token</button>
+        </div>
+        
+        <div>
+            <button onclick="useTestToken()">Use Test Token</button>
+            <button onclick="testToken()">Test Token</button>
+        </div>
+        
+        <div id="result"></div>
+        
+        <div class="info">
+            <strong>Next Steps:</strong>
+            <ol>
+                <li>Set the admin token using the test token or your own</li>
+                <li>Navigate to <a href="/admin-users" target="_blank">/admin-users</a> to view the admin dashboard</li>
+                <li>Or test with <a href="test-admin-users-simple.html" target="_blank">Simple Test Page</a></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const TEST_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5YWJjYTQ2NDEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjAwMTM0MDIsImV4cCI6MTc2MDYxODIwMn0.iC2UlRI0hKv4ofsP8St-mwh6p8bB2Ty_zPvHfCuo0-Y';
+        
+        function updateCurrentToken() {
+            const token = localStorage.getItem('authToken');
+            const tokenDiv = document.getElementById('currentToken');
+            if (token) {
+                tokenDiv.textContent = token.substring(0, 50) + '...';
+            } else {
+                tokenDiv.textContent = 'No token found';
+            }
+        }
+        
+        function setToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                showResult('Please enter a token', 'error');
+                return;
+            }
+            
+            localStorage.setItem('authToken', token);
+            updateCurrentToken();
+            showResult('✅ Token set successfully!', 'success');
+        }
+        
+        function clearToken() {
+            localStorage.removeItem('authToken');
+            updateCurrentToken();
+            showResult('🗑️ Token cleared', 'success');
+        }
+        
+        function useTestToken() {
+            localStorage.setItem('authToken', TEST_TOKEN);
+            updateCurrentToken();
+            showResult('✅ Test token set successfully!', 'success');
+        }
+        
+        async function testToken() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showResult('No token found. Please set a token first.', 'error');
+                return;
+            }
+            
+            try {
+                showResult('Testing token...', 'info');
+                
+                const response = await fetch('http://localhost:5001/api/v1/admin/users?page=1&limit=1', {
+                    headers: {
+                        'x-auth-token': token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Token is valid! Found ${data.totalUsers} users.`, 'success');
+                } else {
+                    showResult(`❌ Token test failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        // Update token display on page load
+        updateCurrentToken();
+    </script>
+</body>
+</html>

@@ -9,6 +9,8 @@ import {
   AlertCircle, Wifi, Signal, CircleDot, Timer, Calendar,
   ArrowUpRight, ArrowDownRight, Copy, Check, Shield, Flame
 } from 'lucide-react';
+import { useAuth, withAuth } from '../../utils/auth';
+import { getApiBaseUrl } from '../../utils/apiUrls';
 
 // API Configuration
 const API_CONFIG = {
@@ -21,7 +23,7 @@ const API_CONFIG = {
     API_KEY: '4cb6763274e86173d2c22c120493ca67b6185039f826f4aa43bb3057db50f858'
   },
   Unlimiteddata: {
-    BASE_URL: 'https://unlimitedata.onrender.com/api/v1'
+    BASE_URL: `${getApiBaseUrl()}/api/v1`
   }
 };
 
@@ -270,8 +272,9 @@ const PurchaseCard = ({ purchase, onCheckStatus, checkingStatus, onCopy, copiedR
 };
 
 // Main Component
-export default function DataPurchases() {
+function DataPurchases() {
   const router = useRouter();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [state, setState] = useState({
     purchases: [],
     allPurchases: [],
@@ -289,14 +292,10 @@ export default function DataPurchases() {
   });
 
   const userId = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      return userData.id;
-    } catch {
-      return null;
-    }
-  }, []);
+    if (authLoading) return null;
+    if (!isAuthenticated || !user) return null;
+    return user.id || user._id;
+  }, [isAuthenticated, user, authLoading]);
 
   const checkOrderStatus = useCallback(async (purchase) => {
     if (!purchase.geonetReference || purchase.network === 'at') return purchase;
@@ -306,14 +305,23 @@ export default function DataPurchases() {
       
       if (purchase.network === 'TELECEL') {
         const url = API_CONFIG.TELCEL.API_URL.replace(':orderRef', purchase.geonetReference);
-        response = await axios.get(url, { headers: { 'X-API-Key': API_CONFIG.TELCEL.API_KEY } });
+        console.log('Checking TELECEL status:', url);
+        response = await axios.get(url, { 
+          headers: { 'X-API-Key': API_CONFIG.TELCEL.API_KEY },
+          timeout: 10000
+        });
         status = response.data.data.order.status;
       } else {
         const url = API_CONFIG.GEONETTECH.BASE_URL.replace(':ref', purchase.geonetReference);
-        response = await axios.get(url, { headers: { Authorization: `Bearer ${API_CONFIG.GEONETTECH.API_KEY}` } });
+        console.log('Checking GEONETTECH status:', url);
+        response = await axios.get(url, { 
+          headers: { Authorization: `Bearer ${API_CONFIG.GEONETTECH.API_KEY}` },
+          timeout: 10000
+        });
         status = response.data.data.status;
       }
       
+      console.log(`Status check successful for ${purchase._id}: ${status}`);
       return { ...purchase, ...(status !== purchase.status && { status }), lastChecked: new Date().toISOString() };
     } catch (error) {
       console.error(`Status check failed for ${purchase._id}:`, error);
@@ -384,25 +392,38 @@ export default function DataPurchases() {
     
     const fetchPurchases = async () => {
       try {
-        const { data } = await axios.get(
-          `${API_CONFIG.Unlimiteddata.BASE_URL}/data/purchase-history/${userId}`,
-          { params: { page: 1, limit: 50 } }
-        );
+        const url = `${API_CONFIG.Unlimiteddata.BASE_URL}/data/purchase-history/${userId}`;
+        console.log('Fetching purchases from:', url);
+        
+        const { data } = await axios.get(url, { 
+          params: { page: 1, limit: 50 },
+          timeout: 10000 // 10 second timeout
+        });
+        
+        console.log('Purchase history response:', data);
         
         if (data.status === 'success') {
           setState(prev => ({
             ...prev,
-            allPurchases: data.data.purchases,
-            purchases: data.data.purchases,
+            allPurchases: data.data.purchases || [],
+            purchases: data.data.purchases || [],
             loading: false
           }));
           
           setTimeout(() => batchCheckStatuses(), 2000);
+        } else {
+          console.error('API returned non-success status:', data);
+          setState(prev => ({
+            ...prev,
+            error: data.message || 'Failed to load purchase history. Please try again later.',
+            loading: false
+          }));
         }
       } catch (err) {
+        console.error('Error fetching purchases:', err);
         setState(prev => ({
           ...prev,
-          error: 'Failed to load purchase history. Please try again later.',
+          error: err.response?.data?.message || err.message || 'Failed to load purchase history. Please try again later.',
           loading: false
         }));
       }
@@ -477,7 +498,27 @@ export default function DataPurchases() {
     [state.allPurchases]
   );
 
-  if (!userId && typeof window !== 'undefined') {
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-yellow-50 to-white dark:from-gray-900 dark:via-yellow-950 dark:to-gray-900 flex items-center justify-center p-3 sm:p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border border-[#FFCC08]/30 dark:border-yellow-900 text-center max-w-md w-full"
+        >
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#FFCC08] to-yellow-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+            <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-black animate-spin" strokeWidth={2.5} />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">UnlimitedData GH</h2>
+          <p className="mb-4 sm:mb-6 text-sm sm:text-base text-gray-600 dark:text-gray-400">Checking authentication...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated || !user || !userId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-white via-yellow-50 to-white dark:from-gray-900 dark:via-yellow-950 dark:to-gray-900 flex items-center justify-center p-3 sm:p-4">
         <motion.div
@@ -819,3 +860,5 @@ export default function DataPurchases() {
     </div>
   );
 }
+
+export default withAuth(DataPurchases);

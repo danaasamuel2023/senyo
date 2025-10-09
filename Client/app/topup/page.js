@@ -15,7 +15,7 @@ import {
 // API Configuration
 const getApiEndpoint = (path) => {
   const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimiteddata.gh';
   return `${baseUrl}${path}`;
 };
 
@@ -255,7 +255,9 @@ const TopUpPage = () => {
       if (userData && authToken) {
         try {
           const user = JSON.parse(userData);
-          setUserId(user.id);
+          const userId = user.id || user._id;
+          console.log('TopUp auth check:', { user, userId, email: user.email });
+          setUserId(userId);
           setUserEmail(user.email);
           setIsAuthenticated(true);
           
@@ -439,18 +441,23 @@ const TopUpPage = () => {
   const handleDeposit = async (e) => {
     e.preventDefault();
     
-    // Check circuit breaker
-    if (circuitBreakerOpen) {
-      setError('Service temporarily unavailable due to repeated failures. Please try again later.');
-      showToast('Service temporarily unavailable. Please try again later.', 'error');
-      return;
-    }
-    
-    // Check if currently rate limited
-    if (isRateLimited) {
-      setError('Please wait before making another request. Rate limit is currently active.');
-      showToast('Rate limit is active. Please wait before trying again.', 'error');
-      return;
+    // Skip all rate limiting checks in development
+    if (process.env.NODE_ENV === 'development') {
+      // Skip rate limiting, proceed directly
+    } else {
+      // Check circuit breaker
+      if (circuitBreakerOpen) {
+        setError('Service temporarily unavailable due to repeated failures. Please try again later.');
+        showToast('Service temporarily unavailable. Please try again later.', 'error');
+        return;
+      }
+      
+      // Check if currently rate limited
+      if (isRateLimited) {
+        setError('Please wait before making another request. Rate limit is currently active.');
+        showToast('Rate limit is active. Please wait before trying again.', 'error');
+        return;
+      }
     }
     
     // Check debounce to prevent rapid successive requests
@@ -507,13 +514,17 @@ const TopUpPage = () => {
     try {
       const token = localStorage.getItem('authToken');
       
+      const depositData = {
+        userId,
+        amount: depositAmount,
+        totalAmountWithFee: parseFloat(totalAmount),
+        email: userEmail
+      };
+      
+      console.log('Deposit request data:', depositData);
+      
       const response = await retryRequest(async () => {
-        return await axios.post(getApiEndpoint('/api/v1/deposit'), {
-          userId,
-          amount: depositAmount,
-          totalAmountWithFee: parseFloat(totalAmount),
-          email: userEmail
-        }, {
+        return await axios.post(getApiEndpoint('/api/v1/deposit'), depositData, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`

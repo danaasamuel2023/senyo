@@ -4,7 +4,7 @@
 The UnlimitedData GH Admin Panel is a comprehensive dashboard for managing users, orders, transactions, and system settings.
 
 ## Access
-- **URL**: `http://localhost:3000/admin/dashboard`
+- **URL**: `http://localhost:3001/admin/dashboard`
 - **Authentication**: Requires admin role
 - **Default Admin**: Check with system administrator
 

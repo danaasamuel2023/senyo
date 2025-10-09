@@ -2,10 +2,10 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 
-// Rate limiter for general API requests
+// Rate limiter for general API requests - Bypassed in development
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased limit for frontend requests
+  max: 10000, // Very high limit to effectively bypass
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -14,6 +14,11 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
     // Skip rate limiting for health checks and admin endpoints
     if (req.path === '/api/health' || req.path.startsWith('/api/admin/')) {
       return true;
@@ -24,7 +29,7 @@ const generalLimiter = rateLimit({
         req.path.startsWith('/api/backend')) {
       return true;
     }
-    // Skip for localhost in development
+    // Skip for localhost in non-production
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return true;
@@ -33,10 +38,10 @@ const generalLimiter = rateLimit({
   }
 });
 
-// Rate limiter for authentication routes - Skip for admin users
+// Rate limiter for authentication routes - Bypassed for development
 const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // limit each IP to 100 auth requests per windowMs (increased for testing)
+  windowMs: 5 * 1000, // 5 seconds
+  max: 1000, // Very high limit to effectively bypass
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -45,6 +50,11 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    // Skip rate limiting for ALL requests in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
     // Skip rate limiting for admin login attempts
     const body = req.body;
     if (body && body.email) {
@@ -55,28 +65,35 @@ const authLimiter = rateLimit({
       ];
       return adminEmails.includes(body.email);
     }
-    // Skip for localhost in development
+    
+    // Skip for localhost in non-production
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return true;
     }
+    
     return false;
   }
 });
 
-// Rate limiter for payment/withdrawal routes
+// Rate limiter for payment/withdrawal routes - Bypassed in development
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 200, // Increased limit for legitimate requests
+  max: 10000, // Very high limit to effectively bypass
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
     // Skip for frontend data requests
     if (req.path.startsWith('/api/v1/data/') && !req.path.includes('purchase')) {
       return true;
     }
-    // Skip for localhost in development
+    // Skip for localhost in non-production
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return true;
@@ -85,19 +102,26 @@ const paymentLimiter = rateLimit({
   }
 });
 
-// Rate limiter for agent store creation
+// Rate limiter for agent store creation - Bypassed in development
 const agentLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 3, // limit each IP to 3 store modifications per windowMs
+  max: 10000, // Very high limit to effectively bypass
   message: 'Too many store modifications, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    return false;
+  }
 });
 
-// Very lenient rate limiter for admin routes
+// Very lenient rate limiter for admin routes - Bypassed in development
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 admin requests per windowMs
+  max: 10000, // Very high limit to effectively bypass
   message: {
     success: false,
     error: 'Admin rate limit exceeded',
@@ -106,7 +130,12 @@ const adminLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip for localhost in development
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    // Skip for localhost in non-production
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
       return true;
@@ -115,10 +144,10 @@ const adminLimiter = rateLimit({
   }
 });
 
-// Ultra lenient rate limiter for backend proxy endpoint
+// Ultra lenient rate limiter for backend proxy endpoint - Bypassed in development
 const proxyLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // limit each IP to 100 proxy requests per windowMs
+  max: 10000, // Very high limit to effectively bypass
   message: {
     success: false,
     error: 'Proxy rate limit exceeded',
@@ -126,6 +155,13 @@ const proxyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    return false;
+  }
 });
 
 // Security headers configuration

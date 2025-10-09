@@ -19,7 +19,7 @@ const isProduction = () => {
 const API_URLS = {
   DEVELOPMENT: {
     BASE: 'http://localhost:5001',
-    FRONTEND: 'http://localhost:3000',
+    FRONTEND: 'http://localhost:3001',
     NEXT_PUBLIC: 'http://localhost:5001'
   },
   PRODUCTION: {

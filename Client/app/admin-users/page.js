@@ -132,15 +132,11 @@ const AdminUsers = () => {
       
       const params = new URLSearchParams({
         page,
-        pageSize: state.pagination.pageSize,
-        search: state.searchTerm,
-        role: state.filterRole,
-        status: state.filterStatus,
-        sortBy: state.sortBy,
-        sortOrder: state.sortOrder
+        limit: state.pagination.pageSize,
+        search: state.searchTerm
       });
 
-      const response = await api.get(`/api/users?${params}`);
+      const response = await api.get(`/api/v1/admin/users?${params}`);
       
       updateState({
         users: response.data.users || [],
@@ -148,7 +144,7 @@ const AdminUsers = () => {
           currentPage: response.data.currentPage || page,
           totalPages: response.data.totalPages || 1,
           totalUsers: response.data.totalUsers || 0,
-          pageSize: response.data.pageSize || 10
+          pageSize: state.pagination.pageSize // Keep current pageSize
         },
         loading: false
       });

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth, withAuth } from '../../utils/auth';
 import {
   User, CreditCard, ShoppingCart, Award, Clock, Mail, Phone, Calendar,
   Wallet, CheckCircle, RefreshCw, AlertCircle, Percent, TrendingUp, Moon,
@@ -162,6 +163,7 @@ const LoadingOverlay = ({ isLoading, message = "Loading..." }) => {
 
 const ProfilePage = () => {
   const router = useRouter();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   
   // State Management
   const [userData, setUserData] = useState(null);
@@ -219,26 +221,17 @@ const ProfilePage = () => {
 
   // Check authentication and load data
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('authToken');
-      const userDataStr = localStorage.getItem('userData');
-      
-      if (token && userDataStr) {
-        try {
-          const user = JSON.parse(userDataStr);
-          setUserData(user);
-          // Don't call loadUserStats here - it will be called by the separate useEffect
-        } catch (error) {
-          console.error('Auth initialization error:', error);
-          router.push('/SignIn');
-        }
-      } else {
-        router.push('/SignIn');
-      }
-    };
+    if (authLoading) {
+      return; // Still loading
+    }
     
-    checkAuth();
-  }, [router]);
+    if (!isAuthenticated || !user) {
+      router.push('/SignIn');
+      return;
+    }
+    
+    setUserData(user);
+  }, [isAuthenticated, user, authLoading, router]);
   
   // Add CSS for animations
   useEffect(() => {

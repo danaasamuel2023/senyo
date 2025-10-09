@@ -112,15 +112,47 @@ class ErrorMonitor {
 // Create global instance
 const errorMonitor = new ErrorMonitor();
 
-// Auto-initialize in development
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+// Auto-initialize in both development and production
+if (typeof window !== 'undefined') {
   errorMonitor.init();
   
-  // Add global methods for debugging
+  // Add global methods for debugging (always available)
   window.errorMonitor = errorMonitor;
   window.getErrors = () => errorMonitor.getErrors();
   window.clearErrors = () => errorMonitor.clearErrors();
   window.reportErrors = () => errorMonitor.reportErrors();
+  
+  // Production error reporting
+  if (process.env.NODE_ENV === 'production') {
+    // Report critical errors to server
+    const originalLogError = errorMonitor.logError;
+    errorMonitor.logError = function(type, args) {
+      originalLogError.call(this, type, args);
+      
+      // Report critical errors to server
+      if (type === 'error' || type === 'unhandledrejection') {
+        const error = {
+          type,
+          message: args.join(' '),
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          userId: localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')).id : null
+        };
+        
+        // Send to error reporting endpoint
+        fetch('/api/errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(error)
+        }).catch(() => {
+          // Silently fail if error reporting fails
+        });
+      }
+    };
+  }
 }
 
 export default errorMonitor;

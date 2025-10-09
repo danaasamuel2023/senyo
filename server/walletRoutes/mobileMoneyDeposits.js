@@ -13,7 +13,7 @@ const logMobileMoneyDeposit = (operation, data) => {
 
 // Validation helpers
 const validateDepositAmount = (amount) => {
-  const minAmount = 5;
+  const minAmount = 10;
   const maxAmount = 10000;
   
   if (!amount || amount < minAmount) {

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Balance Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Wallet Balance Fix Test</h1>
+        <p>Test if wallet balance updates correctly after payment verification</p>
+        
+        <div class="form-group">
+            <label for="email">Admin Email:</label>
+            <input type="email" id="email" value="sunumanfred14@gmail.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="Kingfred4190$">
+        </div>
+        
+        <div class="form-group">
+            <label for="reference">Transaction Reference:</label>
+            <input type="text" id="reference" value="DEP-164cbadf2d29e9a8e527-1760010728076">
+        </div>
+        
+        <button onclick="testLogin()">🔐 Login</button>
+        <button onclick="checkWalletBalance()">💰 Check Wallet Balance</button>
+        <button onclick="testPaymentVerification()">🔍 Test Payment Verification</button>
+        <button onclick="testAdminVerification()">👑 Test Admin Verification</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let userData = null;
+
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                showResult('🔄 Logging in...', 'info');
+                
+                const response = await fetch('http://localhost:5001/api/v1/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.token) {
+                    authToken = data.token;
+                    userData = data.user;
+                    
+                    showResult(`✅ Login successful!\n\nUser: ${data.user.name}\nEmail: ${data.user.email}\nRole: ${data.user.role}\nWallet Balance: GHS ${data.user.walletBalance}`, 'success');
+                } else {
+                    showResult(`❌ Login failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkWalletBalance() {
+            if (!authToken) {
+                showResult('❌ Please login first!', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Checking wallet balance...', 'info');
+                
+                const response = await fetch('http://localhost:5001/api/v1/user-info', {
+                    method: 'GET',
+                    headers: {
+                        'x-auth-token': authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Wallet balance retrieved!\n\nCurrent Balance: GHS ${data.walletBalance}\nUser: ${data.name}\nEmail: ${data.email}`, 'success');
+                } else {
+                    showResult(`❌ Failed to get wallet balance: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Error checking wallet balance: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPaymentVerification() {
+            const reference = document.getElementById('reference').value;
+            
+            if (!authToken) {
+                showResult('❌ Please login first!', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Testing payment verification...', 'info');
+                
+                const response = await fetch(`http://localhost:5001/api/v1/verify-payment?reference=${reference}`, {
+                    method: 'GET',
+                    headers: {
+                        'x-auth-token': authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Payment verification successful!\n\nSuccess: ${data.success}\nMessage: ${data.message}\nReference: ${data.data?.reference}\nAmount: GHS ${data.data?.amount}\nStatus: ${data.data?.status}\n\nNew Balance: GHS ${data.data?.newBalance || 'N/A'}`, 'success');
+                } else {
+                    showResult(`❌ Payment verification failed: ${data.error || data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Payment verification error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminVerification() {
+            const reference = document.getElementById('reference').value;
+            
+            if (!authToken) {
+                showResult('❌ Please login first!', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Testing admin verification...', 'info');
+                
+                const response = await fetch(`http://localhost:5001/api/v1/admin/verify-paystack/${reference}`, {
+                    method: 'GET',
+                    headers: {
+                        'x-auth-token': authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Admin verification successful!\n\nVerified: ${data.verified}\nMessage: ${data.message}\nTransaction Amount: GHS ${data.transaction.amount}\nTransaction Status: ${data.transaction.status}\nPaystack Status: ${data.paystackVerification.status}\nGateway Response: ${data.paystackVerification.gateway_response}`, 'success');
+                } else {
+                    showResult(`❌ Admin verification failed: ${data.msg || data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Admin verification error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test on page load
+        window.onload = function() {
+            showResult('🚀 Ready to test wallet balance fixes!\n\n✅ Fixed Issues:\n1. Updated processSuccessfulPayment() to update User.walletBalance\n2. Updated admin verify-paystack endpoint to update wallet balance\n3. Both User.walletBalance and Wallet.balance are now synchronized\n\n1. Click "Login" to authenticate\n2. Click "Check Wallet Balance" to see current balance\n3. Click "Test Payment Verification" to test the fixed endpoint\n4. Click "Test Admin Verification" to test admin verification\n\nNote: Make sure the backend server is running on localhost:5001', 'info');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Users Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .status-active {
+            color: green;
+            font-weight: bold;
+        }
+        .status-disabled {
+            color: red;
+            font-weight: bold;
+        }
+        .role-admin {
+            color: purple;
+            font-weight: bold;
+        }
+        .role-seller {
+            color: blue;
+            font-weight: bold;
+        }
+        .role-buyer {
+            color: green;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        .pagination button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Admin Users Management Test</h1>
+        <p>Test the admin users API endpoint and view user data</p>
+    </div>
+
+    <div class="controls">
+        <h3>Controls</h3>
+        <div>
+            <button onclick="fetchUsers()" id="fetchBtn">Fetch Users</button>
+            <button onclick="fetchUserById()" id="fetchByIdBtn">Fetch User by ID</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <label>Page: </label>
+            <input type="number" id="pageInput" value="1" min="1" style="width: 80px;">
+            
+            <label>Limit: </label>
+            <input type="number" id="limitInput" value="10" min="1" max="50" style="width: 80px;">
+            
+            <label>Search: </label>
+            <input type="text" id="searchInput" placeholder="Search by name, email, phone..." style="width: 200px;">
+            
+            <label>Role: </label>
+            <select id="roleSelect">
+                <option value="">All Roles</option>
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="results">
+        <h3>Results</h3>
+        <div id="status"></div>
+        <div id="results"></div>
+        <div id="pagination"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001';
+        const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5YWJjYTQ2NDEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjAwMTM0MDIsImV4cCI6MTc2MDYxODIwMn0.iC2UlRI0hKv4ofsP8St-mwh6p8bB2Ty_zPvHfCuo0-Y';
+
+        function addResult(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            statusDiv.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-GH', {
+                style: 'currency',
+                currency: 'GHS'
+            }).format(amount);
+        }
+
+        function getStatusClass(user) {
+            if (user.isDisabled) return 'status-disabled';
+            return 'status-active';
+        }
+
+        function getRoleClass(role) {
+            return `role-${role}`;
+        }
+
+        async function fetchUsers() {
+            try {
+                addResult('🔍 Fetching users...', 'info');
+                
+                const page = document.getElementById('pageInput').value;
+                const limit = document.getElementById('limitInput').value;
+                const search = document.getElementById('searchInput').value;
+                const role = document.getElementById('roleSelect').value;
+                
+                const params = new URLSearchParams({
+                    page,
+                    limit
+                });
+                
+                if (search) params.append('search', search);
+                if (role) params.append('role', role);
+                
+                const response = await fetch(`${API_BASE}/api/v1/admin/users?${params}`, {
+                    headers: {
+                        'x-auth-token': ADMIN_TOKEN,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Successfully fetched ${data.users.length} users (Page ${data.currentPage} of ${data.totalPages}, Total: ${data.totalUsers})`, 'success');
+                    displayUsers(data.users);
+                    displayPagination(data);
+                } else {
+                    addResult(`❌ Error: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function fetchUserById() {
+            const userId = prompt('Enter User ID:');
+            if (!userId) return;
+            
+            try {
+                addResult(`🔍 Fetching user with ID: ${userId}...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/v1/admin/users/${userId}`, {
+                    headers: {
+                        'x-auth-token': ADMIN_TOKEN,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Successfully fetched user: ${data.name}`, 'success');
+                    displayUsers([data]);
+                } else {
+                    addResult(`❌ Error: ${data.message || 'User not found'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayUsers(users) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (users.length === 0) {
+                resultsDiv.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+            
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Wallet Balance</th>
+                            <th>Created</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.name || 'N/A'}</td>
+                                <td>${user.email || 'N/A'}</td>
+                                <td>${user.phoneNumber || 'N/A'}</td>
+                                <td class="${getRoleClass(user.role)}">${user.role || 'N/A'}</td>
+                                <td class="${getStatusClass(user)}">${user.isDisabled ? 'Disabled' : 'Active'}</td>
+                                <td>${formatCurrency(user.walletBalance || 0)}</td>
+                                <td>${formatDate(user.createdAt)}</td>
+                                <td style="font-size: 12px; color: #666;">${user._id}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            resultsDiv.innerHTML = table;
+        }
+
+        function displayPagination(data) {
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (data.totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            const pagination = `
+                <div class="pagination">
+                    <button onclick="changePage(1)" ${data.currentPage === 1 ? 'disabled' : ''}>First</button>
+                    <button onclick="changePage(${data.currentPage - 1})" ${data.currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                    <span>Page ${data.currentPage} of ${data.totalPages}</span>
+                    <button onclick="changePage(${data.currentPage + 1})" ${data.currentPage === data.totalPages ? 'disabled' : ''}>Next</button>
+                    <button onclick="changePage(${data.totalPages})" ${data.currentPage === data.totalPages ? 'disabled' : ''}>Last</button>
+                </div>
+            `;
+            
+            paginationDiv.innerHTML = pagination;
+        }
+
+        function changePage(page) {
+            document.getElementById('pageInput').value = page;
+            fetchUsers();
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('pagination').innerHTML = '';
+        }
+
+        // Auto-fetch on page load
+        window.onload = function() {
+            fetchUsers();
+        };
+    </script>
+</body>
+</html>

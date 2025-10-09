@@ -95,7 +95,15 @@ export const isAuthenticated = () => {
   const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
   const tokenValid = !isTokenExpired();
   
-  return !!token && sessionAuth === 'true' && tokenValid;
+  const result = !!token && sessionAuth === 'true' && tokenValid;
+  console.log('isAuthenticated check:', { 
+    hasToken: !!token, 
+    sessionAuth, 
+    tokenValid, 
+    result 
+  });
+  
+  return result;
 };
 
 /**
@@ -105,10 +113,20 @@ export const isAuthenticated = () => {
 export const getCurrentUser = () => {
   const userData = SecureStorage.getItem(USER_DATA_KEY);
   
-  if (!userData) return null;
+  if (!userData) {
+    console.log('getCurrentUser: No user data found');
+    return null;
+  }
   
   try {
-    return JSON.parse(userData);
+    const parsed = JSON.parse(userData);
+    console.log('getCurrentUser: Parsed user data:', { 
+      hasId: !!(parsed.id || parsed._id),
+      id: parsed.id,
+      _id: parsed._id,
+      keys: Object.keys(parsed)
+    });
+    return parsed;
   } catch (error) {
     console.error('Error parsing user data:', error);
     return null;
@@ -144,6 +162,13 @@ export const saveAuthData = (data, rememberMe = false) => {
   
   if (token) {
     SecureStorage.setItem(AUTH_TOKEN_KEY, token);
+    
+    // Also set cookie for middleware access
+    if (typeof document !== 'undefined') {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + (expiresIn * 1000));
+      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    }
   }
   
   if (refreshToken) {
@@ -184,6 +209,9 @@ export const clearAuthData = () => {
   // Clear session storage
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem(SESSION_AUTH_KEY);
+    
+    // Clear cookie for middleware access
+    document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax';
   }
 };
 
@@ -484,6 +512,13 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
     user,
     expiresIn
   }, rememberMe);
+  
+  // Also set cookie for middleware access
+  if (typeof document !== 'undefined' && token) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (expiresIn * 1000));
+    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+  }
 };
 
 export default {

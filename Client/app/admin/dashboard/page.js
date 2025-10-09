@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import adminAPI from '../../../utils/adminApi';
-import { getNextPublicApiUrl } from '../../../utils/envConfig';
+import adminAPI, { userAPI } from '../../../utils/adminApi';
+import { getApiUrl } from '../../../utils/envConfig';
 import apiClient from '../../../utils/apiClient.js';
+import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth.js';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
@@ -20,17 +21,22 @@ import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptySta
 
 const AdminDashboard = () => {
   const router = useRouter();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userData, setUserData] = useState(null);
+
+  // Notification system
+  const showNotification = useCallback((message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  }, []);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [mounted, setMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   
   // Orders state
   const [orders, setOrders] = useState([]);
@@ -64,7 +70,7 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState([]);
 
   // API Configuration
-  const API_BASE_URL = getNextPublicApiUrl();
+  const API_BASE_URL = getApiUrl();
   
   // Debug mode for development
   const DEBUG_MODE = process.env.NODE_ENV === 'development';
@@ -137,54 +143,45 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Check authentication with better mobile support
+  // Check authentication using centralized auth hook
   const checkAuth = useCallback(() => {
     try {
-      // Use the same token verification as SignIn page with mobile-friendly error handling
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-      const userDataStr = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
+      console.log('🔐 Auth check:', {
+        isAuthenticated,
+        hasUser: !!user,
+        userRole: user?.role,
+        authLoading
+      });
       
-      // Better error handling for mobile browsers
-      if (!token) {
-        console.warn('No auth token found - redirecting to login');
-        router.push('/SignIn');
-        return;
+      if (authLoading) {
+        return false; // Still loading
       }
       
-      if (!userDataStr) {
-        console.warn('No user data found - redirecting to login');
-        router.push('/SignIn');
-        return;
+      // Check if user is authenticated and has admin role
+      if (!isAuthenticated || !user || !['admin', 'superadmin'].includes(user.role)) {
+        console.warn('Authentication failed or user is not admin - redirecting to login');
+        console.log('Auth failure details:', {
+          isAuthenticated,
+          hasUser: !!user,
+          userRole: user?.role,
+          allowedRoles: ['admin', 'superadmin']
+        });
+        logout('/SignIn');
+        return false;
       }
       
-      // Parse user data with error handling
-      let userData;
-      try {
-        userData = JSON.parse(userDataStr);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        router.push('/SignIn');
-        return;
-      }
+      setUserData(user);
+      return true;
       
-      // Check if user has admin role
-      if (!userData.role || !['admin', 'superadmin'].includes(userData.role)) {
-        console.warn('User does not have admin privileges');
-        router.push('/SignIn');
-        return;
-      }
-      
-      setUserData(userData);
-      setIsAuthenticated(true);
-      setAuthChecked(true);
+      console.log('✅ Admin authentication successful');
       
     } catch (error) {
       console.error('Authentication check failed:', error);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      router.push('/SignIn');
+      logout('/SignIn');
     }
-  }, [router]);
+  }, []);
 
   // Retry function with exponential backoff
   const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
@@ -192,7 +189,11 @@ const AdminDashboard = () => {
       try {
         return await fn();
       } catch (error) {
-        if (error.message.includes('Too many requests') && attempt < maxRetries - 1) {
+        // Handle rate limiting errors (including development bypass)
+        if ((error.message.includes('Too many requests') || 
+             error.message.includes('Rate limit bypassed in development') ||
+             (error.isRateLimited && error.error === 'Rate limit bypassed in development')) && 
+            attempt < maxRetries - 1) {
           const delay = baseDelay * Math.pow(2, attempt);
           console.log(`Rate limited, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -216,10 +217,10 @@ const AdminDashboard = () => {
       }
 
       // Check if we have a valid token before making API calls
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const token = getAuthToken();
       if (!token) {
         console.warn('No authentication token found, redirecting to login');
-        router.push('/SignIn');
+        logout('/SignIn');
         return;
       }
 
@@ -233,9 +234,9 @@ const AdminDashboard = () => {
       const dashboardStats = await retryWithBackoff(() => apiClient.getAdminStatistics()).catch(err => {
         console.error('Dashboard stats API error:', err.message);
         if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
-          if (err.message.includes('Failed to fetch')) {
+          if (err.message.includes('Failed to fetch') || err.message.includes('404')) {
             console.warn('Server connection failed, using fallback data');
-            showNotification('Server connection issue, showing cached data', 'warning');
+            showNotification('Admin server not available. Using demo data.', 'warning');
           } else {
             showNotification('Please sign in again', 'error');
             router.push('/SignIn');
@@ -297,6 +298,33 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
+      
+      // Handle development rate limit bypass gracefully
+      if (error.message.includes('Rate limit bypassed in development') || 
+          (error.isRateLimited && error.error === 'Rate limit bypassed in development')) {
+        console.warn('Rate limit bypassed in development - using fallback data');
+        showNotification('Using demo data (rate limit bypassed in development)', 'warning');
+        
+        // Set demo stats for development
+        setStats({
+          totalUsers: 150,
+          activeUsers: 89,
+          totalOrders: 234,
+          totalRevenue: 12500,
+          growthRate: 12.5,
+          pendingOrders: 12,
+          completedOrders: 222,
+          totalProducts: 45,
+          totalAgents: 8,
+          activeAgents: 6,
+          totalCommissions: 890,
+          todayRevenue: 450,
+          todayOrders: 18,
+          systemHealth: 'excellent'
+        });
+        return;
+      }
+      
       showNotification('Failed to load dashboard statistics', 'error');
       
       // Set empty stats on error
@@ -317,7 +345,7 @@ const AdminDashboard = () => {
         systemHealth: 'error'
       });
     }
-  }, [dataCache, CACHE_DURATION, router]);
+  }, [dataCache, CACHE_DURATION, router, showNotification]);
 
   // Helper function to get time ago
   const getTimeAgo = useCallback((date) => {
@@ -342,10 +370,30 @@ const AdminDashboard = () => {
 
   // Load recent activities
   const loadRecentActivities = useCallback(async () => {
+    // Don't load activities if not authenticated
+    if (!isAuthenticated || !user) {
+      console.log('🔐 Skipping activities load - not authenticated');
+      return;
+    }
+    
     try {
       const [ordersData, transactionsData] = await Promise.all([
-        adminAPI.order.getOrders({ limit: 5 }).catch(() => ({ orders: [] })),
-        adminAPI.transaction.getTransactions({ limit: 5 }).catch(() => ({ transactions: [] }))
+        adminAPI.order.getOrders({ limit: 5 }).catch(error => {
+          if (error.message.includes('429') || error.message.includes('Too many') || error.message.includes('Rate limit bypassed')) {
+            console.warn('Rate limited on orders API - using empty data');
+            return { orders: [] };
+          }
+          console.error('Orders API error:', error);
+          return { orders: [] };
+        }),
+        adminAPI.transaction.getTransactions({ limit: 5 }).catch(error => {
+          if (error.message.includes('429') || error.message.includes('Too many') || error.message.includes('Rate limit bypassed')) {
+            console.warn('Rate limited on transactions API - using empty data');
+            return { transactions: [] };
+          }
+          console.error('Transactions API error:', error);
+          return { transactions: [] };
+        })
       ]);
 
       const activities = [];
@@ -385,10 +433,16 @@ const AdminDashboard = () => {
       console.error('Failed to load activities:', error);
       setRecentActivities([]);
     }
-  }, [getTimeAgo]);
+  }, [getTimeAgo, isAuthenticated, user]);
 
   // Load chart data with batch API call and caching
   const loadChartData = useCallback(async () => {
+    // Don't load chart data if not authenticated
+    if (!isAuthenticated || !user) {
+      console.log('🔐 Skipping chart data load - not authenticated');
+      return;
+    }
+    
     try {
       const cacheKey = 'chart_data_7days';
       const cached = dataCache[cacheKey];
@@ -400,13 +454,17 @@ const AdminDashboard = () => {
       }
       
       // Use batch API to get 7 days of data in one request
+      console.log('🔍 Loading chart data with apiClient...');
       const batchData = await apiClient.getAdminBatchDailySummary(7);
+      console.log('📊 Chart data response:', batchData);
       
       if (batchData.success && batchData.data) {
-        const chartData = batchData.data.map(item => ({
+        // Handle both array format and object with summaries property
+        const dataArray = Array.isArray(batchData.data) ? batchData.data : batchData.data.summaries || [];
+        const chartData = dataArray.map(item => ({
           date: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
-          sales: item.summary?.totalRevenue || 0,
-          orders: item.summary?.totalOrders || 0
+          sales: item.revenue || item.summary?.totalRevenue || 0,
+          orders: item.orders || item.summary?.totalOrders || 0
         }));
         
         setChartData(chartData);
@@ -435,6 +493,16 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Failed to load chart data:', error);
+      
+      // Handle development rate limit bypass gracefully
+      if (error.message.includes('Rate limit bypassed in development') || 
+          (error.isRateLimited && error.error === 'Rate limit bypassed in development')) {
+        console.warn('Rate limit bypassed in development - using demo chart data');
+        showNotification('Using demo chart data (rate limit bypassed in development)', 'warning');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('404')) {
+        showNotification('Admin server not available. Using demo data.', 'warning');
+      }
+      
       // Fallback to mock data
       const mockData = [];
       for (let i = 6; i >= 0; i--) {
@@ -448,7 +516,7 @@ const AdminDashboard = () => {
       }
       setChartData(mockData);
     }
-  }, [dataCache, CACHE_DURATION]);
+  }, [dataCache, CACHE_DURATION, isAuthenticated, user, showNotification]);
 
   // Debounce mechanism to prevent rapid successive calls
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
@@ -461,7 +529,7 @@ const AdminDashboard = () => {
 
   // Load dashboard data (Ultra-fast parallel loading)
   const loadDashboardData = useCallback(async () => {
-    if (!isAuthenticated || !authChecked) return;
+    if (!isAuthenticated || !user) return;
     
     // Check debounce to prevent rapid successive requests
     const now = Date.now();
@@ -490,11 +558,11 @@ const AdminDashboard = () => {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [isAuthenticated, authChecked, loadStats, loadRecentActivities, loadChartData, lastRefreshTime]);
+  }, [isAuthenticated, user, loadStats, loadRecentActivities, loadChartData, lastRefreshTime, showNotification]);
 
   // Load orders
   const loadOrders = useCallback(async () => {
-    if (!isAuthenticated || !authChecked) return;
+    if (!isAuthenticated || !user) return;
     
     try {
       const response = await adminAPI.order.getOrders({ 
@@ -518,14 +586,34 @@ const AdminDashboard = () => {
       console.error('Failed to load orders:', error);
       showNotification('Failed to load orders', 'error');
     }
-  }, [filterStatus, isAuthenticated, authChecked]);
+  }, [filterStatus, isAuthenticated, user, showNotification]);
 
   // Load users
   const loadUsers = useCallback(async () => {
-    if (!isAuthenticated || !authChecked) return;
+    if (!isAuthenticated || !user) return;
     
     try {
-      const response = await apiClient.getUsers({ page: 1, limit: 50, search: userSearchTerm });
+      // Debug authentication using auth utilities
+      const token = getAuthToken();
+      const userData = getCurrentUser();
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 Admin Dashboard - Loading users with auth:', {
+          hasToken: !!token,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+          hasUserData: !!userData,
+          userData: userData,
+          isAuthenticated,
+          user
+        });
+      }
+      
+      const response = await userAPI.getUsers(1, 50, userSearchTerm);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('👥 Users API Response:', response);
+      }
+      
       const formattedUsers = response.users?.map(user => ({
         id: user._id,
         name: user.name || 'Unknown',
@@ -542,7 +630,7 @@ const AdminDashboard = () => {
       console.error('Failed to load users:', error);
       showNotification('Failed to load users', 'error');
     }
-  }, [userSearchTerm, isAuthenticated, authChecked]);
+  }, [userSearchTerm, isAuthenticated, user, showNotification]);
 
   // Initialize dashboard
   useEffect(() => {
@@ -551,21 +639,32 @@ const AdminDashboard = () => {
 
   // Load dashboard data when authenticated with auto-refresh
   useEffect(() => {
-    if (isAuthenticated && authChecked) {
-      loadDashboardData();
-      
-      // Auto-refresh dashboard data every 30 seconds
-      const refreshInterval = setInterval(() => {
+    if (isAuthenticated && user) {
+      // Add a small delay to ensure authentication is fully processed
+      const timer = setTimeout(() => {
         loadDashboardData();
-      }, 30000);
+        
+        // Auto-refresh dashboard data every 30 seconds
+        const refreshInterval = setInterval(() => {
+          loadDashboardData();
+        }, 30000);
+        
+        // Store interval ID for cleanup
+        window.dashboardRefreshInterval = refreshInterval;
+      }, 100);
       
-      return () => clearInterval(refreshInterval);
+      return () => {
+        clearTimeout(timer);
+        if (window.dashboardRefreshInterval) {
+          clearInterval(window.dashboardRefreshInterval);
+        }
+      };
     }
-  }, [isAuthenticated, authChecked, loadDashboardData]);
+  }, [isAuthenticated, user, loadDashboardData]);
 
   // Load orders when filterStatus changes or when orders tab is active with auto-refresh
   useEffect(() => {
-    if (activeTab === 'orders' && isAuthenticated && authChecked) {
+    if (activeTab === 'orders' && isAuthenticated && user) {
       loadOrders();
       
       // Auto-refresh orders every 20 seconds when orders tab is active
@@ -577,11 +676,11 @@ const AdminDashboard = () => {
       
       return () => clearInterval(ordersRefreshInterval);
     }
-  }, [filterStatus, activeTab, loadOrders, isAuthenticated, authChecked]);
+  }, [filterStatus, activeTab, loadOrders, isAuthenticated, user]);
 
   // Load users when users tab is active with auto-refresh
   useEffect(() => {
-    if (activeTab === 'users' && isAuthenticated && authChecked) {
+    if (activeTab === 'users' && isAuthenticated && user) {
       loadUsers();
       
       // Auto-refresh users every 25 seconds when users tab is active
@@ -593,7 +692,7 @@ const AdminDashboard = () => {
       
       return () => clearInterval(usersRefreshInterval);
     }
-  }, [activeTab, loadUsers, isAuthenticated, authChecked]);
+  }, [activeTab, loadUsers, isAuthenticated, user]);
 
   // Route prefetching for ultra-fast navigation
   const prefetchRoute = useCallback(async (route) => {
@@ -611,7 +710,7 @@ const AdminDashboard = () => {
 
   // Prefetch all admin routes on component mount
   useEffect(() => {
-    if (isAuthenticated && authChecked) {
+    if (isAuthenticated && user) {
       const routesToPrefetch = [
         '/admin/control-center',
         '/admin/products',
@@ -630,7 +729,7 @@ const AdminDashboard = () => {
         routesToPrefetch.forEach(route => prefetchRoute(route));
       }, 1000);
     }
-  }, [isAuthenticated, authChecked, prefetchRoute]);
+  }, [isAuthenticated, user, prefetchRoute]);
 
   // Keyboard shortcuts for faster refresh
   useEffect(() => {
@@ -664,12 +763,6 @@ const AdminDashboard = () => {
     window.addEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
     return () => window.removeEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
   }, [loadDashboardData]);
-
-  // Notification system
-  const showNotification = useCallback((message, type = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 5000);
-  }, []);
 
   // Logout
   const handleLogout = useCallback(() => {
@@ -1044,7 +1137,7 @@ const AdminDashboard = () => {
     };
 
     const handleToggleUserStatus = async (user) => {
-      if (!isAuthenticated || !authChecked) return;
+      if (!isAuthenticated || !user) return;
       
       try {
         const reason = user.isDisabled ? '' : 'Administrative action';
@@ -1061,7 +1154,7 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteUser = async (user) => {
-      if (!isAuthenticated || !authChecked) return;
+      if (!isAuthenticated || !user) return;
       
       if (confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
         try {
@@ -1829,7 +1922,7 @@ const AdminDashboard = () => {
                 <span className="font-medium text-yellow-800 dark:text-yellow-200">Debug Mode</span>
                 <span className="text-yellow-700 dark:text-yellow-300">API: {API_BASE_URL}</span>
                 <span className="text-yellow-700 dark:text-yellow-300">
-                  Token: {typeof window !== 'undefined' && localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing'}
+                  Token: {isAuthenticated && user ? '✅ Present' : '❌ Missing'}
                 </span>
                 <span className="text-yellow-700 dark:text-yellow-300">
                   Server: {stats.systemHealth === 'error' ? '❌ Error' : '✅ Connected'}
@@ -1839,7 +1932,30 @@ const AdminDashboard = () => {
                 onClick={() => {
                   console.log('Current stats:', stats);
                   console.log('API Base URL:', API_BASE_URL);
-                  console.log('Auth Token:', typeof window !== 'undefined' ? localStorage.getItem('authToken') : 'N/A (SSR)');
+                  console.log('Auth Token:', isAuthenticated && user ? 'Present' : 'Missing');
+                  console.log('Auth State:', { isAuthenticated, user, userData });
+                  
+                  // Debug auth utilities
+                  console.log('Auth Utilities Debug:');
+                  console.log('- getAuthToken():', getAuthToken() ? 'Present' : 'Missing');
+                  console.log('- getCurrentUser():', getCurrentUser());
+                  console.log('- checkIsAuthenticated():', checkIsAuthenticated());
+                  
+                  // Debug localStorage
+                  console.log('LocalStorage Debug:');
+                  Object.keys(localStorage).forEach(key => {
+                    if (key.includes('auth') || key.includes('token') || key.includes('user')) {
+                      console.log(`- ${key}:`, localStorage.getItem(key));
+                    }
+                  });
+                  
+                  // Debug sessionStorage
+                  console.log('SessionStorage Debug:');
+                  Object.keys(sessionStorage).forEach(key => {
+                    if (key.includes('auth') || key.includes('token') || key.includes('user')) {
+                      console.log(`- ${key}:`, sessionStorage.getItem(key));
+                    }
+                  });
                 }}
                 className="text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
               >

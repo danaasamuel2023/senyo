@@ -12,6 +12,11 @@ class RateLimitManager {
 
   // Check if a user/IP is currently rate limited
   isRateLimited(identifier, windowMs = 60000, maxRequests = 10) {
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return false;
+    }
+    
     const now = Date.now();
     const key = `rate_limit_${identifier}`;
     

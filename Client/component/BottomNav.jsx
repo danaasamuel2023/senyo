@@ -10,9 +10,43 @@ export default function BottomNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('authToken');
-    setIsAuthenticated(!!token);
+    // Check if user is authenticated with multiple checks
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const userData = localStorage.getItem('userData');
+        
+        // Check if both token and user data exist
+        const hasToken = !!token;
+        const hasUserData = !!userData;
+        
+        // Additional check: verify user data is valid JSON
+        let validUserData = false;
+        if (userData) {
+          try {
+            const parsed = JSON.parse(userData);
+            validUserData = !!(parsed.id || parsed._id);
+          } catch (e) {
+            console.warn('Invalid user data in localStorage');
+          }
+        }
+        
+        const isAuth = hasToken && hasUserData && validUserData;
+        console.log('BottomNav Auth Check:', { hasToken, hasUserData, validUserData, isAuth });
+        setIsAuthenticated(isAuth);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+    
+    // Listen for storage changes
+    const handleStorageChange = () => checkAuth();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [pathname]);
 
   // Don't show bottom nav on certain pages
@@ -37,9 +71,13 @@ export default function BottomNav() {
           const isActive = pathname === path;
           
           const handleClick = () => {
+            console.log('BottomNav Click:', { label, path, requireAuth, isAuthenticated });
             if (requireAuth && !isAuthenticated) {
-              router.push('/SignIn');
+              console.log('Redirecting to SignIn for:', path);
+              // Add redirect parameter to return to intended page after login
+              router.push(`/SignIn?redirect=${encodeURIComponent(path)}`);
             } else {
+              console.log('Navigating to:', path);
               router.push(path);
             }
           };

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Payment Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .transaction-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .verified-true {
+            border-left: 4px solid #28a745;
+        }
+        .verified-false {
+            border-left: 4px solid #dc3545;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Admin Payment Verification Test</h1>
+    
+    <div class="container">
+        <h2>📊 Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Test Transactions</h2>
+        <button onclick="testSuccessfulTransaction()">Test Successful Transaction</button>
+        <button onclick="testFailedTransaction()">Test Failed Transaction</button>
+        <button onclick="testAllTransactions()">Test All Transactions</button>
+    </div>
+
+    <div class="container">
+        <h2>📋 Transaction Details</h2>
+        <div id="transactionDetails"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001';
+        const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5YWJjYTQ2NDEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjAwMTM0MDIsImV4cCI6MTc2MDYxODIwMn0.iC2UlRI0hKv4ofsP8St-mwh6p8bB2Ty_zPvHfCuo0-Y';
+
+        // Test transactions
+        const testTransactions = {
+            successful: 'DEP-164cbadf2d29e9a8e527-1760010728076',
+            failed: 'DEP-26d4a128ba6c68c54e38-1760011267939'
+        };
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function addTransactionCard(transaction, verification) {
+            const detailsDiv = document.getElementById('transactionDetails');
+            const card = document.createElement('div');
+            card.className = `transaction-card ${verification.verified ? 'verified-true' : 'verified-false'}`;
+            
+            card.innerHTML = `
+                <h3>Transaction: ${transaction.reference}</h3>
+                <p><strong>Status:</strong> ${transaction.status}</p>
+                <p><strong>Amount:</strong> GHS ${transaction.amount}</p>
+                <p><strong>Gateway:</strong> ${transaction.gateway}</p>
+                <p><strong>Verified:</strong> ${verification.verified ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Message:</strong> ${verification.message}</p>
+                <details>
+                    <summary>Full Verification Response</summary>
+                    <pre>${JSON.stringify(verification, null, 2)}</pre>
+                </details>
+            `;
+            
+            detailsDiv.appendChild(card);
+        }
+
+        async function verifyTransaction(reference) {
+            try {
+                addResult(`🔍 Verifying transaction: ${reference}`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/v1/admin/verify-paystack/${reference}`, {
+                    headers: {
+                        'x-auth-token': ADMIN_TOKEN,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                addResult(`✅ Verification completed for ${reference}`, 'success');
+                addTransactionCard(data.transaction, data);
+                
+                return data;
+            } catch (error) {
+                addResult(`❌ Verification failed for ${reference}: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function testSuccessfulTransaction() {
+            addResult('🧪 Testing successful transaction...', 'info');
+            try {
+                await verifyTransaction(testTransactions.successful);
+            } catch (error) {
+                console.error('Test failed:', error);
+            }
+        }
+
+        async function testFailedTransaction() {
+            addResult('🧪 Testing failed transaction...', 'info');
+            try {
+                await verifyTransaction(testTransactions.failed);
+            } catch (error) {
+                console.error('Test failed:', error);
+            }
+        }
+
+        async function testAllTransactions() {
+            addResult('🧪 Testing all transactions...', 'info');
+            
+            for (const [type, reference] of Object.entries(testTransactions)) {
+                try {
+                    await verifyTransaction(reference);
+                } catch (error) {
+                    console.error(`Test failed for ${type}:`, error);
+                }
+            }
+        }
+
+        // Initialize
+        addResult('🚀 Admin Payment Verification Test Ready', 'success');
+        addResult('Click the buttons above to test different transaction scenarios', 'info');
+    </script>
+</body>
+</html>

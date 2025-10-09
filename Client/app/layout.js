@@ -10,14 +10,16 @@ import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
 import errorMonitor from "@/utils/errorMonitor";
-// import "@/utils/consoleErrorSuppression"; // Temporarily disabled
+import performanceMonitor from "@/utils/performanceMonitor";
+// import testRunner from "@/utils/testRunner"; // Temporarily disabled to fix webpack error
+import "@/utils/consoleErrorSuppression"; // Re-enabled for production
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
-  preload: true,
+  preload: false, // Disable automatic preload to prevent warnings
   adjustFontFallback: true,
 });
 
@@ -26,7 +28,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
   variable: "--font-jetbrains",
   weight: ["400", "500", "600", "700", "800"],
-  preload: true,
+  preload: false, // Disable automatic preload to prevent warnings
   adjustFontFallback: true,
 });
 
@@ -359,6 +361,17 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        
+        {/* Font preload optimization with proper as attribute */}
+        <link 
+          rel="preload" 
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" 
+          as="style" 
+        />
+        <link 
+          rel="stylesheet" 
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" 
+        />
         
         {/* Modern favicon setup with dark mode support */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />

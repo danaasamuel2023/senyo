@@ -28,18 +28,20 @@ const ConnectDB = () => {
         console.error('Failed to connect to MongoDB', err);
     });
 
-    // Add connection event listeners for better monitoring
-    mongoose.connection.on('connected', () => {
-        console.log('MongoDB connection established');
-    });
+    // Add connection event listeners for better monitoring (only once)
+    if (!mongoose.connection.listeners('connected').length) {
+        mongoose.connection.on('connected', () => {
+            console.log('MongoDB connection established');
+        });
 
-    mongoose.connection.on('error', (err) => {
-        console.error('MongoDB connection error:', err.message);
-    });
+        mongoose.connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err.message);
+        });
 
-    mongoose.connection.on('disconnected', () => {
-        console.warn('MongoDB disconnected');
-    });
+        mongoose.connection.on('disconnected', () => {
+            console.warn('MongoDB disconnected');
+        });
+    }
 
     // Handle process termination
     process.on('SIGINT', async () => {

@@ -187,7 +187,7 @@ class PaymentGatewayService {
           currency: 'GHS',
           reference,
           callback_url: process.env.NODE_ENV === 'production' 
-            ? `https://unlimiteddata.gh/payment/callback?reference=${reference}&source=unlimiteddata`
+            ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=unlimiteddata`
             : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimiteddata`,
           metadata: {
             custom_fields: [

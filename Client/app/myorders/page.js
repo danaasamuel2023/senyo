@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth, withAuth } from '../../utils/auth';
 import {
   RefreshCw, 
   CheckCircle, 
@@ -269,6 +270,12 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
 const MyOrdersPage = () => {
   const router = useRouter();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  
+  // Debug authentication state
+  useEffect(() => {
+    console.log('MyOrdersPage Auth State:', { isAuthenticated, user, authLoading });
+  }, [isAuthenticated, user, authLoading]);
   
   // State Management
   const [loading, setLoading] = useState(true);
@@ -305,24 +312,70 @@ const MyOrdersPage = () => {
   }, []);
 
   const checkAuth = useCallback(() => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    console.log('checkAuth called:', { authLoading, isAuthenticated, user: !!user });
     
-    if (!token) {
-      router.push('/SignIn');
+    if (authLoading) {
+      console.log('Auth still loading, waiting...');
+      return false; // Still loading
+    }
+    
+    // Check localStorage as fallback
+    if (!isAuthenticated || !user) {
+      console.log('useAuth failed, checking localStorage...');
+      try {
+        const token = localStorage.getItem('authToken');
+        const userDataStr = localStorage.getItem('userData');
+        
+        console.log('localStorage check:', { hasToken: !!token, hasUserData: !!userDataStr });
+        
+        if (token && userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          console.log('Parsed userData:', userData);
+          if (userData && (userData.id || userData._id)) {
+            console.log('localStorage auth valid, setting user data');
+            setUserData(userData);
+            return true;
+          } else {
+            console.log('UserData missing ID fields:', { id: userData?.id, _id: userData?._id });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking localStorage auth:', error);
+      }
+      
+      console.log('No valid auth found, redirecting to SignIn');
+      // Redirect to signin with return path
+      router.push(`/SignIn?redirect=${encodeURIComponent('/myorders')}`);
       return false;
     }
     
+    console.log('useAuth successful, setting user data');
+    console.log('User from useAuth:', user);
     setUserData(user);
     return true;
-  }, [router]);
+  }, [isAuthenticated, user, authLoading, router]);
 
   const loadOrders = useCallback(async () => {
     if (!checkAuth()) return;
     
     setRefreshing(true);
     try {
-      const userId = JSON.parse(localStorage.getItem('userData')).id;
+      // Ensure user is available after checkAuth
+      const userId = user?.id || user?._id || userData?.id || userData?._id;
+      console.log('loadOrders user check:', { 
+        user, 
+        userData, 
+        userId,
+        hasUserId: !!userId 
+      });
+      
+      if (!userId) {
+        console.error('User ID not found in authentication context');
+        showNotification('User authentication error. Please sign in again.', 'error');
+        router.push('/SignIn');
+        return;
+      }
+      
       const authToken = localStorage.getItem('authToken');
 
       const response = await fetch(
@@ -351,7 +404,7 @@ const MyOrdersPage = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [checkAuth, showNotification]);
+  }, [checkAuth, showNotification, router, user]);
 
   const calculateStats = useCallback((ordersList) => {
     const newStats = {
@@ -451,8 +504,14 @@ const MyOrdersPage = () => {
 
   // Effects
   useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+    // Only load orders after auth loading is complete
+    if (!authLoading) {
+      console.log('Auth loading complete, calling loadOrders');
+      loadOrders();
+    } else {
+      console.log('Auth still loading, waiting...');
+    }
+  }, [loadOrders, authLoading]);
 
   useEffect(() => {
     applyFilters();
@@ -472,8 +531,8 @@ const MyOrdersPage = () => {
     return () => window.removeEventListener('refreshOrders', handleRefreshOrders);
   }, [loadOrders]);
 
-  // Loading State
-  if (loading) {
+  // Loading State - Show loading while auth is being checked
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center">
         <div className="text-center">
@@ -487,7 +546,9 @@ const MyOrdersPage = () => {
           <h1 className="text-2xl font-bold text-[#FFCC08] mb-2">UNLIMITEDDATA GH</h1>
           <div className="flex items-center justify-center space-x-2 text-yellow-400">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm font-medium">Loading orders...</span>
+            <span className="text-sm font-medium">
+              {authLoading ? 'Checking authentication...' : 'Loading orders...'}
+            </span>
           </div>
         </div>
       </div>

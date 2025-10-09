@@ -203,10 +203,26 @@ const formatDataCapacity = useCallback((capacity) => {
 // Navigation Functions
 const navigationHandlers = useMemo(() => ({
   orders: () => {
-    router.push('/orders');
+    // Check authentication before navigating
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    
+    if (!token || !userData) {
+      router.push(`/SignIn?redirect=${encodeURIComponent('/orders')}`);
+    } else {
+      router.push('/orders');
+    }
   },
   myOrders: () => {
-    router.push('/myorders');
+    // Check authentication before navigating
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    
+    if (!token || !userData) {
+      router.push(`/SignIn?redirect=${encodeURIComponent('/myorders')}`);
+    } else {
+      router.push('/myorders');
+    }
   },
   topup: () => {
     router.push('/topup');
@@ -257,7 +273,14 @@ const fetchDashboardData = useCallback(async (userId, retryCount = 0) => {
     }
     
     // Use the new API client for authenticated requests
+    console.log('🌐 Fetching dashboard data for userId:', userId);
     const responseData = await apiClient.getUserDashboard(userId);
+    
+    console.log('📊 Dashboard API response:', {
+      status: responseData?.status,
+      hasData: !!responseData?.data,
+      responsePreview: responseData ? JSON.stringify(responseData).substring(0, 200) + '...' : 'null'
+    });
     
     if (responseData?.status === 'success' && responseData?.data) {
       const data = responseData.data;
@@ -325,7 +348,7 @@ const handleAuthenticationError = useCallback(() => {
   setError('Session expired. Please login again.');
   localStorage.removeItem('authToken');
   localStorage.removeItem('userData');
-  setTimeout(() => router.push('/SignUp'), 2000);
+  setTimeout(() => router.push('/SignIn'), 2000);
 }, [router]);
 
 const handleRefresh = useCallback(async () => {
@@ -386,8 +409,16 @@ useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const userDataString = localStorage.getItem('userData');
+    const authToken = localStorage.getItem('authToken');
+    
+    console.log('🔐 UserDashboard Auth Check:', {
+      hasUserData: !!userDataString,
+      hasAuthToken: !!authToken,
+      userDataPreview: userDataString ? userDataString.substring(0, 100) + '...' : 'null'
+    });
     
     if (!userDataString) {
+      console.warn('❌ No userData found in localStorage');
       if (isMounted) {
         setError('Please login to access your dashboard');
         router.push('/SignIn');
@@ -398,7 +429,15 @@ useEffect(() => {
     try {
       const userData = JSON.parse(userDataString);
       
+      console.log('📊 Parsed userData:', {
+        hasId: !!userData?.id,
+        has_id: !!userData?._id,
+        userId: userData?.id || userData?._id,
+        userName: userData?.name
+      });
+      
       if (!userData?.id && !userData?._id) {
+        console.warn('❌ Invalid user data - missing ID');
         if (isMounted) {
           setError('Invalid user data. Please login again.');
           localStorage.removeItem('userData');
@@ -410,10 +449,11 @@ useEffect(() => {
       
       if (isMounted) {
         setUserName(userData.name || 'User');
+        console.log('✅ UserDashboard initialized successfully');
         await fetchDashboardData(userData.id || userData._id);
       }
     } catch (err) {
-      console.error('Initialization error:', err);
+      console.error('❌ Initialization error:', err);
       if (isMounted) {
         setError('Failed to load user data. Please login again.');
         localStorage.removeItem('userData');

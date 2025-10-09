@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Admin Users Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Admin Users Test</h1>
+        <button onclick="testAPI()">Test Admin Users API</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001';
+        const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5YWJjYTQ2NDEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjAwMTM0MDIsImV4cCI6MTc2MDYxODIwMn0.iC2UlRI0hKv4ofsP8St-mwh6p8bB2Ty_zPvHfCuo0-Y';
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">Testing API...</div>';
+            
+            try {
+                console.log('Making request to:', `${API_BASE}/api/v1/admin/users?page=1&limit=5`);
+                console.log('Using token:', ADMIN_TOKEN.substring(0, 20) + '...');
+                
+                const response = await fetch(`${API_BASE}/api/v1/admin/users?page=1&limit=5`, {
+                    headers: {
+                        'x-auth-token': ADMIN_TOKEN,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    let html = `
+                        <div class="result success">
+                            <h3>✅ API Success!</h3>
+                            <p>Found ${data.users.length} users (Total: ${data.totalUsers})</p>
+                            <p>Page ${data.currentPage} of ${data.totalPages}</p>
+                        </div>
+                    `;
+                    
+                    if (data.users.length > 0) {
+                        html += `
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.users.map(user => `
+                                        <tr>
+                                            <td>${user.name || 'N/A'}</td>
+                                            <td>${user.email || 'N/A'}</td>
+                                            <td>${user.role || 'N/A'}</td>
+                                            <td>${user.isDisabled ? 'Disabled' : 'Active'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ API Error</h3>
+                            <p>Status: ${response.status}</p>
+                            <p>Message: ${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

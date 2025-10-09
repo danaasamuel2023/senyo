@@ -179,7 +179,7 @@ const fetchTransactions = async () => {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/verify-paystack/${reference}`, {
+      const response = await axios.get(`http://localhost:5001/api/v1/admin/verify-paystack/${reference}`, {
         headers: {
           'x-auth-token': authToken
         }

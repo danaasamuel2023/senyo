@@ -26,7 +26,7 @@ const AuthGuard = ({ children }) => {
       const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
       
       if (!userData) {
-        router.push('/SignUp');
+        router.push('/SignIn');
         setLoading(false); // Set loading to false to allow redirect
         return;
       } else {
@@ -35,7 +35,7 @@ const AuthGuard = ({ children }) => {
       }
     } catch (error) {
       console.warn('AuthGuard localStorage access error:', error);
-      router.push('/SignUp');
+      router.push('/SignIn');
       setLoading(false);
     }
   }, [router, isPublicPath, pathname]);

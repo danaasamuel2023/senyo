@@ -71,7 +71,7 @@ const validateEnvironment = () => {
 const getEnvConfig = () => {
   return {
     NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT: process.env.PORT || 5001,
+    PORT: process.env.PORT || 3001,
     JWT_SECRET: process.env.JWT_SECRET,
     MONGODB_URI: process.env.MONGODB_URI,
     PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,

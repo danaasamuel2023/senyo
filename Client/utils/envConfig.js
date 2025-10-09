@@ -19,8 +19,8 @@ export const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // Always use production backend
-  return 'https://unlimitedata.onrender.com';
+  // Always use local backend for admin features since production lacks admin routes
+  return 'http://localhost:5001';
 };
 
 // Get Frontend URL for current environment
@@ -57,9 +57,8 @@ export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://localhost:3002',
     'https://unlimitedata.onrender.com',
-    'https://www.unlimitedata.onrender.com',
+    'https://www.unlimiteddata.gh',
     'https://unlimiteddatagh.com',
     'https://www.unlimiteddatagh.com'
   ];

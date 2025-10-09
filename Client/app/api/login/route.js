@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 
-// Use production backend URL
-const API_BASE_URL = 'https://unlimitedata.onrender.com';
+// Use local backend in development, production backend otherwise
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5001' 
+  : 'https://unlimitedata.onrender.com';
 
 export async function POST(request) {
   try {

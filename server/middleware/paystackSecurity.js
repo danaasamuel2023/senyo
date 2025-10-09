@@ -83,13 +83,20 @@ const verifyPaystackSignature = (paystackSecretKey) => {
  */
 const validateDepositAmount = (req, res, next) => {
   const { amount, totalAmountWithFee } = req.body;
+  
+  console.log(`[SECURITY] validateDepositAmount called:`, { 
+    amount, 
+    totalAmountWithFee, 
+    type: typeof amount,
+    ip: req.ip 
+  });
 
   // Minimum and maximum limits
-  const MIN_DEPOSIT = 5;
+  const MIN_DEPOSIT = 10;
   const MAX_DEPOSIT = 10000;
 
   if (!amount || amount < MIN_DEPOSIT) {
-    console.log(`[SECURITY] ❌ Deposit amount too low: ${amount}`);
+    console.log(`[SECURITY] ❌ Deposit amount too low: ${amount} (min: ${MIN_DEPOSIT})`);
     return res.status(400).json({
       success: false,
       error: `Minimum deposit is GHS ${MIN_DEPOSIT}`

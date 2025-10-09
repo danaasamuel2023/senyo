@@ -32,9 +32,19 @@ router.post('/deposit',
   async (req, res) => {
   try {
     const { userId, amount, totalAmountWithFee, email } = req.body;
+    
+    console.log('[DEPOSIT] Request received:', { 
+      userId, 
+      amount, 
+      totalAmountWithFee, 
+      email,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
 
     // Validate input
     if (!userId || !amount || amount < 10) {
+      console.log('[DEPOSIT] ❌ Validation failed:', { userId, amount });
       return res.status(400).json({ 
         success: false,
         error: 'Minimum deposit amount is ₵10' 
@@ -42,13 +52,16 @@ router.post('/deposit',
     }
 
     // Find user to get their email and check account status
+    console.log('[DEPOSIT] Looking for user with ID:', userId);
     const user = await User.findById(userId);
     if (!user) {
+      console.log('[DEPOSIT] ❌ User not found for ID:', userId);
       return res.status(404).json({ 
         success: false,
         error: 'User not found' 
       });
     }
+    console.log('[DEPOSIT] ✅ User found:', { id: user._id, email: user.email });
 
     // Check if user's account is disabled
     if (user.isDisabled) {
@@ -90,7 +103,7 @@ router.post('/deposit',
         reference,
         callback_url: process.env.NODE_ENV === 'production' 
           ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=unlimitedata`
-          : `http://localhost:3002/payment/callback?reference=${reference}&source=unlimitedata`
+          : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimitedata`
       },
       {
         headers: {
@@ -167,10 +180,15 @@ async function processSuccessfulPayment(reference) {
     await transaction.save();
     console.log(`[PAYMENT] Transaction ${reference} marked as completed`);
 
-    // Update user's wallet balance using the new Wallet collection
+    // Update user's wallet balance in both User and Wallet collections
     const user = await User.findById(transaction.userId);
     if (user) {
-      // Find or create wallet for the user
+      // Update User.walletBalance (used by frontend)
+      const previousUserBalance = user.walletBalance;
+      user.walletBalance += transaction.amount;
+      await user.save();
+      
+      // Find or create wallet for the user (for backend consistency)
       let wallet = await Wallet.findOne({ userId: transaction.userId });
       if (!wallet) {
         wallet = new Wallet({
@@ -181,19 +199,19 @@ async function processSuccessfulPayment(reference) {
         console.log(`[PAYMENT] Created new wallet for user ${transaction.userId}`);
       }
       
-      const previousBalance = wallet.balance;
+      const previousWalletBalance = wallet.balance;
       wallet.balance += transaction.amount;
       await wallet.save();
       
       console.log(`[PAYMENT] ✅ User ${user._id} wallet updated successfully!`);
-      console.log(`[PAYMENT]    Previous balance: GHS ${previousBalance}`);
+      console.log(`[PAYMENT]    User.walletBalance: GHS ${previousUserBalance} → GHS ${user.walletBalance}`);
+      console.log(`[PAYMENT]    Wallet.balance: GHS ${previousWalletBalance} → GHS ${wallet.balance}`);
       console.log(`[PAYMENT]    Deposit amount: GHS ${transaction.amount}`);
-      console.log(`[PAYMENT]    New balance: GHS ${wallet.balance}`);
       
       return { 
         success: true, 
         message: 'Deposit successful',
-        newBalance: wallet.balance 
+        newBalance: user.walletBalance // Return User.walletBalance for frontend
       };
     } else {
       console.error(`[PAYMENT] ❌ User not found for transaction ${reference}`);
@@ -207,6 +225,12 @@ async function processSuccessfulPayment(reference) {
     throw error;
   }
 }
+
+// Test webhook endpoint (for development)
+router.post('/paystack/webhook/test', async (req, res) => {
+  console.log('[WEBHOOK_TEST] Test webhook received:', JSON.stringify(req.body, null, 2));
+  return res.json({ message: 'Test webhook received successfully' });
+});
 
 // Paystack webhook handler
 router.post('/paystack/webhook',
@@ -238,12 +262,14 @@ router.post('/paystack/webhook',
     // Handle successful charge
     if (event.event === 'charge.success') {
       const { reference } = event.data;
-      console.log(`Processing successful payment for reference: ${reference}`);
+      console.log(`[WEBHOOK] Processing successful payment for reference: ${reference}`);
+      console.log(`[WEBHOOK] Event data:`, JSON.stringify(event.data, null, 2));
 
       const result = await processSuccessfulPayment(reference);
+      console.log(`[WEBHOOK] Payment processing result:`, result);
       return res.json({ message: result.message });
     } else {
-      console.log(`Unhandled event type: ${event.event}`);
+      console.log(`[WEBHOOK] Unhandled event type: ${event.event}`);
       return res.json({ message: 'Event received' });
     }
 
@@ -648,7 +674,7 @@ router.post('/mobile-money-deposit',
       currency: 'GHS',
       reference: reference,
       callback_url: process.env.NODE_ENV === 'production' 
-        ? `https://unlimiteddata.gh/payment/callback?reference=${reference}&source=mobile_money`
+        ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=mobile_money`
         : `http://localhost:3000/payment/callback?reference=${reference}&source=mobile_money`,
       channels: ['mobile_money'],
       metadata: {

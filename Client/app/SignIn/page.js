@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   Mail, 
   Lock, 
@@ -58,6 +59,9 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/';
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -76,6 +80,9 @@ export default function LoginPage() {
     message: '',
     type: 'success'
   });
+  
+  // Debounce state to prevent rapid clicks
+  const [isDebounced, setIsDebounced] = useState(false);
 
   // Rate limiting countdown effect
   useEffect(() => {
@@ -93,6 +100,12 @@ export default function LoginPage() {
     }
     return () => clearInterval(interval);
   }, [isRateLimited, rateLimitTimeLeft]);
+
+  // Reset rate limiting state on component mount
+  useEffect(() => {
+    setIsRateLimited(false);
+    setRateLimitTimeLeft(0);
+  }, []);
 
   // Add CSS for animations
   useEffect(() => {
@@ -148,25 +161,40 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
-    // Check if user is rate limited
-    if (isRateLimited) {
-      setError(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`);
-      showToast(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`, 'error');
-      return;
-    }
+    // Skip all rate limiting checks in development
+    if (process.env.NODE_ENV === 'development') {
+      setError('');
+      setIsLoading(true);
+      setLastLoginAttempt(Date.now());
+    } else {
+      // Check if user is rate limited
+      if (isRateLimited) {
+        setError(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`);
+        showToast(`Too many login attempts. Please wait ${rateLimitTimeLeft} seconds before trying again.`, 'error');
+        return;
+      }
 
-    // Check for rapid successive attempts (client-side rate limiting)
-    const now = Date.now();
-    const timeSinceLastAttempt = now - lastLoginAttempt;
-    if (timeSinceLastAttempt < 2000) { // 2 seconds minimum between attempts
-      setError('Please wait a moment before trying again.');
-      showToast('Please wait a moment before trying again.', 'error');
-      return;
-    }
+      // Check for rapid successive attempts (client-side rate limiting)
+      const now = Date.now();
+      const timeSinceLastAttempt = now - lastLoginAttempt;
+      if (timeSinceLastAttempt < 3000) { // 3 seconds minimum between attempts
+        setError('Please wait a moment before trying again.');
+        showToast('Please wait a moment before trying again.', 'error');
+        return;
+      }
 
-    setError('');
-    setIsLoading(true);
-    setLastLoginAttempt(now);
+      // Check debounce state
+      if (isDebounced) {
+        setError('Please wait before trying again.');
+        showToast('Please wait before trying again.', 'error');
+        return;
+      }
+
+      setError('');
+      setIsLoading(true);
+      setIsDebounced(true);
+      setLastLoginAttempt(now);
+    }
 
     try {
       // Use Next.js API route to avoid CORS issues in production
@@ -180,23 +208,26 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      // Clone the response to avoid "body stream already read" error
+      const responseClone = response.clone();
+      
       if (!response.ok) {
         let errorData;
         try {
           errorData = await response.json();
         } catch (jsonError) {
-          // If JSON parsing fails, try to get text response
-          const errorText = await response.text();
+          // If JSON parsing fails, try to get text response from clone
+          const errorText = await responseClone.text();
           errorData = { error: errorText, details: 'Non-JSON response' };
         }
         
         // Handle 429 rate limiting specifically
         if (response.status === 429) {
-          const rateLimitSeconds = 900; // 15 minutes for production backend
+          const rateLimitSeconds = 5; // 5 seconds to match backend
           
           setIsRateLimited(true);
           setRateLimitTimeLeft(rateLimitSeconds);
-          const errorMessage = errorData.error || `Too many login attempts. Please try again after 15 minutes.`;
+          const errorMessage = errorData.error || `Too many login attempts. Please try again in ${rateLimitSeconds} seconds.`;
           setError(errorMessage);
           showToast(errorMessage, 'error');
           return;
@@ -207,6 +238,7 @@ export default function LoginPage() {
         throw new Error(errorMessage);
       }
 
+      // Parse successful response
       const data = await response.json();
 
       if (response.ok) {
@@ -216,20 +248,27 @@ export default function LoginPage() {
 
         showToast('Login successful! Redirecting...', 'success');
         
-        // Redirect based on user role
+        // Redirect based on user role and redirect parameter
         setTimeout(() => {
           try {
-            // Check user role and redirect accordingly
-            if (data.user && data.user.role === 'admin') {
-              // Redirect to admin dashboard
-              window.location.href = '/admin/dashboard';
-            } else if (data.user && data.user.role === 'agent') {
-              // Redirect to agent dashboard
-              window.location.href = '/agent/dashboard';
+            let redirectUrl = '/';
+            
+            // Check if there's a specific redirect path
+            if (redirectPath && redirectPath !== '/') {
+              redirectUrl = redirectPath;
             } else {
-              // Redirect to home page for regular users
-              window.location.href = '/';
+              // Default redirects based on user role
+              if (data.user && data.user.role === 'admin') {
+                redirectUrl = '/admin/dashboard';
+              } else if (data.user && data.user.role === 'agent') {
+                redirectUrl = '/agent/dashboard';
+              } else {
+                redirectUrl = '/';
+              }
             }
+            
+            // Navigate to the determined URL
+            window.location.href = redirectUrl;
           } catch (err) {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
@@ -262,6 +301,10 @@ export default function LoginPage() {
       showToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
+      // Reset debounce after a short delay
+      setTimeout(() => {
+        setIsDebounced(false);
+      }, 2000);
     }
   };
 
@@ -411,12 +454,12 @@ export default function LoginPage() {
               {/* Login Button */}
               <button
                 onClick={handleLogin}
-                disabled={isLoading || !email || !password || isRateLimited}
+                disabled={isLoading || !email || !password || (process.env.NODE_ENV !== 'development' && (isRateLimited || isDebounced))}
                 className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black transition-all duration-300 transform hover:scale-105 font-bold ${
                   isRateLimited 
                     ? 'bg-gray-500 cursor-not-allowed opacity-50' 
                     : 'bg-[#FFCC08] hover:bg-[#FFCC08]/90 focus:outline-none focus:ring-4 focus:ring-[#FFCC08]/50'
-                } ${isLoading || !email || !password ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${isLoading || !email || !password || (process.env.NODE_ENV !== 'development' && isDebounced) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isRateLimited ? (
                   <>

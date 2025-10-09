@@ -128,6 +128,17 @@ router.get('/users',auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     
+    // Debug authentication in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔐 Admin Users API - Request from:', {
+        userId: req.user?.userId,
+        userRole: req.user?.role,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        authToken: req.header('x-auth-token') ? `${req.header('x-auth-token').substring(0, 20)}...` : 'NO TOKEN'
+      });
+    }
+    
     const searchQuery = search 
       ? { 
           $or: [
@@ -147,6 +158,15 @@ router.get('/users',auth, adminAuth, async (req, res) => {
     
     const total = await User.countDocuments(searchQuery);
     
+    if (process.env.NODE_ENV === 'development') {
+      console.log('👥 Admin Users API - Response:', {
+        usersCount: users.length,
+        totalUsers: total,
+        currentPage: parseInt(page),
+        searchQuery: searchQuery
+      });
+    }
+    
     res.json({
       users,
       totalPages: Math.ceil(total / parseInt(limit)),
@@ -154,7 +174,7 @@ router.get('/users',auth, adminAuth, async (req, res) => {
       totalUsers: total
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Admin Users API Error:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -1130,7 +1150,7 @@ router.get('/admin/transactions/:id', auth, adminAuth, async (req, res) => {
  * @desc    Verify payment status from Paystack
  * @access  Admin
  */
-router.get('/admin/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
+router.get('/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
   try {
     const { reference } = req.params;
     
@@ -1174,6 +1194,19 @@ router.get('/admin/verify-paystack/:reference', auth, adminAuth, async (req, res
             paystackVerification: paystackData.data
           };
           await transaction.save();
+          
+          // Update user's wallet balance for successful payment
+          const user = await User.findById(transaction.userId);
+          if (user) {
+            const previousBalance = user.walletBalance;
+            user.walletBalance += transaction.amount;
+            await user.save();
+            
+            console.log(`[ADMIN_VERIFY] ✅ User ${user._id} wallet updated via admin verification`);
+            console.log(`[ADMIN_VERIFY]    Previous balance: GHS ${previousBalance}`);
+            console.log(`[ADMIN_VERIFY]    Deposit amount: GHS ${transaction.amount}`);
+            console.log(`[ADMIN_VERIFY]    New balance: GHS ${user.walletBalance}`);
+          }
         }
         
         return res.json({
