@@ -106,7 +106,11 @@ const corsOptions = {
       'https://unlimitedata.onrender.com',
       'https://www.unlimitedata.onrender.com',
       'https://unlimiteddatagh.com',
-      'https://www.unlimiteddatagh.com'
+      'https://www.unlimiteddatagh.com',
+      'https://senyo-frontend-gr8zusaid-danaasamuel2023s-projects.vercel.app',
+      'https://senyo-frontend.vercel.app',
+      'https://vercel.app',
+      'https://*.vercel.app'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
