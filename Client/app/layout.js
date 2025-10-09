@@ -480,6 +480,34 @@ export default function RootLayout({ children }) {
           </ToastProvider>
         </ThemeProvider>
         
+        {/* PWA and Service Worker Global Configuration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Prevent multiple Service Worker registrations
+              if (typeof window !== 'undefined') {
+                window.serviceWorkerRegistered = window.serviceWorkerRegistered || false;
+                window.beforeInstallPromptListenerAdded = window.beforeInstallPromptListenerAdded || false;
+                window.appInstalledListenerAdded = window.appInstalledListenerAdded || false;
+                window.installPromptShown = window.installPromptShown || false;
+                
+                // Global PWA install prompt handler
+                window.globalDeferredPrompt = null;
+                
+                // Listen for install prompt globally
+                if (!window.beforeInstallPromptListenerAdded && 'serviceWorker' in navigator) {
+                  window.addEventListener('beforeinstallprompt', (e) => {
+                    console.log('Global PWA install prompt received');
+                    e.preventDefault();
+                    window.globalDeferredPrompt = e;
+                  });
+                  window.beforeInstallPromptListenerAdded = true;
+                }
+              }
+            `,
+          }}
+        />
+
         {/* Google Analytics with enhanced tracking - only load if GA ID is configured */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>

@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { X, Download, Bell } from 'lucide-react';
 
+// Global flags to prevent multiple registrations
+if (typeof window !== 'undefined') {
+  window.serviceWorkerRegistered = window.serviceWorkerRegistered || false;
+  window.beforeInstallPromptListenerAdded = window.beforeInstallPromptListenerAdded || false;
+  window.appInstalledListenerAdded = window.appInstalledListenerAdded || false;
+  window.installPromptShown = window.installPromptShown || false;
+}
+
 export default function PWAInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -13,6 +21,7 @@ export default function PWAInstaller() {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
+      return; // Exit early if already installed
     }
 
     // Check notification permission
@@ -20,12 +29,13 @@ export default function PWAInstaller() {
       setNotificationPermission(Notification.permission);
     }
 
-    // Register service worker
-    if ('serviceWorker' in navigator) {
+    // Register service worker only once
+    if ('serviceWorker' in navigator && !window.serviceWorkerRegistered) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
           console.log('Service Worker registered:', registration);
+          window.serviceWorkerRegistered = true;
         })
         .catch((error) => {
           console.error('Service Worker registration failed:', error);
@@ -34,42 +44,72 @@ export default function PWAInstaller() {
 
     // Listen for install prompt
     const handleBeforeInstallPrompt = (e) => {
+      console.log('Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.');
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show install prompt after 30 seconds of browsing
+      // Show install prompt after 10 seconds of browsing (reduced from 30)
       setTimeout(() => {
-        if (!isInstalled) {
+        if (!isInstalled && !window.installPromptShown) {
           setShowInstallPrompt(true);
+          window.installPromptShown = true;
         }
-      }, 30000);
+      }, 10000);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Only add listener if not already added
+    if (!window.beforeInstallPromptListenerAdded) {
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.beforeInstallPromptListenerAdded = true;
+    }
 
     // Listen for app installed
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       console.log('PWA installed');
       setIsInstalled(true);
       setShowInstallPrompt(false);
-    });
+      setDeferredPrompt(null);
+    };
+
+    if (!window.appInstalledListenerAdded) {
+      window.addEventListener('appinstalled', handleAppInstalled);
+      window.appInstalledListenerAdded = true;
+    }
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      // Cleanup is handled by the global flags
     };
   }, [isInstalled]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+    if (!deferredPrompt) {
+      console.log('No deferred prompt available');
+      return;
     }
 
-    setDeferredPrompt(null);
+    try {
+      // Show the install prompt
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+    } catch (error) {
+      console.error('Error showing install prompt:', error);
+    } finally {
+      // Clear the deferred prompt
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+      window.installPromptShown = false;
+    }
+  };
+
+  const handleDismissInstall = () => {
     setShowInstallPrompt(false);
+    setDeferredPrompt(null);
+    window.installPromptShown = false;
   };
 
   const requestNotificationPermission = async () => {
@@ -110,7 +150,7 @@ export default function PWAInstaller() {
         <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 animate-slide-up">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-2xl shadow-2xl border border-white/20">
             <button
-              onClick={() => setShowInstallPrompt(false)}
+              onClick={handleDismissInstall}
               className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded-full transition"
             >
               <X size={18} />
