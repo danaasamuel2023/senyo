@@ -175,11 +175,84 @@ app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
   next();
 });
 
-// Apply general rate limiting to all routes
-app.use(generalLimiter);
-
 // Connect to Database
 ConnectDB();
+
+// Direct daily-summary endpoint handler (before rate limiting)
+app.get('/api/admin/daily-summary/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    // Get daily orders
+    const dailyOrders = await DataPurchase.countDocuments({
+      createdAt: { $gte: startDate, $lte: endDate }
+    });
+    
+    // Get daily revenue
+    const dailyRevenueData = await DataPurchase.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$amount' }
+        }
+      }
+    ]);
+    
+    const dailyRevenue = dailyRevenueData.length > 0 ? dailyRevenueData[0].totalRevenue : 0;
+    
+    // Get daily deposits
+    const dailyDeposits = await Transaction.countDocuments({
+      type: 'deposit',
+      createdAt: { $gte: startDate, $lte: endDate }
+    });
+    
+    // Get network breakdown (mock data for now)
+    const networkBreakdown = [
+      { network: 'MTN', orders: Math.floor(dailyOrders * 0.4), revenue: Math.floor(dailyRevenue * 0.4) },
+      { network: 'Airtel', orders: Math.floor(dailyOrders * 0.3), revenue: Math.floor(dailyRevenue * 0.3) },
+      { network: 'Glo', orders: Math.floor(dailyOrders * 0.2), revenue: Math.floor(dailyRevenue * 0.2) },
+      { network: '9mobile', orders: Math.floor(dailyOrders * 0.1), revenue: Math.floor(dailyRevenue * 0.1) }
+    ];
+    
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalOrders: dailyOrders,
+          totalRevenue: dailyRevenue,
+          totalDeposits: dailyDeposits
+        },
+        networkBreakdown
+      }
+    });
+  } catch (error) {
+    console.error('Daily summary error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch daily summary'
+    });
+  }
+});
+
+// Handle daily-summary endpoint without date parameter (default to today)
+app.get('/api/admin/daily-summary', async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  req.params = { date: today };
+  // Redirect to the parameterized version
+  return app._router.handle(req, res, () => {});
+});
+
+// Apply general rate limiting to all routes
+app.use(generalLimiter);
 
 // Routes with specific rate limiters
 // Auth routes with stricter rate limiting
@@ -291,78 +364,6 @@ app.use('/api/admin/statistics', (req, res, next) => {
   next();
 });
 
-// Direct daily-summary endpoint handler
-app.get('/api/admin/daily-summary/:date', async (req, res) => {
-  try {
-    const { date } = req.params;
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-    
-    // Get daily orders
-    const dailyOrders = await DataPurchase.countDocuments({
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
-    
-    // Get daily revenue
-    const dailyRevenueData = await DataPurchase.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$amount' }
-        }
-      }
-    ]);
-    
-    const dailyRevenue = dailyRevenueData.length > 0 ? dailyRevenueData[0].totalRevenue : 0;
-    
-    // Get daily deposits
-    const dailyDeposits = await Transaction.countDocuments({
-      type: 'deposit',
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
-    
-    // Get network breakdown (mock data for now)
-    const networkBreakdown = [
-      { network: 'MTN', orders: Math.floor(dailyOrders * 0.4), revenue: Math.floor(dailyRevenue * 0.4) },
-      { network: 'Airtel', orders: Math.floor(dailyOrders * 0.3), revenue: Math.floor(dailyRevenue * 0.3) },
-      { network: 'Glo', orders: Math.floor(dailyOrders * 0.2), revenue: Math.floor(dailyRevenue * 0.2) },
-      { network: '9mobile', orders: Math.floor(dailyOrders * 0.1), revenue: Math.floor(dailyRevenue * 0.1) }
-    ];
-    
-    res.json({
-      success: true,
-      data: {
-        summary: {
-          totalOrders: dailyOrders,
-          totalRevenue: dailyRevenue,
-          totalDeposits: dailyDeposits
-        },
-        networkBreakdown
-      }
-    });
-  } catch (error) {
-    console.error('Daily summary error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch daily summary'
-    });
-  }
-});
-
-// Handle daily-summary endpoint without date parameter (default to today)
-app.get('/api/admin/daily-summary', async (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
-  req.params = { date: today };
-  // Redirect to the parameterized version
-  return app._router.handle(req, res, () => {});
-});
 
 // Legacy endpoint handlers - redirect to admin endpoints
 app.get('/api/transactions', (req, res) => {
