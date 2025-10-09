@@ -27,14 +27,10 @@ const AuthGuard = ({ children }) => {
         const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
         const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
         
-        console.log('AuthGuard check:', { 
-          hasUserData: !!userData, 
-          hasAuthToken: !!authToken,
-          pathname 
-        });
+        // AuthGuard check - removed console.log for production
         
         if (!userData || !authToken) {
-          console.log('AuthGuard: Missing auth data, redirecting to SignIn');
+          // AuthGuard: Missing auth data, redirecting to SignIn
           router.push('/SignIn');
           setLoading(false);
           return;
@@ -44,7 +40,7 @@ const AuthGuard = ({ children }) => {
         try {
           const parsedUserData = JSON.parse(userData);
           if (!parsedUserData._id && !parsedUserData.id) {
-            console.log('AuthGuard: Invalid user data, redirecting to SignIn');
+            // AuthGuard: Invalid user data, redirecting to SignIn
             localStorage.removeItem('userData');
             localStorage.removeItem('authToken');
             router.push('/SignIn');
@@ -52,18 +48,18 @@ const AuthGuard = ({ children }) => {
             return;
           }
           
-          console.log('AuthGuard: User authenticated successfully');
+          // AuthGuard: User authenticated successfully
           setIsAuthenticated(true);
           setLoading(false);
         } catch (parseError) {
-          console.warn('AuthGuard: Error parsing user data:', parseError);
+          // AuthGuard: Error parsing user data
           localStorage.removeItem('userData');
           localStorage.removeItem('authToken');
           router.push('/SignIn');
           setLoading(false);
         }
       } catch (error) {
-        console.warn('AuthGuard localStorage access error:', error);
+        // AuthGuard localStorage access error
         router.push('/SignIn');
         setLoading(false);
       }

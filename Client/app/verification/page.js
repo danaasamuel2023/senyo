@@ -9,8 +9,7 @@ import {
 
 // API Configuration
 const getApiEndpoint = (path) => {
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
   return `${baseUrl}${path}`;
 };
 

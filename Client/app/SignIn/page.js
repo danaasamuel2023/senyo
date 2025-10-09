@@ -108,41 +108,8 @@ export default function LoginPage() {
     setRateLimitTimeLeft(0);
   }, []);
 
-  // Add CSS for animations
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateX(100px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-      .animate-slide-in {
-        animation: slideIn 0.3s ease-out;
-      }
-      @keyframes pulseGlow {
-        0%, 100% {
-          box-shadow: 0 0 20px rgba(255, 204, 8, 0.3);
-        }
-        50% {
-          box-shadow: 0 0 40px rgba(255, 204, 8, 0.5);
-        }
-      }
-      .pulse-glow {
-        animation: pulseGlow 2s infinite;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  // CSS animations are handled via Tailwind classes
+  // Removed direct DOM manipulation for SSR compatibility
 
   // Function to show toast
   const showToast = (message, type = 'success') => {

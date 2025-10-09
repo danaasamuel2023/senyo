@@ -14,8 +14,7 @@ import {
 
 // API Configuration
 const getApiEndpoint = (path) => {
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
   return `${baseUrl}${path}`;
 };
 
@@ -319,43 +318,8 @@ const TopUpPage = () => {
     }
   }, [amount]);
   
-  // Add CSS for animations
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateX(100px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-      .animate-slide-in {
-        animation: slideIn 0.3s ease-out;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .animate-fade-in {
-        animation: fadeIn 0.3s ease-out;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  // CSS animations are handled via Tailwind classes
+  // Removed direct DOM manipulation for SSR compatibility
   
   // Handle quick amount selection
   const handleQuickAmount = useCallback((value) => {

@@ -12,7 +12,8 @@ import ErrorBoundary from "@/component/ErrorBoundary";
 import errorMonitor from "@/utils/errorMonitor";
 import performanceMonitor from "@/utils/performanceMonitor";
 // import testRunner from "@/utils/testRunner"; // Temporarily disabled to fix webpack error
-import "@/utils/consoleErrorSuppression"; // Re-enabled for production
+// Console error suppression disabled for production
+// import "@/utils/consoleErrorSuppression";
 
 // Font optimization with variable fonts for better performance
 const inter = Inter({
@@ -34,7 +35,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 // Enhanced metadata configuration with structured data
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"),
   title: {
     default: "UnlimitedData GH | Premium Data Marketplace",
     template: "%s | UnlimitedData GH",
@@ -53,7 +54,7 @@ export const metadata = {
     "Vodafone data packages",
     "AirtelTigo data deals",
   ],
-  authors: [{ name: "UnlimitedData GH Team", url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app" }],
+  authors: [{ name: "UnlimitedData GH Team", url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com" }],
   creator: "UnlimitedData GH",
   publisher: "UnlimitedData GH",
   formatDetection: {
@@ -69,7 +70,7 @@ export const metadata = {
   openGraph: {
     title: "UnlimitedData GH | Ghana's Premium Data Marketplace",
     description: "Connect with top data resellers across Ghana. Experience unlimited data possibilities with secure, fast, and reliable transactions.",
-    url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
     siteName: "UnlimitedData GH",
     images: [
       {
@@ -116,14 +117,14 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
+    canonical: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
     languages: {
-      "en-GH": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
-      "en": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/en",
-      "tw-GH": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/tw",
+      "en-GH": process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
+      "en": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"}/en`,
+      "tw-GH": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"}/tw`,
     },
     types: {
-      "application/rss+xml": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/feed.xml",
+      "application/rss+xml": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"}/feed.xml`,
     },
   },
   category: "Technology",
@@ -154,12 +155,12 @@ const structuredData = {
   "@type": "WebSite",
   name: "UnlimitedData GH",
   description: "Ghana's premier platform for data resellers",
-  url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/search?q={search_term_string}"
+      urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"}/search?q={search_term_string}`
     },
     "query-input": "required name=search_term_string"
   },
@@ -321,17 +322,23 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{
           __html: `
             (function() {
-              const savedTheme = localStorage.getItem('app_theme');
-              const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+              if (typeof window === 'undefined') return;
               
-              document.documentElement.setAttribute('data-theme', theme);
-              document.documentElement.classList.toggle('dark', theme === 'dark');
-              
-              // Update meta theme-color
-              const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-              if (metaThemeColor) {
-                metaThemeColor.content = theme === 'dark' ? '#000000' : '#FFCC08';
+              try {
+                const savedTheme = localStorage.getItem('app_theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+                
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                
+                // Update meta theme-color
+                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+                if (metaThemeColor) {
+                  metaThemeColor.content = theme === 'dark' ? '#000000' : '#FFCC08';
+                }
+              } catch (error) {
+                console.warn('Theme initialization failed:', error);
               }
             })();
           `
@@ -537,7 +544,7 @@ export default function RootLayout({ children }) {
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
                   gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                    page_path: window.location.pathname,
+                    page_path: typeof window !== 'undefined' ? window.location.pathname : '/',
                     cookie_flags: 'SameSite=None;Secure'
                   });
                 `,
