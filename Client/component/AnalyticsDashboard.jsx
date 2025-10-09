@@ -7,7 +7,7 @@ import {
   PieChart, LineChart, Activity, Zap, Wifi, Shield,
   AlertCircle, CheckCircle, Loader2, Download, RefreshCw
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const AnalyticsDashboard = ({ agentId }) => {
   const [analytics, setAnalytics] = useState(null);

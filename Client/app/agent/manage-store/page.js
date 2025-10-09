@@ -12,7 +12,7 @@ import {
   Bell, Mail, Phone, Facebook, Twitter, Instagram,
   Zap, Wifi, Shield, Award, Target, PieChart, Megaphone
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 import ProductManager from '@/component/ProductManager';
 import OrderManager from '@/component/OrderManager';
 import AnalyticsDashboard from '@/component/AnalyticsDashboard';

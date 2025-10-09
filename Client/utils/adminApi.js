@@ -3,15 +3,11 @@ import { getNextPublicApiUrl, isDevelopment } from './envConfig';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
-// Helper function to get the correct API URL (proxy for production, direct for development)
+// Helper function to get the correct API URL (always use production backend)
 const getApiUrl = (endpoint) => {
-  // In production, use the API proxy to avoid CORS issues
-  if (!isDevelopment()) {
-    return `/api/backend?path=${encodeURIComponent(endpoint)}`;
-  }
-  // In development, use direct API calls to localhost:5001
-  const devApiUrl = 'http://localhost:5001';
-  return `${devApiUrl}${endpoint}`;
+  // Always use production backend
+  const apiUrl = 'https://unlimitedata.onrender.com';
+  return `${apiUrl}${endpoint}`;
 };
 
 // Helper function to get auth headers (same as SignIn page)

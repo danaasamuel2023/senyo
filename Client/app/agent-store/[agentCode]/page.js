@@ -9,7 +9,7 @@ import {
   Facebook, Twitter, Instagram, TrendingUp, Sparkles,
   Heart, Share2, MapPin, Clock, BadgeCheck
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AgentStorePage = () => {
   const params = useParams();

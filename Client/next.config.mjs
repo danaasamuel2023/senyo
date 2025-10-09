@@ -1,116 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'standalone', // Ensure compatibility with Render
+    output: 'standalone',
     reactStrictMode: true,
     trailingSlash: false,
     
-    // Comprehensive webpack configuration to fix all development issues
+    // Simple webpack configuration
     webpack: (config, { dev, isServer }) => {
       if (dev && !isServer) {
-        // Optimize watch options for better file watching
+        // Basic watch options
         config.watchOptions = {
           poll: 1000,
           aggregateTimeout: 300,
           ignored: /node_modules/,
         };
-        
-        // Fix ChunkLoadError by improving chunk loading
-        config.optimization = {
-          ...config.optimization,
-          splitChunks: {
-            chunks: 'all',
-            cacheGroups: {
-              default: {
-                minChunks: 2,
-                priority: -20,
-                reuseExistingChunk: true,
-              },
-              vendor: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                priority: -10,
-                chunks: 'all',
-              },
-            },
-          },
-        };
-        
-        // Improve chunk loading reliability
-        config.output = {
-          ...config.output,
-          chunkLoadTimeout: 30000,
-          crossOriginLoading: 'anonymous',
-        };
-        
-        // Comprehensive warning suppression
-        config.ignoreWarnings = [
-          { module: /webpack\/hot\/update/ },
-          { message: /webpack\.hot-update\.json/ },
-          { message: /Fast Refresh had to perform a full reload/ },
-          { message: /webpack\/hot\/update\.js/ },
-          { message: /Chrome DevTools/ },
-          { message: /\.well-known/ },
-          { message: /hot-update/ },
-          { message: /Fast Refresh/ },
-          { message: /webpack\/hot/ },
-          { message: /\.hot-update/ },
-          { message: /devIndicators/ },
-          { message: /buildActivity/ },
-          { message: /buildActivityPosition/ },
-          { message: /deprecated.*configurable/ },
-          { message: /has been renamed/ },
-          { message: /conflicts with/ },
-          { message: /ChunkLoadError/ },
-          { message: /Loading chunk/ }
-        ];
-        
-        // Override console methods to suppress specific warnings
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-          const message = args.join(' ');
-          if (
-            message.includes('Fast Refresh') ||
-            message.includes('webpack.hot-update') ||
-            message.includes('Chrome DevTools') ||
-            message.includes('.well-known') ||
-            message.includes('hot-update') ||
-            message.includes('devIndicators') ||
-            message.includes('buildActivity') ||
-            message.includes('buildActivityPosition') ||
-            message.includes('deprecated') ||
-            message.includes('conflicts with') ||
-            message.includes('ChunkLoadError') ||
-            message.includes('Loading chunk')
-          ) {
-            return; // Suppress these warnings
-          }
-          originalWarn.apply(console, args);
-        };
       }
       return config;
     },
     
-    // Additional optimizations
+    // Basic optimizations
     experimental: {
       optimizeCss: true,
-      optimizePackageImports: ['lucide-react']
-    },
-    
-    // Redirects for Chrome DevTools requests
-    async redirects() {
-      return [
-        {
-          source: '/.well-known/appspecific/com.chrome.devtools.json',
-          destination: '/404',
-          permanent: false,
-        },
-      ];
-    },
-    
-    // Suppress Next.js development warnings and optimize performance
-    onDemandEntries: {
-      maxInactiveAge: 25 * 1000,
-      pagesBufferLength: 2,
     },
 };
   

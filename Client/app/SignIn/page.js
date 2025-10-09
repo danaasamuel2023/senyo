@@ -15,7 +15,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../utils/apiConfig';
 import apiClient from '../../utils/apiClient.js';
 
 // Toast Notification Component
@@ -192,11 +192,11 @@ export default function LoginPage() {
         
         // Handle 429 rate limiting specifically
         if (response.status === 429) {
-          const rateLimitSeconds = 5; // Reduced to 5 seconds from server
+          const rateLimitSeconds = 900; // 15 minutes for production backend
           
           setIsRateLimited(true);
           setRateLimitTimeLeft(rateLimitSeconds);
-          const errorMessage = errorData.error || `Too many login attempts. Please try again after ${rateLimitSeconds} seconds.`;
+          const errorMessage = errorData.error || `Too many login attempts. Please try again after 15 minutes.`;
           setError(errorMessage);
           showToast(errorMessage, 'error');
           return;
@@ -210,19 +210,9 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token securely
-        localStorage.setItem('authToken', data.token);
-        
-        // Store user info if provided
-        if (data.user) {
-          localStorage.setItem('userData', JSON.stringify({
-            id: data.user._id,
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            ...(data.user.agentMetadata ? { agentMetadata: data.user.agentMetadata } : {})
-          }));
-        }
+        // Store token securely using the auth utility
+        const { setAuthToken } = await import('../../utils/auth.js');
+        setAuthToken(data.token, data.user, 7 * 24 * 60 * 60, rememberMe); // 7 days expiry
 
         showToast('Login successful! Redirecting...', 'success');
         
@@ -350,7 +340,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
               {/* Email Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -361,6 +351,7 @@ export default function LoginPage() {
                   placeholder="Email Address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   className="pl-10 pr-4 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required
                   disabled={isLoading}
@@ -377,6 +368,7 @@ export default function LoginPage() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   className="pl-10 pr-10 py-3 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/60 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-medium text-sm hover:border-[#FFCC08]/50 transition-colors"
                   required
                   disabled={isLoading}
@@ -444,7 +436,7 @@ export default function LoginPage() {
                   </>
                 )}
               </button>
-            </div>
+            </form>
 
             {/* Sign Up Link */}
             <div className="text-center mt-4">

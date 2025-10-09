@@ -147,13 +147,13 @@ const AdminDashboard = () => {
       // Better error handling for mobile browsers
       if (!token) {
         console.warn('No auth token found - redirecting to login');
-        router.push('/admin/login');
+        router.push('/SignIn');
         return;
       }
       
       if (!userDataStr) {
         console.warn('No user data found - redirecting to login');
-        router.push('/admin/login');
+        router.push('/SignIn');
         return;
       }
       
@@ -163,14 +163,14 @@ const AdminDashboard = () => {
         userData = JSON.parse(userDataStr);
       } catch (error) {
         console.error('Error parsing user data:', error);
-        router.push('/admin/login');
+        router.push('/SignIn');
         return;
       }
       
       // Check if user has admin role
       if (!userData.role || !['admin', 'superadmin'].includes(userData.role)) {
         console.warn('User does not have admin privileges');
-        router.push('/admin/login');
+        router.push('/SignIn');
         return;
       }
       
@@ -182,7 +182,7 @@ const AdminDashboard = () => {
       console.error('Authentication check failed:', error);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      router.push('/admin/login');
+      router.push('/SignIn');
     }
   }, [router]);
 
@@ -219,7 +219,7 @@ const AdminDashboard = () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       if (!token) {
         console.warn('No authentication token found, redirecting to login');
-        router.push('/admin/login');
+        router.push('/SignIn');
         return;
       }
 
@@ -238,7 +238,7 @@ const AdminDashboard = () => {
             showNotification('Server connection issue, showing cached data', 'warning');
           } else {
             showNotification('Please sign in again', 'error');
-            router.push('/admin/login');
+            router.push('/SignIn');
             return { success: false, data: null };
           }
         } else {

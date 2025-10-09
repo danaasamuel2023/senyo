@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Direct API URL - no environment variable dependencies
+// Use production backend URL
 const API_BASE_URL = 'https://unlimitedata.onrender.com';
 
 export async function POST(request) {

@@ -2,21 +2,10 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 
-// Check if we're in development mode
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined;
-
-// Debug logging
-console.log('🔧 Environment Debug:', {
-  NODE_ENV: process.env.NODE_ENV,
-  isDevelopment,
-  isProduction
-});
-
-// Rate limiter for general API requests - COMPLETELY DISABLED FOR PRODUCTION
+// Rate limiter for general API requests
 const generalLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minutes
-  max: isDevelopment ? 1000 : 1000000, // Extremely high limit for production
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -24,24 +13,12 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // COMPLETELY DISABLE RATE LIMITING FOR PRODUCTION
-    if (isProduction) {
-      console.log('🔧 General rate limiting DISABLED for production');
-      return true;
-    }
-    // Skip rate limiting for localhost in development
-    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
-      return true;
-    }
-    return false;
-  }
 });
 
-// Rate limiter for authentication routes - DISABLED FOR PRODUCTION
+// Rate limiter for authentication routes - Skip for admin users
 const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minutes
-  max: isDevelopment ? 10 : 100000, // Very high limit for production
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // limit each IP to 100 auth requests per windowMs (increased for testing)
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -50,14 +27,15 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // COMPLETELY DISABLE rate limiting for production authentication
-    if (isProduction) {
-      console.log('🔧 Auth rate limiting DISABLED for production');
-      return true;
-    }
-    // Skip rate limiting for localhost in development
-    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
-      return true;
+    // Skip rate limiting for admin login attempts
+    const body = req.body;
+    if (body && body.email) {
+      const adminEmails = [
+        'sunumanfred41@gmail.com',
+        'testadmin@example.com',
+        'admin@unlimiteddatagh.com'
+      ];
+      return adminEmails.includes(body.email);
     }
     return false;
   }
@@ -65,34 +43,26 @@ const authLimiter = rateLimit({
 
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minutes
-  max: isDevelopment ? 100 : 20, // More lenient in development
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // limit each IP to 20 payment requests per windowMs
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for localhost in development
-    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
-  }
 });
 
 // Rate limiter for agent store creation
 const agentLimiter = rateLimit({
-  windowMs: 1* 60 * 1000, // 1 minutes
-  max: isDevelopment ? 50 : 3, // More lenient in development
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: 3, // limit each IP to 3 store modifications per windowMs
   message: 'Too many store modifications, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for localhost in development
-    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
-  }
 });
 
-// Very lenient rate limiter for admin routes - DISABLED FOR PRODUCTION
+// Very lenient rate limiter for admin routes
 const adminLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minutes
-  max: isDevelopment ? 10000 : 100000, // Extremely high limit for production admin operations
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 admin requests per windowMs
   message: {
     success: false,
     error: 'Admin rate limit exceeded',
@@ -100,24 +70,12 @@ const adminLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for localhost in development
-    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
-      return true;
-    }
-    // COMPLETELY DISABLE rate limiting for production admin operations
-    if (isProduction) {
-      console.log('🔧 Admin rate limiting DISABLED for production');
-      return true;
-    }
-    return false;
-  }
 });
 
 // Ultra lenient rate limiter for backend proxy endpoint
 const proxyLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minutes
-  max: isDevelopment ? 1000 : 500, // Very high limit for proxy requests
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // limit each IP to 100 proxy requests per windowMs
   message: {
     success: false,
     error: 'Proxy rate limit exceeded',
@@ -125,17 +83,6 @@ const proxyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for localhost in development
-    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
-      return true;
-    }
-    // Skip rate limiting for production
-    if (isProduction) {
-      return true;
-    }
-    return false;
-  }
 });
 
 // Security headers configuration
@@ -170,4 +117,3 @@ module.exports = {
   securityHeaders,
   sanitizeData,
 };
-

@@ -8,7 +8,7 @@ import {
   ChevronRight, Store, ShoppingCart, TrendingUp,
   CheckCircle, XCircle, AlertCircle, MoreHorizontal
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AgentProducts = () => {
   const router = useRouter();

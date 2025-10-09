@@ -8,7 +8,7 @@ import {
   MessageCircle, RefreshCw, Download, Send, Bell,
   Loader2, ChevronDown, ChevronUp, MoreHorizontal
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const OrderManager = ({ agentId, onOrderUpdate }) => {
   const [orders, setOrders] = useState([]);

@@ -8,7 +8,7 @@ import {
   RefreshCw, Download, Upload, Plus, MoreVertical, Star, MapPin,
   Phone, Mail, Calendar, BarChart3, PieChart, Activity, Zap, ArrowLeft, ExternalLink
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AdminAgentStores = () => {
   const router = useRouter();

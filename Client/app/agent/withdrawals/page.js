@@ -8,7 +8,7 @@ import {
   XCircle, AlertCircle, TrendingUp, Info, Eye,
   ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AgentWithdrawals = () => {
   const router = useRouter();

@@ -1,26 +1,59 @@
-// API Configuration Utility
-// Import from centralized config
-import { getApiUrl as getCentralizedApiUrl } from './envConfig';
+// API Configuration Utility - Simplified to avoid circular dependencies
 
-// Use centralized API URL configuration
+// Environment detection
+const isDevelopment = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname === 'localhost';
+  }
+  return process.env.NODE_ENV === 'development';
+};
+
+const isProduction = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.hostname !== 'localhost';
+  }
+  return process.env.NODE_ENV === 'production';
+};
+
+// API URL Configuration
+const API_URLS = {
+  DEVELOPMENT: {
+    BASE: 'http://localhost:5001',
+    FRONTEND: 'http://localhost:3000',
+    NEXT_PUBLIC: 'http://localhost:5001'
+  },
+  PRODUCTION: {
+    BASE: 'https://unlimitedata.onrender.com',
+    FRONTEND: 'https://www.unlimiteddatagh.com',
+    NEXT_PUBLIC: 'https://unlimitedata.onrender.com'
+  }
+};
+
+// Get current environment
+const getCurrentEnvironment = () => {
+  return isDevelopment() ? 'DEVELOPMENT' : 'PRODUCTION';
+};
+
+// Get API URL for current environment
 export const getApiUrl = () => {
-  return getCentralizedApiUrl();
+  // Check for environment variable first
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Always use production backend
+  return 'https://unlimitedata.onrender.com';
 };
 
 export const getApiEndpoint = (endpoint) => {
-  return `${getApiUrl()}${endpoint}`;
+  const baseUrl = getApiUrl();
+  // Remove leading slash if present to avoid double slashes
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `${baseUrl}/${cleanEndpoint}`;
 };
 
-// Environment detection - use centralized config
-import { isDevelopment as getIsDevelopment, isProduction as getIsProduction } from './envConfig';
-
-export const isDevelopment = () => {
-  return getIsDevelopment();
-};
-
-export const isProduction = () => {
-  return getIsProduction();
-};
+// Export environment checks
+export { isDevelopment, isProduction };
 
 // API Health Check
 export const checkApiHealth = async () => {

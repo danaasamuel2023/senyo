@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronUp, Image as ImageIcon, Upload,
   Save, X, Copy, Share2, QrCode, Globe, Smartphone
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const ProductManager = ({ agentId, onProductUpdate }) => {
   const [products, setProducts] = useState([]);

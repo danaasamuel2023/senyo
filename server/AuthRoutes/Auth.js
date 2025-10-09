@@ -170,14 +170,12 @@ router.post("/login", async (req, res) => {
 // Authentication middleware
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
+    // Get token from header (check both x-auth-token and Authorization)
+    const token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({ message: 'Authorization denied' });
     }
-    
-    const token = authHeader.split(' ')[1];
     
     // Verify token
     const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
@@ -188,6 +186,8 @@ const authMiddleware = (req, res, next) => {
       userId: decoded.userId,
       role: decoded.role
     };
+    req.userId = decoded.userId;
+    req.userRole = decoded.role;
     
     next();
   } catch (error) {
@@ -216,14 +216,16 @@ const authorize = (roles = []) => {
 // Auth check route
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    console.log('Debug - req.userId:', req.userId);
+    console.log('Debug - req.user:', req.user);
+    const user = await User.findById(req.userId).select('-password');
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found', debug: { userId: req.userId } });
     }
     res.json({ user });
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

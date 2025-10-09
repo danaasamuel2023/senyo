@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from './ToastNotification';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../utils/apiConfig';
 import { 
   X, Smartphone, DollarSign, CheckCircle, AlertCircle, 
   Loader2, CreditCard, Banknote, Wifi, Signal, Building2,

@@ -8,7 +8,7 @@ import {
   Store, CheckCircle, Clock, XCircle, AlertCircle,
   TrendingUp, BarChart3, Users, Calendar
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AgentTransactions = () => {
   const router = useRouter();

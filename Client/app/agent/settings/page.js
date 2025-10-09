@@ -9,7 +9,7 @@ import {
   Package as PackageIcon, Palette, FileText, Globe,
   ToggleLeft, ToggleRight, Upload, Eye, EyeOff
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 
 const AgentSettings = () => {
   const router = useRouter();

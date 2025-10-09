@@ -9,7 +9,7 @@ import {
   Store, ShoppingCart, LineChart, UserCheck, Clock,
   ArrowUpRight, ArrowDownRight, MoreHorizontal, Filter
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../../../utils/apiConfig';
 import StoreSetupWizard from '@/component/StoreSetupWizard';
 
 const AgentDashboard = () => {

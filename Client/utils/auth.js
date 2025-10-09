@@ -477,6 +477,15 @@ export class SessionManager {
   }
 }
 
+// Export setAuthToken as an alias for saveAuthData for backward compatibility
+export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
+  saveAuthData({
+    token,
+    user,
+    expiresIn
+  }, rememberMe);
+};
+
 export default {
   getAuthToken,
   getRefreshToken,
@@ -485,6 +494,7 @@ export default {
   getUserRole,
   hasRole,
   saveAuthData,
+  setAuthToken, // Add backward compatibility alias
   clearAuthData,
   logout,
   refreshAuthToken,

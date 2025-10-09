@@ -7,7 +7,7 @@ import {
   Trash2, Plus, Save, X, BarChart3, TrendingUp, Star,
   AlertCircle, CheckCircle, Loader2, Bell, Send, Copy
 } from 'lucide-react';
-import { getApiEndpoint } from '@/utils/apiConfig';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 const MarketingTools = ({ agentId }) => {
   const [campaigns, setCampaigns] = useState([]);

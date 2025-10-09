@@ -19,8 +19,8 @@ export const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  const env = getCurrentEnv();
-  return ENV_CONFIG[env].BASE;
+  // Always use production backend
+  return 'https://unlimitedata.onrender.com';
 };
 
 // Get Frontend URL for current environment
@@ -36,8 +36,8 @@ export const getNextPublicApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  const env = getCurrentEnv();
-  return ENV_CONFIG[env].NEXT_PUBLIC;
+  // Always use production backend
+  return 'https://unlimitedata.onrender.com';
 };
 
 // Environment checks
