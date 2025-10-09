@@ -34,7 +34,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 // Enhanced metadata configuration with structured data
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimitedata.onrender.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app"),
   title: {
     default: "UnlimitedData GH | Premium Data Marketplace",
     template: "%s | UnlimitedData GH",
@@ -53,7 +53,7 @@ export const metadata = {
     "Vodafone data packages",
     "AirtelTigo data deals",
   ],
-  authors: [{ name: "UnlimitedData GH Team", url: "https://www.unlimitedata.onrender.com" }],
+  authors: [{ name: "UnlimitedData GH Team", url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app" }],
   creator: "UnlimitedData GH",
   publisher: "UnlimitedData GH",
   formatDetection: {
@@ -69,7 +69,7 @@ export const metadata = {
   openGraph: {
     title: "UnlimitedData GH | Ghana's Premium Data Marketplace",
     description: "Connect with top data resellers across Ghana. Experience unlimited data possibilities with secure, fast, and reliable transactions.",
-    url: "https://www.unlimitedata.onrender.com",
+    url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
     siteName: "UnlimitedData GH",
     images: [
       {
@@ -116,14 +116,14 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: "https://www.unlimitedata.onrender.com",
+    canonical: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
     languages: {
-      "en-GH": "https://www.unlimitedata.onrender.com",
-      "en": "https://www.unlimitedata.onrender.com/en",
-      "tw-GH": "https://www.unlimitedata.onrender.com/tw",
+      "en-GH": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
+      "en": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/en",
+      "tw-GH": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/tw",
     },
     types: {
-      "application/rss+xml": "https://www.unlimitedata.onrender.com/feed.xml",
+      "application/rss+xml": "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/feed.xml",
     },
   },
   category: "Technology",
@@ -154,12 +154,12 @@ const structuredData = {
   "@type": "WebSite",
   name: "UnlimitedData GH",
   description: "Ghana's premier platform for data resellers",
-  url: "https://www.unlimitedata.onrender.com",
+  url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://www.unlimitedata.onrender.com/search?q={search_term_string}"
+      urlTemplate: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/search?q={search_term_string}"
     },
     "query-input": "required name=search_term_string"
   },
@@ -170,7 +170,7 @@ const structuredData = {
     telephone: "+233256702995",
     logo: {
       "@type": "ImageObject",
-      url: "https://www.unlimitedata.onrender.com/logo.png"
+      url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/logo.png"
     },
     contactPoint: {
       "@type": "ContactPoint",
