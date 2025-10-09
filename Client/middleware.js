@@ -75,6 +75,7 @@ const PUBLIC_ROUTES = [
   '/landing',
   '/error',
   '/not-found',
+  '/test-payment',
   '/api/login',
   '/api/auth/logout',
   '/api/auth/refresh',
