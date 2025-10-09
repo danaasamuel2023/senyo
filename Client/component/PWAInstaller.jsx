@@ -44,16 +44,18 @@ export default function PWAInstaller() {
 
     // Listen for install prompt
     const handleBeforeInstallPrompt = (e) => {
-      console.log('Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.');
+      // Prevent the default browser install prompt
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show install prompt after 10 seconds of browsing (reduced from 30)
+      console.log('PWA install prompt available - will show custom banner');
+      
+      // Show install prompt after 5 seconds of browsing (reduced for better UX)
       setTimeout(() => {
         if (!isInstalled && !window.installPromptShown) {
           setShowInstallPrompt(true);
           window.installPromptShown = true;
         }
-      }, 10000);
+      }, 5000);
     };
 
     // Only add listener if not already added

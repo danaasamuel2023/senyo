@@ -16,6 +16,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { getApiEndpoint } from '@/utils/apiConfig';
+import apiClient from '../../utils/apiClient.js';
 
 // Toast Notification Component
 const Toast = ({ message, type, onClose }) => {

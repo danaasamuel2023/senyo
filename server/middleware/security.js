@@ -15,7 +15,7 @@ console.log('🔧 Environment Debug:', {
 
 // Rate limiter for general API requests - COMPLETELY DISABLED FOR PRODUCTION
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minutes
   max: isDevelopment ? 1000 : 1000000, // Extremely high limit for production
   message: {
     success: false,
@@ -38,26 +38,34 @@ const generalLimiter = rateLimit({
   }
 });
 
-// Rate limiter for authentication routes - DISABLED (very high limit)
+// Rate limiter for authentication routes - DISABLED FOR PRODUCTION
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // Very high limit - effectively disabled
+  windowMs: 1 * 60 * 1000, // 1 minutes
+  max: isDevelopment ? 10 : 100000, // Very high limit for production
   message: {
     success: false,
     error: 'Rate limit exceeded',
-    details: 'Rate limit exceeded'
+    details: 'Too many authentication attempts. Please try again later.'
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for all requests
-    return true;
+    // COMPLETELY DISABLE rate limiting for production authentication
+    if (isProduction) {
+      console.log('🔧 Auth rate limiting DISABLED for production');
+      return true;
+    }
+    // Skip rate limiting for localhost in development
+    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    return false;
   }
 });
 
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minutes
   max: isDevelopment ? 100 : 20, // More lenient in development
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
@@ -70,7 +78,7 @@ const paymentLimiter = rateLimit({
 
 // Rate limiter for agent store creation
 const agentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1* 60 * 1000, // 1 minutes
   max: isDevelopment ? 50 : 3, // More lenient in development
   message: 'Too many store modifications, please try again later.',
   standardHeaders: true,
@@ -83,7 +91,7 @@ const agentLimiter = rateLimit({
 
 // Very lenient rate limiter for admin routes - DISABLED FOR PRODUCTION
 const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minutes
   max: isDevelopment ? 10000 : 100000, // Extremely high limit for production admin operations
   message: {
     success: false,
@@ -108,7 +116,7 @@ const adminLimiter = rateLimit({
 
 // Ultra lenient rate limiter for backend proxy endpoint
 const proxyLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minutes
   max: isDevelopment ? 1000 : 500, // Very high limit for proxy requests
   message: {
     success: false,
