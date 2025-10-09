@@ -4,17 +4,25 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 // Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined;
 
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 1000 : 500, // Increased for production
+  max: isDevelopment ? 1000 : 2000, // Very high limit for production
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
     // Skip rate limiting for localhost in development
-    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    // Skip rate limiting for production if NODE_ENV is not set properly
+    if (isProduction && process.env.NODE_ENV === undefined) {
+      return true;
+    }
+    return false;
   }
 });
 
@@ -64,13 +72,20 @@ const agentLimiter = rateLimit({
 // Very lenient rate limiter for admin routes
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 10000 : 2000, // Increased for production admin operations
+  max: isDevelopment ? 10000 : 5000, // Very high limit for production admin operations
   message: 'Too many admin requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
     // Skip rate limiting for localhost in development
-    return isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+    if (isDevelopment && (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    // Skip rate limiting for production if NODE_ENV is not set properly
+    if (isProduction && process.env.NODE_ENV === undefined) {
+      return true;
+    }
+    return false;
   }
 });
 
