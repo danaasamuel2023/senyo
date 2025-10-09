@@ -16,8 +16,12 @@ console.log('🔧 Environment Debug:', {
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 1000 : 10000, // Very high limit for production
-  message: 'Too many requests from this IP, please try again later.',
+  max: isDevelopment ? 10000 : 50000, // Very high limit for production
+  message: {
+    success: false,
+    error: 'Rate limit exceeded',
+    details: 'Too many requests from this IP, please try again later.'
+  },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
@@ -26,7 +30,7 @@ const generalLimiter = rateLimit({
       console.log('🔧 Skipping rate limit for localhost development');
       return true;
     }
-    // Skip rate limiting for production
+    // Skip rate limiting for production - DISABLED
     if (isProduction) {
       console.log('🔧 Skipping rate limit for production');
       return true;

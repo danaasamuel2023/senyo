@@ -69,10 +69,14 @@ const corsOptions = {
     'https://unlimitedata.onrender.com',
     'https://www.unlimitedata.onrender.com',
     'https://unlimiteddatagh.com',
-    'https://www.unlimiteddatagh.com'
+    'https://www.unlimiteddatagh.com',
+    'https://unlimitedata.onrender.com', // Add exact match for the failing URL
+    'https://www.unlimitedata.onrender.com' // Add exact match for the failing URL
   ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 };
 app.use(cors(corsOptions));
 
@@ -147,6 +151,27 @@ const mobileMoneyDepositRoutes = require('./walletRoutes/mobileMoneyDeposits');
 app.use('/api/wallet', withdrawalRoutes);
 app.use('/api/wallet', mobileMoneyDepositRoutes);
 
+// Direct admin API endpoints - proxy to v1 endpoints
+app.use('/api/admin/orders', (req, res, next) => {
+  req.url = req.url.replace('/api/admin/orders', '/api/v1/admin/orders');
+  next();
+});
+
+app.use('/api/admin/transactions', (req, res, next) => {
+  req.url = req.url.replace('/api/admin/transactions', '/api/v1/admin/transactions');
+  next();
+});
+
+app.use('/api/admin/statistics', (req, res, next) => {
+  req.url = req.url.replace('/api/admin/statistics', '/api/v1/admin/dashboard/statistics');
+  next();
+});
+
+app.use('/api/admin/daily-summary', (req, res, next) => {
+  req.url = req.url.replace('/api/admin/daily-summary', '/api/v1/admin/dashboard/daily-summary');
+  next();
+});
+
 // Legacy endpoint handlers - redirect to admin endpoints
 app.get('/api/transactions', (req, res) => {
   res.redirect(301, '/api/admin/transactions');
@@ -220,6 +245,41 @@ app.get('/api/verify-paystack/:reference', (req, res) => {
 
 app.post('/api/orders/bulk-status-update', (req, res) => {
   res.redirect(301, '/api/admin/orders/bulk-status-update');
+});
+
+// Backend proxy endpoint handler
+app.get('/api/backend', (req, res) => {
+  const { path } = req.query;
+  if (!path) {
+    return res.status(400).json({ error: 'Path parameter is required' });
+  }
+  
+  // Decode the path and forward the request
+  const decodedPath = decodeURIComponent(path);
+  console.log('Backend proxy request:', decodedPath);
+  
+  // Forward to the actual endpoint
+  req.url = decodedPath;
+  app._router.handle(req, res);
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found',
+    path: req.originalUrl
+  });
 });
 
 // Default Route
