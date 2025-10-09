@@ -5,7 +5,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 // Rate limiter for general API requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // Increased limit for frontend requests
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -16,6 +16,12 @@ const generalLimiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for health checks and admin endpoints
     if (req.path === '/api/health' || req.path.startsWith('/api/admin/')) {
+      return true;
+    }
+    // Skip for frontend dashboard and user data requests
+    if (req.path.startsWith('/api/v1/data/user-dashboard') || 
+        req.path.startsWith('/api/v1/data/pricing') ||
+        req.path.startsWith('/api/backend')) {
       return true;
     }
     // Skip for localhost in development
@@ -61,11 +67,15 @@ const authLimiter = rateLimit({
 // Rate limiter for payment/withdrawal routes
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // limit each IP to 20 payment requests per windowMs
+  max: 200, // Increased limit for legitimate requests
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    // Skip for frontend data requests
+    if (req.path.startsWith('/api/v1/data/') && !req.path.includes('purchase')) {
+      return true;
+    }
     // Skip for localhost in development
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {

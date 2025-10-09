@@ -43,7 +43,19 @@ class ApiClient {
       }
       
       if (response.status === 429) {
-        throw new Error('Too many requests. Please try again later.');
+        // Wait and retry for rate limit errors (max 2 retries)
+        if (retryCount < 2) {
+          const retryAfter = response.headers.get('Retry-After') || '5';
+          const waitTime = parseInt(retryAfter) * 1000;
+          
+          console.warn(`Rate limited. Retrying after ${retryAfter} seconds... (attempt ${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Retry the request
+          return this.request(endpoint, options, retryCount + 1);
+        } else {
+          throw new Error('Too many requests. Please try again later.');
+        }
       }
 
       const errorData = await response.json().catch(() => ({}));
@@ -64,7 +76,7 @@ class ApiClient {
   }
 
   // Make authenticated API request
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, retryCount = 0) {
     try {
       // Check if token is expired
       if (isTokenExpired()) {
