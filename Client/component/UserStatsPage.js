@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 // Constants
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://unlimiteddata.gh'}/api/v1`;
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/v1`;
 const TABS = ['overview', 'orders', 'financial', 'achievements'];
 
 // Animated Logo Component

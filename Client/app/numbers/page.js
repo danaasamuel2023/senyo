@@ -15,7 +15,7 @@ export default function PhoneNumbersPage() {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimiteddata.gh'}/api/orders/email/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/orders/email/${encodeURIComponent(userEmail)}`);
       const data = await response.json();
       
       if (!response.ok) {

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimiteddata.gh';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
 const API_ENDPOINTS = {
   NETWORKS: '/api/orders/networks',
   BULK_PURCHASE: '/api/orders/place-bulk'

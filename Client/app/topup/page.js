@@ -15,7 +15,7 @@ import {
 // API Configuration
 const getApiEndpoint = (path) => {
   const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimiteddata.gh';
+  const baseUrl = isLocalhost ? 'http://localhost:5001' : 'https://unlimitedata.onrender.com';
   return `${baseUrl}${path}`;
 };
 

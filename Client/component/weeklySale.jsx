@@ -54,7 +54,7 @@ const WeeklySalesChart = ({ userId = getUserIdFromLocalStorage() }) => {
       // Get auth token from localStorage (client-side only)
       const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimiteddata.gh'}/api/weekly-sales?${queryParams.toString()}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com'}/api/weekly-sales?${queryParams.toString()}`, {
         headers: {
           'Authorization': authToken ? `Bearer ${authToken}` : '',
           'Content-Type': 'application/json'
