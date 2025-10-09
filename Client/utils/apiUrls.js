@@ -29,7 +29,7 @@ export const API_URLS = {
   },
   PRODUCTION: {
     BASE: 'https://unlimitedata.onrender.com',
-    FRONTEND: 'https://unlimitedata.onrender.com',
+    FRONTEND: 'https://www.unlimiteddatagh.com',
     NEXT_PUBLIC: 'https://unlimitedata.onrender.com'
   }
 };
@@ -128,6 +128,7 @@ export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
     'http://localhost:3001',
+    'http://localhost:3002',
     'https://unlimitedata.onrender.com',
     'https://www.unlimitedata.onrender.com',
     'https://unlimiteddatagh.com',
