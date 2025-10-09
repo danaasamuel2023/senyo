@@ -108,7 +108,7 @@ export default function LoginPage() {
     setRateLimitTimeLeft(0);
   }, []);
 
-  // CSS animations are handled via Tailwind classes
+    // CSS animations are handled via Tailwind classes
   // Removed direct DOM manipulation for SSR compatibility
 
   // Function to show toast

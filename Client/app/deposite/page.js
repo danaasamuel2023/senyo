@@ -604,7 +604,7 @@ const DataHustleDeposit = () => {
     try {
       console.log('Checking transaction status for reference:', reference);
       
-      const response = await axios.get(getApiEndpoint(`/api/v1/verify-payments?reference=${encodeURIComponent(reference)}`));
+      const response = await axios.get(getApiEndpoint(`/api/v1/verify-payment?reference=${encodeURIComponent(reference)}`));
       
       console.log('Transaction status response:', response.data);
       

@@ -27,14 +27,17 @@ export default function PaymentCallbackClient({ searchParams }) {
       try {
         console.log('Payment callback received:', { reference, source });
 
-        // Direct API call to verify payment
-        console.log('Making direct API call to verify payment');
-        const response = await fetch(`http://localhost:5001/api/v1/verify-payment?reference=${reference}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        // Use server action for payment verification
+        console.log('Using server action to verify payment');
+        const { verifyPayment } = await import('./actions');
+        const result = await verifyPayment(reference);
+        
+        // Convert server action result to fetch-like response format
+        const response = {
+          ok: result.success,
+          status: result.status,
+          json: async () => result.data
+        };
 
         console.log('API response status:', response.status);
         const data = await response.json();

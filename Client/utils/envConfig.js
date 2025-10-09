@@ -58,9 +58,8 @@ export const getCorsOrigins = () => {
     'http://localhost:3000',
     'http://localhost:3001',
     'https://unlimitedata.onrender.com',
-    'https://www.unlimitedata.onrender.com',
-    'https://unlimiteddatagh.com',
-    'https://www.unlimiteddatagh.com'
+    'https://unlimitedatagh.com',
+    'https://www.unlimitedatagh.com'
   ];
 };
 

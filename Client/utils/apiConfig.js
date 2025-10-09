@@ -18,13 +18,13 @@ const isProduction = () => {
 // API URL Configuration
 const API_URLS = {
   DEVELOPMENT: {
-    BASE: 'http://localhost:5001',
+    BASE: 'https://unlimitedata.onrender.com',
     FRONTEND: 'http://localhost:3000',
-    NEXT_PUBLIC: 'http://localhost:5001'
+    NEXT_PUBLIC: 'https://unlimitedata.onrender.com'
   },
   PRODUCTION: {
     BASE: 'https://unlimitedata.onrender.com',
-    FRONTEND: 'https://www.unlimiteddatagh.com',
+    FRONTEND: 'https://unlimitedatagh.com',
     NEXT_PUBLIC: 'https://unlimitedata.onrender.com'
   }
 };
@@ -41,8 +41,9 @@ export const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // Always use production backend
-  return 'https://unlimitedata.onrender.com';
+  // Use environment-based URL
+  const env = getCurrentEnvironment();
+  return API_URLS[env].NEXT_PUBLIC;
 };
 
 export const getApiEndpoint = (endpoint) => {
