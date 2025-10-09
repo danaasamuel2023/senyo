@@ -521,7 +521,24 @@ app.post('/api/orders/bulk-status-update', (req, res) => {
   res.redirect(301, '/api/admin/orders/bulk-status-update');
 });
 
-// Backend proxy endpoint handler - Enhanced with proper error handling
+// Backend proxy endpoint handler - MOVED TO END TO AVOID CONFLICTS
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// Default Route
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
+// Backend proxy endpoint handler - MOVED HERE TO AVOID CONFLICTS
 app.get('/api/backend', proxyLimiter, (req, res, next) => {
   const { path } = req.query;
   if (!path) {
@@ -553,21 +570,6 @@ app.get('/api/backend', proxyLimiter, (req, res, next) => {
       message: error.message
     });
   }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
-
-// Default Route
-app.get('/', (req, res) => {
-  res.send('API is running...');
 });
 
 // 404 handler (should be last)
