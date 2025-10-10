@@ -51,8 +51,8 @@ const AdminPackageManagement = () => {
     lowStockPackages: 0
   });
 
-  // API Configuration - Use local API route for packages
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  // API Configuration - Use frontend API route for packages
+  const API_BASE_URL = '';
 
   // Networks
   const networks = ['MTN', 'AirtelTigo', 'Telecel', 'Vodafone'];
