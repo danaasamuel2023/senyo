@@ -27,10 +27,37 @@ export default function PaymentCallbackClient({ searchParams }) {
       try {
         console.log('Payment callback received:', { reference, source });
 
-        // Use server action for payment verification
-        console.log('Using server action to verify payment');
-        const { verifyPayment } = await import('./actions');
-        const result = await verifyPayment(reference);
+        // Try direct API call first, fallback to server action
+        console.log('Attempting direct API verification');
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+        
+        let result;
+        try {
+          // Direct API call to verify payment
+          const response = await fetch(`${API_URL}/api/v1/verify-payment?reference=${reference}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            result = {
+              success: data.success,
+              data: data,
+              status: response.status
+            };
+            console.log('Direct API verification successful:', result);
+          } else {
+            throw new Error(`API returned ${response.status}`);
+          }
+        } catch (apiError) {
+          console.log('Direct API failed, trying server action:', apiError.message);
+          // Fallback to server action
+          const { verifyPayment } = await import('./actions');
+          result = await verifyPayment(reference);
+        }
         
         // Convert server action result to fetch-like response format
         const response = {
