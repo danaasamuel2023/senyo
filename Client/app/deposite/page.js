@@ -257,7 +257,7 @@ const DataHustleDeposit = () => {
   
   // Quick amount options
   const quickAmounts = [
-    { value: 10, label: '₵10', popular: false },
+    { value: 1, label: '₵1', popular: false },
     { value: 20, label: '₵20', popular: false },
     { value: 50, label: '₵50', popular: true },
     { value: 100, label: '₵100', popular: true },
