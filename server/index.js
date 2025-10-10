@@ -82,8 +82,16 @@ app.get('/debug', (req, res) => {
     success: true, 
     message: 'Debug route working', 
     timestamp: new Date().toISOString(),
-    version: '58d34fe',
-    routes: ['/test', '/api/test', '/api/health', '/api/admin/statistics']
+    version: 'ca97e1b',
+    routes: ['/test', '/api/test', '/api/health', '/api/admin/statistics'],
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'MISSING',
+      MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'MISSING',
+      PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY ? 'SET' : 'MISSING',
+      FRONTEND_URL: process.env.FRONTEND_URL || 'NOT_SET'
+    }
   });
 });
 
