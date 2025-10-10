@@ -239,12 +239,35 @@ async function testMobileMoneyDeposit() {
     return false;
   }
   
+  // Create a new test user for mobile money deposit to avoid duplicate prevention
+  const mobileTestUser = {
+    name: `Mobile Test User ${Date.now()}`,
+    email: `mobile_test_${Date.now()}@example.com`,
+    password: 'TestPassword123!',
+    phoneNumber: '0241234567'
+  };
+  
+  const regResult = await makeRequest({
+    method: 'POST',
+    url: `${API_BASE_URL}/api/v1/register`,
+    data: mobileTestUser,
+    headers: { 'Content-Type': 'application/json' }
+  });
+  
+  let mobileUserId = userId;
+  if (regResult.success) {
+    mobileUserId = regResult.data.user?._id;
+    console.log(`   Created new test user for mobile money: ${mobileUserId}`);
+  } else {
+    console.log('   Using existing user for mobile money test');
+  }
+  
   const mobileData = {
-    userId: userId,
+    userId: mobileUserId,
     amount: 25,
     phoneNumber: '0241234567',
     network: 'MTN',
-    email: testUser.email
+    email: mobileTestUser.email
   };
   
   const result = await makeRequest({
