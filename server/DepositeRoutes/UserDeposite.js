@@ -102,8 +102,8 @@ router.post('/deposit',
         currency: 'GHS',
         reference,
         callback_url: process.env.NODE_ENV === 'production' 
-          ? `${process.env.FRONTEND_URL || 'https://www.unlimiteddatagh.com'}/api/payment/callback?reference=${reference}&source=unlimitedata`
-          : `http://localhost:3000/api/payment/callback?reference=${reference}&source=unlimitedata`
+          ? `${process.env.FRONTEND_URL || 'https://www.unlimiteddatagh.com'}/payment/callback?reference=${reference}&source=unlimitedata`
+          : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimitedata`
       },
       {
         headers: {
@@ -674,8 +674,8 @@ router.post('/mobile-money-deposit',
       currency: 'GHS',
       reference: reference,
       callback_url: process.env.NODE_ENV === 'production' 
-        ? `${process.env.FRONTEND_URL || 'https://www.unlimiteddatagh.com'}/api/payment/callback?reference=${reference}&source=mobile_money`
-        : `http://localhost:3000/api/payment/callback?reference=${reference}&source=mobile_money`,
+        ? `${process.env.FRONTEND_URL || 'https://www.unlimiteddatagh.com'}/payment/callback?reference=${reference}&source=mobile_money`
+        : `http://localhost:3000/payment/callback?reference=${reference}&source=mobile_money`,
       channels: ['mobile_money'],
       metadata: {
         custom_fields: [
