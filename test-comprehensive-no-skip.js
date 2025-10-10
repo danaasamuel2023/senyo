@@ -255,9 +255,26 @@ async function testMobileMoneyDeposit() {
   });
   
   let mobileUserId = userId;
+  let mobileAuthToken = authToken;
+  
   if (regResult.success) {
     mobileUserId = regResult.data.user?._id;
     console.log(`   Created new test user for mobile money: ${mobileUserId}`);
+    
+    // Login the new user to get their auth token
+    const loginResult = await makeRequest({
+      method: 'POST',
+      url: `${API_BASE_URL}/api/v1/login`,
+      data: { email: mobileTestUser.email, password: mobileTestUser.password },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (loginResult.success && loginResult.data.token) {
+      mobileAuthToken = loginResult.data.token;
+      console.log(`   Got auth token for mobile money test user`);
+    } else {
+      console.log('   Using existing auth token for mobile money test');
+    }
   } else {
     console.log('   Using existing user for mobile money test');
   }
@@ -275,7 +292,7 @@ async function testMobileMoneyDeposit() {
     url: `${API_BASE_URL}/api/v1/mobile-money-deposit`,
     data: mobileData,
     headers: { 
-      'Authorization': `Bearer ${authToken}`,
+      'Authorization': `Bearer ${mobileAuthToken}`,
       'Content-Type': 'application/json'
     }
   });
@@ -481,6 +498,8 @@ async function testAmountValidation() {
   for (const testCase of testCases) {
     // Create separate test users for amount validation to avoid duplicate prevention
     let testUserId = userId;
+    let testAuthToken = authToken;
+    
     if (depositReference && (testCase.amount === 10 || testCase.amount === 10000)) {
       const amountTestUser = {
         name: `Amount Test User ${Date.now()}`,
@@ -499,6 +518,21 @@ async function testAmountValidation() {
       if (regResult.success) {
         testUserId = regResult.data.user?._id;
         console.log(`   Created new test user for ${testCase.description}: ${testUserId}`);
+        
+        // Login the new user to get their auth token
+        const loginResult = await makeRequest({
+          method: 'POST',
+          url: `${API_BASE_URL}/api/v1/login`,
+          data: { email: amountTestUser.email, password: amountTestUser.password },
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (loginResult.success && loginResult.data.token) {
+          testAuthToken = loginResult.data.token;
+          console.log(`   Got auth token for ${testCase.description} test user`);
+        } else {
+          console.log(`   Using existing auth token for ${testCase.description}`);
+        }
       } else {
         console.log(`   ${testCase.description}: ⚠️ Skipped (could not create test user)`);
         passedTests++; // Count as passed since this is expected behavior
@@ -516,7 +550,7 @@ async function testAmountValidation() {
         email: testUser.email
       },
       headers: { 
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${testAuthToken}`,
         'Content-Type': 'application/json'
       }
     });
