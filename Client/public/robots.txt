@@ -19,7 +19,7 @@ Allow: /help
 Allow: /settings
 
 # Sitemap location
-Sitemap: https://unlimiteddatagh.com/sitemap.xml
+Sitemap: https://www.unlimiteddatagh.com/sitemap.xml
 
 # Crawl delay for better server performance
 Crawl-delay: 1

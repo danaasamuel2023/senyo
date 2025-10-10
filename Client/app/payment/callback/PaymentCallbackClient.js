@@ -231,10 +231,10 @@ export default function PaymentCallbackClient({ searchParams }) {
         <div className="text-center mt-6 text-gray-500 text-sm">
           <p>Need help? Contact our support team</p>
           <a 
-            href="mailto:support@unlimiteddatagh.com" 
+            href="mailto:support@www.unlimiteddatagh.com" 
             className="text-[#FFCC08] hover:text-[#FFD700] transition-colors"
           >
-            support@unlimiteddatagh.com
+            support@www.unlimiteddatagh.com
           </a>
         </div>
       </div>

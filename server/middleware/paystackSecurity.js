@@ -230,7 +230,7 @@ const checkBlocked = (req, res, next) => {
       success: false,
       error: 'Your IP has been temporarily blocked due to suspicious activity',
       blockedFor: `${remainingMinutes} minutes`,
-      contact: 'support@unlimiteddatagh.com'
+      contact: 'support@www.unlimiteddatagh.com'
     });
   }
 
