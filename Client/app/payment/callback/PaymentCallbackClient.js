@@ -27,50 +27,58 @@ export default function PaymentCallbackClient({ searchParams }) {
       try {
         console.log('Payment callback received:', { reference, source });
 
-        // Try direct API call first, fallback to server action
-        console.log('Attempting direct API verification');
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+        // Call our internal API route for payment verification
+        console.log('Calling internal payment callback API');
         
-        let result;
-        try {
-          // Direct API call to verify payment
-          const response = await fetch(`${API_URL}/api/v1/verify-payment?reference=${reference}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            result = {
-              success: data.success,
-              data: data,
-              status: response.status
-            };
-            console.log('Direct API verification successful:', result);
-          } else {
-            throw new Error(`API returned ${response.status}`);
-          }
-        } catch (apiError) {
-          console.log('Direct API failed, trying server action:', apiError.message);
-          // Fallback to server action
-          const { verifyPayment } = await import('./actions');
-          result = await verifyPayment(reference);
+        const response = await fetch(`/api/payment/callback?reference=${reference}&source=${source}&trxref=${trxref}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}`);
         }
+
+        const paymentData = await response.json();
+        console.log('Payment verification response:', paymentData);
+
+        if (paymentData.success) {
+          // Update user wallet balance in localStorage
+          const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+          const currentBalance = userData.walletBalance || 0;
+          const paymentAmount = paymentData.data.amount;
+          const newBalance = currentBalance + paymentAmount;
+          
+          // Update user data with new balance
+          userData.walletBalance = newBalance;
+          localStorage.setItem('userData', JSON.stringify(userData));
+          
+          // Add new balance to response data
+          paymentData.data.newBalance = newBalance;
+        }
+
+        const result = {
+          success: paymentData.success,
+          data: paymentData.data,
+          status: response.status
+        };
         
-        // Convert server action result to fetch-like response format
-        const response = {
+        console.log('Payment verification completed:', result);
+        
+        // Convert result to fetch-like response format
+        const apiResponse = {
           ok: result.success,
           status: result.status,
           json: async () => result.data
         };
 
-        console.log('API response status:', response.status);
-        const data = await response.json();
-        console.log('Payment verification response:', { response: response.status, data });
+        console.log('API response status:', apiResponse.status);
+        const data = await apiResponse.json();
+        console.log('Payment verification response:', { response: apiResponse.status, data });
 
-        if (response.ok && data.success) {
+        if (apiResponse.ok && data.success) {
           setStatus('success');
           setMessage(data.message || 'Payment successful! Your wallet has been credited.');
           setTransactionData(data.data);
