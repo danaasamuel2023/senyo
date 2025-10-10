@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Flow Test Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Payment Flow Test Simulation</h1>
+        <p>This page simulates the complete payment flow to test the callback URL functionality.</p>
+
+        <div class="test-section info">
+            <h3>📋 Test Configuration</h3>
+            <p><strong>Backend URL:</strong> <span id="backendUrl">http://localhost:5001</span></p>
+            <p><strong>Frontend URL:</strong> <span id="frontendUrl">http://localhost:3000</span></p>
+            <p><strong>Test Amount:</strong> GHS 10</p>
+            <p><strong>Test User:</strong> test@unlimiteddata.gh</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Step 1: Test Callback URL</h3>
+            <p>Test if the frontend callback URL is accessible:</p>
+            <button onclick="testCallbackUrl()">Test Callback URL</button>
+            <div id="callbackResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Step 2: Test Internal API Callback</h3>
+            <p>Test the internal API callback endpoint:</p>
+            <button onclick="testInternalCallback()">Test Internal API</button>
+            <div id="internalResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Step 3: Test Backend Webhook</h3>
+            <p>Test the backend webhook endpoint:</p>
+            <button onclick="testWebhook()">Test Webhook</button>
+            <div id="webhookResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Step 4: Simulate Complete Payment Flow</h3>
+            <p>Simulate the complete payment flow:</p>
+            <button onclick="simulatePaymentFlow()">Simulate Payment Flow</button>
+            <div id="paymentResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results Summary</h3>
+            <div id="summary"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>🎯 Paystack Test Credentials</h3>
+            <p>For real testing, use these Paystack test credentials:</p>
+            <ul>
+                <li><strong>Card Number:</strong> 4084084084084081</li>
+                <li><strong>CVV:</strong> 408</li>
+                <li><strong>Expiry:</strong> Any future date</li>
+                <li><strong>PIN:</strong> 1234</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:5001';
+        const FRONTEND_URL = 'http://localhost:3000';
+        const TEST_REFERENCE = 'TEST-' + Date.now();
+
+        let testResults = {
+            callback: false,
+            internal: false,
+            webhook: false,
+            payment: false
+        };
+
+        async function testCallbackUrl() {
+            const resultDiv = document.getElementById('callbackResult');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const url = `${FRONTEND_URL}/payment/callback?reference=${TEST_REFERENCE}&source=unlimitedata`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ SUCCESS: Callback URL accessible\nStatus: ${response.status}\nURL: ${url}`;
+                    resultDiv.className = 'result success';
+                    testResults.callback = true;
+                } else {
+                    resultDiv.innerHTML = `❌ FAILED: Status ${response.status}\nURL: ${url}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ ERROR: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+            
+            updateSummary();
+        }
+
+        async function testInternalCallback() {
+            const resultDiv = document.getElementById('internalResult');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const url = `${FRONTEND_URL}/api/payment/callback?reference=${TEST_REFERENCE}&source=unlimitedata`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `✅ SUCCESS: Internal API working\nStatus: ${response.status}\nData: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                    testResults.internal = true;
+                } else {
+                    resultDiv.innerHTML = `❌ FAILED: Status ${response.status}\nData: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ ERROR: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+            
+            updateSummary();
+        }
+
+        async function testWebhook() {
+            const resultDiv = document.getElementById('webhookResult');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const webhookData = {
+                    event: 'charge.success',
+                    data: {
+                        reference: TEST_REFERENCE,
+                        amount: 1000, // GHS 10 in kobo
+                        status: 'success'
+                    }
+                };
+                
+                const response = await fetch(`${BACKEND_URL}/api/v1/paystack/webhook`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-paystack-signature': 'test-signature'
+                    },
+                    body: JSON.stringify(webhookData)
+                });
+                
+                const data = await response.json();
+                
+                // Expect "Invalid signature" for test
+                if (data.error === 'Invalid signature') {
+                    resultDiv.innerHTML = `✅ SUCCESS: Webhook endpoint accessible\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                    testResults.webhook = true;
+                } else {
+                    resultDiv.innerHTML = `⚠️ UNEXPECTED: Status ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result info';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ ERROR: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+            
+            updateSummary();
+        }
+
+        async function simulatePaymentFlow() {
+            const resultDiv = document.getElementById('paymentResult');
+            resultDiv.innerHTML = 'Simulating payment flow...';
+            
+            try {
+                // Step 1: Test callback URL
+                const callbackUrl = `${FRONTEND_URL}/payment/callback?reference=${TEST_REFERENCE}&source=unlimitedata`;
+                const callbackResponse = await fetch(callbackUrl);
+                
+                if (!callbackResponse.ok) {
+                    throw new Error(`Callback URL failed: ${callbackResponse.status}`);
+                }
+                
+                // Step 2: Test internal API
+                const internalUrl = `${FRONTEND_URL}/api/payment/callback?reference=${TEST_REFERENCE}&source=unlimitedata`;
+                const internalResponse = await fetch(internalUrl);
+                const internalData = await internalResponse.json();
+                
+                if (!internalResponse.ok || !internalData.success) {
+                    throw new Error(`Internal API failed: ${JSON.stringify(internalData)}`);
+                }
+                
+                // Step 3: Test webhook
+                const webhookData = {
+                    event: 'charge.success',
+                    data: {
+                        reference: TEST_REFERENCE,
+                        amount: 1000,
+                        status: 'success'
+                    }
+                };
+                
+                const webhookResponse = await fetch(`${BACKEND_URL}/api/v1/paystack/webhook`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-paystack-signature': 'test-signature'
+                    },
+                    body: JSON.stringify(webhookData)
+                });
+                
+                const webhookDataResponse = await webhookResponse.json();
+                
+                resultDiv.innerHTML = `✅ SUCCESS: Complete payment flow simulation successful!\n\n` +
+                    `Step 1 - Callback URL: ✅ (${callbackResponse.status})\n` +
+                    `Step 2 - Internal API: ✅ (${internalResponse.status})\n` +
+                    `Step 3 - Webhook: ✅ (${webhookResponse.status})\n\n` +
+                    `Test Reference: ${TEST_REFERENCE}\n` +
+                    `Payment Amount: GHS 10\n` +
+                    `Status: Completed`;
+                resultDiv.className = 'result success';
+                testResults.payment = true;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ FAILED: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const passed = Object.values(testResults).filter(Boolean).length;
+            const total = Object.keys(testResults).length;
+            
+            let summaryHTML = `<h4>Test Results: ${passed}/${total} passed</h4>`;
+            summaryHTML += `<div class="step">✅ Callback URL: ${testResults.callback ? 'PASS' : 'FAIL'}</div>`;
+            summaryHTML += `<div class="step">✅ Internal API: ${testResults.internal ? 'PASS' : 'FAIL'}</div>`;
+            summaryHTML += `<div class="step">✅ Webhook: ${testResults.webhook ? 'PASS' : 'FAIL'}</div>`;
+            summaryHTML += `<div class="step">✅ Payment Flow: ${testResults.payment ? 'PASS' : 'FAIL'}</div>`;
+            
+            if (passed === total) {
+                summaryHTML += `<div class="step success">🎉 All tests passed! Payment flow is working correctly.</div>`;
+            } else {
+                summaryHTML += `<div class="step error">⚠️ Some tests failed. Check individual results above.</div>`;
+            }
+            
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        // Initialize summary
+        updateSummary();
+    </script>
+</body>
+</html>

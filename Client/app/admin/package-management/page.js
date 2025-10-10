@@ -106,7 +106,7 @@ const AdminPackageManagement = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/packages`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

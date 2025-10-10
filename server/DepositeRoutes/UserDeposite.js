@@ -102,7 +102,7 @@ router.post('/deposit',
         currency: 'GHS',
         reference,
         callback_url: process.env.NODE_ENV === 'production' 
-          ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=unlimitedata`
+          ? `${process.env.FRONTEND_URL || 'https://unlimitedatagh.com'}/payment/callback?reference=${reference}&source=unlimitedata`
           : `http://localhost:3000/payment/callback?reference=${reference}&source=unlimitedata`
       },
       {
@@ -674,7 +674,7 @@ router.post('/mobile-money-deposit',
       currency: 'GHS',
       reference: reference,
       callback_url: process.env.NODE_ENV === 'production' 
-        ? `https://unlimitedata.onrender.com/payment/callback?reference=${reference}&source=mobile_money`
+        ? `${process.env.FRONTEND_URL || 'https://unlimitedatagh.com'}/payment/callback?reference=${reference}&source=mobile_money`
         : `http://localhost:3000/payment/callback?reference=${reference}&source=mobile_money`,
       channels: ['mobile_money'],
       metadata: {
