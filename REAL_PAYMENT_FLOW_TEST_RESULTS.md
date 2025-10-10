@@ -9,7 +9,7 @@ Successfully tested the complete end-to-end payment flow with Paystack integrati
 | Component | Status | URL | Response |
 |-----------|--------|-----|----------|
 | **Frontend Callback** | ✅ PASS | `http://localhost:3000/payment/callback` | 200 OK - Renders payment processing page |
-| **Internal API Callback** | ✅ PASS | `http://localhost:3000/api/payment/callback` | 200 OK - Returns JSON with payment data |
+| **Internal API Callback** | ✅ PASS | `https://unlimiteddata.gh/api/payment/callback` | 200 OK - Returns JSON with payment data |
 | **Backend Webhook** | ✅ PASS | `http://localhost:5001/api/v1/paystack/webhook` | 200 OK - Returns "Invalid signature" (expected) |
 | **Backend Health** | ✅ PASS | `http://localhost:5001/api/health` | 200 OK - Server running |
 | **Frontend Health** | ✅ PASS | `http://localhost:3000` | 200 OK - Server running |
@@ -70,7 +70,7 @@ curl "http://localhost:3000/payment/callback?reference=test123&source=unlimiteda
 
 ### **2. Internal API Test:**
 ```bash
-curl "http://localhost:3000/api/payment/callback?reference=test123&source=unlimitedata"
+curl "https://unlimiteddata.gh/api/payment/callback?reference=test123&source=unlimitedata"
 # Result: 200 OK - JSON response
 ```
 

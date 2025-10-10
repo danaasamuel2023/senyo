@@ -74,8 +74,8 @@ router.post('/process', auth, async (req, res) => {
       email: req.user.email,
       reference: transaction._id.toString(),
       callback_url: process.env.NODE_ENV === 'production' 
-        ? `${process.env.FRONTEND_URL || 'https://unlimitedatagh.com'}/payment/callback`
-        : `http://localhost:3000/payment/callback`,
+        ? `${process.env.FRONTEND_URL || 'https://unlimiteddata.gh'}/api/payment/callback`
+        : `http://localhost:3000/api/payment/callback`,
       metadata: {
         orderId: orderId,
         agentCode: agentCode,

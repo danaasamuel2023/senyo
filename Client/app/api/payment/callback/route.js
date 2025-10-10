@@ -16,22 +16,68 @@ export async function GET(request) {
       }, { status: 400 });
     }
 
-    // Simulate payment verification
-    // In a real implementation, this would verify with Paystack or your payment provider
-    const paymentData = {
-      success: true,
-      data: {
-        reference: reference,
-        status: 'completed',
-        amount: 100, // This should come from the actual payment provider
-        message: 'Payment verified successfully!',
-        timestamp: new Date().toISOString()
+    // Call backend verification endpoint
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+    const verifyUrl = `${backendUrl}/api/v1/verify-payment?reference=${reference}`;
+    
+    console.log('Calling backend verification:', verifyUrl);
+    
+    try {
+      const verifyResponse = await fetch(verifyUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Senyo-Payment-Callback/1.0'
+        },
+        // Add timeout
+        signal: AbortSignal.timeout(30000), // 30 seconds
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error(`Backend verification failed: ${verifyResponse.status} ${verifyResponse.statusText}`);
       }
-    };
 
-    console.log('Payment verification result:', paymentData);
+      const verifyData = await verifyResponse.json();
+      console.log('Backend verification response:', verifyData);
 
-    return NextResponse.json(paymentData, { status: 200 });
+      if (verifyData.success) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            reference: reference,
+            status: 'completed',
+            amount: verifyData.data?.amount || 0,
+            newBalance: verifyData.data?.newBalance || 0,
+            message: 'Payment verified successfully!',
+            timestamp: new Date().toISOString()
+          }
+        }, { status: 200 });
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: verifyData.error || 'Payment verification failed',
+          data: {
+            reference: reference,
+            status: 'failed',
+            message: verifyData.message || 'Payment verification failed'
+          }
+        }, { status: 400 });
+      }
+    } catch (backendError) {
+      console.error('Backend verification error:', backendError);
+      
+      // Fallback: return error but don't fail completely
+      return NextResponse.json({
+        success: false,
+        error: 'Backend verification failed',
+        message: backendError.message,
+        data: {
+          reference: reference,
+          status: 'pending',
+          message: 'Payment verification is pending. Please check your wallet balance.'
+        }
+      }, { status: 200 }); // Return 200 to avoid breaking the callback flow
+    }
 
   } catch (error) {
     console.error('Payment callback API error:', error);
@@ -58,19 +104,67 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Simulate payment processing
-    const paymentData = {
-      success: true,
-      data: {
-        reference: reference,
-        status: status || 'completed',
-        amount: amount || 100,
-        message: 'Payment processed successfully!',
-        timestamp: new Date().toISOString()
-      }
-    };
+    // Call backend verification endpoint
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+    const verifyUrl = `${backendUrl}/api/v1/verify-payment?reference=${reference}`;
+    
+    console.log('Calling backend verification (POST):', verifyUrl);
+    
+    try {
+      const verifyResponse = await fetch(verifyUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Senyo-Payment-Callback/1.0'
+        },
+        signal: AbortSignal.timeout(30000), // 30 seconds
+      });
 
-    return NextResponse.json(paymentData, { status: 200 });
+      if (!verifyResponse.ok) {
+        throw new Error(`Backend verification failed: ${verifyResponse.status} ${verifyResponse.statusText}`);
+      }
+
+      const verifyData = await verifyResponse.json();
+      console.log('Backend verification response (POST):', verifyData);
+
+      if (verifyData.success) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            reference: reference,
+            status: 'completed',
+            amount: verifyData.data?.amount || amount || 0,
+            newBalance: verifyData.data?.newBalance || 0,
+            message: 'Payment processed successfully!',
+            timestamp: new Date().toISOString()
+          }
+        }, { status: 200 });
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: verifyData.error || 'Payment verification failed',
+          data: {
+            reference: reference,
+            status: 'failed',
+            message: verifyData.message || 'Payment verification failed'
+          }
+        }, { status: 400 });
+      }
+    } catch (backendError) {
+      console.error('Backend verification error (POST):', backendError);
+      
+      // Fallback: return error but don't fail completely
+      return NextResponse.json({
+        success: false,
+        error: 'Backend verification failed',
+        message: backendError.message,
+        data: {
+          reference: reference,
+          status: 'pending',
+          message: 'Payment verification is pending. Please check your wallet balance.'
+        }
+      }, { status: 200 }); // Return 200 to avoid breaking the callback flow
+    }
 
   } catch (error) {
     console.error('Payment callback POST error:', error);

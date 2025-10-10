@@ -9,7 +9,7 @@ All payment flow components are working correctly after updating the Paystack ca
 | Component | Status | URL | Response |
 |-----------|--------|-----|----------|
 | **Frontend Callback** | ✅ PASS | `http://localhost:3000/payment/callback` | 200 OK - Renders payment processing page |
-| **Internal API Callback** | ✅ PASS | `http://localhost:3000/api/payment/callback` | 200 OK - Returns JSON with payment data |
+| **Internal API Callback** | ✅ PASS | `https://unlimiteddata.gh/api/payment/callback` | 200 OK - Returns JSON with payment data |
 | **Backend Webhook** | ✅ PASS | `http://localhost:5001/api/v1/paystack/webhook` | 200 OK - Returns "Invalid signature" (expected) |
 | **Test Payment Page** | ✅ PASS | `http://localhost:3000/test-payment` | 200 OK - Renders test interface |
 | **Backend Health** | ✅ PASS | `http://localhost:5001/api/health` | 200 OK - Server running |

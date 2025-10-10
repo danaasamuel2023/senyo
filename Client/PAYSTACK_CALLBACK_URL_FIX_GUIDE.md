@@ -83,7 +83,7 @@ curl "https://your-domain.com/payment/callback?reference=test123&source=unlimite
 ### **3. Test Internal API Route:**
 ```bash
 # Development
-curl "http://localhost:3000/api/payment/callback?reference=test123&source=unlimitedata"
+curl "https://unlimiteddata.gh/api/payment/callback?reference=test123&source=unlimitedata"
 
 # Production
 curl "https://your-domain.com/api/payment/callback?reference=test123&source=unlimitedata"

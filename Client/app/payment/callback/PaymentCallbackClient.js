@@ -53,18 +53,25 @@ export default function PaymentCallbackClient({ searchParams }) {
         console.log('Payment verification response:', paymentData);
 
         if (paymentData.success) {
-          // Update user wallet balance in localStorage
+          // Update user wallet balance in localStorage using backend-provided balance
           const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-          const currentBalance = userData.walletBalance || 0;
-          const paymentAmount = paymentData.data.amount;
-          const newBalance = currentBalance + paymentAmount;
+          const backendBalance = paymentData.data.newBalance;
           
-          // Update user data with new balance
-          userData.walletBalance = newBalance;
-          localStorage.setItem('userData', JSON.stringify(userData));
-          
-          // Add new balance to response data
-          paymentData.data.newBalance = newBalance;
+          if (backendBalance !== undefined) {
+            // Use the balance from backend verification (more accurate)
+            userData.walletBalance = backendBalance;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            console.log('✅ Wallet balance updated from backend:', backendBalance);
+          } else {
+            // Fallback: calculate locally if backend doesn't provide balance
+            const currentBalance = userData.walletBalance || 0;
+            const paymentAmount = paymentData.data.amount || 0;
+            const newBalance = currentBalance + paymentAmount;
+            
+            userData.walletBalance = newBalance;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            console.log('⚠️ Wallet balance calculated locally:', newBalance);
+          }
         }
 
         const result = {
