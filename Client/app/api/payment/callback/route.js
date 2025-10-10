@@ -48,6 +48,7 @@ export async function GET(request) {
       console.log('Backend verification response:', verifyData);
 
       if (verifyData.success) {
+        console.log('✅ Backend verification successful, returning success response');
         return NextResponse.json({
           success: true,
           data: {

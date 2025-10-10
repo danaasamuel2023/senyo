@@ -9,9 +9,17 @@ export default function PaymentCallbackClient({ searchParams }) {
   const [status, setStatus] = useState('processing'); // processing, success, failed
   const [message, setMessage] = useState('');
   const [transactionData, setTransactionData] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const handlePaymentCallback = async () => {
+      // Prevent duplicate processing
+      if (isProcessing) {
+        console.log('🔄 Already processing, skipping duplicate call');
+        return;
+      }
+      
+      setIsProcessing(true);
       console.log('🔍 Payment callback processing started');
       let reference = searchParams?.reference;
       const source = searchParams?.source;
@@ -25,16 +33,18 @@ export default function PaymentCallbackClient({ searchParams }) {
       
       console.log('🔍 URL params:', { reference, source, trxref });
 
-      // Check if we've already processed this reference to prevent loops
+      // Clean up any stale processing state on component mount
+      const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
       const processedRefs = JSON.parse(localStorage.getItem('processedPayments') || '[]');
+      
+      // If this reference is already processed, redirect immediately
       if (processedRefs.includes(reference)) {
-        console.log('🔄 Payment already processed, redirecting to dashboard');
+        console.log('🔄 Payment already processed, redirecting immediately');
         router.push('/');
         return;
       }
 
       // Check if we're currently processing this reference
-      const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
       if (processingRefs.includes(reference)) {
         console.log('🔄 Payment already being processed, waiting...');
         return;
@@ -111,8 +121,10 @@ export default function PaymentCallbackClient({ searchParams }) {
         console.log('API response status:', apiResponse.status);
         const data = await apiResponse.json();
         console.log('Payment verification response:', { response: apiResponse.status, data });
+        console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'data.success:', data.success);
 
         if (apiResponse.ok && data.success) {
+          console.log('✅ Payment verification successful, setting success status');
           setStatus('success');
           setMessage(data.message || 'Payment successful! Your wallet has been credited.');
           setTransactionData(data.data);
@@ -132,6 +144,8 @@ export default function PaymentCallbackClient({ searchParams }) {
             router.push('/');
           }, 2000);
         } else {
+          console.log('❌ Payment verification failed, setting failed status');
+          console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'data.success:', data.success);
           setStatus('failed');
           
           // Handle different error types with user-friendly messages
@@ -163,12 +177,19 @@ export default function PaymentCallbackClient({ searchParams }) {
         const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
         const updatedProcessingRefs = processingRefs.filter(ref => ref !== reference);
         localStorage.setItem('processingPayments', JSON.stringify(updatedProcessingRefs));
+      } finally {
+        setIsProcessing(false);
       }
     };
 
     // Add a small delay to ensure DOM is ready
-    setTimeout(handlePaymentCallback, 100);
-  }, [searchParams, router]);
+    const timeoutId = setTimeout(handlePaymentCallback, 100);
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchParams, router, isProcessing]);
 
   const getStatusIcon = () => {
     switch (status) {
