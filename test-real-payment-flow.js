@@ -13,7 +13,7 @@ const CONFIG = {
   backendUrl: 'http://localhost:5001',
   frontendUrl: 'http://localhost:3000',
   testAmount: 10, // GHS 10 test amount
-  testEmail: 'test@unlimiteddata.gh',
+  testEmail: 'test@unlimiteddatagh.com',
   testPhone: '0246783840'
 };
 

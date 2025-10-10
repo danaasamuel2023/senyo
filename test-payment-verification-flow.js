@@ -9,7 +9,7 @@ const axios = require('axios');
 
 // Configuration
 const BACKEND_URL = 'https://unlimitedata.onrender.com';
-const FRONTEND_URL = 'https://unlimiteddata.gh';
+const FRONTEND_URL = 'https://unlimiteddatagh.com';
 
 // Test reference (you can replace this with a real reference from a test payment)
 const TEST_REFERENCE = 'DEP-test123456789';
