@@ -39,17 +39,7 @@ import {
   StarIcon
 } from 'lucide-react';
 
-export const metadata = {
-  title: "Cheap Databundle Ghana | Best Unlimited Data Deals 2024",
-  description: "Get the cheapest databundle deals in Ghana. Unlimited data packages starting from ₵5. MTN, Vodafone, AirtelTigo & Telecel. Instant delivery, secure payment.",
-  keywords: "cheap databundle ghana, unlimited data deals, best databundle prices, affordable data bundles, MTN databundle, Vodafone databundle, AirtelTigo databundle, Telecel databundle",
-  openGraph: {
-    title: "Cheap Databundle Ghana | Best Unlimited Data Deals 2024",
-    description: "Get the cheapest databundle deals in Ghana. Unlimited data packages from ₵5. Instant delivery, secure payment.",
-    type: "website",
-    url: "https://unlimiteddata.gh/cheap-databundle"
-  }
-};
+// Metadata is handled by layout.js for client components
 
 const CheapDatabundlePage = () => {
   const router = useRouter();

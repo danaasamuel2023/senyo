@@ -43,17 +43,7 @@ import {
   WifiOff
 } from 'lucide-react';
 
-export const metadata = {
-  title: "Unlimited Data Deals Ghana | Best Unlimited Data Packages 2024",
-  description: "Get unlimited data deals in Ghana. Best unlimited data packages for MTN, Vodafone, AirtelTigo & Telecel. No data limits, instant delivery, secure payment.",
-  keywords: "unlimited data ghana, unlimited data deals, unlimited data packages, best unlimited data, MTN unlimited data, Vodafone unlimited data, AirtelTigo unlimited data, Telecel unlimited data",
-  openGraph: {
-    title: "Unlimited Data Deals Ghana | Best Unlimited Data Packages 2024",
-    description: "Get unlimited data deals in Ghana. Best unlimited data packages for all networks. No data limits, instant delivery.",
-    type: "website",
-    url: "https://unlimiteddata.gh/unlimited-data-deals"
-  }
-};
+// Metadata is handled by layout.js for client components
 
 const UnlimitedDataDealsPage = () => {
   const router = useRouter();

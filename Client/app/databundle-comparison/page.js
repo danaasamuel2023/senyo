@@ -47,17 +47,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export const metadata = {
-  title: "Databundle Comparison Ghana | Compare MTN, Vodafone, AirtelTigo & Telecel",
-  description: "Compare databundle packages from all networks in Ghana. Find the best deals for MTN, Vodafone, AirtelTigo & Telecel. Price comparison, features, and reviews.",
-  keywords: "databundle comparison ghana, compare databundle packages, MTN vs Vodafone databundle, AirtelTigo vs Telecel databundle, best databundle deals comparison",
-  openGraph: {
-    title: "Databundle Comparison Ghana | Compare All Networks",
-    description: "Compare databundle packages from all networks in Ghana. Find the best deals and prices.",
-    type: "website",
-    url: "https://unlimiteddata.gh/databundle-comparison"
-  }
-};
+// Metadata is handled by layout.js for client components
 
 const DatabundleComparisonPage = () => {
   const router = useRouter();
