@@ -102,7 +102,18 @@ const AdminSettingsPage = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load payment gateway settings:', error);
+      console.warn('Payment gateway settings endpoint not available, using defaults:', error);
+      // Use default payment gateway settings when endpoint is not available
+      setPaymentGatewaySettings({
+        activeGateway: 'paystack',
+        paystackEnabled: true,
+        bulkclixEnabled: false,
+        paystackPublicKey: '',
+        paystackSecretKey: '',
+        bulkclixApiKey: '',
+        autoSwitch: false,
+        fallbackGateway: 'paystack'
+      });
     }
   };
 
@@ -788,8 +799,8 @@ const AdminSettingsPage = () => {
                   showNotification('Failed to save settings', 'error');
                 }
               } catch (error) {
-                console.error('Save payment gateway settings error:', error);
-                showNotification('Failed to save settings', 'error');
+                console.warn('Payment gateway settings endpoint not available:', error);
+                showNotification('Payment gateway settings endpoint not available - please wait for deployment', 'error');
               } finally {
                 setSaving(false);
               }

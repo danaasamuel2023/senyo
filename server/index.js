@@ -516,6 +516,7 @@ adminRouter.use('/', AdminManagement);
 adminRouter.use('/bulk-messaging', bulkMessagingRoutes);
 adminRouter.use('/', packageManagementRoutes);
 adminRouter.use('/', priceManagementRoutes);
+adminRouter.use('/', paymentGatewaySettingsRoutes);
 
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT
 if (process.env.NODE_ENV !== 'development') {
