@@ -277,6 +277,50 @@ app.get('/api/admin/statistics', async (req, res) => {
   }
 });
 
+// Temporary direct inventory endpoint to fix 404 error
+app.get('/api/v1/admin/inventory', async (req, res) => {
+  try {
+    const { DataInventory } = require('./schema/schema');
+    const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
+    
+    // Predefined networks
+    const NETWORKS = ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"];
+    
+    // Create response with all networks (create missing ones with defaults)
+    const inventory = NETWORKS.map(network => {
+      const existingItem = inventoryItems.find(item => item.network === network);
+      
+      if (existingItem) {
+        return {
+          network: existingItem.network,
+          inStock: existingItem.inStock,
+          skipGeonettech: existingItem.skipGeonettech || false,
+          updatedAt: existingItem.updatedAt
+        };
+      } else {
+        return {
+          network,
+          inStock: true, // Default to in stock
+          skipGeonettech: false, // Default to API enabled
+          updatedAt: null
+        };
+      }
+    });
+    
+    res.json({
+      inventory,
+      totalNetworks: NETWORKS.length,
+      message: 'Inventory data retrieved successfully'
+    });
+  } catch (err) {
+    console.error('Error fetching inventory:', err.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: err.message
+    });
+  }
+});
+
 // Pricing endpoint
 app.get('/api/v1/data/pricing', async (req, res) => {
   try {
