@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Transaction, User, Wallet } = require('../schema/schema');
 const axios = require('axios');
 const crypto = require('crypto');
@@ -132,8 +133,13 @@ router.post('/deposit',
 
 // FIXED: Added transaction locking mechanism using processing field
 // Process a successful payment and update user wallet
-async function processSuccessfulPayment(reference) {
+async function processSuccessfulPayment(reference, idempotencyKey = null) {
   console.log(`[PAYMENT] Starting to process payment for reference: ${reference}`);
+  
+  // Generate idempotency key if not provided
+  if (!idempotencyKey) {
+    idempotencyKey = `payment_${reference}_${Date.now()}`;
+  }
   
   // First, try to find any transaction with this reference regardless of status
   const existingTransaction = await Transaction.findOne({ reference });
@@ -142,19 +148,40 @@ async function processSuccessfulPayment(reference) {
     status: existingTransaction.status,
     amount: existingTransaction.amount,
     userId: existingTransaction.userId,
-    processing: existingTransaction.processing
+    processing: existingTransaction.processing,
+    idempotencyKey: existingTransaction.idempotencyKey
   } : 'NOT FOUND');
 
-  // Use findOneAndUpdate with proper conditions to prevent race conditions
+  // Check if already processed with same idempotency key
+  if (existingTransaction && existingTransaction.idempotencyKey === idempotencyKey) {
+    console.log(`[PAYMENT] Transaction already processed with same idempotency key`);
+    return { 
+      success: true, 
+      message: 'Transaction already processed',
+      newBalance: existingTransaction.newBalance || 0
+    };
+  }
+
+  // Use atomic operation with multiple conditions to prevent race conditions
   const transaction = await Transaction.findOneAndUpdate(
     { 
       reference, 
       status: 'pending',
-      processing: { $ne: true } // Only update if not already being processed
+      $or: [
+        { processing: { $ne: true } },
+        { processing: { $exists: false } }
+      ],
+      // Add timeout for stuck processing (5 minutes)
+      $or: [
+        { processingStartedAt: { $exists: false } },
+        { processingStartedAt: { $lt: new Date(Date.now() - 5 * 60 * 1000) } }
+      ]
     },
     { 
       $set: { 
-        processing: true  // Mark as being processed to prevent double processing
+        processing: true,
+        processingStartedAt: new Date(),
+        idempotencyKey: idempotencyKey
       } 
     },
     { new: true }
@@ -166,65 +193,141 @@ async function processSuccessfulPayment(reference) {
     // Check if it's already completed
     if (existingTransaction && existingTransaction.status === 'completed') {
       console.log(`[PAYMENT] Transaction already completed`);
-      return { success: true, message: 'Transaction already processed' };
+      return { 
+        success: true, 
+        message: 'Transaction already processed',
+        newBalance: existingTransaction.newBalance || 0
+      };
     }
     
     return { success: false, message: 'Transaction not found or already processed' };
   }
 
   try {
-    console.log(`[PAYMENT] Processing transaction ${reference}, amount: ${transaction.amount}`);
+    console.log(`[PAYMENT] Processing transaction ${reference}, amount: ${transaction.amount}, idempotency: ${idempotencyKey}`);
     
-    // Now safely update the transaction status
-    transaction.status = 'completed';
-    await transaction.save();
-    console.log(`[PAYMENT] Transaction ${reference} marked as completed`);
+    // Use database transaction for atomic operations
+    const session = await mongoose.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        // Update transaction status atomically
+        await Transaction.findByIdAndUpdate(
+          transaction._id,
+          { 
+            $set: { 
+              status: 'completed',
+              completedAt: new Date(),
+              processing: false
+            }
+          },
+          { session }
+        );
+        console.log(`[PAYMENT] Transaction ${reference} marked as completed`);
 
-    // Update user's wallet balance in both User and Wallet collections
-    const user = await User.findById(transaction.userId);
-    if (user) {
-      // Update User.walletBalance (used by frontend)
-      const previousUserBalance = user.walletBalance;
-      user.walletBalance += transaction.amount;
-      await user.save();
-      
-      // Find or create wallet for the user (for backend consistency)
-      let wallet = await Wallet.findOne({ userId: transaction.userId });
-      if (!wallet) {
-        wallet = new Wallet({
-          userId: transaction.userId,
-          balance: 0,
-          currency: 'GHS'
-        });
-        console.log(`[PAYMENT] Created new wallet for user ${transaction.userId}`);
-      }
-      
-      const previousWalletBalance = wallet.balance;
-      wallet.balance += transaction.amount;
-      await wallet.save();
-      
-      console.log(`[PAYMENT] ✅ User ${user._id} wallet updated successfully!`);
-      console.log(`[PAYMENT]    User.walletBalance: GHS ${previousUserBalance} → GHS ${user.walletBalance}`);
-      console.log(`[PAYMENT]    Wallet.balance: GHS ${previousWalletBalance} → GHS ${wallet.balance}`);
-      console.log(`[PAYMENT]    Deposit amount: GHS ${transaction.amount}`);
+        // Update user's wallet balance atomically
+        const user = await User.findById(transaction.userId, null, { session });
+        if (!user) {
+          throw new Error(`User not found for transaction ${reference}`);
+        }
+
+        // Update User.walletBalance (used by frontend)
+        const previousUserBalance = user.walletBalance;
+        user.walletBalance += transaction.amount;
+        await user.save({ session });
+        
+        // Find or create wallet for the user (for backend consistency)
+        let wallet = await Wallet.findOne({ userId: transaction.userId }, null, { session });
+        if (!wallet) {
+          wallet = new Wallet({
+            userId: transaction.userId,
+            balance: 0,
+            currency: 'GHS'
+          });
+          console.log(`[PAYMENT] Created new wallet for user ${transaction.userId}`);
+        }
+        
+        const previousWalletBalance = wallet.balance;
+        wallet.balance += transaction.amount;
+        await wallet.save({ session });
+        
+        // Store the new balance in transaction for idempotency
+        await Transaction.findByIdAndUpdate(
+          transaction._id,
+          { $set: { newBalance: user.walletBalance } },
+          { session }
+        );
+        
+        console.log(`[PAYMENT] ✅ User ${user._id} wallet updated successfully!`);
+        console.log(`[PAYMENT]    User.walletBalance: GHS ${previousUserBalance} → GHS ${user.walletBalance}`);
+        console.log(`[PAYMENT]    Wallet.balance: GHS ${previousWalletBalance} → GHS ${wallet.balance}`);
+        console.log(`[PAYMENT]    Deposit amount: GHS ${transaction.amount}`);
+        console.log(`[PAYMENT]    Idempotency key: ${idempotencyKey}`);
+      });
       
       return { 
         success: true, 
         message: 'Deposit successful',
-        newBalance: user.walletBalance // Return User.walletBalance for frontend
+        newBalance: transaction.newBalance || 0,
+        idempotencyKey: idempotencyKey
       };
-    } else {
-      console.error(`[PAYMENT] ❌ User not found for transaction ${reference}`);
-      return { success: false, message: 'User not found' };
+      
+    } finally {
+      await session.endSession();
     }
+    
   } catch (error) {
     console.error(`[PAYMENT] ❌ Error processing payment:`, error);
-    // If there's an error, release the processing lock
-    transaction.processing = false;
-    await transaction.save();
+    
+    // Release the processing lock and log the error
+    try {
+      await Transaction.findByIdAndUpdate(transaction._id, {
+        $set: { 
+          processing: false,
+          processingError: error.message,
+          processingErrorAt: new Date()
+        }
+      });
+    } catch (updateError) {
+      console.error(`[PAYMENT] ❌ Failed to release processing lock:`, updateError);
+    }
+    
     throw error;
   }
 }
+
+// Cleanup stuck processing transactions (run periodically)
+async function cleanupStuckProcessingTransactions() {
+  try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    
+    const stuckTransactions = await Transaction.find({
+      processing: true,
+      processingStartedAt: { $lt: fiveMinutesAgo }
+    });
+    
+    if (stuckTransactions.length > 0) {
+      console.log(`[CLEANUP] Found ${stuckTransactions.length} stuck processing transactions`);
+      
+      for (const transaction of stuckTransactions) {
+        console.log(`[CLEANUP] Releasing stuck transaction: ${transaction.reference}`);
+        
+        await Transaction.findByIdAndUpdate(transaction._id, {
+          $set: {
+            processing: false,
+            processingError: 'Stuck processing - released by cleanup',
+            processingErrorAt: new Date()
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[CLEANUP] Error cleaning up stuck transactions:', error);
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanupStuckProcessingTransactions, 5 * 60 * 1000);
 
 // Test webhook endpoint (for development)
 router.post('/paystack/webhook/test', async (req, res) => {
@@ -268,6 +371,9 @@ router.post('/paystack/webhook',
       console.log(`[WEBHOOK] Processing successful payment for reference: ${reference}`);
       console.log(`[WEBHOOK] Event data:`, JSON.stringify(event.data, null, 2));
 
+      // Generate idempotency key for webhook processing
+      const idempotencyKey = `webhook_${reference}_${event.data.id || Date.now()}`;
+
       // Verify amount matches (Paystack sends amount in kobo/pesewas)
       const webhookAmount = transaction.amount;
       const transactionRecord = await Transaction.findOne({ reference });
@@ -288,13 +394,41 @@ router.post('/paystack/webhook',
         }
       }
 
-      const result = await processSuccessfulPayment(reference);
-      console.log(`[WEBHOOK] Payment processing result:`, result);
+      // Add retry logic for webhook processing
+      let result;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          result = await processSuccessfulPayment(reference, idempotencyKey);
+          console.log(`[WEBHOOK] Payment processing result (attempt ${retryCount + 1}):`, result);
+          break; // Success, exit retry loop
+        } catch (error) {
+          retryCount++;
+          console.error(`[WEBHOOK] ❌ Payment processing failed (attempt ${retryCount}/${maxRetries}):`, error.message);
+          
+          if (retryCount >= maxRetries) {
+            console.error(`[WEBHOOK] ❌ All retry attempts failed for reference: ${reference}`);
+            return res.status(500).json({ 
+              success: false, 
+              error: 'Payment processing failed after retries',
+              reference: reference
+            });
+          }
+          
+          // Wait before retry (exponential backoff)
+          const delay = Math.pow(2, retryCount) * 1000; // 2s, 4s, 8s
+          console.log(`[WEBHOOK] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
       
       if (result.success) {
         return res.json({ 
           success: true, 
-          message: result.message 
+          message: result.message,
+          idempotencyKey: result.idempotencyKey
         });
       } else {
         return res.status(400).json({ 
