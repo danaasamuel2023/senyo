@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth, withAuth } from '../../../utils/auth';
 
-const PriceManagementPage = () => {
+const PriceManagementPage = ({ user }) => {
   const router = useRouter();
+  const { isAuthenticated, user: authUser } = useAuth();
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,10 +18,26 @@ const PriceManagementPage = () => {
   const loadPrices = async () => {
     try {
       setLoading(true);
+      
+      // Check authentication
+      if (!isAuthenticated) {
+        setError('Please log in to access price management.');
+        router.push('/SignIn?redirect=/admin/price-management');
+        return;
+      }
+
+      // Check admin role
+      const currentUser = authUser || user;
+      if (!currentUser || currentUser.role !== 'admin') {
+        setError('Admin access required.');
+        router.push('/unauthorized');
+        return;
+      }
+
       const token = localStorage.getItem('authToken');
       if (!token) {
         setError('Authentication token not found. Please log in.');
-        router.push('/SignIn');
+        router.push('/SignIn?redirect=/admin/price-management');
         return;
       }
 
@@ -50,10 +68,23 @@ const PriceManagementPage = () => {
   const testConnection = async () => {
     try {
       console.log('🔗 Testing connection to production API...');
+      
+      // Check authentication before testing
+      if (!isAuthenticated) {
+        console.log('⚠️ User not authenticated, skipping API test');
+        return;
+      }
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.log('⚠️ No auth token found, skipping API test');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/v1/admin/prices`, {
         method: 'HEAD', // Just test if endpoint exists
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`,
         }
       });
       
@@ -69,9 +100,15 @@ const PriceManagementPage = () => {
 
   // Initialize
   useEffect(() => {
-    testConnection();
-    loadPrices();
-  }, []);
+    // Only load data if user is authenticated
+    if (isAuthenticated) {
+      testConnection();
+      loadPrices();
+    } else {
+      setLoading(false);
+      setError('Please log in to access price management.');
+    }
+  }, [isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -90,11 +127,17 @@ const PriceManagementPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Manage databundle prices and inventory
                 </p>
-                <div className="flex items-center mt-1">
+                <div className="flex items-center mt-1 space-x-2">
                   <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
                     Connected to Production API
                   </span>
+                  {authUser && (
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-1"></span>
+                      {authUser.name || authUser.email} ({authUser.role})
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -224,4 +267,17 @@ const PriceManagementPage = () => {
   );
 };
 
-export default PriceManagementPage;
+// Export with authentication protection
+export default withAuth(PriceManagementPage, {
+  redirectTo: '/SignIn?redirect=/admin/price-management',
+  requiredRole: 'admin',
+  fallback: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Authenticating...</h2>
+        <p className="text-gray-500 dark:text-gray-400">Please wait while we verify your admin access.</p>
+      </div>
+    </div>
+  )
+});
