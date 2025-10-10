@@ -53,7 +53,8 @@ const AnalyticsPage = () => {
         ? 'http://localhost:5001'
         : 'https://unlimitedata.onrender.com';
 
-      const userId = userData?.id || JSON.parse(localStorage.getItem('userData') || '{}').id;
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userId = userData.id || userData._id;
       
       if (!userId) return;
 

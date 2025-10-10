@@ -143,6 +143,30 @@ export const getUserRole = () => {
 };
 
 /**
+ * Normalize user data to ensure both id and _id fields exist
+ * @param {Object} userData - Raw user data from backend
+ * @returns {Object} Normalized user data
+ */
+export const normalizeUserData = (userData) => {
+  if (!userData) return null;
+  
+  return {
+    ...userData,
+    id: userData._id || userData.id, // Ensure id field exists
+    _id: userData._id // Keep original _id
+  };
+};
+
+/**
+ * Get user ID from localStorage (handles both id and _id)
+ * @returns {string|null} The user ID or null
+ */
+export const getUserId = () => {
+  const userData = getCurrentUser();
+  return userData ? (userData.id || userData._id) : null;
+};
+
+/**
  * Check if user has specific role
  * @param {string} role - Role to check
  * @returns {boolean} True if user has the role

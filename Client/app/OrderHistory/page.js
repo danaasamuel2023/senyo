@@ -333,7 +333,8 @@ const OrderHistoryPage = () => {
     
     setRefreshing(true);
     try {
-      const userId = JSON.parse(localStorage.getItem('userData')).id;
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userId = userData.id || userData._id;
       const authToken = localStorage.getItem('authToken');
 
       const response = await fetch(

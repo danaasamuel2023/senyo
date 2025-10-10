@@ -210,9 +210,18 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Normalize user data to include both id and _id for compatibility
+        const { setAuthToken, normalizeUserData } = await import('../../utils/auth.js');
+        const normalizedUser = normalizeUserData(data.user);
+        
+        console.log('🔐 Login successful - User data normalized:', {
+          originalId: data.user._id,
+          normalizedId: normalizedUser.id,
+          userName: normalizedUser.name
+        });
+        
         // Store token securely using the auth utility
-        const { setAuthToken } = await import('../../utils/auth.js');
-        setAuthToken(data.token, data.user, 7 * 24 * 60 * 60, rememberMe); // 7 days expiry
+        setAuthToken(data.token, normalizedUser, 7 * 24 * 60 * 60, rememberMe); // 7 days expiry
 
         showToast('Login successful! Redirecting...', 'success');
         
