@@ -17,6 +17,14 @@ export default function PaymentCallbackClient({ searchParams }) {
       const source = searchParams?.source;
       console.log('🔍 URL params:', { reference, source });
 
+      // Check if we've already processed this reference to prevent loops
+      const processedRefs = JSON.parse(localStorage.getItem('processedPayments') || '[]');
+      if (processedRefs.includes(reference)) {
+        console.log('🔄 Payment already processed, redirecting to dashboard');
+        router.push('/');
+        return;
+      }
+
       if (!reference) {
         console.log('❌ No reference found');
         setStatus('failed');
@@ -83,10 +91,15 @@ export default function PaymentCallbackClient({ searchParams }) {
           setMessage(data.message || 'Payment successful! Your wallet has been credited.');
           setTransactionData(data.data);
           
-          // Redirect to dashboard after 3 seconds
+          // Mark this payment as processed to prevent loops
+          const processedRefs = JSON.parse(localStorage.getItem('processedPayments') || '[]');
+          processedRefs.push(reference);
+          localStorage.setItem('processedPayments', JSON.stringify(processedRefs));
+          
+          // Redirect to dashboard after 2 seconds (reduced from 3)
           setTimeout(() => {
             router.push('/');
-          }, 3000);
+          }, 2000);
         } else {
           setStatus('failed');
           if (data.error === 'Transaction not found') {
@@ -185,7 +198,7 @@ export default function PaymentCallbackClient({ searchParams }) {
           <div className="space-y-3">
             {status === 'success' && (
               <div className="text-sm text-gray-400">
-                Redirecting to dashboard in 3 seconds...
+                Redirecting to dashboard in 2 seconds...
               </div>
             )}
             
