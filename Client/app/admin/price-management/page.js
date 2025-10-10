@@ -98,6 +98,65 @@ const PriceManagementPage = ({ user }) => {
     }
   };
 
+  // Sync prices with DataMart API
+  const syncDataMart = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check authentication
+      if (!isAuthenticated) {
+        setError('Please log in to sync prices.');
+        return;
+      }
+
+      const currentUser = authUser || user;
+      if (!currentUser || currentUser.role !== 'admin') {
+        setError('Admin access required.');
+        return;
+      }
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token not found. Please log in.');
+        return;
+      }
+
+      console.log('🔄 Starting DataMart sync...');
+      
+      const response = await fetch(`${API_URL}/api/v1/admin/sync-datamart`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}) // Sync all networks
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Sync failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ DataMart sync completed:', result);
+      
+      // Reload prices after sync
+      await loadPrices();
+      
+      // Show success message with more details
+      const message = `Sync completed successfully!\n\nSource: ${result.data.apiSource}\nTotal Processed: ${result.data.totalProcessed}\nCreated: ${result.data.created}\nUpdated: ${result.data.updated}\nErrors: ${result.data.errors.length}`;
+      alert(message);
+      
+    } catch (err) {
+      console.error('❌ DataMart sync error:', err);
+      setError(err.message);
+      alert(`Sync failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Initialize
   useEffect(() => {
     // Only load data if user is authenticated
@@ -144,11 +203,21 @@ const PriceManagementPage = ({ user }) => {
             
             <div className="flex items-center space-x-3">
               <button
-                onClick={loadPrices}
-                className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                onClick={syncDataMart}
+                disabled={loading}
+                className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
               >
-                <span className="mr-2">🔄</span>
-                Sync DataMart
+                <span className="mr-2">{loading ? '⏳' : '🔄'}</span>
+                {loading ? 'Syncing...' : 'Sync DataMart'}
+              </button>
+              
+              <button
+                onClick={loadPrices}
+                disabled={loading}
+                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                <span className="mr-2">📥</span>
+                Refresh Prices
               </button>
               
               <button
