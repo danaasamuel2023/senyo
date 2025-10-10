@@ -15,7 +15,8 @@ export default function PaymentCallbackClient({ searchParams }) {
       console.log('🔍 Payment callback processing started');
       const reference = searchParams?.reference;
       const source = searchParams?.source;
-      console.log('🔍 URL params:', { reference, source });
+      const trxref = searchParams?.trxref;
+      console.log('🔍 URL params:', { reference, source, trxref });
 
       // Check if we've already processed this reference to prevent loops
       const processedRefs = JSON.parse(localStorage.getItem('processedPayments') || '[]');
