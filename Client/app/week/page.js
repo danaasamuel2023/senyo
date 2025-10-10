@@ -1,16 +1,17 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { 
-  ComposedChart, 
-  Line, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
+// Recharts temporarily disabled due to dependency conflicts
+// import { 
+//   ComposedChart, 
+//   Line, 
+//   Bar, 
+//   XAxis, 
+//   YAxis, 
+//   CartesianGrid, 
+//   Tooltip, 
+//   Legend, 
+//   ResponsiveContainer 
+// } from 'recharts';
 
 // Helper function to get user ID from localStorage
 const getUserIdFromLocalStorage = () => {
@@ -288,43 +289,14 @@ const DailySalesChart = ({ userId = getUserIdFromLocalStorage() }) => {
 
       {/* Main chart */}
       {chartData.length > 0 ? (
-        <div className="h-64 mb-8">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
-              <XAxis 
-                dataKey="name" 
-                stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} 
-                tick={{ fill: theme === 'dark' ? '#e5e7eb' : '#374151' }} 
-              />
-              <YAxis 
-                yAxisId="left" 
-                orientation="left" 
-                stroke="#8884d8" 
-                tick={{ fill: theme === 'dark' ? '#e5e7eb' : '#374151' }} 
-              />
-              <YAxis 
-                yAxisId="right" 
-                orientation="right" 
-                stroke="#82ca9d" 
-                tick={{ fill: theme === 'dark' ? '#e5e7eb' : '#374151' }} 
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
-                  borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
-                  color: theme === 'dark' ? '#e5e7eb' : '#374151'
-                }} 
-              />
-              <Legend 
-                wrapperStyle={{ 
-                  color: theme === 'dark' ? '#e5e7eb' : '#374151' 
-                }} 
-              />
-              <Bar yAxisId="left" dataKey="orders" fill="#8884d8" name="Orders" barSize={20} />
-              <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" name="Revenue ($)" />
-            </ComposedChart>
-          </ResponsiveContainer>
+        <div className="h-64 mb-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <div className="text-center text-gray-500 dark:text-gray-400">
+            <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              📊
+            </div>
+            <p>Weekly Analytics Chart</p>
+            <p className="text-sm">Charts temporarily disabled</p>
+          </div>
         </div>
       ) : (
         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md mb-8">

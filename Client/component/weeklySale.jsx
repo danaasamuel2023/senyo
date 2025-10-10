@@ -1,18 +1,19 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  Bar, 
-  BarChart,
-  ComposedChart
-} from 'recharts';
+// Recharts temporarily disabled due to dependency conflicts
+// import { 
+//   LineChart, 
+//   Line, 
+//   XAxis, 
+//   YAxis, 
+//   CartesianGrid, 
+//   Tooltip, 
+//   Legend, 
+//   ResponsiveContainer, 
+//   Bar, 
+//   BarChart,
+//   ComposedChart
+// } from 'recharts';
 
 // Helper function to get user ID from localStorage
 const getUserIdFromLocalStorage = () => {
@@ -159,19 +160,14 @@ const WeeklySalesChart = ({ userId = getUserIdFromLocalStorage() }) => {
       </div>
 
       {/* Main chart */}
-      <div className="h-64 mb-8">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-            <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-            <Tooltip />
-            <Legend />
-            <Bar yAxisId="left" dataKey="orders" fill="#8884d8" name="Orders" barSize={20} />
-            <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" name="Revenue ($)" />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <div className="h-64 mb-8 flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center text-gray-500">
+          <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+            📊
+          </div>
+          <p>Weekly Sales Chart</p>
+          <p className="text-sm">Charts temporarily disabled</p>
+        </div>
       </div>
 
       {/* Trend indicators */}

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// Recharts temporarily disabled due to dependency conflicts
+// import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, ArrowUp, ArrowDown, Database, Users, Activity, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import for navigation
 import { getApiUrl } from '../../utils/apiConfig'; // Import API configuration
@@ -387,28 +388,12 @@ const DailyDashboard = () => {
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Network Distribution</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data.networkSummary}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                  nameKey="network"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {data.networkSummary.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value, name, props) => [`${value} orders`, props.payload.network]} />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+            <div className="text-center text-gray-500">
+              <Database className="w-12 h-12 mx-auto mb-2" />
+              <p>Network Distribution Chart</p>
+              <p className="text-sm">Charts temporarily disabled</p>
+            </div>
           </div>
         </div>
       </div>
@@ -417,24 +402,12 @@ const DailyDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Data Package Distribution</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={capacityBreakdown}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="capacity" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => [`${value} orders`, 'Orders']}
-                  labelFormatter={(value) => `Package Size: ${value}`}
-                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: '1px solid #f0f0f0' }}
-                />
-                <Legend />
-                <Bar dataKey="count" name="Number of Orders" fill="#8884d8" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+            <div className="text-center text-gray-500">
+              <Database className="w-12 h-12 mx-auto mb-2" />
+              <p>Data Package Distribution</p>
+              <p className="text-sm">Charts temporarily disabled</p>
+            </div>
           </div>
         </div>
         
@@ -477,30 +450,12 @@ const DailyDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Order Status Summary</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data.statusSummary}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="status" />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value) => [`${value} orders`, 'Count']}
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: '1px solid #f0f0f0' }}
-                  />
-                  <Legend />
-                  <Bar dataKey="count" name="Orders" radius={[4, 4, 0, 0]}>
-                    {data.statusSummary.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={STATUS_COLORS[entry.status] || '#82ca9d'} 
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+              <div className="text-center text-gray-500">
+                <Database className="w-12 h-12 mx-auto mb-2" />
+                <p>Status Summary Chart</p>
+                <p className="text-sm">Charts temporarily disabled</p>
+              </div>
             </div>
             
             <div className="flex flex-col justify-center">
