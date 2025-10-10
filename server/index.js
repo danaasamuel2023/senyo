@@ -507,12 +507,14 @@ app.use('/api/developer', Developer)
 app.use('/api/v1', HubnetAt);
 app.use('/api/v1', passreset);
 app.use('/api/v1', userStats);
+app.use('/api/v1', paystackWebhookRoutes);
 
 // Create a consolidated admin router to avoid conflicts
 const adminRouter = express.Router();
 
 // Import paymentGatewaySettingsRoutes here to avoid circular dependency
 const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings.js');
+const paystackWebhookRoutes = require('./routes/paystackWebhook');
 
 // Mount all admin routes on the consolidated router
 adminRouter.use('/', AdminManagement);
