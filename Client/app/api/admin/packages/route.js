@@ -133,11 +133,17 @@ export async function PUT(request) {
     const body = await request.json();
     console.log('Update package request:', body);
 
-    // Mock package update
+    // Mock package update with stock status logic
     const updatedPackage = {
       ...body,
       updatedAt: new Date().toISOString()
     };
+
+    // Auto-disable packages with zero stock
+    if (updatedPackage.stock === 0 && updatedPackage.isActive) {
+      updatedPackage.isActive = false;
+      console.log('Package auto-disabled due to zero stock');
+    }
 
     return NextResponse.json({
       success: true,

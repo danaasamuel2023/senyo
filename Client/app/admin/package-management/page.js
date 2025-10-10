@@ -535,109 +535,227 @@ const AdminPackageManagement = () => {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Package
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Network
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredPackages.map((pkg) => (
-                    <tr key={pkg._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {pkg.name}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {pkg.capacity}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                          {pkg.network}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          ₵{pkg.price}
-                        </div>
-                        {pkg.agentPrice && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Agent: ₵{pkg.agentPrice}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${
-                          pkg.stock < 10 
-                            ? 'text-red-600 dark:text-red-400' 
-                            : pkg.stock < 50 
-                            ? 'text-yellow-600 dark:text-yellow-400'
-                            : 'text-green-600 dark:text-green-400'
-                        }`}>
-                          {pkg.stock}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => togglePackageStatus(pkg._id, pkg.isActive)}
-                          className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all hover:scale-105 ${
-                            pkg.isActive 
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {pkg.isActive ? (
-                            <ToggleRight className="w-5 h-5" />
-                          ) : (
-                            <ToggleLeft className="w-5 h-5" />
-                          )}
-                          <span className="text-sm font-medium">
-                            {pkg.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => setEditingPackage(pkg)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deletePackage(pkg._id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Package
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Network
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Price
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Stock
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredPackages.map((pkg) => (
+                      <tr key={pkg._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {pkg.name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {pkg.capacity}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                            {pkg.network}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            ₵{pkg.price}
+                          </div>
+                          {pkg.agentPrice && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Agent: ₵{pkg.agentPrice}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <div className={`text-sm font-medium ${
+                              pkg.stock === 0 
+                                ? 'text-red-600 dark:text-red-400' 
+                                : pkg.stock < 10 
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : pkg.stock < 50 
+                                ? 'text-yellow-600 dark:text-yellow-400'
+                                : 'text-green-600 dark:text-green-400'
+                            }`}>
+                              {pkg.stock}
+                            </div>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              pkg.stock === 0 
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                : pkg.stock < 10 
+                                ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+                                : pkg.stock < 50 
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            }`}>
+                              {pkg.stock === 0 ? 'Out of Stock' : pkg.stock < 10 ? 'Low Stock' : pkg.stock < 50 ? 'Medium Stock' : 'In Stock'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => togglePackageStatus(pkg._id, pkg.isActive)}
+                              className={`flex items-center justify-center space-x-2 px-3 py-1.5 rounded-lg transition-all hover:scale-105 ${
+                                pkg.isActive 
+                                  ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              {pkg.isActive ? (
+                                <ToggleRight className="w-4 h-4" />
+                              ) : (
+                                <ToggleLeft className="w-4 h-4" />
+                              )}
+                              <span className="text-xs font-medium">
+                                {pkg.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </button>
+                            <div className={`text-xs text-center px-2 py-1 rounded ${
+                              pkg.isActive && pkg.stock > 0
+                                ? 'bg-green-50 text-green-700 dark:bg-green-900/10 dark:text-green-400'
+                                : pkg.isActive && pkg.stock === 0
+                                ? 'bg-red-50 text-red-700 dark:bg-red-900/10 dark:text-red-400'
+                                : 'bg-gray-50 text-gray-700 dark:bg-gray-900/10 dark:text-gray-400'
+                            }`}>
+                              {pkg.isActive && pkg.stock > 0 ? 'Available' : pkg.isActive && pkg.stock === 0 ? 'Out of Stock' : 'Disabled'}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => setEditingPackage(pkg)}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deletePackage(pkg._id)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4 p-4">
+                {filteredPackages.map((pkg) => (
+                  <div key={pkg._id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{pkg.name}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{pkg.capacity}</p>
+                      </div>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {pkg.network}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Price</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">₵{pkg.price}</p>
+                        {pkg.agentPrice && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Agent: ₵{pkg.agentPrice}</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Stock</p>
+                        <div className="flex items-center space-x-1">
+                          <span className={`text-sm font-medium ${
+                            pkg.stock === 0 
+                              ? 'text-red-600 dark:text-red-400' 
+                              : pkg.stock < 10 
+                              ? 'text-orange-600 dark:text-orange-400'
+                              : pkg.stock < 50 
+                              ? 'text-yellow-600 dark:text-yellow-400'
+                              : 'text-green-600 dark:text-green-400'
+                          }`}>
+                            {pkg.stock}
+                          </span>
+                          <span className={`px-1.5 py-0.5 text-xs font-medium rounded-full ${
+                            pkg.stock === 0 
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                              : pkg.stock < 10 
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+                              : pkg.stock < 50 
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                          }`}>
+                            {pkg.stock === 0 ? 'Out' : pkg.stock < 10 ? 'Low' : pkg.stock < 50 ? 'Med' : 'High'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => togglePackageStatus(pkg._id, pkg.isActive)}
+                        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                          pkg.isActive 
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {pkg.isActive ? (
+                          <ToggleRight className="w-4 h-4" />
+                        ) : (
+                          <ToggleLeft className="w-4 h-4" />
+                        )}
+                        <span className="text-xs font-medium">
+                          {pkg.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </button>
+                      
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setEditingPackage(pkg)}
+                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deletePackage(pkg._id)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
