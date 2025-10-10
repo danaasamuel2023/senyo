@@ -4,9 +4,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
-
-dotenv.config();
-const dotenv = require('dotenv');
 const path = require('path');
 
 // Load environment variables

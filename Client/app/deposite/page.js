@@ -226,7 +226,7 @@ const LoadingOverlay = ({ isLoading, message = "Processing..." }) => {
   );
 };
 
-const DataHustleDeposit = () => {
+const UnlimitedDataDeposit = () => {
   const router = useRouter();
   
   // State Management
