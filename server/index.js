@@ -76,6 +76,24 @@ app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API test route working', timestamp: new Date().toISOString() });
 });
 
+// Environment check endpoint
+app.get('/env-check', (req, res) => {
+  res.json({
+    success: true,
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'MISSING',
+      MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'MISSING',
+      PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY ? 'SET' : 'MISSING',
+      FRONTEND_URL: process.env.FRONTEND_URL || 'NOT_SET',
+      EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
+      EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'MISSING'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Debug route to check if server is running latest code
 app.get('/debug', (req, res) => {
   res.json({ 
