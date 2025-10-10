@@ -39,7 +39,7 @@ export default function PaymentCallbackClient({ searchParams }) {
         // Call our internal API route for payment verification
         console.log('Calling internal payment callback API');
         
-        const response = await fetch(`/api/payment/callback?reference=${reference}&source=${source}&trxref=${trxref}`, {
+        const response = await fetch(`/api/payment/callback?reference=${reference}&source=${source || ''}&trxref=${trxref || ''}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
