@@ -348,21 +348,21 @@ const MTNBundleSelect = () => {
   const inventoryAvailable = true;
   
   const bundles = [
-    { value: '1', label: '1GB', capacity: '1', price: '4.5', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '2', label: '2GB', capacity: '2', price: '8.9', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '3', label: '3GB', capacity: '3', price: '12.9', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '4', label: '4GB', capacity: '4', price: '16.9', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '5', label: '5GB', capacity: '5', price: '23', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '6', label: '6GB', capacity: '6', price: '27.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '8', label: '8GB', capacity: '8', price: '35.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '10', label: '10GB', capacity: '10', price: '43.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '15', label: '15GB', capacity: '15', price: '62.50', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '20', label: '20GB', capacity: '20', price: '83.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '25', label: '25GB', capacity: '25', price: '105.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '30', label: '30GB', capacity: '30', price: '129.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '40', label: '40GB', capacity: '40', price: '166.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '50', label: '50GB', capacity: '50', price: '207.00', network: 'YELLO', inStock: inventoryAvailable },
-    { value: '100', label: '100GB', capacity: '100', price: '407.00', network: 'YELLO', inStock: inventoryAvailable }
+    { value: '1', label: '1GB', capacity: '1', price: '5.0', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '2', label: '2GB', capacity: '2', price: '9.9', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '3', label: '3GB', capacity: '3', price: '14.4', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '4', label: '4GB', capacity: '4', price: '19.0', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '5', label: '5GB', capacity: '5', price: '25.0', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '6', label: '6GB', capacity: '6', price: '29.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '8', label: '8GB', capacity: '8', price: '36.50', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '10', label: '10GB', capacity: '10', price: '45.50', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '15', label: '15GB', capacity: '15', price: '64.50', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '20', label: '20GB', capacity: '20', price: '85.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '25', label: '25GB', capacity: '25', price: '108.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '30', label: '30GB', capacity: '30', price: '131.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '40', label: '40GB', capacity: '40', price: '168.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '50', label: '50GB', capacity: '50', price: '209.00', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '100', label: '100GB', capacity: '100', price: '409.00', network: 'YELLO', inStock: inventoryAvailable }
   ];
 
   // Get user data from localStorage on component mount
