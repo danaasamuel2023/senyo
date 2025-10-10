@@ -135,10 +135,9 @@ const Toast = ({ toast, onRemove }) => {
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-current opacity-20 rounded-t-xl">
         <div 
-          className="h-full bg-current opacity-60 rounded-t-xl transition-all ease-linear"
+          className="h-full bg-current opacity-60 rounded-t-xl animate-progress-shrink"
           style={{
-            width: '100%',
-            animation: `shrink ${toast.duration}ms linear forwards`,
+            animationDuration: `${toast.duration}ms`,
             transformOrigin: 'left'
           }}
         />
@@ -168,13 +167,6 @@ const Toast = ({ toast, onRemove }) => {
         <X size={16} className="opacity-60 hover:opacity-100" />
       </button>
 
-      {/* Custom styles for progress animation */}
-      <style jsx>{`
-        @keyframes shrink {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-      `}</style>
     </div>
   );
 };
