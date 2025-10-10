@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Use local backend in development, production backend otherwise
 const API_BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:5001' 

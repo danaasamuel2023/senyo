@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Direct API URL - no environment variable dependencies
 const API_BASE_URL = 'https://unlimitedata.onrender.com';
 
