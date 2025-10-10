@@ -93,7 +93,7 @@ const AdminBulkMessaging = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
+      const response = await fetch(`/api/backend?path=/api/v1/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -210,7 +210,7 @@ const AdminBulkMessaging = () => {
         }
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/bulk-message`, {
+      const response = await fetch(`/api/backend?path=/api/v1/admin/bulk-messaging/bulk-message`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

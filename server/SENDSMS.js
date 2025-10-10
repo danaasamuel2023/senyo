@@ -358,7 +358,7 @@ Refund SMS sent to 0500647580 for order 67dc03d92bebb1cdd2a3530b`;
     
     // Process numbers in each batch concurrently
     const batchPromises = batch.map(async ({ phoneNumber, orderRef }) => {
-      const message = `DATAMART: Your order for data bundle yesterday could not be processed 1gb. Your account has been refunded. Thank you for choosing DATAMART.`;
+      const message = `Unlimiteddatagh: Your order for data bundle yesterday could not be processed 1gb. Your account has been refunded. Thank you for choosing Unlimiteddatagh.`;
       
       try {
         const result = await sendSMS(phoneNumber, message, {

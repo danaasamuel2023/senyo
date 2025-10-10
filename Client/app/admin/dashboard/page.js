@@ -15,7 +15,8 @@ import {
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
   Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare
 } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+// Temporarily disabled Recharts due to D3 import issues
+// import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders';
 import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates';
 
@@ -231,7 +232,7 @@ const AdminDashboard = () => {
       }
       
       // Only fetch dashboard statistics, skip daily summary to reduce API calls
-      const dashboardStats = await retryWithBackoff(() => apiClient.getAdminStatistics()).catch(err => {
+      const dashboardStats = await retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
         console.error('Dashboard stats API error:', err.message);
         if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
           if (err.message.includes('Failed to fetch') || err.message.includes('404')) {
@@ -267,10 +268,10 @@ const AdminDashboard = () => {
 
       // Process real API data with mock data for missing fields
       const statsData = {
-        totalUsers: dashboardStats.success ? (dashboardStats.data?.overview?.totalUsers || 0) : 0,
-        activeUsers: dashboardStats.success ? Math.floor((dashboardStats.data?.overview?.totalUsers || 0) * 0.6) : 0,
-        totalOrders: dashboardStats.success ? (dashboardStats.data?.overview?.totalOrders || 0) : 0,
-        totalRevenue: dashboardStats.success ? (dashboardStats.data?.overview?.todayRevenue || 0) : 0,
+        totalUsers: dashboardStats.success ? (dashboardStats.data?.totalUsers || 0) : 0,
+        activeUsers: dashboardStats.success ? Math.floor((dashboardStats.data?.totalUsers || 0) * 0.6) : 0,
+        totalOrders: dashboardStats.success ? (dashboardStats.data?.totalOrders || 0) : 0,
+        totalRevenue: dashboardStats.success ? (dashboardStats.data?.todayRevenue || 0) : 0,
         growthRate: 12.5, // Mock growth rate
         pendingOrders: Math.floor(Math.random() * 20) + 5, // Mock pending orders
         completedOrders: Math.floor(Math.random() * 100) + 50, // Mock completed orders
@@ -278,8 +279,8 @@ const AdminDashboard = () => {
         totalAgents: Math.floor(Math.random() * 50) + 10, // Mock agent count
         activeAgents: Math.floor(Math.random() * 30) + 5, // Mock active agents
         totalCommissions: Math.floor(Math.random() * 5000) + 1000, // Mock commissions
-        todayOrders: dashboardStats.success ? (dashboardStats.data?.overview?.todayOrders || 0) : 0,
-        todayRevenue: dashboardStats.success ? (dashboardStats.data?.overview?.todayRevenue || 0) : 0,
+        todayOrders: dashboardStats.success ? (dashboardStats.data?.todayOrders || 0) : 0,
+        todayRevenue: dashboardStats.success ? (dashboardStats.data?.todayRevenue || 0) : 0,
         systemHealth: dashboardStats.success ? 'excellent' : 'error'
       };
       
@@ -1006,55 +1007,15 @@ const AdminDashboard = () => {
             </select>
           </div>
           
-          {/* Professional Chart with Recharts */}
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FFCC08" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#FFCC08" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#9CA3AF" 
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#9CA3AF" 
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(31, 41, 55, 0.95)', 
-                    border: 'none', 
-                    borderRadius: '12px',
-                    color: '#fff',
-                    padding: '12px'
-                  }}
-                  labelStyle={{ color: '#FFCC08', fontWeight: 'bold' }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#FFCC08" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <BarChart3 className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">No data available</p>
-              </div>
-              </div>
-            )}
+          {/* Chart temporarily disabled due to Recharts D3 import issues */}
+          <div className="h-64 flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl">
+            <div className="text-center">
+              <BarChart3 className="w-16 h-16 text-yellow-500 dark:text-yellow-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Revenue Chart</h3>
+              <p className="text-gray-500 dark:text-gray-400">Chart temporarily disabled - Core functionality working</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">User count: {stats.totalUsers} | Orders: {stats.totalOrders}</p>
+            </div>
+          </div>
         </div>
 
         {/* Recent Activities */}

@@ -364,7 +364,7 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
       try {
         if (user.phoneNumber) {
           const formattedPhone = user.phoneNumber.replace(/^\+/, '');
-          const message = `DATAMART: GHS${amount.toFixed(2)} has been deducted from your wallet. Your new balance is GHS${user.walletBalance.toFixed(2)}. Reason: ${reason || 'Administrative adjustment'}.`;
+          const message = `Unlimiteddatagh: GHS${amount.toFixed(2)} has been deducted from your wallet. Your new balance is GHS${user.walletBalance.toFixed(2)}. Reason: ${reason || 'Administrative adjustment'}.`;
           
           await sendSMS(formattedPhone, message, {
             useCase: 'transactional',
@@ -593,7 +593,7 @@ router.put('/admin/orders/:id/status', auth, adminAuth, async (req, res) => {
             
             if (user.phoneNumber) {
               const userPhone = formatPhoneForSms(user.phoneNumber);
-              const refundMessage = `DATAMART: Your order for ${order.capacity}GB ${order.network} data bundle (Ref: ${order.geonetReference}) could not be processed. Your account has been refunded with GHS${order.price.toFixed(2)}. Thank you for choosing DATAMART.`;
+              const refundMessage = `Unlimiteddatagh: Your order for ${order.capacity}GB ${order.network} data bundle (Ref: ${order.geonetReference}) could not be processed. Your account has been refunded with GHS${order.price.toFixed(2)}. Thank you for choosing Unlimiteddatagh.`;
               
               await sendSMS(userPhone, refundMessage, {
                 useCase: 'transactional',
@@ -1338,9 +1338,9 @@ router.put('/users/:id/toggle-status', auth, adminAuth, async (req, res) => {
         let message;
         
         if (user.isDisabled) {
-          message = `DATAMART: Your account has been disabled. Reason: ${user.disableReason}. Contact support for assistance.`;
+          message = `Unlimiteddatagh: Your account has been disabled. Reason: ${user.disableReason}. Contact support for assistance.`;
         } else {
-          message = `DATAMART: Your account has been re-enabled. You can now access all platform features. Thank you for choosing DATAMART.`;
+          message = `Unlimiteddatagh: Your account has been re-enabled. You can now access all platform features. Thank you for choosing Unlimiteddatagh.`;
         }
         
         await sendSMS(formattedPhone, message, {

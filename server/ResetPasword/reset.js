@@ -9,7 +9,7 @@ const JWT_SECRET = 'DatAmArt';
 // mNotify SMS configuration
 const SMS_CONFIG = {
   API_KEY: process.env.MNOTIFY_API_KEY || 'w3rGWhv4e235nDwYvD5gVDyrW',
-  SENDER_ID: 'DataMartGH',
+  SENDER_ID: 'Unlimiteddatagh',
   BASE_URL: 'https://apps.mnotify.net/smsapi'
 };
 
@@ -176,7 +176,7 @@ router.post('/request-password-reset', async (req, res) => {
     await user.save();
     
     // Send OTP via SMS using mNotify
-    const message = `Your DataMartGH password reset code is: ${otp}. This code is valid for 10 minutes. If you didn't request this, please ignore.`;
+    const message = `Your Unlimiteddatagh password reset code is: ${otp}. This code is valid for 10 minutes. If you didn't request this, please ignore.`;
     const smsResult = await sendSMS(user.phoneNumber, message);
     
     if (!smsResult.success) {
@@ -278,7 +278,7 @@ router.post('/reset-password', async (req, res) => {
     await user.save();
     
     // Send success SMS notification using mNotify
-    const message = `Your DataMartGH password has been successfully reset. If you did not perform this action, please contact support immediately.`;
+    const message = `Your Unlimiteddatagh password has been successfully reset. If you did not perform this action, please contact support immediately.`;
     await sendSMS(user.phoneNumber, message);
     
     res.status(200).json({
@@ -353,7 +353,7 @@ router.post('/resend-password-reset-otp', async (req, res) => {
     await user.save();
     
     // Send OTP via SMS using mNotify
-    const message = `Your new DataMartGH password reset code is: ${otp}. This code is valid for 10 minutes.`;
+    const message = `Your new Unlimiteddatagh password reset code is: ${otp}. This code is valid for 10 minutes.`;
     const smsResult = await sendSMS(user.phoneNumber, message);
     
     if (!smsResult.success) {

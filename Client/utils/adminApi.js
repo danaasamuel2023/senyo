@@ -424,8 +424,8 @@ export const inventoryAPI = {
 export const dashboardAPI = {
   // Get dashboard statistics
   getStatistics: async () => {
-    // Use the correct admin endpoint
-    const response = await fetch(getApiUrl('/api/v1/admin/dashboard/statistics'), {
+    // Use the correct admin endpoint that's actually working
+    const response = await fetch(getApiUrl('/api/admin/statistics'), {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

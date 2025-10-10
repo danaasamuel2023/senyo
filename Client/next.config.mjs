@@ -30,7 +30,7 @@ const nextConfig = {
       // Fix for webpack module loading errors
       config.resolve.alias = {
         ...config.resolve.alias,
-        '@': new URL('.', import.meta.url).pathname,
+        '@': '.',
       };
       
       // Optimize module resolution
@@ -54,6 +54,9 @@ const nextConfig = {
           'bufferutil': 'commonjs bufferutil',
         });
       }
+      
+      // D3 aliases temporarily removed to fix import issues
+      // Will be re-enabled once Recharts is properly configured
       
       return config;
     },

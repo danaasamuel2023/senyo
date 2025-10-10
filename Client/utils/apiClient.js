@@ -179,7 +179,7 @@ class ApiClient {
 
   // Admin APIs
   async getAdminStatistics() {
-    return this.get('/api/v1/admin/admin/dashboard/statistics');
+    return this.get('/api/admin/statistics');
   }
 
   async getAdminDailySummary(date) {

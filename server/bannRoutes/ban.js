@@ -137,7 +137,7 @@ router.put('/users/:id/block-device', auth, adminAuth, ensureDeviceSchema, async
     try {
       if (user.phoneNumber) {
         const formattedPhone = user.phoneNumber.replace(/^\+/, '');
-        const message = `DATAMART: One of your devices has been blocked from accessing your account due to security concerns. Please contact support for more information.`;
+        const message = `Unlimiteddatagh: One of your devices has been blocked from accessing your account due to security concerns. Please contact support for more information.`;
         
         // Send SMS using your existing sendSMS function
         if (typeof sendSMS === 'function') {
@@ -205,7 +205,7 @@ router.put('/users/:id/unblock-device/:deviceId', auth, adminAuth, ensureDeviceS
     try {
       if (user.phoneNumber) {
         const formattedPhone = user.phoneNumber.replace(/^\+/, '');
-        const message = `DATAMART: Your previously blocked device has been unblocked. You can now access your account from this device.`;
+        const message = `Unlimiteddatagh: Your previously blocked device has been unblocked. You can now access your account from this device.`;
         
         // Send SMS using your existing sendSMS function
         if (typeof sendSMS === 'function') {
