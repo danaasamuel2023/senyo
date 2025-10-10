@@ -261,13 +261,47 @@ router.post('/paystack/webhook',
 
     // Handle successful charge
     if (event.event === 'charge.success') {
-      const { reference } = event.data;
+      const transaction = event.data;
+      const { reference } = transaction;
+      const metadata = transaction.metadata || {};
+      
       console.log(`[WEBHOOK] Processing successful payment for reference: ${reference}`);
       console.log(`[WEBHOOK] Event data:`, JSON.stringify(event.data, null, 2));
 
+      // Verify amount matches (Paystack sends amount in kobo/pesewas)
+      const webhookAmount = transaction.amount;
+      const transactionRecord = await Transaction.findOne({ reference });
+      
+      if (transactionRecord) {
+        const expectedAmount = transactionRecord.amount * 100; // Convert to pesewas
+        
+        if (Math.abs(webhookAmount - expectedAmount) > 1) {
+          console.warn("⚠️ Payment amount mismatch", { 
+            webhookAmount, 
+            expectedAmount, 
+            reference 
+          });
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Amount mismatch' 
+          });
+        }
+      }
+
       const result = await processSuccessfulPayment(reference);
       console.log(`[WEBHOOK] Payment processing result:`, result);
-      return res.json({ message: result.message });
+      
+      if (result.success) {
+        return res.json({ 
+          success: true, 
+          message: result.message 
+        });
+      } else {
+        return res.status(400).json({ 
+          success: false, 
+          error: result.message 
+        });
+      }
     } else {
       console.log(`[WEBHOOK] Unhandled event type: ${event.event}`);
       return res.json({ message: 'Event received' });
