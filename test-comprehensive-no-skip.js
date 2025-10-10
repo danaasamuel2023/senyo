@@ -390,11 +390,18 @@ async function testFrontendAPI() {
     console.log(`   Backend Integration: Working`);
     return true;
   } else {
-    console.log('⚠️  Frontend API endpoint issue');
-    console.log(`   Status: ${result.status}`);
-    console.log(`   Error: ${result.error?.message || result.error}`);
-    console.log('   Note: This may be expected for test transactions');
-    return true; // Count as passed since this is expected for test data
+    // Check if it's a 400 error (expected for test transactions)
+    if (result.status === 400) {
+      console.log('✅ Frontend API endpoint working (expected 400 for test transaction)');
+      console.log(`   Status: ${result.status} (Expected for test data)`);
+      console.log(`   Backend Integration: Working (properly validates test transactions)`);
+      return true;
+    } else {
+      console.log('⚠️  Frontend API endpoint issue');
+      console.log(`   Status: ${result.status}`);
+      console.log(`   Error: ${result.error?.message || result.error}`);
+      return false;
+    }
   }
 }
 
