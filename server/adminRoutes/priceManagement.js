@@ -429,11 +429,164 @@ router.patch('/prices/:id/toggle', auth, adminAuth, async (req, res) => {
 // ============================================
 // INVENTORY MANAGEMENT ENDPOINTS
 // ============================================
-// Note: Inventory endpoints are handled by adminManagemet.js
-// to avoid route conflicts. These endpoints are available at:
-// GET /api/v1/admin/inventory
-// PUT /api/v1/admin/inventory/:network/toggle
-// PUT /api/v1/admin/inventory/:network/toggle-geonettech
+
+/**
+ * @route   GET /api/v1/admin/inventory
+ * @desc    Get all inventory items with current status
+ * @access  Admin
+ */
+router.get('/inventory', auth, adminAuth, async (req, res) => {
+  try {
+    const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
+    
+    // Predefined networks
+    const NETWORKS = ["YELLO", "TELECEL", "AT_PREMIUM", "airteltigo", "at"];
+    
+    // Create response with all networks (create missing ones with defaults)
+    const inventory = NETWORKS.map(network => {
+      const existingItem = inventoryItems.find(item => item.network === network);
+      
+      if (existingItem) {
+        return {
+          network: existingItem.network,
+          inStock: existingItem.inStock,
+          skipGeonettech: existingItem.skipGeonettech || false,
+          updatedAt: existingItem.updatedAt
+        };
+      } else {
+        return {
+          network,
+          inStock: true, // Default to in stock
+          skipGeonettech: false, // Default to API enabled
+          updatedAt: null
+        };
+      }
+    });
+    
+    res.json({
+      inventory,
+      totalNetworks: NETWORKS.length,
+      message: 'Inventory data retrieved successfully'
+    });
+  } catch (err) {
+    console.error('Error fetching inventory:', err.message);
+    res.status(500).json({
+      error: 'Server Error',
+      message: err.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/admin/inventory/:network
+ * @desc    Get specific network inventory status
+ * @access  Admin
+ */
+router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
+  try {
+    const { network } = req.params;
+    
+    const inventoryItem = await DataInventory.findOne({ network });
+    
+    if (!inventoryItem) {
+      return res.json({
+        network,
+        inStock: true, // Default to in stock
+        skipGeonettech: false, // Default to API enabled
+        updatedAt: null,
+        message: 'Network not found in inventory - showing defaults'
+      });
+    }
+    
+    res.json({
+      network: inventoryItem.network,
+      inStock: inventoryItem.inStock,
+      skipGeonettech: inventoryItem.skipGeonettech || false,
+      updatedAt: inventoryItem.updatedAt
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+/**
+ * @route   PUT /api/v1/admin/inventory/:network/toggle
+ * @desc    Toggle inventory status for specific network
+ * @access  Admin
+ */
+router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
+  try {
+    const { network } = req.params;
+    
+    // Find or create inventory item
+    let inventoryItem = await DataInventory.findOne({ network });
+    
+    if (!inventoryItem) {
+      inventoryItem = new DataInventory({ network, inStock: true });
+    }
+    
+    // Toggle the status
+    inventoryItem.inStock = !inventoryItem.inStock;
+    inventoryItem.updatedAt = new Date();
+    
+    await inventoryItem.save();
+    
+    res.json({
+      success: true,
+      message: `Inventory status for ${network} updated`,
+      network: inventoryItem.network,
+      inStock: inventoryItem.inStock,
+      updatedAt: inventoryItem.updatedAt
+    });
+  } catch (err) {
+    console.error('Toggle inventory error:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      message: err.message
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/v1/admin/inventory/:network/toggle-geonettech
+ * @desc    Toggle Geonettech API for specific network
+ * @access  Admin
+ */
+router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
+  try {
+    const { network } = req.params;
+    
+    // Find or create inventory item
+    let inventoryItem = await DataInventory.findOne({ network });
+    
+    if (!inventoryItem) {
+      inventoryItem = new DataInventory({ network, inStock: true, skipGeonettech: false });
+    }
+    
+    // Toggle the Geonettech API status
+    inventoryItem.skipGeonettech = !inventoryItem.skipGeonettech;
+    inventoryItem.updatedAt = new Date();
+    
+    await inventoryItem.save();
+    
+    res.json({
+      success: true,
+      message: `Geonettech API status for ${network} updated`,
+      network: inventoryItem.network,
+      skipGeonettech: inventoryItem.skipGeonettech,
+      updatedAt: inventoryItem.updatedAt
+    });
+  } catch (err) {
+    console.error('Toggle Geonettech error:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error',
+      message: err.message
+    });
+  }
+});
 
 // ============================================
 // DATAMART API SYNCHRONIZATION
