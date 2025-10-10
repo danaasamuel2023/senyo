@@ -33,6 +33,17 @@ export default function PaymentCallbackClient({ searchParams }) {
         return;
       }
 
+      // Check if we're currently processing this reference
+      const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
+      if (processingRefs.includes(reference)) {
+        console.log('🔄 Payment already being processed, waiting...');
+        return;
+      }
+
+      // Mark as processing
+      processingRefs.push(reference);
+      localStorage.setItem('processingPayments', JSON.stringify(processingRefs));
+
       if (!reference) {
         console.log('❌ No reference found');
         setStatus('failed');
@@ -111,6 +122,11 @@ export default function PaymentCallbackClient({ searchParams }) {
           processedRefs.push(reference);
           localStorage.setItem('processedPayments', JSON.stringify(processedRefs));
           
+          // Remove from processing list
+          const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
+          const updatedProcessingRefs = processingRefs.filter(ref => ref !== reference);
+          localStorage.setItem('processingPayments', JSON.stringify(updatedProcessingRefs));
+          
           // Redirect to dashboard after 2 seconds (reduced from 3)
           setTimeout(() => {
             router.push('/');
@@ -142,6 +158,11 @@ export default function PaymentCallbackClient({ searchParams }) {
         console.error('Payment callback error:', error);
         setStatus('failed');
         setMessage('An error occurred while verifying your payment. Please try again or contact support.');
+        
+        // Remove from processing list on error
+        const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
+        const updatedProcessingRefs = processingRefs.filter(ref => ref !== reference);
+        localStorage.setItem('processingPayments', JSON.stringify(updatedProcessingRefs));
       }
     };
 

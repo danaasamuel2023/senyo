@@ -258,11 +258,16 @@ async function processSuccessfulPayment(reference, idempotencyKey = null) {
           { session }
         );
         
+        // Invalidate verification cache for this reference
+        const cacheKey = `verify_${reference}`;
+        verificationCache.delete(cacheKey);
+        
         console.log(`[PAYMENT] ✅ User ${user._id} wallet updated successfully!`);
         console.log(`[PAYMENT]    User.walletBalance: GHS ${previousUserBalance} → GHS ${user.walletBalance}`);
         console.log(`[PAYMENT]    Wallet.balance: GHS ${previousWalletBalance} → GHS ${wallet.balance}`);
         console.log(`[PAYMENT]    Deposit amount: GHS ${transaction.amount}`);
         console.log(`[PAYMENT]    Idempotency key: ${idempotencyKey}`);
+        console.log(`[PAYMENT]    Cache invalidated for reference: ${reference}`);
       });
       
       return { 
@@ -328,6 +333,19 @@ async function cleanupStuckProcessingTransactions() {
 
 // Run cleanup every 5 minutes
 setInterval(cleanupStuckProcessingTransactions, 5 * 60 * 1000);
+
+// Cleanup verification cache every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  const maxAge = 10 * 60 * 1000; // 10 minutes
+  
+  for (const [key, value] of verificationCache.entries()) {
+    if (now - value.timestamp > maxAge) {
+      verificationCache.delete(key);
+      console.log(`[CACHE_CLEANUP] Removed expired cache entry: ${key}`);
+    }
+  }
+}, 10 * 60 * 1000);
 
 // Test webhook endpoint (for development)
 router.post('/paystack/webhook/test', async (req, res) => {
@@ -462,6 +480,9 @@ router.post('/paystack/webhook',
   }
 });
 
+// In-memory cache for verification results (5 minute TTL)
+const verificationCache = new Map();
+
 // Verify payment endpoint for client-side verification
 router.get('/verify-payment',
   checkBlocked,
@@ -471,6 +492,16 @@ router.get('/verify-payment',
   async (req, res) => {
   try {
     const { reference } = req.query;
+    
+    // Check cache first
+    const cacheKey = `verify_${reference}`;
+    const cachedResult = verificationCache.get(cacheKey);
+    
+    if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
+      console.log(`[VERIFY] ✅ Returning cached result for reference: ${reference}`);
+      return res.json(cachedResult.data);
+    }
+
     console.log(`[VERIFY] Verification request received for reference: ${reference}`);
 
     if (!reference) {
@@ -492,16 +523,24 @@ router.get('/verify-payment',
 
     if (!transaction) {
       console.log(`[VERIFY] ❌ Transaction not found in database`);
-      return res.status(404).json({ 
+      const errorResponse = { 
         success: false, 
         error: 'Transaction not found' 
+      };
+      
+      // Cache error result for 1 minute to prevent repeated failed lookups
+      verificationCache.set(cacheKey, {
+        data: errorResponse,
+        timestamp: Date.now()
       });
+      
+      return res.status(404).json(errorResponse);
     }
 
     // If transaction is already completed, we can return success
     if (transaction.status === 'completed') {
       console.log(`[VERIFY] ✅ Transaction already completed, returning success`);
-      return res.json({
+      const successResponse = {
         success: true,
         message: 'Payment already verified and completed',
         data: {
@@ -509,7 +548,15 @@ router.get('/verify-payment',
           amount: transaction.amount,
           status: transaction.status
         }
+      };
+      
+      // Cache successful result for 5 minutes
+      verificationCache.set(cacheKey, {
+        data: successResponse,
+        timestamp: Date.now()
       });
+      
+      return res.json(successResponse);
     }
 
     // If transaction is still pending, verify with Paystack
