@@ -856,7 +856,7 @@ const DataPurchaseSchema = new mongoose.Schema({
 });
 */
 
-router.put('/admin/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -898,7 +898,7 @@ router.put('/admin/inventory/:network/toggle', auth, adminAuth, async (req, res)
  * @desc    Toggle Geonettech API for specific network
  * @access  Admin
  */
-router.put('/admin/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -940,7 +940,7 @@ router.put('/admin/inventory/:network/toggle-geonettech', auth, adminAuth, async
  * @desc    Get all inventory items with current status
  * @access  Admin
  */
-router.get('/admin/inventory', auth, adminAuth, async (req, res) => {
+router.get('/inventory', auth, adminAuth, async (req, res) => {
   try {
     const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
     
@@ -987,7 +987,7 @@ router.get('/admin/inventory', auth, adminAuth, async (req, res) => {
  * @desc    Get specific network inventory status
  * @access  Admin
  */
-router.get('/admin/inventory/:network', auth, adminAuth, async (req, res) => {
+router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     

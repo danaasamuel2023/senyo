@@ -370,72 +370,11 @@ router.patch('/prices/:id/toggle', auth, adminAuth, async (req, res) => {
 // ============================================
 // INVENTORY MANAGEMENT ENDPOINTS
 // ============================================
-
-// Get inventory status for all networks
-router.get('/inventory', auth, adminAuth, async (req, res) => {
-  try {
-    const inventory = await DataInventory.find({}).sort({ network: 1 });
-    res.json({
-      success: true,
-      data: inventory
-    });
-  } catch (error) {
-    console.error('Get inventory error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch inventory' });
-  }
-});
-
-// Update inventory status
-router.put('/inventory/:network', auth, adminAuth, async (req, res) => {
-  try {
-    const { network } = req.params;
-    const { inStock, skipGeonettech } = req.body;
-
-    const inventory = await DataInventory.findOneAndUpdate(
-      { network },
-      { 
-        inStock: inStock !== undefined ? inStock : true,
-        skipGeonettech: skipGeonettech !== undefined ? skipGeonettech : false,
-        updatedAt: new Date()
-      },
-      { upsert: true, new: true }
-    );
-
-    res.json({
-      success: true,
-      message: 'Inventory updated successfully',
-      data: inventory
-    });
-  } catch (error) {
-    console.error('Update inventory error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update inventory' });
-  }
-});
-
-// Toggle inventory status
-router.patch('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
-  try {
-    const { network } = req.params;
-    
-    const inventory = await DataInventory.findOne({ network });
-    if (!inventory) {
-      return res.status(404).json({ success: false, message: 'Inventory not found' });
-    }
-
-    inventory.inStock = !inventory.inStock;
-    inventory.updatedAt = new Date();
-    await inventory.save();
-
-    res.json({
-      success: true,
-      message: `Inventory ${inventory.inStock ? 'enabled' : 'disabled'} successfully`,
-      data: inventory
-    });
-  } catch (error) {
-    console.error('Toggle inventory error:', error);
-    res.status(500).json({ success: false, message: 'Failed to toggle inventory' });
-  }
-});
+// Note: Inventory endpoints are handled by adminManagemet.js
+// to avoid route conflicts. These endpoints are available at:
+// GET /api/v1/admin/inventory
+// PUT /api/v1/admin/inventory/:network/toggle
+// PUT /api/v1/admin/inventory/:network/toggle-geonettech
 
 // ============================================
 // DATAMART API SYNCHRONIZATION
