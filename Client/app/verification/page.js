@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   CheckCircle, XCircle, Loader2, ArrowRight, Wallet, 
-  AlertTriangle, RefreshCw, Clock, DollarSign, Shield 
+  AlertTriangle, RefreshCw, Clock, Shield 
 } from 'lucide-react';
 
 // API Configuration
@@ -16,17 +16,33 @@ const getApiEndpoint = (path) => {
 const PaymentVerificationPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState('loading'); // loading, success, error, pending
+  const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('Processing your payment...');
   const [paymentData, setPaymentData] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const [userBalance, setUserBalance] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
+  const [isClient, setIsClient] = useState(false);
   
   const MAX_RETRIES = 3;
-  const RETRY_DELAY = 5000; // 5 seconds
+  const RETRY_DELAY = 5000;
 
+  // Handle client-side hydration
   useEffect(() => {
+    setIsClient(true);
+    
+    // Safely access localStorage after component mounts
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
+      setAuthToken(token);
+    }
+  }, []);
+
+  // Verify payment when client is ready
+  useEffect(() => {
+    if (!isClient) return;
+
     const reference = searchParams.get('reference');
     const source = searchParams.get('source');
     const trxref = searchParams.get('trxref');
@@ -41,7 +57,7 @@ const PaymentVerificationPage = () => {
 
     // Start verification process
     verifyPayment(reference);
-  }, [searchParams]);
+  }, [isClient, searchParams]);
 
   const verifyPayment = async (reference, isRetry = false) => {
     try {
@@ -52,15 +68,13 @@ const PaymentVerificationPage = () => {
         setMessage(`Retrying verification... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
       }
       
-      const token = localStorage.getItem('authToken');
-      
       const response = await fetch(
         getApiEndpoint(`/api/v1/verify-payment?reference=${reference}`), 
         {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${authToken}`
           }
         }
       );
@@ -79,9 +93,19 @@ const PaymentVerificationPage = () => {
           
           // Update localStorage with new balance
           if (typeof window !== 'undefined') {
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            userData.walletBalance = data.data.newBalance;
-            localStorage.setItem('userData', JSON.stringify(userData));
+            try {
+              const storedUserData = localStorage.getItem('userData');
+              const userData = storedUserData ? JSON.parse(storedUserData) : {};
+              
+              const updatedUserData = {
+                ...userData,
+                walletBalance: data.data.newBalance
+              };
+              
+              localStorage.setItem('userData', JSON.stringify(updatedUserData));
+            } catch (error) {
+              console.error('Error updating localStorage:', error);
+            }
           }
         }
 
@@ -114,7 +138,7 @@ const PaymentVerificationPage = () => {
       console.error('Payment verification error:', error);
       
       // Retry on network errors
-      if (retryCount < MAX_RETRIES && !isRetry) {
+      if (retryCount < MAX_RETRIES) {
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
           verifyPayment(reference, true);
@@ -198,6 +222,23 @@ const PaymentVerificationPage = () => {
       default: return 'Processing Payment';
     }
   };
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-md w-full relative z-10">
+          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl shadow-2xl p-8 text-center border border-[#FFCC08]/20">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-100 mb-6">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-blue-600">Loading...</h1>
+            <p className="text-gray-300">Initializing payment verification...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4">
