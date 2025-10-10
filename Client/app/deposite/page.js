@@ -185,7 +185,7 @@ const AmountInput = ({ value, onChange, quickAmounts, selectedAmount, onQuickSel
               onChange={onChange}
               placeholder="Enter amount"
               className="pl-12 pr-4 py-4 block w-full rounded-xl bg-white/10 backdrop-blur-sm border border-[#FFCC08]/30 text-white placeholder-white/50 focus:ring-2 focus:ring-[#FFCC08] focus:border-[#FFCC08] font-bold text-lg transition-all"
-              min="10"
+              min="1"
               max="10000"
               step="0.01"
             />
@@ -385,8 +385,8 @@ const DataHustleDeposit = () => {
 
   // Form validation
   const isFormValid = () => {
-    if (!amount || parseFloat(amount) <= 9) {
-      setError('Please enter a valid amount greater than GHS 9');
+    if (!amount || parseFloat(amount) < 1) {
+      setError('Please enter a valid amount of at least GHS 1');
       return false;
     }
     
@@ -1042,4 +1042,4 @@ const DataHustleDeposit = () => {
   );
 };
 
-export default DataHustleDeposit;
+export default UnlimitedDataDeposit;
