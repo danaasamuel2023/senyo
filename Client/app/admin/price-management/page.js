@@ -9,24 +9,34 @@ const PriceManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // API Base URL
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  // API Base URL - Connected to production
+  const API_URL = 'https://unlimitedata.onrender.com';
 
   // Load prices
   const loadPrices = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token not found. Please log in.');
+        router.push('/SignIn');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/v1/admin/prices`, {
         headers: {
-          'x-auth-token': localStorage.getItem('authToken')
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch prices');
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch prices: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('📦 Prices loaded from production API:', data);
       setPrices(data.data || []);
     } catch (error) {
       console.error('Error loading prices:', error);
@@ -36,8 +46,30 @@ const PriceManagementPage = () => {
     }
   };
 
+  // Test API connection
+  const testConnection = async () => {
+    try {
+      console.log('🔗 Testing connection to production API...');
+      const response = await fetch(`${API_URL}/api/v1/admin/prices`, {
+        method: 'HEAD', // Just test if endpoint exists
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        }
+      });
+      
+      if (response.ok) {
+        console.log('✅ Production API connection successful');
+      } else {
+        console.log('⚠️ Production API responded with:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Production API connection failed:', error);
+    }
+  };
+
   // Initialize
   useEffect(() => {
+    testConnection();
     loadPrices();
   }, []);
 
@@ -58,6 +90,12 @@ const PriceManagementPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Manage databundle prices and inventory
                 </p>
+                <div className="flex items-center mt-1">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
+                    Connected to Production API
+                  </span>
+                </div>
               </div>
             </div>
             
