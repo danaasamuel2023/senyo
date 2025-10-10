@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 const FloatingWhatsAppIcon = () => {
   const whatsappGroupUrl = 'https://chat.whatsapp.com/LEfSM2A3RVKJ1yY8JB5osP';
@@ -24,14 +23,16 @@ const FloatingWhatsAppIcon = () => {
     };
   }, []);
   
+  const handleClick = () => {
+    window.open(whatsappGroupUrl, '_blank', 'noopener,noreferrer');
+  };
+  
   if (!showIcon) return null;
   
   return (
     <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50">
-      <Link
-        href={whatsappGroupUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        onClick={handleClick}
         aria-label="Join our WhatsApp group"
         className="block transition-transform hover:scale-110 duration-300"
       >
@@ -45,7 +46,7 @@ const FloatingWhatsAppIcon = () => {
             fill="#25D366"
           />
         </svg>
-      </Link>
+      </button>
     </div>
   );
 };
