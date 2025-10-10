@@ -219,6 +219,12 @@ function trackSuspiciousActivity(identifier, type, details = {}) {
  */
 const checkBlocked = (req, res, next) => {
   const identifier = req.ip || req.connection.remoteAddress;
+  
+  // Allow localhost for development/testing
+  if (identifier === '127.0.0.1' || identifier === '::1' || identifier === '::ffff:127.0.0.1' || identifier === 'localhost') {
+    return next();
+  }
+  
   const activity = suspiciousActivities[identifier];
 
   if (activity && activity.blockedUntil && Date.now() < activity.blockedUntil) {
@@ -241,7 +247,7 @@ const checkBlocked = (req, res, next) => {
  * Validate transaction reference format
  */
 const validateReference = (req, res, next) => {
-  const reference = req.query.reference || req.body.reference || req.params.reference;
+  let reference = req.query.reference || req.body.reference || req.params.reference;
 
   if (!reference) {
     return res.status(400).json({
@@ -250,16 +256,34 @@ const validateReference = (req, res, next) => {
     });
   }
 
+  // Fix duplicate reference issue - take only the first one if comma-separated
+  if (reference && reference.includes(',')) {
+    const originalReference = reference;
+    reference = reference.split(',')[0].trim();
+    console.log(`[SECURITY] 🔧 Fixed duplicate reference: ${originalReference} → ${reference}`);
+    
+    // Update the request with the cleaned reference
+    if (req.query.reference) req.query.reference = reference;
+    if (req.body.reference) req.body.reference = reference;
+    if (req.params.reference) req.params.reference = reference;
+  }
+
   // Validate reference format (should start with DEP-, MOMO-, TRX-, PAY-, or REF-)
-  const validFormats = /^(DEP|MOMO|TRX|PAY|REF)-[a-f0-9]{20}-\d{13}$/;
+  // More flexible regex to handle different reference lengths
+  const validFormats = /^(DEP|MOMO|TRX|PAY|REF)-[a-f0-9]+-\d+$/;
   
   if (!validFormats.test(reference)) {
     console.log(`[SECURITY] ⚠️ Invalid reference format: ${reference}`);
-    trackSuspiciousActivity(req.ip, 'invalid_reference_format', { reference });
+    
+    // Only track suspicious activity for non-localhost IPs in production
+    if (process.env.NODE_ENV === 'production' && req.ip !== '127.0.0.1' && req.ip !== '::1') {
+      trackSuspiciousActivity(req.ip, 'invalid_reference_format', { reference });
+    }
     
     return res.status(400).json({
       success: false,
-      error: 'Invalid transaction reference format'
+      error: 'Invalid transaction reference format',
+      message: 'Please ensure the payment reference is valid and try again'
     });
   }
 

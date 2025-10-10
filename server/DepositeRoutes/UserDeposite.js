@@ -335,6 +335,21 @@ router.post('/paystack/webhook/test', async (req, res) => {
   return res.json({ message: 'Test webhook received successfully' });
 });
 
+// Debug endpoint to check IP detection
+router.get('/debug/ip', (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const realIp = req.headers['x-real-ip'];
+  
+  res.json({
+    ip: ip,
+    forwardedFor: forwardedFor,
+    realIp: realIp,
+    headers: req.headers,
+    connection: req.connection.remoteAddress
+  });
+});
+
 // Paystack webhook handler
 router.post('/paystack/webhook',
   verifyPaystackSignature(PAYSTACK_SECRET_KEY),

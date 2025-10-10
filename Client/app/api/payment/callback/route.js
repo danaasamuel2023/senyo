@@ -3,9 +3,16 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const reference = searchParams.get('reference');
+    let reference = searchParams.get('reference');
     const source = searchParams.get('source');
     const trxref = searchParams.get('trxref');
+
+    // Fix duplicate reference issue - take only the first one if comma-separated
+    if (reference && reference.includes(',')) {
+      const originalReference = reference;
+      reference = reference.split(',')[0].trim();
+      console.log(`[CALLBACK_API] 🔧 Fixed duplicate reference: ${originalReference} → ${reference}`);
+    }
 
     console.log('Payment callback API received:', { reference, source, trxref });
 
@@ -66,6 +73,11 @@ export async function GET(request) {
     } catch (backendError) {
       console.error('Backend verification error:', backendError);
       
+      // Determine if this is a temporary or permanent error
+      const isTemporaryError = backendError.message.includes('timeout') || 
+                              backendError.message.includes('network') ||
+                              backendError.message.includes('ECONNREFUSED');
+      
       // Fallback: return error but don't fail completely
       return NextResponse.json({
         success: false,
@@ -73,8 +85,10 @@ export async function GET(request) {
         message: backendError.message,
         data: {
           reference: reference,
-          status: 'pending',
-          message: 'Payment verification is pending. Please check your wallet balance.'
+          status: isTemporaryError ? 'pending' : 'failed',
+          message: isTemporaryError 
+            ? 'Payment verification is pending. Please check your wallet balance or try again later.'
+            : 'Payment verification failed. Please contact support if you completed a payment.'
         }
       }, { status: 200 }); // Return 200 to avoid breaking the callback flow
     }
@@ -161,7 +175,7 @@ export async function POST(request) {
         data: {
           reference: reference,
           status: 'pending',
-          message: 'Payment verification is pending. Please check your wallet balance.'
+          message: 'Payment verification is pending. Please check your wallet balance or try again later.'
         }
       }, { status: 200 }); // Return 200 to avoid breaking the callback flow
     }

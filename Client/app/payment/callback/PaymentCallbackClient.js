@@ -13,9 +13,16 @@ export default function PaymentCallbackClient({ searchParams }) {
   useEffect(() => {
     const handlePaymentCallback = async () => {
       console.log('🔍 Payment callback processing started');
-      const reference = searchParams?.reference;
+      let reference = searchParams?.reference;
       const source = searchParams?.source;
       const trxref = searchParams?.trxref;
+      
+      // Fix duplicate reference issue - take only the first one if comma-separated
+      if (reference && reference.includes(',')) {
+        reference = reference.split(',')[0].trim();
+        console.log('🔧 Fixed duplicate reference:', reference);
+      }
+      
       console.log('🔍 URL params:', { reference, source, trxref });
 
       // Check if we've already processed this reference to prevent loops
@@ -110,16 +117,24 @@ export default function PaymentCallbackClient({ searchParams }) {
           }, 2000);
         } else {
           setStatus('failed');
+          
+          // Handle different error types with user-friendly messages
           if (data.error === 'Transaction not found') {
             setMessage('This payment reference was not found. Please contact support if you completed a payment.');
           } else if (data.error === 'Invalid transaction reference format') {
             setMessage('Invalid payment reference format. Please contact support.');
+          } else if (data.error === 'Backend verification failed') {
+            if (data.data?.status === 'pending') {
+              setMessage('Payment verification is pending. Please check your wallet balance or try again later.');
+            } else {
+              setMessage('Payment verification failed. Please contact support if you completed a payment.');
+            }
           } else if (data.message === 'Payment not completed' && data.data?.status === 'abandoned') {
             setMessage('Payment was not completed. Please try again or contact support if you believe this is an error.');
           } else if (data.message === 'Payment not completed') {
             setMessage('Payment verification is still pending. Please wait a moment and refresh the page.');
           } else {
-            setMessage(data.error || data.message || 'Payment verification failed');
+            setMessage(data.error || data.message || 'Payment verification failed. Please contact support.');
           }
           console.error('Payment verification failed:', data);
         }
