@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { use } from 'react'; // Import 'use' from React
-import Head from 'next/head';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   RefreshCw, 
@@ -25,8 +24,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+
 export default function VerificationDetailPage({ params }) {
-  // Unwrap params using React.use() if it's a Promise
+  // Unwrap params if it's a Promise
   const unwrappedParams = params instanceof Promise ? use(params) : params;
   const verificationId = unwrappedParams?.id;
 
@@ -38,78 +40,91 @@ export default function VerificationDetailPage({ params }) {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [isClient, setIsClient] = useState(false);
+  
   const pollingInterval = useRef(null);
   const router = useRouter();
 
-  // Check system preference for dark mode on initial load
+  // Initialize client-side only state
   useEffect(() => {
-    // Check if user has a preference stored in localStorage
-    const storedPreference = localStorage.getItem('darkMode');
+    setIsClient(true);
     
-    if (storedPreference !== null) {
-      setDarkMode(storedPreference === 'true');
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDark);
+    // Check for authentication
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('userData');
+      const user = userData ? JSON.parse(userData) : null;
+      
+      if (!user || !user.id) {
+        router.push('/login');
+        return;
+      }
+      
+      setUserId(user.id);
+      
+      // Initialize dark mode
+      const storedPreference = localStorage.getItem('darkMode');
+      if (storedPreference !== null) {
+        setDarkMode(storedPreference === 'true');
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setDarkMode(prefersDark);
+      }
     }
-    
-    // Listen for system preference changes
+  }, [router]);
+
+  // Listen for system dark mode changes
+  useEffect(() => {
+    if (!isClient) return;
+
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e) => {
-      if (localStorage.getItem('darkMode') === null) {
+      if (typeof window !== 'undefined' && localStorage.getItem('darkMode') === null) {
         setDarkMode(e.matches);
       }
     };
     
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  }, [isClient]);
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    localStorage.setItem('darkMode', newMode.toString());
-  };
-
+  // Apply dark mode to document
   useEffect(() => {
-    // Apply dark mode class to document
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    if (isClient) {
+      if (darkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
-  }, [darkMode]);
+  }, [darkMode, isClient]);
 
+  // Fetch verification details when userId is available
   useEffect(() => {
-    // Get user data from localStorage
-    const userData = localStorage.getItem('userData');
-    const user = userData ? JSON.parse(userData) : null;
-    
-    if (!user || !user.id) {
-      router.push('/login');
-      return;
+    if (userId && verificationId) {
+      fetchVerificationDetails(verificationId, userId);
     }
     
-    // Fetch verification details
-    if (verificationId) {
-      fetchVerificationDetails(verificationId, user.id);
-    }
-    
-    // Cleanup function
     return () => {
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
       }
     };
-  }, [router, verificationId]);
+  }, [userId, verificationId]);
 
-  const fetchVerificationDetails = async (id, userId) => {
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darkMode', newMode.toString());
+    }
+  };
+
+  const fetchVerificationDetails = async (id, uid) => {
     try {
       setLoading(true);
       
-      const response = await fetch(`https://datahustle.onrender.com/api/verifications/${id}?userId=${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/verifications/${id}?userId=${uid}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch verification details: ${response.status} ${response.statusText}`);
@@ -122,7 +137,7 @@ export default function VerificationDetailPage({ params }) {
         
         // Start polling if verification is active but not yet verified
         if (data.verification.status === 'active' && !data.verification.verificationCode) {
-          startPolling(id, userId);
+          startPolling(id, uid);
         } else {
           stopPolling();
         }
@@ -139,7 +154,7 @@ export default function VerificationDetailPage({ params }) {
     }
   };
 
-  const startPolling = (id, userId) => {
+  const startPolling = (id, uid) => {
     if (pollingInterval.current) {
       clearInterval(pollingInterval.current);
     }
@@ -148,7 +163,7 @@ export default function VerificationDetailPage({ params }) {
     
     // Poll every 5 seconds
     pollingInterval.current = setInterval(() => {
-      fetchVerificationCode(id, userId);
+      fetchVerificationCode(id, uid);
     }, 5000);
   };
 
@@ -161,12 +176,13 @@ export default function VerificationDetailPage({ params }) {
     setPollingActive(false);
   };
 
-  const fetchVerificationCode = async (id, userId) => {
+  const fetchVerificationCode = async (id, uid) => {
     try {
-      const response = await fetch(`https://datahustle.onrender.com/api/verifications/${id}/code?userId=${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/verifications/${id}/code?userId=${uid}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch verification code: ${response.status} ${response.statusText}`);
+        console.error(`Failed to fetch verification code: ${response.status}`);
+        return;
       }
       
       const data = await response.json();
@@ -183,13 +199,7 @@ export default function VerificationDetailPage({ params }) {
         stopPolling();
       } else if (data.status && data.status !== 'active') {
         // Status changed, refresh verification details
-        const userData = localStorage.getItem('userData');
-        const user = userData ? JSON.parse(userData) : null;
-        
-        if (user && user.id) {
-          fetchVerificationDetails(id, user.id);
-        }
-        
+        fetchVerificationDetails(id, uid);
         stopPolling();
       }
     } catch (err) {
@@ -199,24 +209,19 @@ export default function VerificationDetailPage({ params }) {
   };
 
   const refreshVerification = () => {
-    const userData = localStorage.getItem('userData');
-    const user = userData ? JSON.parse(userData) : null;
-    
-    if (user && user.id && verificationId) {
-      fetchVerificationDetails(verificationId, user.id);
+    if (userId && verificationId) {
+      fetchVerificationDetails(verificationId, userId);
     }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(
-      () => {
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 2000);
-      },
-      (err) => {
-        console.error('Could not copy text: ', err);
-      }
-    );
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch (err) {
+      console.error('Could not copy text:', err);
+    }
   };
 
   const reactivateVerification = async () => {
@@ -236,20 +241,17 @@ export default function VerificationDetailPage({ params }) {
       setActionInProgress(true);
       setActionMessage(actionMsg);
       
-      const userData = localStorage.getItem('userData');
-      const user = userData ? JSON.parse(userData) : null;
-      
-      if (!user || !user.id) {
+      if (!userId) {
         throw new Error('User not authenticated');
       }
       
-      const response = await fetch(`https://datamartbackened.onrender.com/api/verifications/${verificationId}/${action}`, {
+      const response = await fetch(`${API_BASE_URL}/api/verifications/${verificationId}/${action}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: user.id
+          userId: userId
         })
       });
       
@@ -258,7 +260,7 @@ export default function VerificationDetailPage({ params }) {
       }
       
       // Refresh verification details
-      fetchVerificationDetails(verificationId, user.id);
+      fetchVerificationDetails(verificationId, userId);
       
       setActionMessage(`${action.charAt(0).toUpperCase() + action.slice(1)} successful`);
       
@@ -354,12 +356,17 @@ export default function VerificationDetailPage({ params }) {
     }
   };
 
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <RefreshCw size={32} className="animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
-      <Head>
-        <title>Verification Details</title>
-      </Head>
-      
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header with back button, title and theme toggle */}
         <div className="mb-6 flex items-center justify-between">
@@ -425,7 +432,7 @@ export default function VerificationDetailPage({ params }) {
                     <button
                       onClick={refreshVerification}
                       disabled={actionInProgress}
-                      className="p-2 rounded-md bg-white dark:bg-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 transition-colors"
+                      className="p-2 rounded-md bg-white dark:bg-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw size={16} className={pollingActive ? 'animate-spin text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'} />
                     </button>
@@ -519,7 +526,7 @@ export default function VerificationDetailPage({ params }) {
                       <button
                         onClick={reactivateVerification}
                         disabled={actionInProgress}
-                        className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-800 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50"
                       >
                         <RotateCcw size={16} className="mr-2" />
                         Reactivate
@@ -530,7 +537,7 @@ export default function VerificationDetailPage({ params }) {
                       <button
                         onClick={reportVerification}
                         disabled={actionInProgress}
-                        className="inline-flex items-center px-4 py-2 border border-amber-300 dark:border-amber-800 shadow-sm text-sm font-medium rounded-md text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-slate-800 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-amber-300 dark:border-amber-800 shadow-sm text-sm font-medium rounded-md text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50"
                       >
                         <Flag size={16} className="mr-2" />
                         Report Problem
@@ -541,7 +548,7 @@ export default function VerificationDetailPage({ params }) {
                       <button
                         onClick={cancelVerification}
                         disabled={actionInProgress}
-                        className="inline-flex items-center px-4 py-2 border border-red-300 dark:border-red-800 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-slate-800 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-red-300 dark:border-red-800 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50"
                       >
                         <Ban size={16} className="mr-2" />
                         Cancel
