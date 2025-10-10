@@ -37,11 +37,31 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"),
   title: {
-    default: "UnlimitedData GH | Premium Data Marketplace",
-    template: "%s | UnlimitedData GH",
+    default: "Cheap Databundle Ghana | Unlimited Data Deals | Best Prices",
+    template: "%s | Cheap Databundle Ghana",
   },
-  description: "Ghana's premier platform for data resellers. Buy and sell data packages with unlimited possibilities, secure transactions, and instant delivery.",
+  description: "Get the cheapest databundle deals in Ghana. Unlimited data packages starting from ₵5. MTN, Vodafone, AirtelTigo & Telecel. Instant delivery, secure payment.",
   keywords: [
+    "databundle ghana",
+    "cheap data ghana", 
+    "unlimited data ghana",
+    "databundle cheap",
+    "cheap unlimited data",
+    "best databundle deals",
+    "affordable data bundles",
+    "cheap data bundles ghana",
+    "unlimited data packages",
+    "databundle marketplace",
+    "MTN databundle",
+    "Vodafone databundle", 
+    "AirtelTigo databundle",
+    "Telecel databundle",
+    "wholesale databundle",
+    "bulk databundle",
+    "instant databundle",
+    "secure databundle",
+    "reliable databundle",
+    "fast databundle delivery",
     "unlimited data ghana",
     "data marketplace",
     "ghana data resellers",
@@ -68,8 +88,8 @@ export const metadata = {
     bing: process.env.NEXT_PUBLIC_BING_VERIFICATION,
   },
   openGraph: {
-    title: "UnlimitedData GH | Ghana's Premium Data Marketplace",
-    description: "Connect with top data resellers across Ghana. Experience unlimited data possibilities with secure, fast, and reliable transactions.",
+    title: "Cheap Databundle Ghana | Best Unlimited Data Deals 2024",
+    description: "Get the cheapest databundle deals in Ghana. Unlimited data packages from ₵5. MTN, Vodafone, AirtelTigo & Telecel. Instant delivery.",
     url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
     siteName: "UnlimitedData GH",
     images: [
@@ -94,8 +114,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "UnlimitedData GH | Premium Data Marketplace",
-    description: "Ghana's #1 platform for data resellers. Unlimited possibilities, secure transactions, instant delivery.",
+    title: "Cheap Databundle Ghana | Best Unlimited Data Deals",
+    description: "Get the cheapest databundle deals in Ghana. Unlimited data packages from ₵5. Instant delivery, secure payment.",
     site: "@UnlimitedDataGH",
     creator: "@UnlimitedDataGH",
     images: {
@@ -153,8 +173,8 @@ export const viewport = {
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "UnlimitedData GH",
-  description: "Ghana's premier platform for data resellers",
+  name: "Cheap Databundle Ghana",
+  description: "Ghana's premier platform for cheap databundle deals and unlimited data packages",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com",
   potentialAction: {
     "@type": "SearchAction",
@@ -182,6 +202,38 @@ const structuredData = {
       availableLanguage: "English"
     }
   }
+};
+
+// Product structured data for databundle services
+const productStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Cheap Databundle Ghana",
+  "description": "Affordable unlimited data packages for all networks in Ghana. Best prices for MTN, Vodafone, AirtelTigo & Telecel databundles.",
+  "brand": {
+    "@type": "Brand",
+    "name": "UnlimitedData GH"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "5.00",
+    "priceCurrency": "GHS",
+    "availability": "https://schema.org/InStock",
+    "priceValidUntil": "2024-12-31",
+    "seller": {
+      "@type": "Organization",
+      "name": "UnlimitedData GH"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "1250",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "category": "Telecommunications",
+  "keywords": "databundle ghana, cheap data ghana, unlimited data ghana, MTN databundle, Vodafone databundle"
 };
 
 export default function RootLayout({ children }) {
@@ -391,6 +443,10 @@ export default function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData) }}
         />
       </head>
       <body

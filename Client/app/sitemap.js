@@ -9,6 +9,18 @@ export default function sitemap() {
       priority: 1,
     },
     {
+      url: `${baseUrl}/cheap-databundle`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/unlimited-data-deals`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/SignIn`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -30,6 +42,18 @@ export default function sitemap() {
       url: `${baseUrl}/mtnup2u`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/databundle-comparison`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/best-databundle-deals`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
       priority: 0.9,
     },
     {

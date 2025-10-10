@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /private/
+
+# Allow important SEO pages
+Allow: /cheap-databundle
+Allow: /unlimited-data-deals
+Allow: /databundle-comparison
+Allow: /best-databundle-deals
+Allow: /mtnup2u
+Allow: /at-ishare
+Allow: /TELECEL
+Allow: /bulk-purchase
+Allow: /topup
+Allow: /help
+Allow: /settings
+
+# Sitemap location
+Sitemap: https://unlimiteddata.gh/sitemap.xml
+
+# Crawl delay for better server performance
+Crawl-delay: 1
