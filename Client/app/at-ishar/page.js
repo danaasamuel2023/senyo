@@ -124,7 +124,7 @@ const ATBundleCards = () => {
       return;
     }
 
-    if (!userData || !userData.id) {
+    if (!userData || (!userData.id && !userData._id)) {
       setGlobalMessage({ text: 'User not authenticated. Please login to continue.', type: 'error' });
       return;
     }
@@ -134,7 +134,7 @@ const ATBundleCards = () => {
     try {
       const token = localStorage.getItem('authToken');
       const response = await axios.post('https://datamartbackened.onrender.com/api/v1/data/purchase-data', {
-        userId: userData.id,
+        userId: userData.id || userData._id,
         phoneNumber: phoneNumber,
         network: bundle.network,
         capacity: bundle.capacity, // Sending MB value as capacity

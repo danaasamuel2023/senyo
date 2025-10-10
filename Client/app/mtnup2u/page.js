@@ -472,7 +472,7 @@ const MTNBundleSelect = () => {
       return;
     }
 
-    if (!userData || !userData.id) {
+    if (!userData || (!userData.id && !userData._id)) {
       showToast('Please login to continue', 'error');
       return;
     }
@@ -505,7 +505,7 @@ const MTNBundleSelect = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId: userData.id,
+          userId: userData.id || userData._id,
           phoneNumber: phoneNumber,
           network: pendingPurchase.network,
           capacity: parseInt(pendingPurchase.capacity),

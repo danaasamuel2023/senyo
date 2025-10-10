@@ -169,7 +169,7 @@ const MomoDepositPage = () => {
     try {
       const token = localStorage.getItem('authToken');
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      const userId = userData.id;
+      const userId = userData.id || userData._id;
       const userEmail = userData.email;
 
       // Validate user data

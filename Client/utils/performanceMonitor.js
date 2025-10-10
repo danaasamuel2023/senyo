@@ -127,7 +127,7 @@ class PerformanceMonitor {
         timestamp: new Date().toISOString(),
         url: window.location.href,
         userAgent: navigator.userAgent,
-        userId: localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')).id : null
+        userId: localStorage.getItem('userData') ? (JSON.parse(localStorage.getItem('userData')).id || JSON.parse(localStorage.getItem('userData'))._id) : null
       };
 
       // Send to performance reporting endpoint

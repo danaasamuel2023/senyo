@@ -367,7 +367,19 @@ const TelecelBundleSelect = () => {
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
-      setUserData(JSON.parse(storedUserData));
+      try {
+        const parsedUserData = JSON.parse(storedUserData);
+        setUserData(parsedUserData);
+        console.log('🔐 TELECEL: User data loaded:', {
+          hasId: !!parsedUserData?.id,
+          has_id: !!parsedUserData?._id,
+          userId: parsedUserData?.id || parsedUserData?._id,
+          userName: parsedUserData?.name
+        });
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        setUserData(null);
+      }
     }
   }, []);
 
@@ -466,7 +478,7 @@ const TelecelBundleSelect = () => {
       return;
     }
 
-    if (!userData || !userData.id) {
+    if (!userData || (!userData.id && !userData._id)) {
       showToast('Please login to continue', 'error');
       return;
     }
@@ -498,7 +510,7 @@ const TelecelBundleSelect = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId: userData.id,
+          userId: userData.id || userData._id,
           phoneNumber: phoneNumber,
           network: pendingPurchase.network,
           capacity: parseInt(pendingPurchase.capacity),
