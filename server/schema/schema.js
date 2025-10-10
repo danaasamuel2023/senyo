@@ -984,6 +984,76 @@ const ProductPricingSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// ============================================
+// PRICE HISTORY SCHEMA (Audit Trail)
+// ============================================
+
+const PriceHistorySchema = new Schema({
+  priceId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "ProductPricingdataunlimited", 
+    required: true,
+    index: true
+  },
+  network: { 
+    type: String, 
+    enum: ["MTN", "YELLO", "VODAFONE", "TELECEL", "AT_PREMIUM", "airteltigo", "at"], 
+    required: true,
+    index: true
+  },
+  capacity: { type: Number, required: true },
+  
+  // Price changes
+  oldPrice: { type: Number },
+  newPrice: { type: Number, required: true },
+  
+  // Status changes
+  oldEnabled: { type: Boolean },
+  newEnabled: { type: Boolean },
+  
+  // Description changes
+  oldDescription: { type: String },
+  newDescription: { type: String },
+  
+  // Change metadata
+  changeType: { 
+    type: String, 
+    enum: ['price_update', 'status_toggle', 'description_update', 'bulk_update', 'datamart_sync', 'create', 'delete'],
+    required: true,
+    index: true
+  },
+  changeReason: { type: String, maxlength: 500 },
+  changedBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited",
+    index: true
+  },
+  changedByName: { type: String },
+  changedByEmail: { type: String },
+  
+  // API source
+  source: { 
+    type: String, 
+    enum: ['admin_panel', 'datamart_api', 'bulk_import', 'system'],
+    default: 'admin_panel',
+    index: true
+  },
+  
+  // Additional metadata
+  metadata: { type: Schema.Types.Mixed },
+  
+  createdAt: { type: Date, default: Date.now, index: true }
+});
+
+// Compound indexes for efficient queries
+PriceHistorySchema.index({ priceId: 1, createdAt: -1 });
+PriceHistorySchema.index({ network: 1, createdAt: -1 });
+PriceHistorySchema.index({ changeType: 1, createdAt: -1 });
+PriceHistorySchema.index({ changedBy: 1, createdAt: -1 });
+
+// Auto-cleanup old history (keep 1 year)
+PriceHistorySchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
+
 // Compound unique index
 ProductPricingSchema.index({ network: 1, capacity: 1 }, { unique: true });
 
@@ -1289,6 +1359,7 @@ const ReferralBonus = getModel("ReferralBonusdataunlimited", ReferralBonusSchema
 const ApiKey = getModel("ApiKeydatahusle", ApiKeySchema);
 const DataInventory = getModel("DataInventorydataunlimited", DataInventorySchema);
 const ProductPricing = getModel("ProductPricing", ProductPricingSchema);
+const PriceHistory = getModel("PriceHistory", PriceHistorySchema);
 const OrderReport = getModel("OrderReportunlimited", OrderReportSchema);
 const AgentCatalog = getModel("AgentCatalog", AgentCatalogSchema);
 const Review = getModel("Review", ReviewSchema);
@@ -1394,6 +1465,7 @@ module.exports = {
   ApiKey, 
   DataInventory,
   ProductPricing,
+  PriceHistory,
   OrderReport,
   Notification,
   NotificationQueue,

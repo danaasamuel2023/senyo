@@ -490,6 +490,10 @@ app.use('/api/v1/admin/bulk-messaging', bulkMessagingRoutes);
 // Package management routes
 app.use('/api/v1/admin', packageManagementRoutes);
 
+// Price management routes
+const priceManagementRoutes = require('./adminRoutes/priceManagement');
+app.use('/api/v1/admin', priceManagementRoutes);
+
 // New feature routes
 app.use('/api/wallet', walletRoutes);
 app.use('/api/referral', referralRoutes);
