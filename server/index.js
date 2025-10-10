@@ -32,6 +32,7 @@ const bulkMessagingRoutes = require('./adminRoutes/bulkMessaging.js')
 const packageManagementRoutes = require('./adminRoutes/packageManagement.js')
 const priceManagementRoutes = require('./adminRoutes/priceManagement.js')
 const storeRoutes = require('./storeRoutes/store.js')
+const paystackWebhookRoutes = require('./routes/paystackWebhook');
 
 // New feature routes
 const walletRoutes = require('./walletRoutes/wallet.js')
@@ -514,7 +515,6 @@ const adminRouter = express.Router();
 
 // Import paymentGatewaySettingsRoutes here to avoid circular dependency
 const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings.js');
-const paystackWebhookRoutes = require('./routes/paystackWebhook');
 
 // Mount all admin routes on the consolidated router
 adminRouter.use('/', AdminManagement);
