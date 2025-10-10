@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 const YelloOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,28 @@ const YelloOrders = () => {
   const [ordersPerPage, setOrdersPerPage] = useState(50);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Payment verification function
+  const verifyPayment = async (reference) => {
+    try {
+      // Call your backend to verify the payment status
+      const response = await axios.get(`https://unlimitedata.onrender.com/api/v1/verify-payment?reference=${reference}`);
+      
+      // Handle the response
+      if (response.data.success) {
+        // Payment verified successfully
+        console.log('Payment verified:', response.data);
+        return response.data;
+      } else {
+        // Payment verification failed
+        console.error('Payment verification failed:', response.data.message);
+        throw new Error(response.data.message || 'Payment verification failed');
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
