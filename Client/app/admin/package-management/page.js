@@ -51,8 +51,8 @@ const AdminPackageManagement = () => {
     lowStockPackages: 0
   });
 
-  // API Configuration
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  // API Configuration - Use local API route for packages
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
   // Networks
   const networks = ['MTN', 'AirtelTigo', 'Telecel', 'Vodafone'];
@@ -106,7 +106,7 @@ const AdminPackageManagement = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/packages`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

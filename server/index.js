@@ -487,6 +487,9 @@ app.use('/api/public', agentRoutes);
 // Bulk messaging routes
 app.use('/api/v1/admin/bulk-messaging', bulkMessagingRoutes);
 
+// Package management routes
+app.use('/api/v1/admin', packageManagementRoutes);
+
 // New feature routes
 app.use('/api/wallet', walletRoutes);
 app.use('/api/referral', referralRoutes);
