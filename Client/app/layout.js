@@ -94,18 +94,18 @@ export const metadata = {
     siteName: "UnlimitedData GH",
     images: [
       {
-        url: "/images/og-unlimited-data.jpg",
-        width: 1200,
-        height: 630,
+        url: "/icon-512.svg",
+        width: 512,
+        height: 512,
         alt: "UnlimitedData GH - Premium Data Marketplace",
-        type: "image/jpeg",
+        type: "image/svg+xml",
       },
       {
-        url: "/images/og-unlimited-data-square.jpg",
-        width: 600,
-        height: 600,
+        url: "/icon.svg",
+        width: 512,
+        height: 512,
         alt: "UnlimitedData GH Logo",
-        type: "image/jpeg",
+        type: "image/svg+xml",
       },
     ],
     locale: "en_GH",
@@ -119,7 +119,7 @@ export const metadata = {
     site: "@UnlimitedDataGH",
     creator: "@UnlimitedDataGH",
     images: {
-      url: "/images/twitter-unlimited-data.jpg",
+      url: "/icon-512.svg",
       alt: "UnlimitedData GH",
     },
   },
@@ -191,7 +191,7 @@ const structuredData = {
     telephone: "+233256702995",
     logo: {
       "@type": "ImageObject",
-      url: "https://senyo-frontend-final-hg1kr9283-danaasamuel2023s-projects.vercel.app/logo.png"
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.unlimiteddatagh.com"}/icon.svg`
     },
     contactPoint: {
       "@type": "ContactPoint",
@@ -432,9 +432,9 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" 
         />
         
-        {/* Modern favicon setup with dark mode support */}
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        {/* Modern favicon setup with UnlimitedData GH logo */}
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.svg" />
         <link rel="mask-icon" href="/icon.svg" color="#FFCC08" />
         <link rel="manifest" href="/manifest.json" />

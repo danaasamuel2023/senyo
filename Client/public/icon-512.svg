@@ -1,4 +1,42 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#FFCC08"/>
-  <text x="256" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="128" font-weight="bold" fill="#000000">UD</text>
+  <defs>
+    <linearGradient id="logoGradient512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFCC08;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#000000" stroke="#FFCC08" stroke-width="4"/>
+  
+  <!-- Text: UnlimitedData -->
+  <text x="256" y="180" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="url(#logoGradient512)">UnlimitedData</text>
+  
+  <!-- Text: GH -->
+  <text x="256" y="210" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="url(#logoGradient512)">GH</text>
+  
+  <!-- Central Symbol -->
+  <g transform="translate(256, 320)">
+    <!-- Left signal wave -->
+    <path d="M -60 0 Q -40 -20 -20 0 Q -40 20 -60 0" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    <path d="M -80 0 Q -60 -15 -40 0 Q -60 15 -80 0" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    
+    <!-- Right signal wave -->
+    <path d="M 60 0 Q 40 -20 20 0 Q 40 20 60 0" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    <path d="M 80 0 Q 60 -15 40 0 Q 60 15 80 0" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    
+    <!-- Central design -->
+    <!-- Crown/top -->
+    <path d="M -15 -25 Q -5 -35 5 -25 Q 15 -35 25 -25" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    
+    <!-- Triangle/A -->
+    <path d="M -20 -15 L 0 15 L 20 -15" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    <line x1="-10" y1="0" x2="10" y2="0" stroke="url(#logoGradient512)" stroke-width="3"/>
+    
+    <!-- Left curve -->
+    <path d="M -20 15 Q -30 25 -25 35 Q -20 30 -15 25" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+    
+    <!-- Right curve -->
+    <path d="M 20 15 Q 30 25 25 35 Q 20 30 15 25" stroke="url(#logoGradient512)" stroke-width="3" fill="none"/>
+  </g>
 </svg>
