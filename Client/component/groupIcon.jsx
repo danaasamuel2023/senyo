@@ -8,11 +8,13 @@ const FloatingWhatsAppIcon = () => {
   useEffect(() => {
     // Check if token exists in localStorage
     const hasToken = localStorage.getItem('authToken') !== null;
+    console.log('🔗 WhatsApp Icon Visibility Check:', { hasToken, showIcon });
     setShowIcon(hasToken);
     
     // Optional: Listen for storage changes in case token is added/removed in another tab
     const handleStorageChange = () => {
       const hasToken = localStorage.getItem('authToken') !== null;
+      console.log('🔗 WhatsApp Icon Storage Change:', { hasToken });
       setShowIcon(hasToken);
     };
     
@@ -30,11 +32,11 @@ const FloatingWhatsAppIcon = () => {
   if (!showIcon) return null;
   
   return (
-    <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50">
+    <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-[9999]">
       <button
         onClick={handleClick}
         aria-label="Join our WhatsApp group"
-        className="block transition-transform hover:scale-110 duration-300"
+        className="block transition-transform hover:scale-110 duration-300 bg-white rounded-full p-2 shadow-lg border-2 border-green-500"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
