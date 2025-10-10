@@ -106,7 +106,7 @@ const AdminPackageManagement = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/packages`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -192,7 +192,7 @@ const AdminPackageManagement = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/packages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -232,13 +232,13 @@ const AdminPackageManagement = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages/${packageId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/packages`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updates)
+        body: JSON.stringify({ ...updates, _id: packageId })
       });
 
       if (!response.ok) throw new Error('Failed to update package');
@@ -260,7 +260,7 @@ const AdminPackageManagement = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/packages/${packageId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/packages?id=${packageId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
