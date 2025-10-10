@@ -992,4 +992,59 @@ router.post('/mobile-money-deposit',
   }
 });
 
+// Test endpoint to verify Paystack configuration
+router.get('/test-paystack', async (req, res) => {
+  try {
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+    const paystackPublicKey = process.env.PAYSTACK_PUBLIC_KEY;
+    
+    if (!paystackSecretKey || !paystackPublicKey) {
+      return res.json({
+        success: false,
+        message: 'Paystack keys not configured',
+        keys: {
+          secretKey: paystackSecretKey ? 'Set' : 'Missing',
+          publicKey: paystackPublicKey ? 'Set' : 'Missing'
+        }
+      });
+    }
+    
+    // Test Paystack API connection
+    const paystackResponse = await axios.get('https://api.paystack.co/bank', {
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    if (paystackResponse.status === 200) {
+      return res.json({
+        success: true,
+        message: 'Paystack configuration working',
+        keys: {
+          secretKey: 'Set',
+          publicKey: 'Set'
+        },
+        apiTest: {
+          status: 'Connected',
+          banksAvailable: paystackResponse.data.data?.length || 0
+        }
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: 'Paystack API connection failed',
+        status: paystackResponse.status
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: 'Paystack configuration test failed',
+      error: error.response?.data?.message || error.message
+    });
+  }
+});
+
 module.exports = router;

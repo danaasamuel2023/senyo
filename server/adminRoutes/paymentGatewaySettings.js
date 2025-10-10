@@ -18,12 +18,8 @@ router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
         data: {
           activeGateway: 'paystack',
           paystackEnabled: true,
-          bulkclixEnabled: false,
           paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
-          paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || '',
-          bulkclixApiKey: process.env.BULKCLIX_API_KEY || '',
-          autoSwitch: false,
-          fallbackGateway: 'paystack'
+          paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || ''
         }
       });
       await settings.save();
@@ -46,43 +42,15 @@ router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
 router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
   try {
     const {
-      activeGateway,
-      paystackEnabled,
-      bulkclixEnabled,
       paystackPublicKey,
-      paystackSecretKey,
-      bulkclixApiKey,
-      autoSwitch,
-      fallbackGateway
+      paystackSecretKey
     } = req.body;
 
-    // Validate required fields
-    if (!activeGateway || !['paystack', 'bulkclix'].includes(activeGateway)) {
+    // Validate Paystack API keys
+    if (!paystackPublicKey || !paystackSecretKey) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid active gateway. Must be either "paystack" or "bulkclix"'
-      });
-    }
-
-    if (!fallbackGateway || !['paystack', 'bulkclix'].includes(fallbackGateway)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid fallback gateway. Must be either "paystack" or "bulkclix"'
-      });
-    }
-
-    // Validate API keys based on enabled gateways
-    if (paystackEnabled && (!paystackPublicKey || !paystackSecretKey)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Paystack public and secret keys are required when Paystack is enabled'
-      });
-    }
-
-    if (bulkclixEnabled && !bulkclixApiKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'BulkClix API key is required when BulkClix is enabled'
+        error: 'Paystack public and secret keys are required'
       });
     }
 
@@ -96,16 +64,12 @@ router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
       });
     }
 
-    // Update settings
+    // Update settings - Paystack only
     settings.data = {
-      activeGateway,
-      paystackEnabled: Boolean(paystackEnabled),
-      bulkclixEnabled: Boolean(bulkclixEnabled),
+      activeGateway: 'paystack',
+      paystackEnabled: true,
       paystackPublicKey: paystackPublicKey || '',
       paystackSecretKey: paystackSecretKey || '',
-      bulkclixApiKey: bulkclixApiKey || '',
-      autoSwitch: Boolean(autoSwitch),
-      fallbackGateway,
       updatedAt: new Date()
     };
 
@@ -114,22 +78,19 @@ router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
     // Clear payment gateway service cache to ensure immediate effect
     paymentGatewayService.clearCache();
 
-    // Update environment variables if provided
+    // Update environment variables
     if (paystackPublicKey && paystackPublicKey.trim()) {
       process.env.PAYSTACK_PUBLIC_KEY = paystackPublicKey;
     }
     if (paystackSecretKey && paystackSecretKey.trim()) {
       process.env.PAYSTACK_SECRET_KEY = paystackSecretKey;
     }
-    if (bulkclixApiKey && bulkclixApiKey.trim()) {
-      process.env.BULKCLIX_API_KEY = bulkclixApiKey;
-    }
 
-    console.log(`[PAYMENT_GATEWAY] Settings updated - Active: ${activeGateway}, Paystack: ${paystackEnabled}, BulkClix: ${bulkclixEnabled}`);
+    console.log(`[PAYMENT_GATEWAY] Settings updated - Paystack enabled with keys configured`);
 
     return res.json({
       success: true,
-      message: 'Payment gateway settings updated successfully',
+      message: 'Paystack settings updated successfully',
       data: settings.data
     });
   } catch (error) {
@@ -141,84 +102,45 @@ router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
   }
 });
 
-// Test payment gateway connection
+// Test Paystack connection
 router.post('/payment-gateway-settings/test', authMiddleware, adminAuth, async (req, res) => {
   try {
-    const { gateway, apiKey } = req.body;
-
-    if (!gateway || !['paystack', 'bulkclix'].includes(gateway)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid gateway. Must be either "paystack" or "bulkclix"'
-      });
-    }
+    const { apiKey } = req.body;
 
     if (!apiKey) {
       return res.status(400).json({
         success: false,
-        error: 'API key is required for testing'
+        error: 'Paystack secret key is required for testing'
       });
     }
 
-    let testResult = {};
+    // Test Paystack connection
+    try {
+      const axios = require('axios');
+      const response = await axios.get('https://api.paystack.co/bank', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (gateway === 'paystack') {
-      // Test Paystack connection
-      try {
-        const axios = require('axios');
-        const response = await axios.get('https://api.paystack.co/bank', {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        testResult = {
-          success: true,
-          message: 'Paystack connection successful',
-          data: {
-            status: response.status,
-            bankCount: response.data.data?.length || 0
-          }
-        };
-      } catch (error) {
-        testResult = {
-          success: false,
-          message: 'Paystack connection failed',
-          error: error.response?.data?.message || error.message
-        };
-      }
-    } else if (gateway === 'bulkclix') {
-      // Test BulkClix connection
-      try {
-        const axios = require('axios');
-        const response = await axios.get('https://api.bulkclix.com/api/v1/payment-api/banks/list', {
-          headers: {
-            'x-api-key': apiKey,
-            'Accept': 'application/json'
-          }
-        });
-
-        testResult = {
-          success: true,
-          message: 'BulkClix connection successful',
-          data: {
-            status: response.status,
-            bankCount: response.data.data?.length || 0
-          }
-        };
-      } catch (error) {
-        testResult = {
-          success: false,
-          message: 'BulkClix connection failed',
-          error: error.response?.data?.message || error.message
-        };
-      }
+      return res.json({
+        success: true,
+        message: 'Paystack connection successful',
+        data: {
+          status: response.status,
+          bankCount: response.data.data?.length || 0
+        }
+      });
+    } catch (error) {
+      return res.json({
+        success: false,
+        message: 'Paystack connection failed',
+        error: error.response?.data?.message || error.message
+      });
     }
-
-    return res.json(testResult);
   } catch (error) {
-    console.error('Test Payment Gateway Error:', error);
+    console.error('Test Paystack Connection Error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
@@ -236,8 +158,7 @@ router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async 
         success: true,
         data: {
           activeGateway: 'paystack',
-          paystackEnabled: true,
-          bulkclixEnabled: false
+          paystackEnabled: true
         }
       });
     }
@@ -245,9 +166,8 @@ router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async 
     return res.json({
       success: true,
       data: {
-        activeGateway: settings.data.activeGateway || 'paystack',
-        paystackEnabled: settings.data.paystackEnabled || false,
-        bulkclixEnabled: settings.data.bulkclixEnabled || false
+        activeGateway: 'paystack',
+        paystackEnabled: true
       }
     });
   } catch (error) {

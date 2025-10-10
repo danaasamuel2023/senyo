@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 // Rate limiting for payment endpoints
 const paymentRateLimiter = {};
@@ -154,6 +155,16 @@ const validateDepositAmount = (req, res, next) => {
 const preventDuplicateDeposits = (Transaction) => {
   return async (req, res, next) => {
     const { userId } = req.body;
+    
+    // Validate userId is a valid ObjectId
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      console.log(`[SECURITY] ❌ Invalid userId format: ${userId}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID format'
+      });
+    }
+    
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
     // Check for recent pending deposits from this user

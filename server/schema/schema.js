@@ -660,16 +660,17 @@ const NotificationQueueSchema = new Schema({
   
   attempts: { type: Number, default: 0, max: 5 },
   nextRetryAt: { type: Date, index: true },
-  lastError: { type: String, maxlength: 500 }
+  lastError: { type: String, maxlength: 500 },
+  createdAt: { type: Date, default: Date.now }
 }, {
-  timestamps: { createdAt: true, updatedAt: false }
+  timestamps: false // Disable timestamps to avoid duplicate createdAt index
 });
 
 // Priority queue index
 NotificationQueueSchema.index({ status: 1, priority: -1, nextRetryAt: 1 });
 
-// Auto-cleanup old queue items
-NotificationQueueSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 }); // 24 hours
+// Auto-cleanup old queue items (24 hours TTL)
+NotificationQueueSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
 
 // ============================================
 // OPTIMIZED SITE SETTINGS (SINGLETON)
@@ -1042,7 +1043,7 @@ const PriceHistorySchema = new Schema({
   // Additional metadata
   metadata: { type: Schema.Types.Mixed },
   
-  createdAt: { type: Date, default: Date.now, index: true }
+  createdAt: { type: Date, default: Date.now }
 });
 
 // Compound indexes for efficient queries

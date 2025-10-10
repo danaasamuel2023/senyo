@@ -511,6 +511,9 @@ app.use('/api/v1', userStats);
 // Create a consolidated admin router to avoid conflicts
 const adminRouter = express.Router();
 
+// Import paymentGatewaySettingsRoutes here to avoid circular dependency
+const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings.js');
+
 // Mount all admin routes on the consolidated router
 adminRouter.use('/', AdminManagement);
 adminRouter.use('/bulk-messaging', bulkMessagingRoutes);
@@ -556,7 +559,6 @@ const agentApprovalRoutes = require('./adminRoutes/agentApproval');
 const productAssignmentRoutes = require('./adminRoutes/productAssignment');
 const adminDashboardRoutes = require('./adminRoutes/dashboard');
 const adminV1Routes = require('./adminRoutes/adminV1Routes');
-const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings');
 
 // Note: Admin routes are now consolidated to avoid conflicts
 // Individual admin routes should be registered within AdminManagement router

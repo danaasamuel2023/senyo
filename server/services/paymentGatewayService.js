@@ -28,16 +28,12 @@ class PaymentGatewayService {
       const settings = await Settings.getByType('payment_gateway');
       
       if (!settings) {
-        // Create default settings
+        // Create default settings - Paystack only
         const defaultSettings = {
           activeGateway: 'paystack',
           paystackEnabled: true,
-          bulkclixEnabled: false,
           paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
-          paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || '',
-          bulkclixApiKey: process.env.BULKCLIX_API_KEY || '',
-          autoSwitch: false,
-          fallbackGateway: 'paystack'
+          paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || ''
         };
 
         await Settings.updateByType('payment_gateway', defaultSettings);
@@ -51,31 +47,26 @@ class PaymentGatewayService {
       return settings.data;
     } catch (error) {
       console.error('Error getting payment gateway settings:', error);
-      // Return default settings on error
+      // Return default settings on error - Paystack only
       return {
         activeGateway: 'paystack',
-        paystackEnabled: true,
-        bulkclixEnabled: false,
-        autoSwitch: false,
-        fallbackGateway: 'paystack'
+        paystackEnabled: true
       };
     }
   }
 
   /**
-   * Get the active payment gateway
+   * Get the active payment gateway - always returns Paystack
    */
   async getActiveGateway() {
-    const settings = await this.getSettings();
-    return settings.activeGateway;
+    return 'paystack';
   }
 
   /**
-   * Check if a gateway is enabled
+   * Check if a gateway is enabled - Paystack is always enabled
    */
   async isGatewayEnabled(gateway) {
-    const settings = await this.getSettings();
-    return settings[`${gateway}Enabled`] || false;
+    return gateway === 'paystack';
   }
 
   /**
@@ -83,85 +74,17 @@ class PaymentGatewayService {
    */
   async processMobileMoneyDeposit(depositData) {
     const settings = await this.getSettings();
-    const activeGateway = settings.activeGateway;
-
+    
+    console.log(`[PAYMENT_GATEWAY] Processing mobile money deposit with Paystack`);
+    
     try {
-      if (activeGateway === 'bulkclix' && settings.bulkclixEnabled) {
-        try {
-          return await this.processBulkClixDeposit(depositData, settings);
-        } catch (error) {
-          console.log(`[PAYMENT_GATEWAY] BulkClix failed: ${error.message}`);
-          
-          // Try fallback gateway if auto-switch is enabled
-          if (settings.autoSwitch && settings.fallbackGateway === 'paystack' && settings.paystackEnabled) {
-            console.log(`[PAYMENT_GATEWAY] Auto-switching to fallback gateway: ${settings.fallbackGateway}`);
-            return await this.processPaystackDeposit(depositData, settings);
-          }
-          throw error;
-        }
-      } else if (activeGateway === 'paystack' && settings.paystackEnabled) {
-        return await this.processPaystackDeposit(depositData, settings);
-      } else {
-        // Try fallback gateway if auto-switch is enabled
-        if (settings.autoSwitch && settings.fallbackGateway !== activeGateway) {
-          console.log(`[PAYMENT_GATEWAY] Active gateway ${activeGateway} not available, trying fallback: ${settings.fallbackGateway}`);
-          
-          if (settings.fallbackGateway === 'bulkclix' && settings.bulkclixEnabled) {
-            return await this.processBulkClixDeposit(depositData, settings);
-          } else if (settings.fallbackGateway === 'paystack' && settings.paystackEnabled) {
-            return await this.processPaystackDeposit(depositData, settings);
-          }
-        }
-        
-        throw new Error(`Payment gateway ${activeGateway} is not available`);
-      }
+      return await this.processPaystackDeposit(depositData, settings);
     } catch (error) {
-      console.error(`[PAYMENT_GATEWAY] Error processing deposit with ${activeGateway}:`, error);
+      console.error(`[PAYMENT_GATEWAY] Error processing deposit with Paystack:`, error);
       throw error;
     }
   }
 
-  /**
-   * Process deposit using BulkClix
-   */
-  async processBulkClixDeposit(depositData, settings) {
-    const { amount, phoneNumber, network, userId, email } = depositData;
-    
-    // Generate reference
-    const reference = `MOMO-${crypto.randomBytes(10).toString('hex')}-${Date.now()}`;
-    
-    try {
-      // Note: BulkClix doesn't support mobile money collection
-      // This is a placeholder for when BulkClix enables collection
-      // For now, we'll throw an error to indicate it's not supported
-      throw new Error('BulkClix mobile money collection is not currently supported. Please contact BulkClix support to enable collection services.');
-      
-      // Future implementation when BulkClix supports collection:
-      // const result = await bulkClixService.collectMobileMoney({
-      //   amount: amount.toString(),
-      //   account_number: phoneNumber,
-      //   channel: network,
-      //   account_name: 'Customer',
-      //   client_reference: reference
-      // });
-
-      // return {
-      //   success: true,
-      //   gateway: 'bulkclix',
-      //   reference,
-      //   data: {
-      //     amount,
-      //     phoneNumber,
-      //     network,
-      //     bulkClixTransactionId: result.data?.transaction_id,
-      //     status: 'pending'
-      //   }
-      // };
-    } catch (error) {
-      console.error('[PAYMENT_GATEWAY] BulkClix deposit error:', error);
-      throw new Error(`BulkClix deposit failed: ${error.message}`);
-    }
-  }
 
   /**
    * Process deposit using Paystack

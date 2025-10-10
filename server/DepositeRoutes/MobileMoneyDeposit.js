@@ -227,25 +227,15 @@ router.post('/mobile-money',
 
       await transaction.save();
 
-      // Return appropriate response based on gateway
-      if (gatewayResult.gateway === 'paystack') {
-        return res.json({
-          success: true,
-          message: 'Mobile money deposit initiated via Paystack',
-          paystackUrl: gatewayResult.paystackUrl,
-          reference: gatewayResult.reference,
-          gateway: 'paystack',
-          data: gatewayResult.data
-        });
-      } else if (gatewayResult.gateway === 'bulkclix') {
-        return res.json({
-          success: true,
-          message: 'Mobile money deposit initiated via BulkClix',
-          reference: gatewayResult.reference,
-          gateway: 'bulkclix',
-          data: gatewayResult.data
-        });
-      }
+      // Return Paystack response
+      return res.json({
+        success: true,
+        message: 'Mobile money deposit initiated via Paystack',
+        paystackUrl: gatewayResult.paystackUrl,
+        reference: gatewayResult.reference,
+        gateway: 'paystack',
+        data: gatewayResult.data
+      });
 
     } catch (error) {
       console.error('Mobile Money Deposit Error:', error);
