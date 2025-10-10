@@ -30,6 +30,7 @@ const paymentRoutes = require('./paymentRoutes/payments.js')
 const adminAgentRoutes = require('./adminRoutes/agentManagement.js')
 const bulkMessagingRoutes = require('./adminRoutes/bulkMessaging.js')
 const packageManagementRoutes = require('./adminRoutes/packageManagement.js')
+const priceManagementRoutes = require('./adminRoutes/priceManagement.js')
 const storeRoutes = require('./storeRoutes/store.js')
 
 // New feature routes
