@@ -1,327 +1,373 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function PaymentCallbackClient({ searchParams }) {
-  const router = useRouter();
+function PaymentCallbackClient() {
   const [status, setStatus] = useState('processing');
-  const [message, setMessage] = useState('Processing your payment...');
-  const [transactionData, setTransactionData] = useState(null);
+  const [message, setMessage] = useState('Verifying your payment...');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const reference = searchParams.get('reference');
   
-  // Use ref to prevent duplicate processing
-  const hasProcessed = useRef(false);
-  const processingRef = useRef(false);
-
   useEffect(() => {
-    // Prevent duplicate execution
-    if (hasProcessed.current || processingRef.current) {
-      console.log('🔄 Already processed or processing, skipping');
-      return;
-    }
-
-    const handlePaymentCallback = async () => {
-      try {
-        processingRef.current = true;
-        console.log('🔍 Payment callback processing started');
-
-        // Extract and clean reference
-        let reference = searchParams?.reference;
-        const source = searchParams?.source;
-        const trxref = searchParams?.trxref;
-
-        // Fix duplicate reference issue
-        if (reference && typeof reference === 'string' && reference.includes(',')) {
-          reference = reference.split(',')[0].trim();
-          console.log('🔧 Fixed duplicate reference:', reference);
-        }
-
-        console.log('🔍 URL params:', { reference, source, trxref });
-
-        // Validate reference
-        if (!reference) {
-          console.log('❌ No reference found');
-          setStatus('failed');
-          setMessage('No payment reference found. Please contact support.');
-          return;
-        }
-
-        // Check localStorage with error handling
-        const getFromStorage = (key, defaultValue = '[]') => {
-          try {
-            return JSON.parse(localStorage.getItem(key) || defaultValue);
-          } catch (error) {
-            console.error(`Error reading ${key} from localStorage:`, error);
-            return JSON.parse(defaultValue);
-          }
-        };
-
-        const setToStorage = (key, value) => {
-          try {
-            localStorage.setItem(key, JSON.stringify(value));
-          } catch (error) {
-            console.error(`Error writing ${key} to localStorage:`, error);
-          }
-        };
-
-        // Check if already processed
-        const processedRefs = getFromStorage('processedPayments');
-        if (processedRefs.includes(reference)) {
-          console.log('🔄 Payment already processed, redirecting');
-          router.push('/');
-          return;
-        }
-
-        // Mark as processing
-        const processingRefs = getFromStorage('processingPayments');
-        if (!processingRefs.includes(reference)) {
-          processingRefs.push(reference);
-          setToStorage('processingPayments', processingRefs);
-        }
-
-        // Call payment verification API
-        console.log('📞 Calling payment verification API');
-        const apiUrl = `/api/payment/callback?reference=${encodeURIComponent(reference)}&source=${encodeURIComponent(source || '')}&trxref=${encodeURIComponent(trxref || '')}`;
-        
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const paymentData = await response.json();
-        console.log('📦 Payment verification response:', paymentData);
-
-        // Handle successful payment
-        if (response.ok && paymentData.success) {
-          console.log('✅ Payment verification successful');
-
-          // Update wallet balance
-          try {
-            const userData = getFromStorage('userData', '{}');
-            const backendBalance = paymentData.data?.newBalance;
-
-            if (backendBalance !== undefined) {
-              userData.walletBalance = backendBalance;
-              console.log('✅ Wallet balance updated from backend:', backendBalance);
-            } else {
-              const currentBalance = userData.walletBalance || 0;
-              const paymentAmount = paymentData.data?.amount || 0;
-              userData.walletBalance = currentBalance + paymentAmount;
-              console.log('⚠️ Wallet balance calculated locally:', userData.walletBalance);
-            }
-
-            setToStorage('userData', userData);
-          } catch (error) {
-            console.error('Error updating wallet balance:', error);
-          }
-
-          setStatus('success');
-          setMessage(paymentData.message || 'Payment successful! Your wallet has been credited.');
-          setTransactionData(paymentData.data);
-
-          // Mark as processed
-          const updatedProcessedRefs = getFromStorage('processedPayments');
-          if (!updatedProcessedRefs.includes(reference)) {
-            updatedProcessedRefs.push(reference);
-            setToStorage('processedPayments', updatedProcessedRefs);
-          }
-
-          // Remove from processing list
-          const updatedProcessingRefs = getFromStorage('processingPayments');
-          setToStorage('processingPayments', updatedProcessingRefs.filter(ref => ref !== reference));
-
-          // Redirect after delay
-          setTimeout(() => {
-            router.push('/');
-          }, 2000);
-
-        } else {
-          // Handle payment failure
-          console.log('❌ Payment verification failed');
-          setStatus('failed');
-
-          // Determine appropriate error message
-          let errorMessage = 'Payment verification failed. Please contact support.';
-
-          if (paymentData.error === 'Transaction not found') {
-            errorMessage = 'This payment reference was not found. Please contact support if you completed a payment.';
-          } else if (paymentData.error === 'Invalid transaction reference format') {
-            errorMessage = 'Invalid payment reference format. Please contact support.';
-          } else if (paymentData.error === 'Backend verification failed') {
-            errorMessage = paymentData.data?.status === 'pending'
-              ? 'Payment verification is pending. Please check your wallet balance or try again later.'
-              : 'Payment verification failed. Please contact support if you completed a payment.';
-          } else if (paymentData.message === 'Payment not completed' && paymentData.data?.status === 'abandoned') {
-            errorMessage = 'Payment was not completed. Please try again or contact support if you believe this is an error.';
-          } else if (paymentData.message === 'Payment not completed') {
-            errorMessage = 'Payment verification is still pending. Please wait a moment and refresh the page.';
-          } else if (paymentData.error || paymentData.message) {
-            errorMessage = paymentData.error || paymentData.message;
-          }
-
-          setMessage(errorMessage);
-
-          // Remove from processing list
-          const updatedProcessingRefs = getFromStorage('processingPayments');
-          setToStorage('processingPayments', updatedProcessingRefs.filter(ref => ref !== reference));
-        }
-
-      } catch (error) {
-        console.error('💥 Payment callback error:', error);
-        setStatus('failed');
-        setMessage('An error occurred while verifying your payment. Please try again or contact support.');
-
-        // Cleanup processing state
+    // Only proceed if we have a reference from the URL
+    if (reference) {
+      let checkCount = 0;
+      const maxChecks = 10; // Maximum number of verification attempts
+      
+      const verifyPayment = async () => {
         try {
-          const reference = searchParams?.reference;
-          if (reference) {
-            const processingRefs = JSON.parse(localStorage.getItem('processingPayments') || '[]');
-            localStorage.setItem('processingPayments', JSON.stringify(
-              processingRefs.filter(ref => ref !== reference)
-            ));
+          // Call your backend to verify the payment status
+          const response = await axios.get(`https://unlimitedata.onrender.com/api/v1/verify-payment?reference=${reference}`);
+          
+          if (response.data.success) {
+            setStatus('success');
+            setMessage('Your deposit was successful! Funds have been added to your wallet.');
+            // No need to check anymore
+            return true;
+          } else if (response.data.data && response.data.data.status === 'failed') {
+            setStatus('failed');
+            setMessage('Payment failed. Please try again or contact support.');
+            return true;
+          } else if (checkCount < maxChecks) {
+            // Still pending, continue checking
+            return false;
+          } else {
+            // Reached max attempts, tell user to check account later
+            setStatus('pending');
+            setMessage('Your payment is still processing. Please check your account in a few minutes.');
+            return true;
           }
-        } catch (cleanupError) {
-          console.error('Error during cleanup:', cleanupError);
+        } catch (error) {
+          console.error('Verification error:', error);
+          if (checkCount < maxChecks) {
+            // Error occurred but still have attempts left
+            return false;
+          } else {
+            setStatus('failed');
+            setMessage('An error occurred while verifying your payment. Please contact support.');
+            return true;
+          }
         }
-      } finally {
-        processingRef.current = false;
-        hasProcessed.current = true;
-      }
-    };
+      };
+      
+      const checkPaymentStatus = async () => {
+        const isComplete = await verifyPayment();
+        
+        if (!isComplete) {
+          checkCount++;
+          // Wait 3 seconds before checking again
+          setTimeout(checkPaymentStatus, 3000);
+        }
+      };
+      
+      // Start the verification process
+      checkPaymentStatus();
+    }
+  }, [reference]);
 
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(handlePaymentCallback, 100);
+  // Handle redirect to dashboard after success
+  useEffect(() => {
+    if (status === 'success') {
+      // Optionally auto-redirect after a few seconds
+      const redirectTimer = setTimeout(() => {
+        router.push('/');
+      }, 5000); // Redirect after 5 seconds
+      
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [status, router]);
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [searchParams, router]);
-
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'processing':
-        return <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />;
-      case 'success':
-        return <CheckCircle className="w-16 h-16 text-green-500" />;
-      case 'failed':
-        return <XCircle className="w-16 h-16 text-red-500" />;
-      default:
-        return <AlertCircle className="w-16 h-16 text-yellow-500" />;
+  const statusConfig = {
+    processing: {
+      icon: (
+        <div className="relative">
+          {/* Outer rotating ring */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          >
+            <div className="w-24 h-24 rounded-full border-4 border-transparent 
+                          border-t-blue-500 border-r-blue-500 dark:border-t-blue-400 dark:border-r-blue-400"></div>
+          </motion.div>
+          
+          {/* Inner rotating ring - opposite direction */}
+          <motion.div
+            className="absolute inset-2"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <div className="w-20 h-20 rounded-full border-4 border-transparent 
+                          border-b-purple-500 border-l-purple-500 dark:border-b-purple-400 dark:border-l-purple-400"></div>
+          </motion.div>
+          
+          {/* Center dot */}
+          <motion.div
+            className="absolute inset-8"
+            animate={{ scale: [0.8, 1.2, 0.8] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 
+                          dark:from-blue-400 dark:to-purple-400"></div>
+          </motion.div>
+        </div>
+      ),
+      bgGradient: 'from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800',
+      cardBg: 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg',
+      titleColor: 'text-gray-800 dark:text-gray-100'
+    },
+    success: {
+      icon: (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 10 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-green-500 dark:bg-green-400 rounded-full opacity-20 
+                        animate-ping"></div>
+          <div className="relative bg-gradient-to-br from-green-400 to-emerald-600 
+                        dark:from-green-300 dark:to-emerald-500 rounded-full p-6">
+            <motion.svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <motion.path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M5 13l4 4L19 7"
+              />
+            </motion.svg>
+          </div>
+        </motion.div>
+      ),
+      bgGradient: 'from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800',
+      cardBg: 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg',
+      titleColor: 'text-green-700 dark:text-green-400'
+    },
+    failed: {
+      icon: (
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-red-500 dark:bg-red-400 rounded-full opacity-20 
+                        animate-pulse"></div>
+          <div className="relative bg-gradient-to-br from-red-400 to-rose-600 
+                        dark:from-red-300 dark:to-rose-500 rounded-full p-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        </motion.div>
+      ),
+      bgGradient: 'from-red-50 to-rose-50 dark:from-gray-900 dark:to-gray-800',
+      cardBg: 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg',
+      titleColor: 'text-red-700 dark:text-red-400'
+    },
+    pending: {
+      icon: (
+        <motion.div
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="relative"
+        >
+          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 
+                        dark:from-yellow-300 dark:to-orange-400 rounded-full p-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </motion.div>
+      ),
+      bgGradient: 'from-yellow-50 to-orange-50 dark:from-gray-900 dark:to-gray-800',
+      cardBg: 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg',
+      titleColor: 'text-yellow-700 dark:text-yellow-400'
     }
   };
 
-  const getStatusColor = () => {
-    switch (status) {
-      case 'processing':
-        return 'text-blue-500';
-      case 'success':
-        return 'text-green-500';
-      case 'failed':
-        return 'text-red-500';
-      default:
-        return 'text-yellow-500';
-    }
-  };
-
-  const getStatusTitle = () => {
-    switch (status) {
-      case 'processing':
-        return 'Processing Payment...';
-      case 'success':
-        return 'Payment Successful!';
-      case 'failed':
-        return 'Payment Failed';
-      default:
-        return 'Payment Status';
-    }
-  };
+  const currentConfig = statusConfig[status] || statusConfig.processing;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 text-center border border-gray-800">
-          {/* Status Icon */}
-          <div className="flex justify-center mb-6">
-            {getStatusIcon()}
-          </div>
+    <div className={`flex items-center justify-center min-h-screen bg-gradient-to-br ${currentConfig.bgGradient} transition-all duration-1000`}>
+      {/* Animated background shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 dark:bg-blue-600 rounded-full 
+                     mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 dark:bg-purple-600 rounded-full 
+                     mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity }}
+        />
+      </div>
 
-          {/* Status Title */}
-          <h1 className={`text-2xl font-bold mb-4 ${getStatusColor()}`}>
-            {getStatusTitle()}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10"
+      >
+        <div className={`w-full max-w-md p-8 ${currentConfig.cardBg} rounded-2xl shadow-2xl 
+                      border border-gray-200 dark:border-gray-700 transform transition-all duration-500`}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={status}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+              className="text-center"
+            >
+              <h1 className={`text-3xl font-bold ${currentConfig.titleColor} mb-8 transition-colors duration-500`}>
+                Payment {status.charAt(0).toUpperCase() + status.slice(1)}
+              </h1>
+              
+              <div className="flex justify-center my-8 h-24">
+                {currentConfig.icon}
+              </div>
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-lg text-gray-700 dark:text-gray-300 mb-8"
+              >
+                {message}
+              </motion.p>
+              
+              {status === 'success' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Redirecting you to dashboard in a few seconds...
+                  </p>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 5 }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+              
+              {status !== 'processing' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="mt-8 space-y-4"
+                >
+                  <Link href="/" className="block">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
+                               text-white font-medium py-3 px-6 rounded-lg shadow-lg transition-all duration-300"
+                    >
+                      Return to Dashboard
+                    </motion.div>
+                  </Link>
+                  
+                  {status === 'failed' && (
+                    <Link href="/deposit" className="block">
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 
+                                 font-medium transition-colors duration-300"
+                      >
+                        Try Again
+                      </motion.div>
+                    </Link>
+                  )}
+                </motion.div>
+              )}
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+              >
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Reference: <span className="font-mono font-medium text-gray-800 dark:text-gray-200">
+                    {reference || 'N/A'}
+                  </span>
+                </p>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Fallback component to show while loading
+function PaymentCallbackFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 
+                  dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md p-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl 
+                    shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+            Payment Processing
           </h1>
-
-          {/* Message */}
-          <p className="text-gray-300 mb-6">
-            {message}
-          </p>
-
-          {/* Transaction Details */}
-          {transactionData && (
-            <div className="bg-gray-800/50 rounded-xl p-4 mb-6 text-left">
-              <h3 className="text-white font-semibold mb-3">Transaction Details</h3>
-              <div className="space-y-2 text-sm">
-                {transactionData.reference && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Reference:</span>
-                    <span className="text-white font-mono text-xs break-all">{transactionData.reference}</span>
-                  </div>
-                )}
-                {transactionData.amount !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Amount:</span>
-                    <span className="text-white">₵{transactionData.amount}</span>
-                  </div>
-                )}
-                {transactionData.status && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Status:</span>
-                    <span className="text-green-400 capitalize">{transactionData.status}</span>
-                  </div>
-                )}
+          <div className="flex justify-center my-8">
+            <div className="relative w-24 h-24">
+              <div className="absolute inset-0 animate-spin">
+                <div className="w-24 h-24 rounded-full border-4 border-transparent 
+                              border-t-blue-500 border-r-blue-500 dark:border-t-blue-400 dark:border-r-blue-400"></div>
+              </div>
+              <div className="absolute inset-8">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 
+                              dark:from-blue-400 dark:to-purple-400 animate-pulse"></div>
               </div>
             </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            {status === 'success' && (
-              <div className="text-sm text-gray-400 mb-2">
-                Redirecting to dashboard in 2 seconds...
-              </div>
-            )}
-            
-            <button
-              onClick={() => router.push('/')}
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#FFCC08] to-[#FFD700] hover:from-[#FFD700] hover:to-[#FFCC08] text-black font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95"
-            >
-              Go to Dashboard
-            </button>
-
-            {status === 'failed' && (
-              <button
-                onClick={() => router.push('/topup')}
-                className="w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all active:scale-95"
-              >
-                Try Again
-              </button>
-            )}
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-6 text-gray-500 text-sm">
-          <p>Need help? Contact our support team</p>
-          <a 
-            href="mailto:support@unlimiteddatagh.com" 
-            className="text-[#FFCC08] hover:text-[#FFD700] transition-colors"
-          >
-            support@unlimiteddatagh.com
-          </a>
+          <p className="text-lg text-gray-700 dark:text-gray-300">Loading payment details...</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps the client component with Suspense
+export default function PaymentCallback() {
+  return (
+    <Suspense fallback={<PaymentCallbackFallback />}>
+      <PaymentCallbackClient />
+    </Suspense>
   );
 }
