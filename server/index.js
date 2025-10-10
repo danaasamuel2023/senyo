@@ -463,12 +463,22 @@ app.use('/api/v1', HubnetAt);
 app.use('/api/v1', passreset);
 app.use('/api/v1', userStats);
 
+// Create a consolidated admin router to avoid conflicts
+const adminRouter = express.Router();
+
+// Mount all admin routes on the consolidated router
+adminRouter.use('/', AdminManagement);
+adminRouter.use('/bulk-messaging', bulkMessagingRoutes);
+adminRouter.use('/', packageManagementRoutes);
+adminRouter.use('/', priceManagementRoutes);
+
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT
 if (process.env.NODE_ENV !== 'development') {
-  app.use('/api/v1/admin', adminLimiter, AdminManagement);
+  app.use('/api/v1/admin', adminLimiter, adminRouter);
 } else {
-  app.use('/api/v1/admin', AdminManagement);
+  app.use('/api/v1/admin', adminRouter);
 }
+
 app.use('/api/reports', Report);
 app.use('/api', approveuser);
 app.use('/api', registerFriend);
@@ -483,16 +493,6 @@ app.use('/api/agent', agentDashboardRoutes);
 const agentWithdrawalRoutes = require('./agentRoutes/withdrawals');
 app.use('/api/agent', agentWithdrawalRoutes);
 app.use('/api/public', agentRoutes);
-
-// Bulk messaging routes
-app.use('/api/v1/admin/bulk-messaging', bulkMessagingRoutes);
-
-// Package management routes
-app.use('/api/v1/admin', packageManagementRoutes);
-
-// Price management routes
-const priceManagementRoutes = require('./adminRoutes/priceManagement');
-app.use('/api/v1/admin', priceManagementRoutes);
 
 // New feature routes
 app.use('/api/wallet', walletRoutes);
