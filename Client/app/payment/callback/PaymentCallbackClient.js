@@ -121,9 +121,9 @@ export default function PaymentCallbackClient({ searchParams }) {
         console.log('API response status:', apiResponse.status);
         const data = await apiResponse.json();
         console.log('Payment verification response:', { response: apiResponse.status, data });
-        console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'data.success:', data.success);
+        console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'result.success:', result.success);
 
-        if (apiResponse.ok && data.success) {
+        if (apiResponse.ok) {
           console.log('✅ Payment verification successful, setting success status');
           setStatus('success');
           setMessage(data.message || 'Payment successful! Your wallet has been credited.');
@@ -145,28 +145,30 @@ export default function PaymentCallbackClient({ searchParams }) {
           }, 2000);
         } else {
           console.log('❌ Payment verification failed, setting failed status');
-          console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'data.success:', data.success);
+          console.log('🔍 Debug - apiResponse.ok:', apiResponse.ok, 'result.success:', result.success);
           setStatus('failed');
           
           // Handle different error types with user-friendly messages
-          if (data.error === 'Transaction not found') {
+          const errorMessage = paymentData.error || paymentData.message || 'Payment verification failed. Please contact support.';
+          
+          if (paymentData.error === 'Transaction not found') {
             setMessage('This payment reference was not found. Please contact support if you completed a payment.');
-          } else if (data.error === 'Invalid transaction reference format') {
+          } else if (paymentData.error === 'Invalid transaction reference format') {
             setMessage('Invalid payment reference format. Please contact support.');
-          } else if (data.error === 'Backend verification failed') {
-            if (data.data?.status === 'pending') {
+          } else if (paymentData.error === 'Backend verification failed') {
+            if (paymentData.data?.status === 'pending') {
               setMessage('Payment verification is pending. Please check your wallet balance or try again later.');
             } else {
               setMessage('Payment verification failed. Please contact support if you completed a payment.');
             }
-          } else if (data.message === 'Payment not completed' && data.data?.status === 'abandoned') {
+          } else if (paymentData.message === 'Payment not completed' && paymentData.data?.status === 'abandoned') {
             setMessage('Payment was not completed. Please try again or contact support if you believe this is an error.');
-          } else if (data.message === 'Payment not completed') {
+          } else if (paymentData.message === 'Payment not completed') {
             setMessage('Payment verification is still pending. Please wait a moment and refresh the page.');
           } else {
-            setMessage(data.error || data.message || 'Payment verification failed. Please contact support.');
+            setMessage(errorMessage);
           }
-          console.error('Payment verification failed:', data);
+          console.error('Payment verification failed:', paymentData);
         }
       } catch (error) {
         console.error('Payment callback error:', error);
