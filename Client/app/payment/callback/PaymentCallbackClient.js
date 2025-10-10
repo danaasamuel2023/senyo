@@ -9,25 +9,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 function PaymentCallbackClient() {
   const [status, setStatus] = useState('processing');
   const [message, setMessage] = useState('Verifying your payment...');
+  const [authToken, setAuthToken] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
+
+  // Get auth token from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
+      setAuthToken(token);
+    }
+  }, []);
   
   useEffect(() => {
-    // Only proceed if we have a reference from the URL
-    if (reference) {
+    // Only proceed if we have a reference from the URL and auth token
+    if (reference && authToken) {
       let checkCount = 0;
       const maxChecks = 10; // Maximum number of verification attempts
       
       const verifyPayment = async () => {
         try {
           // Call your backend to verify the payment status
-          const response = await axios.get(`https://unlimitedata.onrender.com/api/v1/verify-payment?reference=${reference}`);
+          const response = await axios.get(`https://unlimitedata.onrender.com/api/v1/verify-payment?reference=${reference}`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
           
           if (response.data.success) {
             setStatus('success');
             setMessage('Your deposit was successful! Funds have been added to your wallet.');
-            // No need to check anymore
+            // Redirect to verification page to show payment details
+            setTimeout(() => {
+              router.push(`/verification?reference=${reference}`);
+            }, 2000);
             return true;
           } else if (response.data.data && response.data.data.status === 'failed') {
             setStatus('failed');
@@ -67,8 +84,11 @@ function PaymentCallbackClient() {
       
       // Start the verification process
       checkPaymentStatus();
+    } else if (reference && !authToken) {
+      setStatus('failed');
+      setMessage('Authentication required. Please log in and try again.');
     }
-  }, [reference]);
+  }, [reference, authToken]);
 
   // Handle redirect to dashboard after success
   useEffect(() => {
