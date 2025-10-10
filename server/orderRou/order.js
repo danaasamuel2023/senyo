@@ -5,6 +5,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { User, DataPurchase, Transaction, DataInventory } = require('../schema/schema');
 const dotenv = require('dotenv');
+const { authMiddleware } = require('../middleware/auth');
 
 dotenv.config();
 
@@ -1268,7 +1269,7 @@ router.get('/data-packages', async (req, res) => {
 });
 
 // Get User Data Purchase History
-router.get('/purchase-history/:userId', async (req, res) => {
+router.get('/purchase-history/:userId', authMiddleware, async (req, res) => {
   try {
     const { page = 1, limit = 20, startDate, endDate, network } = req.query;
     const userId = req.params.userId;
@@ -1442,7 +1443,6 @@ router.get('/user-transactions/:userId', async (req, res) => {
 // Including: user-dashboard, sales-report, users-leaderboard, daily-sales
 
 // Import authentication middleware
-const { authMiddleware } = require('../middleware/auth.js');
 
 // OPTIONS handler for user dashboard
 router.options('/user-dashboard/:userId', (req, res) => {

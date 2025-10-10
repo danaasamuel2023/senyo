@@ -9,7 +9,7 @@ import {
   AlertCircle, Wifi, Signal, CircleDot, Timer, Calendar,
   ArrowUpRight, ArrowDownRight, Copy, Check, Shield, Flame
 } from 'lucide-react';
-import { useAuth, withAuth } from '../../utils/auth';
+import { useAuth, withAuth, authenticatedFetch } from '../../utils/auth';
 import { getApiBaseUrl } from '../../utils/apiUrls';
 
 // API Configuration
@@ -395,10 +395,18 @@ function DataPurchases() {
         const url = `${API_CONFIG.Unlimiteddata.BASE_URL}/data/purchase-history/${userId}`;
         console.log('Fetching purchases from:', url);
         
-        const { data } = await axios.get(url, { 
-          params: { page: 1, limit: 50 },
-          timeout: 10000 // 10 second timeout
+        const response = await authenticatedFetch(`${url}?page=1&limit=50`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         console.log('Purchase history response:', data);
         
