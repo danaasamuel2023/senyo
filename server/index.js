@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const ConnectDB = require('./DataBaseConnection/connection.js');
 const { DataPurchase, Transaction, User } = require('./schema/schema');
 // Either import just the router or destructure it from the object
@@ -93,6 +94,7 @@ app.use(sanitizeData);
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // CORS configuration - Enhanced for production
 const corsOptions = {
