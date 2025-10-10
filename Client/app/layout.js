@@ -9,10 +9,10 @@ import BottomNav from "@/component/BottomNav";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
-import errorMonitor from "@/utils/errorMonitor";
-import performanceMonitor from "@/utils/performanceMonitor";
-// import testRunner from "@/utils/testRunner"; // Temporarily disabled to fix webpack error
-// Console error suppression disabled for production
+// Temporarily disabled to fix webpack errors
+// import errorMonitor from "@/utils/errorMonitor";
+// import performanceMonitor from "@/utils/performanceMonitor";
+// import testRunner from "@/utils/testRunner";
 // import "@/utils/consoleErrorSuppression";
 
 // Font optimization with variable fonts for better performance
@@ -404,10 +404,10 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: `
               document.body.classList.add('ready');
-              // Initialize error monitoring
-              if (typeof window !== 'undefined' && window.errorMonitor) {
-                window.errorMonitor.init();
-              }
+              // Error monitoring temporarily disabled
+              // if (typeof window !== 'undefined' && window.errorMonitor) {
+              //   window.errorMonitor.init();
+              // }
             `
           }}
         />
