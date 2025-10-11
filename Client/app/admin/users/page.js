@@ -36,8 +36,11 @@ const AdminUsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [addMoneyAmount, setAddMoneyAmount] = useState('');
+  const [addMoneyReason, setAddMoneyReason] = useState('');
 
   // API Configuration
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -207,18 +210,36 @@ const AdminUsersPage = () => {
   };
 
   // Add money to user wallet
-  const addMoney = async (userId, amount) => {
+  const addMoney = async (userId, amount, reason) => {
     try {
       setActionLoading(true);
-      await adminAPI.user.addMoney(userId, parseFloat(amount));
+      await adminAPI.user.addMoney(userId, parseFloat(amount), reason);
       showNotification(`Successfully added GHS ${amount} to user wallet`);
       loadUsers(currentPage, searchTerm, filterRole);
+      setShowAddMoneyModal(false);
+      setAddMoneyAmount('');
+      setAddMoneyReason('');
     } catch (error) {
       console.error('Failed to add money:', error);
       showNotification('Failed to add money to wallet', 'error');
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // Handle add money modal
+  const handleAddMoney = (user) => {
+    setSelectedUser(user);
+    setShowAddMoneyModal(true);
+  };
+
+  // Submit add money
+  const submitAddMoney = () => {
+    if (!addMoneyAmount || parseFloat(addMoneyAmount) <= 0) {
+      showNotification('Please enter a valid amount', 'error');
+      return;
+    }
+    addMoney(selectedUser.id, addMoneyAmount, addMoneyReason);
   };
 
   // Initialize
@@ -604,6 +625,14 @@ const AdminUsersPage = () => {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => handleAddMoney(user)}
+                        disabled={actionLoading}
+                        className="text-green-600 hover:text-green-900 p-1"
+                        title="Add Money"
+                      >
+                        <Wallet className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => toggleUserStatus(user.id, user.isDisabled)}
                         disabled={actionLoading}
                         className={`p-1 ${user.isDisabled ? 'text-green-600 hover:text-green-900' : 'text-yellow-600 hover:text-yellow-900'}`}
@@ -692,6 +721,86 @@ const AdminUsersPage = () => {
           </div>
         )}
       </div>
+
+      {/* Add Money Modal */}
+      {showAddMoneyModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Money to User</h3>
+              <button
+                onClick={() => {
+                  setShowAddMoneyModal(false);
+                  setAddMoneyAmount('');
+                  setAddMoneyReason('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Adding money to: <span className="font-semibold">{selectedUser.name}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Current balance: <span className="font-semibold text-green-600">
+                  {formatCurrency(selectedUser.walletBalance || 0)}
+                </span>
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Amount (GHS)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={addMoneyAmount}
+                onChange={(e) => setAddMoneyAmount(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter amount"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason (Optional)
+              </label>
+              <textarea
+                value={addMoneyReason}
+                onChange={(e) => setAddMoneyReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="3"
+                placeholder="Enter reason for adding money"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowAddMoneyModal(false);
+                  setAddMoneyAmount('');
+                  setAddMoneyReason('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitAddMoney}
+                disabled={actionLoading || !addMoneyAmount || parseFloat(addMoneyAmount) <= 0}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? 'Adding...' : 'Add Money'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notification */}
       {notification && (

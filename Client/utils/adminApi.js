@@ -158,13 +158,13 @@ export const userAPI = {
   },
 
   // Add money to user wallet
-  addMoney: async (userId, amount) => {
+  addMoney: async (userId, amount, reason) => {
     // Try the correct admin endpoint first
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}/add-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ amount, reason })
       });
       return handleResponse(response);
     } catch (error) {
@@ -174,7 +174,7 @@ export const userAPI = {
       const response = await fetch(`${API_BASE_URL}${endpoint}/${userId}/add-money`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ amount, reason })
       });
       return handleResponse(response);
     }
