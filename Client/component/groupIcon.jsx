@@ -4,8 +4,12 @@ import React, { useEffect, useState } from 'react';
 const FloatingWhatsAppIcon = () => {
   const whatsappGroupUrl = 'https://chat.whatsapp.com/LEfSM2A3RVKJ1yY8JB5osP';
   const [showIcon, setShowIcon] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
+    // Mark as client-side to prevent hydration mismatch
+    setIsClient(true);
+    
     // Check if token exists in localStorage
     const hasToken = localStorage.getItem('authToken') !== null;
     console.log('🔗 WhatsApp Icon Visibility Check:', { hasToken, showIcon });
@@ -29,7 +33,8 @@ const FloatingWhatsAppIcon = () => {
     window.open(whatsappGroupUrl, '_blank', 'noopener,noreferrer');
   };
   
-  if (!showIcon) return null;
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient || !showIcon) return null;
   
   return (
     <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-[9999]">
