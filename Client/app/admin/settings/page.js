@@ -19,9 +19,9 @@ const AdminSettingsPage = () => {
   
   // Wallet Management State
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [users, setUsers] = useState([]);
   const [walletAmount, setWalletAmount] = useState('');
   const [walletReason, setWalletReason] = useState('');
+  const [users, setUsers] = useState([]);
   
   // API Management State
   const [inventory, setInventory] = useState([]);
@@ -36,7 +36,7 @@ const AdminSettingsPage = () => {
     referralBonus: 5
   });
 
-  // Payment Gateway Settings State - Paystack only
+  // Payment Gateway Settings State
   const [paymentGatewaySettings, setPaymentGatewaySettings] = useState({
     activeGateway: 'paystack',
     paystackEnabled: true,
@@ -71,11 +71,10 @@ const AdminSettingsPage = () => {
       setUsers(usersData.users || []);
       setInventory(inventoryData.inventory || []);
       
-      // Load payment gateway settings
       await loadPaymentGatewaySettings();
     } catch (error) {
       console.error('Failed to load data:', error);
-      showNotification('Failed to load data', 'error');
+      showNotification('Failed to load data: ' + (error.message || 'Unknown error'), 'error');
     } finally {
       setLoading(false);
     }
@@ -98,8 +97,7 @@ const AdminSettingsPage = () => {
         }
       }
     } catch (error) {
-      console.warn('Payment gateway settings endpoint not available, using defaults:', error);
-      // Use default payment gateway settings when endpoint is not available - Paystack only
+      console.warn('Payment gateway settings endpoint not available:', error);
       setPaymentGatewaySettings({
         activeGateway: 'paystack',
         paystackEnabled: true,
@@ -114,46 +112,103 @@ const AdminSettingsPage = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
+  const validateAmount = (amount) => {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) {
+      throw new Error('Please enter a valid amount greater than 0');
+    }
+    return num;
+  };
+
   const handleAddMoney = async () => {
-    if (!selectedUserId || !walletAmount) {
-      showNotification('Please select user and enter amount', 'error');
+    if (!selectedUserId) {
+      showNotification('Please select a user', 'error');
       return;
     }
 
-    setSaving(true);
+    if (!walletAmount || walletAmount.trim() === '') {
+      showNotification('Please enter an amount', 'error');
+      return;
+    }
+
     try {
-      await adminAPI.user.addMoney(selectedUserId, parseFloat(walletAmount));
-      showNotification(`Successfully added GHS ${walletAmount}`, 'success');
+      const amount = validateAmount(walletAmount);
+      
+      if (!confirm(`Add GHS ${amount.toFixed(2)} to the selected user's wallet?`)) {
+        return;
+      }
+
+      setSaving(true);
+      
+      console.log('Adding money:', { userId: selectedUserId, amount });
+      
+      const result = await adminAPI.user.addMoney(selectedUserId, amount);
+      
+      console.log('Add money result:', result);
+      
+      showNotification(`Successfully added GHS ${amount.toFixed(2)}`, 'success');
+      
+      // Reset form
       setWalletAmount('');
       setSelectedUserId('');
-      loadData();
+      
+      // Reload data
+      await loadData();
+      
     } catch (error) {
       console.error('Failed to add money:', error);
-      showNotification('Failed to add money', 'error');
+      const errorMessage = error.message || 'Failed to add money. Please check the console for details.';
+      showNotification(errorMessage, 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeductMoney = async () => {
-    if (!selectedUserId || !walletAmount || !walletReason) {
-      showNotification('Please fill all fields', 'error');
+    if (!selectedUserId) {
+      showNotification('Please select a user', 'error');
       return;
     }
 
-    if (!confirm(`Deduct GHS ${walletAmount} from user's wallet?`)) return;
+    if (!walletAmount || walletAmount.trim() === '') {
+      showNotification('Please enter an amount', 'error');
+      return;
+    }
 
-    setSaving(true);
+    if (!walletReason || walletReason.trim() === '') {
+      showNotification('Please enter a reason for deduction', 'error');
+      return;
+    }
+
     try {
-      await adminAPI.user.deductMoney(selectedUserId, parseFloat(walletAmount), walletReason);
-      showNotification(`Successfully deducted GHS ${walletAmount}`, 'success');
+      const amount = validateAmount(walletAmount);
+
+      if (!confirm(`Deduct GHS ${amount.toFixed(2)} from the selected user's wallet?\n\nReason: ${walletReason}`)) {
+        return;
+      }
+
+      setSaving(true);
+      
+      console.log('Deducting money:', { userId: selectedUserId, amount, reason: walletReason });
+      
+      const result = await adminAPI.user.deductMoney(selectedUserId, amount, walletReason);
+      
+      console.log('Deduct money result:', result);
+      
+      showNotification(`Successfully deducted GHS ${amount.toFixed(2)}`, 'success');
+      
+      // Reset form
       setWalletAmount('');
       setWalletReason('');
       setSelectedUserId('');
-      loadData();
+      
+      // Reload data
+      await loadData();
+      
     } catch (error) {
       console.error('Failed to deduct money:', error);
-      showNotification('Failed to deduct money', 'error');
+      const errorMessage = error.message || 'Failed to deduct money. Please check the console for details.';
+      showNotification(errorMessage, 'error');
     } finally {
       setSaving(false);
     }
@@ -163,10 +218,10 @@ const AdminSettingsPage = () => {
     try {
       await adminAPI.inventory.toggleNetworkStock(network);
       showNotification(`${network} stock status updated`, 'success');
-      loadData();
+      await loadData();
     } catch (error) {
       console.error('Failed to toggle stock:', error);
-      showNotification('Failed to update stock', 'error');
+      showNotification('Failed to update stock: ' + (error.message || 'Unknown error'), 'error');
     }
   };
 
@@ -174,10 +229,10 @@ const AdminSettingsPage = () => {
     try {
       await adminAPI.inventory.toggleGeonettech(network);
       showNotification(`${network} API status updated`, 'success');
-      loadData();
+      await loadData();
     } catch (error) {
       console.error('Failed to toggle API:', error);
-      showNotification('Failed to update API', 'error');
+      showNotification('Failed to update API: ' + (error.message || 'Unknown error'), 'error');
     }
   };
 
@@ -206,17 +261,18 @@ const AdminSettingsPage = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select User
+                Select User *
               </label>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white"
+                disabled={saving}
               >
                 <option value="">Choose user...</option>
                 {users.map(user => (
                   <option key={user._id} value={user._id}>
-                    {user.name} - {user.email} (GHS {user.walletBalance})
+                    {user.name} - {user.email} (GHS {user.walletBalance?.toFixed(2) || '0.00'})
                   </option>
                 ))}
               </select>
@@ -224,26 +280,36 @@ const AdminSettingsPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Amount (GHS)
+                Amount (GHS) *
               </label>
               <input
                 type="number"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 placeholder="0.00"
-                min="0"
+                min="0.01"
                 step="0.01"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white"
+                disabled={saving}
               />
             </div>
 
             <button
               onClick={handleAddMoney}
               disabled={saving || !selectedUserId || !walletAmount}
-              className="w-full px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-bold disabled:opacity-50 flex items-center justify-center space-x-2"
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
-              <TrendingUp className="w-5 h-5" />
-              <span>{saving ? 'Processing...' : 'Add Funds'}</span>
+              {saving ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-5 h-5" />
+                  <span>Add Funds</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -260,17 +326,18 @@ const AdminSettingsPage = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select User
+                Select User *
               </label>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900 dark:text-white"
+                disabled={saving}
               >
                 <option value="">Choose user...</option>
                 {users.map(user => (
                   <option key={user._id} value={user._id}>
-                    {user.name} - {user.email} (GHS {user.walletBalance})
+                    {user.name} - {user.email} (GHS {user.walletBalance?.toFixed(2) || '0.00'})
                   </option>
                 ))}
               </select>
@@ -278,40 +345,67 @@ const AdminSettingsPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Amount (GHS)
+                Amount (GHS) *
               </label>
               <input
                 type="number"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 placeholder="0.00"
-                min="0"
+                min="0.01"
                 step="0.01"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900 dark:text-white"
+                disabled={saving}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Reason
+                Reason *
               </label>
               <input
                 type="text"
                 value={walletReason}
                 onChange={(e) => setWalletReason(e.target.value)}
                 placeholder="Reason for deduction"
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900 dark:text-white"
+                disabled={saving}
               />
             </div>
 
             <button
               onClick={handleDeductMoney}
               disabled={saving || !selectedUserId || !walletAmount || !walletReason}
-              className="w-full px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-bold disabled:opacity-50 flex items-center justify-center space-x-2"
+              className="w-full px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
-              <TrendingDown className="w-5 h-5" />
-              <span>{saving ? 'Processing...' : 'Deduct Funds'}</span>
+              {saving ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="w-5 h-5" />
+                  <span>Deduct Funds</span>
+                </>
+              )}
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+        <div className="flex items-start space-x-3">
+          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-1">Important Notes</h4>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+              <li>• All wallet transactions are logged and auditable</li>
+              <li>• Adding funds creates a credit transaction in the user's wallet</li>
+              <li>• Deducting funds requires a reason for audit purposes</li>
+              <li>• Users will be notified of wallet changes via email</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -533,8 +627,8 @@ const AdminSettingsPage = () => {
               <input
                 type="number"
                 value={systemSettings.minimumDeposit}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, minimumDeposit: parseFloat(e.target.value) }))}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
+                onChange={(e) => setSystemSettings(prev => ({ ...prev, minimumDeposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
 
@@ -545,8 +639,8 @@ const AdminSettingsPage = () => {
               <input
                 type="number"
                 value={systemSettings.maximumDeposit}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, maximumDeposit: parseFloat(e.target.value) }))}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
+                onChange={(e) => setSystemSettings(prev => ({ ...prev, maximumDeposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
 
@@ -557,8 +651,8 @@ const AdminSettingsPage = () => {
               <input
                 type="number"
                 value={systemSettings.referralBonus}
-                onChange={(e) => setSystemSettings(prev => ({ ...prev, referralBonus: parseFloat(e.target.value) }))}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
+                onChange={(e) => setSystemSettings(prev => ({ ...prev, referralBonus: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
 
@@ -581,7 +675,6 @@ const AdminSettingsPage = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payment Gateway Settings</h2>
       
-      {/* Paystack Configuration */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Paystack Configuration</h3>
@@ -619,7 +712,6 @@ const AdminSettingsPage = () => {
           </div>
         </div>
 
-        {/* Save Button */}
         <div className="mt-6">
           <button
             onClick={async () => {
@@ -648,7 +740,7 @@ const AdminSettingsPage = () => {
                 }
               } catch (error) {
                 console.warn('Payment gateway settings endpoint not available:', error);
-                showNotification('Payment gateway settings endpoint not available - please wait for deployment', 'error');
+                showNotification('Payment gateway settings endpoint not available', 'error');
               } finally {
                 setSaving(false);
               }
@@ -664,16 +756,27 @@ const AdminSettingsPage = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-12 h-12 text-[#FFCC08] animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 animate-slide-in ${
           notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
         }`}>
           {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span className="font-medium">{notification.message}</span>
-          <button onClick={() => setNotification(null)}>
+          <span className="font-medium max-w-md">{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="ml-2">
             <X className="w-4 h-4" />
           </button>
         </div>
