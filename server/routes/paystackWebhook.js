@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { Transaction, User, Wallet } = require('../schema/schema');
+const WalletService = require('../services/walletService');
 
 // Paystack webhook secret (should be set in environment variables)
 const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET || 'paystack_webhook_secret';
@@ -39,7 +40,7 @@ const verifyPaystackSignature = (req, res, next) => {
 };
 
 /**
- * Process successful payment
+ * Process successful payment with in-memory caching
  */
 const processSuccessfulPayment = async (transactionData) => {
   try {
@@ -47,69 +48,26 @@ const processSuccessfulPayment = async (transactionData) => {
     
     console.log(`[WEBHOOK] Processing successful payment: ${reference}`);
     
-    // Find the transaction
-    const transaction = await Transaction.findOne({ reference });
+    // Use WalletService for cached processing
+    const result = await WalletService.processPayment(reference);
     
-    if (!transaction) {
-      console.log(`[WEBHOOK] ❌ Transaction not found: ${reference}`);
-      return { success: false, error: 'Transaction not found' };
-    }
-
-    if (transaction.status === 'completed') {
-      console.log(`[WEBHOOK] ⚠️ Transaction already processed: ${reference}`);
-      return { success: true, message: 'Transaction already processed' };
-    }
-
-    // Find the user
-    const user = await User.findById(transaction.userId);
-    if (!user) {
-      console.log(`[WEBHOOK] ❌ User not found: ${transaction.userId}`);
-      return { success: false, error: 'User not found' };
-    }
-
-    // Start a session for atomic operations
-    const session = await Transaction.startSession();
-    
-    try {
-      await session.withTransaction(async () => {
-        // Update transaction status
-        transaction.status = 'completed';
-        transaction.gatewayFees = gateway_fees || 0;
-        transaction.completedAt = new Date();
-        await transaction.save({ session });
-
-        // Update user wallet balance
-        const wallet = await Wallet.findOne({ userId: user._id }).session(session);
-        if (wallet) {
-          wallet.balance += amount / 100; // Convert from kobo to cedis
-          await wallet.save({ session });
-        } else {
-          // Create wallet if it doesn't exist
-          const newWallet = new Wallet({
-            userId: user._id,
-            balance: amount / 100
-          });
-          await newWallet.save({ session });
-        }
-
-        console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
-        console.log(`[WEBHOOK] Amount: ₵${amount / 100}, User: ${user.email}`);
-      });
-
-      return { 
-        success: true, 
+    if (result.success) {
+      console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
+      console.log(`[WEBHOOK] Amount: ₵${amount / 100}, New Balance: ₵${result.newBalance}`);
+      
+      return {
+        success: true,
         message: 'Payment processed successfully',
         data: {
           reference,
           amount: amount / 100,
-          newBalance: (await Wallet.findOne({ userId: user._id })).balance
+          newBalance: result.newBalance,
+          fromCache: result.fromCache || false
         }
       };
-    } catch (error) {
-      console.log(`[WEBHOOK] ❌ Transaction failed: ${error.message}`);
-      throw error;
-    } finally {
-      await session.endSession();
+    } else {
+      console.log(`[WEBHOOK] ❌ Payment processing failed: ${reference} - ${result.error}`);
+      return { success: false, error: result.error };
     }
   } catch (error) {
     console.log(`[WEBHOOK] ❌ Error processing payment: ${error.message}`);

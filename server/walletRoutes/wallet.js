@@ -3,6 +3,7 @@ const router = express.Router();
 const { Wallet, Referral, PromoCode, User } = require('../schema/schema.js');
 const verifyAuth = require('../middlewareUser/middleware.js');
 const { sendTransactionReceipt } = require('../services/emailService.js');
+const WalletService = require('../services/walletService');
 
 // Enhanced logging utility
 const logWalletActivity = (userId, action, details = {}) => {
@@ -90,6 +91,60 @@ router.get('/balance', verifyAuth, async (req, res) => {
       success: false,
       message: 'Failed to fetch wallet balance',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Get cache statistics (admin only)
+router.get('/cache/stats', verifyAuth, async (req, res) => {
+  try {
+    // Check if user is admin
+    const user = await User.findById(req.user._id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const stats = WalletService.getCacheStats();
+    res.json({
+      success: true,
+      cacheStats: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching cache stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch cache statistics'
+    });
+  }
+});
+
+// Clear all caches (admin only)
+router.post('/cache/clear', verifyAuth, async (req, res) => {
+  try {
+    // Check if user is admin
+    const user = await User.findById(req.user._id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    WalletService.clearAllCaches();
+    res.json({
+      success: true,
+      message: 'All caches cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error clearing caches:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear caches'
     });
   }
 });
