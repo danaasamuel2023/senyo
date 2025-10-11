@@ -316,20 +316,37 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
 // Get active announcements for user
 router.get('/user/announcements/:userId', authMiddleware, async (req, res) => {
   try {
+    const { userId } = req.params;
+    
+    // Validate userId format (should be 24-character MongoDB ObjectId)
+    if (!userId || userId.length !== 24 || !/^[a-f0-9]{24}$/i.test(userId)) {
+      console.error('❌ Invalid userId format in notifications API:', {
+        userId,
+        length: userId?.length,
+        isValidFormat: userId && /^[a-f0-9]{24}$/i.test(userId)
+      });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid user ID format',
+        error: 'User ID must be a valid 24-character MongoDB ObjectId'
+      });
+    }
+    
     // Check if notification system is enabled
     const systemSettings = await NotificationSystem.findOne().sort({ createdAt: -1 });
     if (!systemSettings || !systemSettings.isEnabled) {
       return res.json({ success: true, announcements: [], systemSettings: null });
     }
     
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(userId);
     if (!user) {
+      console.error('❌ User not found in notifications API:', userId);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
     // Get user's interaction history
     const userInteractions = await UserAnnouncementInteraction.find({ 
-      userId: req.params.userId,
+      userId: userId,
       action: 'dismissed'
     }).select('announcementId');
     

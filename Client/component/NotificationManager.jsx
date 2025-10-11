@@ -13,9 +13,23 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   const loadAnnouncements = useCallback(async () => {
     if (!userId) return;
     
+    // Validate userId format (should be 24-character MongoDB ObjectId)
+    if (!userId || userId.length !== 24 || !/^[a-f0-9]{24}$/i.test(userId)) {
+      console.error('❌ Invalid userId format:', {
+        userId,
+        length: userId?.length,
+        isValidFormat: userId && /^[a-f0-9]{24}$/i.test(userId)
+      });
+      setError('Invalid user ID format');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🔔 Loading announcements for userId:', userId);
       
       const response = await fetch(`/api/backend?path=/api/v1/admin/notifications/user/announcements/${userId}`, {
         headers: {

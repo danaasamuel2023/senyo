@@ -450,10 +450,19 @@ useEffect(() => {
       }
       
       if (isMounted) {
+        const userId = userData.id || userData._id;
         setUserName(userData.name || 'User');
-        setUserId(userData.id || userData._id);
+        setUserId(userId);
+        
         console.log('✅ UserDashboard initialized successfully');
-        await fetchDashboardData(userData.id || userData._id);
+        console.log('📊 User ID details:', {
+          userId,
+          length: userId?.length,
+          isValidFormat: userId && /^[a-f0-9]{24}$/i.test(userId),
+          source: userData.id ? 'id' : '_id'
+        });
+        
+        await fetchDashboardData(userId);
       }
     } catch (err) {
       console.error('❌ Initialization error:', err);
