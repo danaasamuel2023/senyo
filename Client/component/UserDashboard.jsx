@@ -4,6 +4,7 @@ import { useToast } from './ToastNotification';
 import { useTheme } from '../app/providers/ThemeProvider';
 import MobileNavbar from './nav';
 import MobileMoneyDepositModal from './MobileMoneyDepositModal';
+import NotificationManager from './NotificationManager';
 import { getApiEndpoint as getCentralizedApiEndpoint } from '../utils/envConfig';
 import apiClient from '../utils/apiClient.js';
 import { 
@@ -155,6 +156,7 @@ const { theme, toggleTheme } = useTheme();
 const [loading, setLoading] = useState(true);
 const [refreshing, setRefreshing] = useState(false);
 const [userName, setUserName] = useState('');
+const [userId, setUserId] = useState(null);
 const [error, setError] = useState(null);
 const [showNotice, setShowNotice] = useState(true);
 const [animateStats, setAnimateStats] = useState(false);
@@ -449,6 +451,7 @@ useEffect(() => {
       
       if (isMounted) {
         setUserName(userData.name || 'User');
+        setUserId(userData.id || userData._id);
         console.log('✅ UserDashboard initialized successfully');
         await fetchDashboardData(userData.id || userData._id);
       }
@@ -969,6 +972,15 @@ return (
         }}
       />
 
+      {/* Notification Manager */}
+      {userId && (
+        <NotificationManager 
+          userId={userId}
+          onAnnouncementsLoaded={(announcements, systemSettings) => {
+            console.log('Announcements loaded:', announcements.length, 'announcements');
+          }}
+        />
+      )}
 
     </div>
 );

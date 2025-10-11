@@ -37,6 +37,7 @@ const adminAgentRoutes = require('./adminRoutes/agentManagement.js')
 const bulkMessagingRoutes = require('./adminRoutes/bulkMessaging.js')
 const packageManagementRoutes = require('./adminRoutes/packageManagement.js')
 const priceManagementRoutes = require('./adminRoutes/priceManagement.js')
+const notificationSystemRoutes = require('./adminRoutes/notificationSystem.js')
 const storeRoutes = require('./storeRoutes/store.js')
 const paystackWebhookRoutes = require('./routes/paystackWebhook');
 
@@ -527,6 +528,7 @@ adminRouter.use('/', AdminManagement);
 adminRouter.use('/bulk-messaging', bulkMessagingRoutes);
 adminRouter.use('/', packageManagementRoutes);
 adminRouter.use('/', priceManagementRoutes);
+adminRouter.use('/notifications', notificationSystemRoutes);
 adminRouter.use('/', paymentGatewaySettingsRoutes);
 
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT

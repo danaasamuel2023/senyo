@@ -2,6 +2,7 @@
   "dependencies": {
     "axios": "^1.12.2",
     "lucide-react": "^0.544.0",
+    "mongoose": "^8.19.1",
     "react-toastify": "^11.0.5"
   },
   "description": "Emergency redeploy 2025-10-11T09:57:37.823Z",

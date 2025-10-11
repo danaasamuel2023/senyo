@@ -1783,8 +1783,177 @@ const TwoFactorAuthSchema = new Schema({
 
 const TwoFactorAuth = mongoose.model("TwoFactorAuth", TwoFactorAuthSchema);
 
+// ============================================
+// NOTIFICATION SYSTEM SCHEMAS
+// ============================================
+
+// Notification System Settings Schema
+const NotificationSystemSchema = new Schema({
+  isEnabled: { type: Boolean, default: true },
+  globalSettings: {
+    showOnLogin: { type: Boolean, default: true },
+    autoDismissDelay: { type: Number, default: 10000 }, // milliseconds
+    maxAnnouncementsPerUser: { type: Number, default: 5 },
+    allowUserDismiss: { type: Boolean, default: true },
+    showPriorityBadges: { type: Boolean, default: true }
+  },
+  displaySettings: {
+    position: { 
+      type: String, 
+      enum: ["top-right", "top-left", "top-center", "bottom-right", "bottom-left", "bottom-center"], 
+      default: "top-right" 
+    },
+    style: { 
+      type: String, 
+      enum: ["toast", "banner", "modal", "popup"], 
+      default: "toast" 
+    },
+    animation: { 
+      type: String, 
+      enum: ["slide", "fade", "bounce", "none"], 
+      default: "slide" 
+    }
+  },
+  targetingSettings: {
+    enableRoleTargeting: { type: Boolean, default: true },
+    enableUserTargeting: { type: Boolean, default: false },
+    enableDateTargeting: { type: Boolean, default: true },
+    enableGeoTargeting: { type: Boolean, default: false }
+  },
+  analyticsSettings: {
+    trackViews: { type: Boolean, default: true },
+    trackDismissals: { type: Boolean, default: true },
+    trackClicks: { type: Boolean, default: true },
+    retentionDays: { type: Number, default: 30 }
+  },
+  lastUpdatedBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true 
+  },
+  lastUpdatedAt: { type: Date, default: Date.now }
+}, {
+  timestamps: true
+});
+
+// Enhanced Announcement Schema
+const AnnouncementSchema = new Schema({
+  title: { type: String, required: true, maxlength: 200 },
+  message: { type: String, required: true, maxlength: 2000 },
+  type: { 
+    type: String, 
+    enum: ["general", "promotion", "maintenance", "urgent", "system", "marketing"], 
+    default: "general"
+  },
+  priority: { 
+    type: String, 
+    enum: ["low", "normal", "high", "urgent"], 
+    default: "normal"
+  },
+  
+  // Targeting
+  targetAudience: {
+    type: String,
+    enum: ["all", "buyer", "seller", "agent", "dealer", "admin"],
+    default: "all"
+  },
+  specificUsers: [{ 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited" 
+  }],
+  
+  // Display Settings
+  displaySettings: {
+    showOnLogin: { type: Boolean, default: true },
+    dismissible: { type: Boolean, default: true },
+    autoDismiss: { type: Boolean, default: true },
+    autoDismissDelay: { type: Number, default: 10000 },
+    showIcon: { type: Boolean, default: true },
+    customIcon: { type: String, maxlength: 100 },
+    backgroundColor: { type: String, maxlength: 7, default: "#3B82F6" },
+    textColor: { type: String, maxlength: 7, default: "#FFFFFF" }
+  },
+  
+  // Scheduling
+  isActive: { type: Boolean, default: true },
+  scheduledAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, sparse: true },
+  
+  // Content
+  actionButton: {
+    text: { type: String, maxlength: 50 },
+    url: { type: String, maxlength: 500 },
+    action: { type: String, maxlength: 100 }
+  },
+  
+  // Analytics
+  analytics: {
+    totalViews: { type: Number, default: 0 },
+    totalDismissals: { type: Number, default: 0 },
+    totalClicks: { type: Number, default: 0 },
+    uniqueViews: { type: Number, default: 0 },
+    conversionRate: { type: Number, default: 0 }
+  },
+  
+  // Metadata
+  sentBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true 
+  },
+  tags: [{ type: String, maxlength: 50 }],
+  notes: { type: String, maxlength: 500 }
+}, {
+  timestamps: true
+});
+
+// User Announcement Interaction Schema
+const UserAnnouncementInteractionSchema = new Schema({
+  userId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Userdataunlimited", 
+    required: true,
+    index: true 
+  },
+  announcementId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Announcement", 
+    required: true,
+    index: true 
+  },
+  action: { 
+    type: String, 
+    enum: ["viewed", "dismissed", "clicked", "interacted"], 
+    required: true 
+  },
+  timestamp: { type: Date, default: Date.now },
+  userAgent: { type: String, maxlength: 500 },
+  ipAddress: { type: String, maxlength: 45 },
+  metadata: {
+    type: Map,
+    of: Schema.Types.Mixed
+  }
+}, {
+  timestamps: false
+});
+
+// Indexes for notification system
+NotificationSystemSchema.index({ isEnabled: 1 });
+AnnouncementSchema.index({ isActive: 1, targetAudience: 1, expiresAt: 1 });
+AnnouncementSchema.index({ priority: -1, createdAt: -1 });
+UserAnnouncementInteractionSchema.index({ announcementId: 1, action: 1, timestamp: -1 });
+UserAnnouncementInteractionSchema.index({ userId: 1, announcementId: 1 }, { unique: true });
+
+// Create models
+const NotificationSystem = mongoose.model("NotificationSystem", NotificationSystemSchema);
+const Announcement = mongoose.model("Announcement", AnnouncementSchema);
+const UserAnnouncementInteraction = mongoose.model("UserAnnouncementInteraction", UserAnnouncementInteractionSchema);
+
 // Export new models
 module.exports.Wallet = Wallet;
 module.exports.Referral = Referral;
 module.exports.PromoCode = PromoCode;
 module.exports.TwoFactorAuth = TwoFactorAuth;
+module.exports.NotificationSystem = NotificationSystem;
+module.exports.Announcement = Announcement;
+module.exports.UserAnnouncementInteraction = UserAnnouncementInteraction;
