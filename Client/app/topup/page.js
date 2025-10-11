@@ -248,6 +248,8 @@ const TopUpPage = () => {
   // Check authentication status on component mount
   useEffect(() => {
     const checkAuth = () => {
+      if (typeof window === 'undefined') return;
+      
       const userData = localStorage.getItem('userData');
       const authToken = localStorage.getItem('authToken');
       
@@ -287,6 +289,8 @@ const TopUpPage = () => {
   // Load wallet data
   const loadWalletData = async () => {
     try {
+      if (typeof window === 'undefined') return;
+      
       const token = localStorage.getItem('authToken');
       const response = await fetch(getApiEndpoint('/api/wallet/balance'), {
         headers: {
@@ -476,6 +480,8 @@ const TopUpPage = () => {
     setRequestCount(prev => prev + 1);
     
     try {
+      if (typeof window === 'undefined') return;
+      
       const token = localStorage.getItem('authToken');
       
       const depositData = {

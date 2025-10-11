@@ -39,6 +39,8 @@ const YelloOrders = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
+      if (typeof window === 'undefined') return;
+      
       const authToken = localStorage.getItem("authToken");
       if (!authToken) {
         alert("Unauthorized access!");
@@ -81,6 +83,8 @@ const YelloOrders = () => {
   }, [currentPage, ordersPerPage]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    if (typeof window === 'undefined') return;
+    
     const authToken = localStorage.getItem("authToken");
     if (!authToken) {
       alert("Unauthorized access!");
@@ -130,6 +134,8 @@ const YelloOrders = () => {
       return;
     }
 
+    if (typeof window === 'undefined') return;
+    
     const authToken = localStorage.getItem("authToken");
     if (!authToken) {
       alert("Unauthorized access!");

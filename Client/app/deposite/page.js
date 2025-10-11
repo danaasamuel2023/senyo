@@ -293,6 +293,8 @@ const UnlimitedDataDeposit = () => {
   // Load wallet data
   const loadWalletData = async () => {
     try {
+      if (typeof window === 'undefined') return;
+      
       const token = localStorage.getItem('authToken');
       const response = await fetch(getApiEndpoint('/api/wallet/balance'), {
         headers: {

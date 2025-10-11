@@ -12,10 +12,20 @@ const DashboardSummary = () => {
       try {
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+        
+        // Check if we're on the client side before accessing localStorage
+        if (typeof window === 'undefined') return;
+        
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+          setError('Authentication required');
+          return;
+        }
+        
         const response = await axios.get(`${API_URL}/api/v1/admin/daily-summary`, {
 // const response = await axios.get('https://unlimitedata.onrender.com/api/admin/daily-summary', { --- IGNORE ---
           headers: {
-            'x-auth-token': localStorage.getItem('authToken'),
+            'x-auth-token': authToken,
           },
         }
         );
