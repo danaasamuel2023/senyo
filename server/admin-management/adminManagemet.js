@@ -247,57 +247,61 @@ router.put('/users/:id',auth, adminAuth, async (req, res) => {
  */
 router.put('/users/:id/add-money',auth, adminAuth, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, reason } = req.body;
     
     if (!amount || amount <= 0) {
-      return res.status(400).json({ msg: 'Please provide a valid amount' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Please provide a valid amount' 
+      });
     }
     
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // Find user first
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        msg: 'User not found' 
+      });
+    }
     
-    try {
-      // Find user and update wallet balance
-      const user = await User.findById(req.params.id).session(session);
-      
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ msg: 'User not found' });
-      }
-      
-      // Update wallet balance
-      user.walletBalance += parseFloat(amount);
-      await user.save({ session });
-      
-      // Create transaction record
-      const transaction = new Transaction({
-        userId: user._id,
-        type: 'deposit',
-        amount: parseFloat(amount),
-        status: 'completed',
+    // Use WalletService for consistent wallet updates
+    const WalletService = require('../services/walletService');
+    const result = await WalletService.updateWalletBalance(
+      req.params.id,
+      parseFloat(amount),
+      'admin-deposit',
+      {
         reference: `ADMIN-${Date.now()}`,
+        description: reason || 'Administrative deposit',
+        adminId: req.user.id,
         gateway: 'admin-deposit'
-      });
-      
-      await transaction.save({ session });
-      
-      await session.commitTransaction();
-      session.endSession();
-      
+      }
+    );
+    
+    if (result.success) {
       res.json({
-        msg: `Successfully added ${amount} to ${user.name}'s wallet`,
-        currentBalance: user.walletBalance,
-        transaction
+        success: true,
+        msg: `Successfully added ₵${amount} to ${user.name}'s wallet`,
+        currentBalance: result.newBalance,
+        transaction: {
+          amount: parseFloat(amount),
+          type: 'admin-deposit',
+          reference: `ADMIN-${Date.now()}`,
+          status: 'completed'
+        }
       });
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
+    } else {
+      throw new Error(result.error);
     }
+    
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Add money error:', err.message);
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server Error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
@@ -312,59 +316,51 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
     const { amount, reason } = req.body;
     
     if (!amount || amount <= 0) {
-      return res.status(400).json({ msg: 'Please provide a valid amount' });
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Please provide a valid amount' 
+      });
     }
     
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    
-    try {
-      // Find user and update wallet balance
-      const user = await User.findById(req.params.id).session(session);
-      
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ msg: 'User not found' });
-      }
-      
-      // Check if user has sufficient balance
-      if (user.walletBalance < parseFloat(amount)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ 
-          msg: 'Insufficient balance', 
-          currentBalance: user.walletBalance,
-          requestedDeduction: parseFloat(amount)
-        });
-      }
-      
-      // Update wallet balance
-      user.walletBalance -= parseFloat(amount);
-      await user.save({ session });
-      
-      // Create transaction record
-      const transaction = new Transaction({
-        userId: user._id,
-        type: 'withdrawal',
-        amount: parseFloat(amount),
-        status: 'completed',
-        reference: `ADMIN-DEDUCT-${Date.now()}`,
-        gateway: 'admin-deduction',
-        metadata: {
-          reason: reason || 'Administrative deduction',
-          adminId: req.user.id,
-          previousBalance: user.walletBalance + parseFloat(amount)
-        }
+    // Find user first
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        msg: 'User not found' 
       });
-      
-      await transaction.save({ session });
-      
+    }
+    
+    // Check if user has sufficient balance
+    if (user.walletBalance < parseFloat(amount)) {
+      return res.status(400).json({ 
+        success: false,
+        msg: 'Insufficient balance', 
+        currentBalance: user.walletBalance,
+        requestedDeduction: parseFloat(amount)
+      });
+    }
+    
+    // Use WalletService for consistent wallet updates (negative amount for deduction)
+    const WalletService = require('../services/walletService');
+    const result = await WalletService.updateWalletBalance(
+      req.params.id,
+      -parseFloat(amount), // Negative amount for deduction
+      'admin-deduction',
+      {
+        reference: `ADMIN-DEDUCT-${Date.now()}`,
+        description: reason || 'Administrative deduction',
+        adminId: req.user.id,
+        gateway: 'admin-deduction'
+      }
+    );
+    
+    if (result.success) {
       // Optional: Send notification to user
       try {
         if (user.phoneNumber) {
           const formattedPhone = user.phoneNumber.replace(/^\+/, '');
-          const message = `Unlimiteddatagh: GHS${amount.toFixed(2)} has been deducted from your wallet. Your new balance is GHS${user.walletBalance.toFixed(2)}. Reason: ${reason || 'Administrative adjustment'}.`;
+          const message = `Unlimiteddatagh: ₵${amount.toFixed(2)} has been deducted from your wallet. Your new balance is ₵${result.newBalance.toFixed(2)}. Reason: ${reason || 'Administrative adjustment'}.`;
           
           await sendSMS(formattedPhone, message, {
             useCase: 'transactional',
@@ -376,22 +372,28 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
         // Continue with the transaction even if SMS fails
       }
       
-      await session.commitTransaction();
-      session.endSession();
-      
       res.json({
-        msg: `Successfully deducted ${amount} from ${user.name}'s wallet`,
-        currentBalance: user.walletBalance,
-        transaction
+        success: true,
+        msg: `Successfully deducted ₵${amount} from ${user.name}'s wallet`,
+        currentBalance: result.newBalance,
+        transaction: {
+          amount: parseFloat(amount),
+          type: 'admin-deduction',
+          reference: `ADMIN-DEDUCT-${Date.now()}`,
+          status: 'completed'
+        }
       });
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
+    } else {
+      throw new Error(result.error);
     }
+    
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Deduct money error:', err.message);
+    res.status(500).json({ 
+      success: false,
+      msg: 'Server Error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
