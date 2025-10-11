@@ -42,8 +42,10 @@ async function quickTest() {
     // Test 2: Try to create a deposit (this will test if the endpoint is available)
     console.log('📊 Step 2: Test Deposit Endpoint');
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/wallet/deposit`, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/deposit`, {
+        userId: 'test-user-id',
         amount: 10.30,
+        totalAmountWithFee: 10.30,
         email: 'test@example.com'
       }, {
         headers: { 
@@ -52,11 +54,11 @@ async function quickTest() {
         }
       });
 
-      if (response.data.success) {
+      if (response.data.paystackUrl) {
         console.log('   ✅ Deposit endpoint is working!');
-        console.log('   Reference:', response.data.data.reference);
-        console.log('   Amount: ₵' + response.data.data.amount);
-        console.log('   Paystack URL:', response.data.data.paystackUrl ? 'Generated' : 'Not generated');
+        console.log('   Reference:', response.data.reference);
+        console.log('   Amount: ₵10.30');
+        console.log('   Paystack URL:', response.data.paystackUrl ? 'Generated' : 'Not generated');
       } else {
         console.log('   ❌ Deposit failed:', response.data.message);
       }

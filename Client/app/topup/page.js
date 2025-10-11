@@ -485,18 +485,16 @@ const TopUpPage = () => {
       const token = localStorage.getItem('authToken');
       
       const depositData = {
+        userId: userId,
         amount: depositAmount,
-        email: userEmail,
-        metadata: {
-          source: 'web_deposit',
-          userAgent: navigator.userAgent
-        }
+        totalAmountWithFee: parseFloat(totalAmount),
+        email: userEmail
       };
       
       console.log('Deposit request data:', depositData);
       
       const response = await retryRequest(async () => {
-        return await axios.post(getApiEndpoint('/api/wallet/deposit'), depositData, {
+        return await axios.post(getApiEndpoint('/api/v1/deposit'), depositData, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -505,13 +503,13 @@ const TopUpPage = () => {
         });
       });
       
-      if (response.data.success && response.data.data.paystackUrl) {
+      if (response.data.paystackUrl) {
         setSuccess('Redirecting to secure payment...');
         showToast('Redirecting to secure payment...', 'success');
         // Reset consecutive failures on success
         setConsecutiveFailures(0);
         setTimeout(() => {
-          window.location.href = response.data.data.paystackUrl;
+          window.location.href = response.data.paystackUrl;
         }, 1000);
       } else {
         throw new Error(response.data.message || 'Failed to initialize deposit');

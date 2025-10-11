@@ -36,7 +36,7 @@ const PaymentCallback = () => {
 
         // Verify payment with our backend
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
-        const response = await fetch(`${API_URL}/api/wallet/deposit/verify/${paymentReference}`, {
+        const response = await fetch(`${API_URL}/api/v1/verify-payment?reference=${paymentReference}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -84,7 +84,7 @@ const PaymentCallback = () => {
         const token = localStorage.getItem('authToken');
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
         
-        const response = await fetch(`${API_URL}/api/wallet/deposit/verify/${paymentReference}`, {
+        const response = await fetch(`${API_URL}/api/v1/verify-payment?reference=${paymentReference}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

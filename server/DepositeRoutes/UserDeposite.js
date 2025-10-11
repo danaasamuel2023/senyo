@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { Transaction, User } = require('../schema/schema');
+const { Transaction, User, Wallet } = require('../schema/schema');
 const axios = require('axios');
 const crypto = require('crypto');
+const WalletService = require('../services/walletService');
 
 // Paystack configuration
 const PAYSTACK_SECRET_KEY = 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b'; 
@@ -95,51 +96,122 @@ router.post('/deposit', async (req, res) => {
   }
 });
 
-// FIXED: Added transaction locking mechanism using processing field
+// FIXED: Updated to use new wallet system with proper integration
 // Process a successful payment and update user wallet
 async function processSuccessfulPayment(reference) {
-  // Use findOneAndUpdate with proper conditions to prevent race conditions
-  const transaction = await Transaction.findOneAndUpdate(
-    { 
-      reference, 
-      status: 'pending',
-      processing: { $ne: true } // Only update if not already being processed
-    },
-    { 
-      $set: { 
-        processing: true  // Mark as being processed to prevent double processing
-      } 
-    },
-    { new: true }
-  );
-
-  if (!transaction) {
-    console.log(`Transaction ${reference} not found or already processed/processing`);
-    return { success: false, message: 'Transaction not found or already processed' };
-  }
-
   try {
-    // Now safely update the transaction status
-    transaction.status = 'completed';
-    await transaction.save();
-    console.log(`Transaction ${reference} marked as completed`);
-
-    // Update user's wallet balance with the original amount (without fee)
-    const user = await User.findById(transaction.userId);
-    if (user) {
-      user.walletBalance += transaction.amount; 
-      await user.save();
-      console.log(`User ${user._id} wallet updated, new balance: ${user.walletBalance}`);
-      return { success: true, message: 'Deposit successful' };
+    console.log(`[DEPOSIT] Processing successful payment: ${reference}`);
+    
+    // Check if this is a new wallet-based transaction (starts with DEPOSIT-)
+    if (reference.startsWith('DEPOSIT-')) {
+      // Find the wallet that contains this transaction
+      const wallet = await Wallet.findOne({ 
+        'transactions.reference': reference 
+      });
+      
+      if (!wallet) {
+        console.log(`[DEPOSIT] ❌ Wallet transaction not found: ${reference}`);
+        return { success: false, message: 'Transaction not found in wallet' };
+      }
+      
+      // Find the specific transaction
+      const transaction = wallet.transactions.find(t => t.reference === reference);
+      if (!transaction) {
+        console.log(`[DEPOSIT] ❌ Transaction not found: ${reference}`);
+        return { success: false, message: 'Transaction not found' };
+      }
+      
+      // Check if already processed
+      if (transaction.status === 'completed') {
+        console.log(`[DEPOSIT] ✅ Transaction already processed: ${reference}`);
+        return {
+          success: true,
+          message: 'Payment already processed',
+          newBalance: wallet.balance
+        };
+      }
+      
+      // Process the payment using WalletService
+      const result = await WalletService.updateWalletBalance(
+        wallet.userId,
+        transaction.amount,
+        'deposit',
+        {
+          reference: transaction.reference,
+          description: 'Wallet deposit via Paystack',
+          gateway: 'paystack',
+          paystackReference: reference
+        }
+      );
+      
+      if (result.success) {
+        // Update transaction status
+        const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+        if (transactionIndex !== -1) {
+          wallet.transactions[transactionIndex].status = 'completed';
+          wallet.transactions[transactionIndex].completedAt = new Date();
+          wallet.transactions[transactionIndex].balanceAfter = result.newBalance;
+          await wallet.save();
+        }
+        
+        console.log(`[DEPOSIT] ✅ Payment processed successfully: ${reference}`);
+        console.log(`[DEPOSIT] Amount: ₵${transaction.amount}, New Balance: ₵${result.newBalance}`);
+        
+        return {
+          success: true,
+          message: 'Deposit successful',
+          newBalance: result.newBalance
+        };
+      } else {
+        console.log(`[DEPOSIT] ❌ Payment processing failed: ${reference} - ${result.error}`);
+        return { success: false, message: result.error };
+      }
     } else {
-      console.error(`User not found for transaction ${reference}`);
-      return { success: false, message: 'User not found' };
+      // For legacy transactions, use the original method
+      const transaction = await Transaction.findOneAndUpdate(
+        { 
+          reference, 
+          status: 'pending',
+          processing: { $ne: true }
+        },
+        { 
+          $set: { 
+            processing: true
+          } 
+        },
+        { new: true }
+      );
+
+      if (!transaction) {
+        console.log(`[DEPOSIT] Transaction ${reference} not found or already processed/processing`);
+        return { success: false, message: 'Transaction not found or already processed' };
+      }
+
+      try {
+        transaction.status = 'completed';
+        await transaction.save();
+        console.log(`[DEPOSIT] Transaction ${reference} marked as completed`);
+
+        // Update user's wallet balance with the original amount (without fee)
+        const user = await User.findById(transaction.userId);
+        if (user) {
+          user.walletBalance += transaction.amount; 
+          await user.save();
+          console.log(`[DEPOSIT] User ${user._id} wallet updated, new balance: ${user.walletBalance}`);
+          return { success: true, message: 'Deposit successful', newBalance: user.walletBalance };
+        } else {
+          console.error(`[DEPOSIT] User not found for transaction ${reference}`);
+          return { success: false, message: 'User not found' };
+        }
+      } catch (error) {
+        transaction.processing = false;
+        await transaction.save();
+        throw error;
+      }
     }
   } catch (error) {
-    // If there's an error, release the processing lock
-    transaction.processing = false;
-    await transaction.save();
-    throw error;
+    console.error(`[DEPOSIT] Error processing payment ${reference}:`, error);
+    return { success: false, message: error.message };
   }
 }
 
@@ -471,6 +543,14 @@ router.post('/verify-pending-transaction/:transactionId', async (req, res) => {
       error: 'Internal server error'
     });
   }
+});
+
+// Webhook test endpoint (GET method for testing)
+router.get('/paystack/webhook', (req, res) => {
+  res.status(405).json({
+    success: false,
+    error: 'Method not allowed. Use POST for webhook processing.'
+  });
 });
 
 module.exports = router;
