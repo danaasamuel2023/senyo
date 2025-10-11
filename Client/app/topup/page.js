@@ -163,7 +163,7 @@ const PaymentSummary = ({ amount, fee, totalAmount, isLoading }) => {
       </h3>
       <div className="space-y-3">
         <div className="flex justify-between text-white/80">
-          <span className="text-sm">Deposit Amount</span>
+          <span className="text-sm">Amount</span>
           <span className="font-bold text-white">₵{parseFloat(amount).toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-white/80">
@@ -464,12 +464,12 @@ const TopUpPage = () => {
     const depositAmount = parseFloat(amount);
     
     if (!amount || depositAmount < 10) {
-      setError('Minimum deposit amount is ₵10');
+      setError('Minimum amount is ₵10');
       return;
     }
     
     if (depositAmount > 10000) {
-      setError('Maximum deposit amount is ₵10,000');
+      setError('Maximum amount is ₵10,000');
       return;
     }
     
@@ -485,16 +485,18 @@ const TopUpPage = () => {
       const token = localStorage.getItem('authToken');
       
       const depositData = {
-        userId,
         amount: depositAmount,
-        totalAmountWithFee: parseFloat(totalAmount),
-        email: userEmail
+        email: userEmail,
+        metadata: {
+          source: 'web_deposit',
+          userAgent: navigator.userAgent
+        }
       };
       
       console.log('Deposit request data:', depositData);
       
       const response = await retryRequest(async () => {
-        return await axios.post(getApiEndpoint('/api/v1/deposit'), depositData, {
+        return await axios.post(getApiEndpoint('/api/wallet/deposit'), depositData, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -503,14 +505,16 @@ const TopUpPage = () => {
         });
       });
       
-      if (response.data.paystackUrl) {
+      if (response.data.success && response.data.data.paystackUrl) {
         setSuccess('Redirecting to secure payment...');
         showToast('Redirecting to secure payment...', 'success');
         // Reset consecutive failures on success
         setConsecutiveFailures(0);
         setTimeout(() => {
-          window.location.href = response.data.paystackUrl;
+          window.location.href = response.data.data.paystackUrl;
         }, 1000);
+      } else {
+        throw new Error(response.data.message || 'Failed to initialize deposit');
       }
     } catch (error) {
       console.error('Deposit error:', error);
@@ -561,12 +565,12 @@ const TopUpPage = () => {
           }, 120000);
         } else if (status === 500 || status === 502 || status === 503) {
           setError('Server error. Please try again later.');
-        } else if (errorData?.error === 'Account is disabled') {
+        } else if (errorData?.message === 'Account is disabled') {
           setAccountStatus('disabled');
-          setDisableReason(errorData.disableReason || 'Account disabled');
+          setDisableReason(errorData.reason || 'Account disabled');
           setShowApprovalModal(true);
-        } else if (errorData?.error === 'Account not approved') {
-          if (errorData.approvalStatus === 'pending') {
+        } else if (errorData?.message === 'Account approval required' || errorData?.message === 'Account not approved') {
+          if (errorData.message === 'Account approval required') {
             setAccountStatus('pending');
           } else {
             setAccountStatus('not-approved');
@@ -574,7 +578,7 @@ const TopUpPage = () => {
           }
           setShowApprovalModal(true);
         } else {
-          setError(errorData?.error || errorData?.message || 'Failed to process deposit. Please try again.');
+          setError(errorData?.message || 'Failed to process deposit. Please try again.');
         }
       } else if (error.request) {
         setError('No response from server. Please check your internet connection.');
@@ -650,8 +654,8 @@ const TopUpPage = () => {
                 <Wallet className="w-6 h-6 text-black" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Top Up Wallet</h1>
-                <p className="text-gray-400 mt-1">Add funds to your account</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Deposit Funds</h1>
+                <p className="text-gray-400 mt-1">Add money to your wallet</p>
               </div>
             </div>
           </div>
@@ -691,7 +695,7 @@ const TopUpPage = () => {
                     <CreditCard className="w-6 h-6 text-black" strokeWidth={2} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-black">Add Funds</h2>
+                    <h2 className="text-xl font-bold text-black">Deposit Money</h2>
                     <p className="text-black/90 text-sm">Quick & Secure Payment</p>
                   </div>
                 </div>

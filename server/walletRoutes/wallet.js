@@ -1009,4 +1009,439 @@ function generateTopCategories(transactions) {
     .slice(0, 5);
 }
 
+// Deposit funds to wallet with Paystack integration
+router.post('/deposit', verifyAuth, async (req, res) => {
+  try {
+    const { amount, email, phoneNumber, metadata = {} } = req.body;
+    const userId = req.user._id;
+
+    logWalletActivity(userId, 'DEPOSIT_REQUEST', { amount, email });
+
+    // Enhanced validation
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid amount. Amount must be greater than 0.' 
+      });
+    }
+
+    if (amount > 100000) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Amount exceeds maximum limit of GHS 100,000 per transaction.' 
+      });
+    }
+
+    if (amount < 10) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Minimum deposit amount is GHS 10.' 
+      });
+    }
+
+    // Get user information
+    const user = await User.findById(userId).select('email firstName lastName phoneNumber');
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+
+    // Check if user's account is disabled
+    if (user.isDisabled) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is disabled',
+        reason: user.disableReason || 'Account has been disabled'
+      });
+    }
+
+    // Check if user's account is approved
+    if (user.approvalStatus === 'pending') {
+      return res.status(403).json({
+        success: false,
+        message: 'Account approval required',
+        reason: 'Your account requires approval before you can make deposits'
+      });
+    }
+
+    if (user.approvalStatus === 'rejected') {
+      return res.status(403).json({
+        success: false,
+        message: 'Account not approved',
+        reason: user.rejectionReason || 'Your account has been rejected'
+      });
+    }
+
+    // Get or create wallet
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      wallet = new Wallet({ 
+        userId,
+        balance: 0,
+        currency: 'GHS',
+        frozen: false,
+        transactions: []
+      });
+      await wallet.save();
+    }
+
+    // Check if wallet is frozen
+    if (wallet.frozen) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Wallet is frozen',
+        reason: wallet.freezeReason 
+      });
+    }
+
+    // Check daily/monthly limits
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const todayDeposits = wallet.transactions
+      .filter(t => 
+        t.type === 'deposit' && 
+        t.status === 'completed' && 
+        t.createdAt >= today
+      )
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    const monthlyDeposits = wallet.transactions
+      .filter(t => 
+        t.type === 'deposit' && 
+        t.status === 'completed' && 
+        t.createdAt >= monthStart
+      )
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    if (todayDeposits + amount > (wallet.dailyLimit || 10000)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Daily deposit limit exceeded',
+        limit: wallet.dailyLimit || 10000,
+        used: todayDeposits,
+        remaining: (wallet.dailyLimit || 10000) - todayDeposits
+      });
+    }
+
+    if (monthlyDeposits + amount > (wallet.monthlyLimit || 50000)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Monthly deposit limit exceeded',
+        limit: wallet.monthlyLimit || 50000,
+        used: monthlyDeposits,
+        remaining: (wallet.monthlyLimit || 50000) - monthlyDeposits
+      });
+    }
+
+    // Check maximum balance limit
+    if (wallet.balance + amount > (wallet.maxBalance || 100000)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Maximum wallet balance would be exceeded',
+        currentBalance: wallet.balance,
+        depositAmount: amount,
+        wouldBeBalance: wallet.balance + amount,
+        limit: wallet.maxBalance || 100000
+      });
+    }
+
+    // Generate unique reference for Paystack
+    const reference = `DEPOSIT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create pending transaction record
+    const transaction = {
+      type: 'deposit',
+      amount: parseFloat(amount),
+      balanceBefore: wallet.balance,
+      balanceAfter: wallet.balance, // Will be updated after successful payment
+      description: 'Wallet deposit via Paystack',
+      reference,
+      status: 'pending',
+      source: 'paystack',
+      metadata: {
+        ...metadata,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        depositType: 'paystack'
+      },
+      createdAt: new Date()
+    };
+
+    wallet.transactions.push(transaction);
+    await wallet.save();
+
+    // Initialize Paystack payment
+    const paystackData = {
+      email: email || user.email,
+      amount: Math.round(parseFloat(amount) * 100), // Convert to pesewas
+      currency: 'GHS',
+      reference,
+      callback_url: `${process.env.FRONTEND_URL || 'https://www.unlimiteddatagh.com'}/payment/callback?reference=${reference}`,
+      metadata: {
+        userId: userId,
+        depositAmount: amount,
+        customerName: `${user.firstName} ${user.lastName}`,
+        phoneNumber: phoneNumber || user.phoneNumber,
+        ...metadata
+      },
+      channels: ['card', 'bank', 'mobile_money']
+    };
+
+    // Add phone number for mobile money if provided
+    if (phoneNumber) {
+      paystackData.metadata.phone = phoneNumber;
+    }
+
+    try {
+      const axios = require('axios');
+      const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b';
+      const PAYSTACK_BASE_URL = 'https://api.paystack.co';
+
+      const paystackResponse = await axios.post(
+        `${PAYSTACK_BASE_URL}/transaction/initialize`,
+        paystackData,
+        {
+          headers: {
+            'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (paystackResponse.data.status) {
+        logWalletActivity(userId, 'DEPOSIT_INITIATED', { 
+          amount, 
+          reference,
+          paystackUrl: paystackResponse.data.data.authorization_url
+        });
+
+        res.json({
+          success: true,
+          message: 'Deposit initiated successfully',
+          data: {
+            reference,
+            amount: parseFloat(amount),
+            paystackUrl: paystackResponse.data.data.authorization_url,
+            accessCode: paystackResponse.data.data.access_code
+          },
+          limits: {
+            dailyRemaining: (wallet.dailyLimit || 10000) - todayDeposits,
+            monthlyRemaining: (wallet.monthlyLimit || 50000) - monthlyDeposits,
+            maxBalanceRemaining: (wallet.maxBalance || 100000) - wallet.balance
+          }
+        });
+      } else {
+        throw new Error('Paystack initialization failed');
+      }
+    } catch (paystackError) {
+      console.error('Paystack initialization error:', paystackError);
+      
+      // Update transaction status to failed
+      const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+      if (transactionIndex !== -1) {
+        wallet.transactions[transactionIndex].status = 'failed';
+        wallet.transactions[transactionIndex].metadata.error = paystackError.message;
+        await wallet.save();
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to initialize deposit. Please try again.',
+        error: process.env.NODE_ENV === 'development' ? paystackError.message : undefined
+      });
+    }
+
+  } catch (error) {
+    logWalletActivity(req.user._id, 'DEPOSIT_ERROR', { error: error.message });
+    console.error('Error processing deposit:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to process deposit request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Verify deposit payment status
+router.get('/deposit/verify/:reference', verifyAuth, async (req, res) => {
+  try {
+    const { reference } = req.params;
+    const userId = req.user._id;
+
+    logWalletActivity(userId, 'DEPOSIT_VERIFY_REQUEST', { reference });
+
+    if (!reference) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reference is required'
+      });
+    }
+
+    // Find the transaction in wallet
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wallet not found'
+      });
+    }
+
+    const transaction = wallet.transactions.find(t => t.reference === reference);
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    // If already completed, return success
+    if (transaction.status === 'completed') {
+        return res.json({
+          success: true,
+          message: 'Deposit already completed',
+        data: {
+          reference,
+          amount: transaction.amount,
+          status: 'completed',
+          completedAt: transaction.completedAt
+        }
+      });
+    }
+
+    // If failed, return failure
+    if (transaction.status === 'failed') {
+        return res.json({
+          success: false,
+          message: 'Deposit failed',
+        data: {
+          reference,
+          amount: transaction.amount,
+          status: 'failed',
+          error: transaction.metadata?.error
+        }
+      });
+    }
+
+    // If still pending, verify with Paystack
+    if (transaction.status === 'pending') {
+      try {
+        const axios = require('axios');
+        const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b';
+        const PAYSTACK_BASE_URL = 'https://api.paystack.co';
+
+        const paystackResponse = await axios.get(
+          `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        const { data } = paystackResponse.data;
+
+        if (data.status === 'success') {
+          // Process successful payment using WalletService
+          const result = await WalletService.updateWalletBalance(
+            userId,
+            transaction.amount,
+            'deposit',
+            {
+              reference: transaction.reference,
+              description: 'Wallet deposit via Paystack',
+              gateway: 'paystack',
+              paystackReference: data.reference
+            }
+          );
+
+          if (result.success) {
+            // Update transaction status
+            const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+            if (transactionIndex !== -1) {
+              wallet.transactions[transactionIndex].status = 'completed';
+              wallet.transactions[transactionIndex].completedAt = new Date();
+              wallet.transactions[transactionIndex].balanceAfter = result.newBalance;
+              await wallet.save();
+            }
+
+            logWalletActivity(userId, 'DEPOSIT_COMPLETED', { 
+              reference, 
+              amount: transaction.amount,
+              newBalance: result.newBalance
+            });
+
+            return res.json({
+              success: true,
+              message: 'Deposit completed successfully',
+              data: {
+                reference,
+                amount: transaction.amount,
+                status: 'completed',
+                newBalance: result.newBalance,
+                completedAt: new Date()
+              }
+            });
+          } else {
+            return res.status(500).json({
+              success: false,
+              message: 'Failed to update wallet balance',
+              error: result.error
+            });
+          }
+        } else if (data.status === 'failed') {
+          // Update transaction status to failed
+          const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+          if (transactionIndex !== -1) {
+            wallet.transactions[transactionIndex].status = 'failed';
+            wallet.transactions[transactionIndex].metadata.error = 'Payment failed on Paystack';
+            await wallet.save();
+          }
+
+          return res.json({
+            success: false,
+            message: 'Payment failed',
+            data: {
+              reference,
+              amount: transaction.amount,
+              status: 'failed'
+            }
+          });
+        } else {
+          // Still pending
+          return res.json({
+            success: false,
+            message: 'Payment still pending',
+            data: {
+              reference,
+              amount: transaction.amount,
+              status: 'pending'
+            }
+          });
+        }
+      } catch (paystackError) {
+        console.error('Paystack verification error:', paystackError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to verify payment with Paystack',
+          error: process.env.NODE_ENV === 'development' ? paystackError.message : undefined
+        });
+      }
+    }
+
+  } catch (error) {
+    logWalletActivity(req.user._id, 'DEPOSIT_VERIFY_ERROR', { error: error.message });
+    console.error('Error verifying deposit:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify deposit',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
