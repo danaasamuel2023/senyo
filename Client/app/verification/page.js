@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   CheckCircle, XCircle, Loader2, ArrowRight, Wallet, 
@@ -8,14 +8,12 @@ import {
 } from 'lucide-react';
 
 // API Configuration
-const getApiEndpoint = (path) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
-  return `${baseUrl}${path}`;
-};
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
 
 const PaymentVerificationPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
   const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('Processing your payment...');
   const [paymentData, setPaymentData] = useState(null);
@@ -23,58 +21,40 @@ const PaymentVerificationPage = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [userBalance, setUserBalance] = useState(null);
   const [authToken, setAuthToken] = useState(null);
-  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 5000;
 
-  // Handle client-side hydration
+  // Handle client-side mounting
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
     
-    // Safely access localStorage after component mounts
+    // Get auth token from localStorage
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('authToken');
       setAuthToken(token);
     }
   }, []);
 
-  // Verify payment when client is ready
-  useEffect(() => {
-    if (!isClient) return;
-
-    const reference = searchParams.get('reference');
-    const source = searchParams.get('source');
-    const trxref = searchParams.get('trxref');
-
-    console.log('Payment verification params:', { reference, source, trxref });
-
-    if (!reference) {
-      setStatus('error');
-      setMessage('No payment reference found in URL');
-      return;
-    }
-
-    // Start verification process
-    verifyPayment(reference);
-  }, [isClient, searchParams]);
-
-  const verifyPayment = async (reference, isRetry = false) => {
+  // Verify payment function
+  const verifyPayment = useCallback(async (reference, isRetry = false) => {
     try {
       if (!isRetry) {
         setMessage('Verifying your payment with Paystack...');
+        setStatus('loading');
       } else {
         setIsRetrying(true);
         setMessage(`Retrying verification... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
       }
       
       const response = await fetch(
-        getApiEndpoint(`/api/v1/verify-payment?reference=${reference}`), 
+        `${API_BASE_URL}/api/v1/verify-payment?reference=${reference}`, 
         {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${authToken || ''}`
           }
         }
       );
@@ -87,11 +67,11 @@ const PaymentVerificationPage = () => {
         setMessage('Payment verified successfully! Your wallet has been updated.');
         setPaymentData(data.data);
         
-        // Update user balance if provided
+        // Update user balance
         if (data.data.newBalance !== undefined) {
           setUserBalance(data.data.newBalance);
           
-          // Update localStorage with new balance
+          // Update localStorage
           if (typeof window !== 'undefined') {
             try {
               const storedUserData = localStorage.getItem('userData');
@@ -109,17 +89,16 @@ const PaymentVerificationPage = () => {
           }
         }
 
-        // Redirect to dashboard after 5 seconds
+        // Redirect after 5 seconds
         setTimeout(() => {
           router.push('/');
         }, 5000);
       } else {
-        // Handle different error scenarios
-        if (data.message?.includes('pending') || data.message?.includes('still processing')) {
+        // Handle errors
+        if (data.message?.includes('pending') || data.message?.includes('processing')) {
           setStatus('pending');
           setMessage('Payment is still being processed. Please wait...');
           
-          // Retry after delay if not exceeded max retries
           if (retryCount < MAX_RETRIES) {
             setTimeout(() => {
               setRetryCount(prev => prev + 1);
@@ -127,7 +106,7 @@ const PaymentVerificationPage = () => {
             }, RETRY_DELAY);
           } else {
             setStatus('error');
-            setMessage('Payment verification timed out. Please contact support if your payment was successful.');
+            setMessage('Payment verification timed out. Please contact support if payment was successful.');
           }
         } else {
           setStatus('error');
@@ -137,7 +116,6 @@ const PaymentVerificationPage = () => {
     } catch (error) {
       console.error('Payment verification error:', error);
       
-      // Retry on network errors
       if (retryCount < MAX_RETRIES) {
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
@@ -145,12 +123,31 @@ const PaymentVerificationPage = () => {
         }, RETRY_DELAY);
       } else {
         setStatus('error');
-        setMessage('Failed to verify payment. Please check your connection and try again.');
+        setMessage('Failed to verify payment. Please check your connection.');
       }
     } finally {
       setIsRetrying(false);
     }
-  };
+  }, [authToken, retryCount, router]);
+
+  // Start verification when component mounts
+  useEffect(() => {
+    if (!mounted || !authToken) return;
+
+    const reference = searchParams.get('reference');
+    const source = searchParams.get('source');
+    const trxref = searchParams.get('trxref');
+
+    console.log('Payment params:', { reference, source, trxref });
+
+    if (!reference) {
+      setStatus('error');
+      setMessage('No payment reference found in URL');
+      return;
+    }
+
+    verifyPayment(reference);
+  }, [mounted, authToken, searchParams, verifyPayment]);
 
   const handleRetry = () => {
     const reference = searchParams.get('reference');
@@ -159,14 +156,6 @@ const PaymentVerificationPage = () => {
       setStatus('loading');
       verifyPayment(reference);
     }
-  };
-
-  const handleGoToDashboard = () => {
-    router.push('/');
-  };
-
-  const handleGoToOrders = () => {
-    router.push('/myorders');
   };
 
   const formatAmount = (amount) => {
@@ -223,12 +212,12 @@ const PaymentVerificationPage = () => {
     }
   };
 
-  // Show loading state during hydration
-  if (!isClient) {
+  // Show loading until mounted
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full relative z-10">
-          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl shadow-2xl p-8 text-center border border-[#FFCC08]/20">
+        <div className="max-w-md w-full">
+          <div className="bg-gray-800/30 backdrop-blur-xl rounded-2xl p-8 text-center border border-[#FFCC08]/20">
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-100 mb-6">
               <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
             </div>
@@ -326,7 +315,7 @@ const PaymentVerificationPage = () => {
             {status === 'success' && (
               <>
                 <button
-                  onClick={handleGoToDashboard}
+                  onClick={() => router.push('/')}
                   className="w-full flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-[#FFCC08] to-[#FFD700] text-black font-bold hover:from-[#FFD700] hover:to-[#FFCC08] transition-all duration-300 transform hover:scale-105"
                 >
                   <Wallet className="mr-2 w-5 h-5" />
@@ -335,7 +324,7 @@ const PaymentVerificationPage = () => {
                 </button>
                 
                 <button
-                  onClick={handleGoToOrders}
+                  onClick={() => router.push('/myorders')}
                   className="w-full py-3 px-6 rounded-xl bg-gray-700/50 text-white font-medium hover:bg-gray-600/50 transition-all duration-300"
                 >
                   View Transaction History
