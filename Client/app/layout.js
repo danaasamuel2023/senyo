@@ -2,7 +2,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import Footer from "@/component/footer";
-import WhatsAppLink from "@/component/groupIcon";
+import FloatingWhatsAppIcon from "@/component/groupIcon";
 import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
 // import PullToRefreshWrapper from "@/component/PullToRefreshWrapper"; // Temporarily disabled
@@ -543,7 +543,7 @@ export default function RootLayout({ children }) {
               </div>
               
               {/* WhatsApp floating button - Mobile optimized position */}
-              <WhatsAppLink />
+              <FloatingWhatsAppIcon />
             </main>
             
             <Footer hideOnAdmin={true} />
