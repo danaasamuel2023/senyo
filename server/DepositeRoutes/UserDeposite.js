@@ -192,12 +192,50 @@ async function processSuccessfulPayment(reference) {
         await transaction.save();
         console.log(`[DEPOSIT] Transaction ${reference} marked as completed`);
 
-        // Update user's wallet balance with the original amount (without fee)
+        // Update both User.walletBalance and Wallet.balance for consistency
         const user = await User.findById(transaction.userId);
         if (user) {
+          // Update User.walletBalance
           user.walletBalance += transaction.amount; 
           await user.save();
+          
+          // Update Wallet.balance to keep consistency
+          let wallet = await Wallet.findOne({ userId: transaction.userId });
+          if (!wallet) {
+            wallet = new Wallet({
+              userId: transaction.userId,
+              balance: 0,
+              currency: 'GHS',
+              frozen: false,
+              transactions: []
+            });
+          }
+          
+          const balanceBefore = wallet.balance;
+          wallet.balance += transaction.amount;
+          wallet.lastTransaction = new Date();
+          
+          // Add transaction record to wallet
+          wallet.transactions.push({
+            type: 'deposit',
+            amount: transaction.amount,
+            balanceBefore,
+            balanceAfter: wallet.balance,
+            description: 'Wallet deposit via Paystack',
+            reference: transaction.reference,
+            status: 'completed',
+            metadata: {
+              gateway: 'paystack',
+              paystackReference: reference,
+              legacyTransaction: true
+            },
+            createdAt: new Date()
+          });
+          
+          await wallet.save();
+          
           console.log(`[DEPOSIT] User ${user._id} wallet updated, new balance: ${user.walletBalance}`);
+          console.log(`[DEPOSIT] Wallet ${wallet._id} balance updated, new balance: ${wallet.balance}`);
           return { success: true, message: 'Deposit successful', newBalance: user.walletBalance };
         } else {
           console.error(`[DEPOSIT] User not found for transaction ${reference}`);

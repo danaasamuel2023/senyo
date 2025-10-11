@@ -34,8 +34,15 @@ router.get('/balance', verifyAuth, async (req, res) => {
       await wallet.save();
     }
 
-    // Get user information for enhanced response
-    const user = await User.findById(req.user._id).select('firstName lastName email phoneNumber');
+    // Get user information for enhanced response and sync balance
+    const user = await User.findById(req.user._id).select('firstName lastName email phoneNumber walletBalance');
+    
+    // Sync User.walletBalance with Wallet.balance if they differ
+    if (user && user.walletBalance !== wallet.balance) {
+      console.log(`[WALLET_SYNC] Syncing User.walletBalance (${user.walletBalance}) with Wallet.balance (${wallet.balance})`);
+      user.walletBalance = wallet.balance;
+      await user.save();
+    }
     
     // Get recent transactions (last 15 for better overview)
     const recentTransactions = wallet.transactions

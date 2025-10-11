@@ -1523,6 +1523,13 @@ router.get('/user-dashboard/:userId', authMiddleware, async (req, res) => {
 
     const actualBalance = wallet.balance;
 
+    // Sync User.walletBalance with Wallet.balance if they differ
+    if (user.walletBalance !== actualBalance) {
+      console.log(`[USER_DASHBOARD_SYNC] Syncing User.walletBalance (${user.walletBalance}) with Wallet.balance (${actualBalance})`);
+      user.walletBalance = actualBalance;
+      await user.save();
+    }
+
     logOperation('USER_DASHBOARD_USER_FOUND', {
       userId,
       walletBalance: actualBalance,
