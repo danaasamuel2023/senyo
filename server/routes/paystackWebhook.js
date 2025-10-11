@@ -40,7 +40,7 @@ const verifyPaystackSignature = (req, res, next) => {
 };
 
 /**
- * Process successful payment with in-memory caching
+ * Process successful payment with wallet integration
  */
 const processSuccessfulPayment = async (transactionData) => {
   try {
@@ -48,26 +48,103 @@ const processSuccessfulPayment = async (transactionData) => {
     
     console.log(`[WEBHOOK] Processing successful payment: ${reference}`);
     
-    // Use WalletService for cached processing
-    const result = await WalletService.processPayment(reference);
-    
-    if (result.success) {
-      console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
-      console.log(`[WEBHOOK] Amount: ₵${amount / 100}, New Balance: ₵${result.newBalance}`);
+    // Check if this is a deposit transaction (starts with DEPOSIT-)
+    if (reference.startsWith('DEPOSIT-')) {
+      // Find the wallet that contains this transaction
+      const { Wallet } = require('../schema/schema');
+      const wallet = await Wallet.findOne({ 
+        'transactions.reference': reference 
+      });
       
-      return {
-        success: true,
-        message: 'Payment processed successfully',
-        data: {
-          reference,
-          amount: amount / 100,
-          newBalance: result.newBalance,
-          fromCache: result.fromCache || false
+      if (!wallet) {
+        console.log(`[WEBHOOK] ❌ Wallet transaction not found: ${reference}`);
+        return { success: false, error: 'Transaction not found in wallet' };
+      }
+      
+      // Find the specific transaction
+      const transaction = wallet.transactions.find(t => t.reference === reference);
+      if (!transaction) {
+        console.log(`[WEBHOOK] ❌ Transaction not found: ${reference}`);
+        return { success: false, error: 'Transaction not found' };
+      }
+      
+      // Check if already processed
+      if (transaction.status === 'completed') {
+        console.log(`[WEBHOOK] ✅ Transaction already processed: ${reference}`);
+        return {
+          success: true,
+          message: 'Payment already processed',
+          data: {
+            reference,
+            amount: amount / 100,
+            newBalance: wallet.balance,
+            fromCache: true
+          }
+        };
+      }
+      
+      // Process the payment using WalletService
+      const result = await WalletService.updateWalletBalance(
+        wallet.userId,
+        transaction.amount,
+        'deposit',
+        {
+          reference: transaction.reference,
+          description: 'Wallet deposit via Paystack (webhook)',
+          gateway: 'paystack',
+          paystackReference: reference
         }
-      };
+      );
+      
+      if (result.success) {
+        // Update transaction status
+        const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+        if (transactionIndex !== -1) {
+          wallet.transactions[transactionIndex].status = 'completed';
+          wallet.transactions[transactionIndex].completedAt = new Date();
+          wallet.transactions[transactionIndex].balanceAfter = result.newBalance;
+          await wallet.save();
+        }
+        
+        console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
+        console.log(`[WEBHOOK] Amount: ₵${amount / 100}, New Balance: ₵${result.newBalance}`);
+        
+        return {
+          success: true,
+          message: 'Payment processed successfully',
+          data: {
+            reference,
+            amount: amount / 100,
+            newBalance: result.newBalance,
+            fromCache: false
+          }
+        };
+      } else {
+        console.log(`[WEBHOOK] ❌ Payment processing failed: ${reference} - ${result.error}`);
+        return { success: false, error: result.error };
+      }
     } else {
-      console.log(`[WEBHOOK] ❌ Payment processing failed: ${reference} - ${result.error}`);
-      return { success: false, error: result.error };
+      // For non-deposit transactions, use the original WalletService method
+      const result = await WalletService.processPayment(reference);
+      
+      if (result.success) {
+        console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
+        console.log(`[WEBHOOK] Amount: ₵${amount / 100}, New Balance: ₵${result.newBalance}`);
+        
+        return {
+          success: true,
+          message: 'Payment processed successfully',
+          data: {
+            reference,
+            amount: amount / 100,
+            newBalance: result.newBalance,
+            fromCache: result.fromCache || false
+          }
+        };
+      } else {
+        console.log(`[WEBHOOK] ❌ Payment processing failed: ${reference} - ${result.error}`);
+        return { success: false, error: result.error };
+      }
     }
   } catch (error) {
     console.log(`[WEBHOOK] ❌ Error processing payment: ${error.message}`);
