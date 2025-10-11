@@ -258,6 +258,37 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Balance update check endpoint for real-time updates
+app.get('/api/balance-update/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Check if there's a pending balance update for this user
+    if (global.balanceUpdateEvents && global.balanceUpdateEvents.has(userId)) {
+      const updateEvent = global.balanceUpdateEvents.get(userId);
+      global.balanceUpdateEvents.delete(userId); // Remove after sending
+      
+      return res.json({
+        success: true,
+        hasUpdate: true,
+        data: updateEvent
+      });
+    }
+    
+    return res.json({
+      success: true,
+      hasUpdate: false,
+      message: 'No pending balance updates'
+    });
+  } catch (error) {
+    console.error('Balance update check error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check balance updates'
+    });
+  }
+});
+
 // Statistics endpoint
 app.get('/api/admin/statistics', async (req, res) => {
   try {

@@ -83,6 +83,16 @@ const PaymentVerificationPage = () => {
               };
               
               localStorage.setItem('userData', JSON.stringify(updatedUserData));
+              
+              // Dispatch balance update event for real-time updates
+              window.dispatchEvent(new CustomEvent('balanceUpdated', {
+                detail: {
+                  newBalance: data.data.newBalance,
+                  reference: data.data.reference,
+                  amount: data.data.amount,
+                  timestamp: new Date().toISOString()
+                }
+              }));
             } catch (error) {
               console.error('Error updating localStorage:', error);
             }

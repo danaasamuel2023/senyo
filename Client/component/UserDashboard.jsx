@@ -7,6 +7,7 @@ import MobileMoneyDepositModal from './MobileMoneyDepositModal';
 import NotificationManager from './NotificationManager';
 import { getApiEndpoint as getCentralizedApiEndpoint } from '../utils/envConfig';
 import apiClient from '../utils/apiClient.js';
+import useBalanceUpdate from '../hooks/useBalanceUpdate';
 import { 
   CreditCard, Package, Database, DollarSign, TrendingUp, X, 
   AlertCircle, PlusCircle, User, BarChart2, Clock, Eye, Zap, 
@@ -164,6 +165,9 @@ const [selectedNetwork, setSelectedNetwork] = useState(null);
 const [showSalesChart, setShowSalesChart] = useState(false);
 const [salesPeriod, setSalesPeriod] = useState('7d');
 const [showMobileMoneyDeposit, setShowMobileMoneyDeposit] = useState(false);
+
+// Real-time balance update hook
+const { balanceUpdate, isPolling } = useBalanceUpdate(userId, true);
 
 // API Data State
 const [stats, setStats] = useState({
@@ -400,6 +404,26 @@ useEffect(() => {
   window.addEventListener('refreshDashboard', handleRefreshDashboard);
   return () => window.removeEventListener('refreshDashboard', handleRefreshDashboard);
 }, [fetchDashboardData]);
+
+// Handle real-time balance updates
+useEffect(() => {
+  if (balanceUpdate) {
+    console.log('💰 Real-time balance update received:', balanceUpdate);
+    
+    // Update stats with new balance
+    setStats(prevStats => ({
+      ...prevStats,
+      balance: balanceUpdate.newBalance
+    }));
+    
+    // Show success notification
+    success(`Payment successful! Your balance has been updated to ₵${balanceUpdate.newBalance.toFixed(2)}`);
+    
+    // Trigger animation
+    setAnimateStats(true);
+    setTimeout(() => setAnimateStats(false), 1000);
+  }
+}, [balanceUpdate, success]);
 
 // Effects
 useEffect(() => {

@@ -109,6 +109,25 @@ const processSuccessfulPayment = async (transactionData) => {
         console.log(`[WEBHOOK] ✅ Payment processed successfully: ${reference}`);
         console.log(`[WEBHOOK] Amount: ₵${amount / 100}, New Balance: ₵${result.newBalance}`);
         
+        // Trigger frontend balance update via custom event
+        try {
+          const { User } = require('../schema/schema');
+          const user = await User.findById(wallet.userId);
+          if (user) {
+            console.log(`[WEBHOOK] 📡 Broadcasting balance update for user ${user._id}`);
+            // This will be handled by the frontend to update balance in real-time
+            global.balanceUpdateEvents = global.balanceUpdateEvents || new Map();
+            global.balanceUpdateEvents.set(user._id, {
+              newBalance: result.newBalance,
+              reference,
+              amount: amount / 100,
+              timestamp: new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          console.error('[WEBHOOK] Error broadcasting balance update:', error);
+        }
+        
         return {
           success: true,
           message: 'Payment processed successfully',
