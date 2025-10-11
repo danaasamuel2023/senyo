@@ -268,6 +268,8 @@ const UnlimitedDataDeposit = () => {
   // Get user data from localStorage on component mount
   useEffect(() => {
     try {
+      if (typeof window === 'undefined') return;
+      
       const userDataString = localStorage.getItem('userData');
       if (userDataString) {
         const userData = JSON.parse(userDataString);
