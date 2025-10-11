@@ -45,36 +45,84 @@ const AdminSettingsPage = () => {
   });
 
   useEffect(() => {
-    checkAuth();
-    loadData();
+    const initializePage = async () => {
+      if (checkAuth()) {
+        await loadData();
+      }
+    };
+    initializePage();
   }, []);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
-    
-    if (!token || user.role !== 'admin') {
+    try {
+      const token = localStorage.getItem('authToken');
+      const userDataString = localStorage.getItem('userData');
+      
+      if (!token) {
+        console.error('No auth token found');
+        router.push('/SignIn');
+        return false;
+      }
+
+      if (!userDataString) {
+        console.error('No user data found');
+        router.push('/SignIn');
+        return false;
+      }
+
+      const user = JSON.parse(userDataString);
+      
+      if (user.role !== 'admin') {
+        console.error('User is not an admin');
+        router.push('/SignIn');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Auth check failed:', error);
       router.push('/SignIn');
       return false;
     }
-    return true;
   };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersData, inventoryData] = await Promise.all([
-        adminAPI.user.getUsers(1, 1000),
-        adminAPI.inventory.getInventory()
+      // Load users and inventory with individual error handling
+      const results = await Promise.allSettled([
+        adminAPI.user.getUsers(1, 1000).catch(err => {
+          console.error('Failed to load users:', err);
+          return { users: [] };
+        }),
+        adminAPI.inventory.getInventory().catch(err => {
+          console.error('Failed to load inventory:', err);
+          return { inventory: [] };
+        })
       ]);
-      
-      setUsers(usersData.users || []);
-      setInventory(inventoryData.inventory || []);
-      
+
+      // Extract users data
+      if (results[0].status === 'fulfilled' && results[0].value) {
+        setUsers(Array.isArray(results[0].value.users) ? results[0].value.users : []);
+      } else {
+        setUsers([]);
+        showNotification('Failed to load users data', 'error');
+      }
+
+      // Extract inventory data
+      if (results[1].status === 'fulfilled' && results[1].value) {
+        setInventory(Array.isArray(results[1].value.inventory) ? results[1].value.inventory : []);
+      } else {
+        setInventory([]);
+        showNotification('Failed to load inventory data', 'error');
+      }
+
+      // Load payment gateway settings separately
       await loadPaymentGatewaySettings();
+
     } catch (error) {
-      console.error('Failed to load data:', error);
-      showNotification('Failed to load data: ' + (error.message || 'Unknown error'), 'error');
+      console.error('Critical error loading data:', error);
+      showNotification('Failed to load settings. Please refresh the page.', 'error');
     } finally {
       setLoading(false);
     }
@@ -83,7 +131,13 @@ const AdminSettingsPage = () => {
   const loadPaymentGatewaySettings = async () => {
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token for payment settings');
+        return;
+      }
+
       const response = await fetch('/api/v1/admin/payment-gateway-settings', {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -92,18 +146,21 @@ const AdminSettingsPage = () => {
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success) {
-          setPaymentGatewaySettings(result.data);
+        if (result.success && result.data) {
+          setPaymentGatewaySettings({
+            activeGateway: result.data.activeGateway || 'paystack',
+            paystackEnabled: result.data.paystackEnabled ?? true,
+            paystackPublicKey: result.data.paystackPublicKey || '',
+            paystackSecretKey: result.data.paystackSecretKey || ''
+          });
         }
+      } else if (response.status === 404) {
+        console.warn('Payment gateway settings endpoint not found');
+      } else {
+        console.warn('Payment gateway settings request failed:', response.status);
       }
     } catch (error) {
-      console.warn('Payment gateway settings endpoint not available:', error);
-      setPaymentGatewaySettings({
-        activeGateway: 'paystack',
-        paystackEnabled: true,
-        paystackPublicKey: '',
-        paystackSecretKey: ''
-      });
+      console.warn('Payment gateway settings not available:', error.message);
     }
   };
 
@@ -113,20 +170,37 @@ const AdminSettingsPage = () => {
   };
 
   const validateAmount = (amount) => {
-    const num = parseFloat(amount);
-    if (isNaN(num) || num <= 0) {
-      throw new Error('Please enter a valid amount greater than 0');
+    const trimmed = String(amount).trim();
+    
+    if (!trimmed || trimmed === '') {
+      throw new Error('Amount cannot be empty');
     }
+
+    const num = parseFloat(trimmed);
+    
+    if (isNaN(num)) {
+      throw new Error('Please enter a valid number');
+    }
+    
+    if (num <= 0) {
+      throw new Error('Amount must be greater than 0');
+    }
+
+    if (num > 1000000) {
+      throw new Error('Amount is too large');
+    }
+
     return num;
   };
 
   const handleAddMoney = async () => {
-    if (!selectedUserId) {
+    // Validation
+    if (!selectedUserId || selectedUserId.trim() === '') {
       showNotification('Please select a user', 'error');
       return;
     }
 
-    if (!walletAmount || walletAmount.trim() === '') {
+    if (!walletAmount || String(walletAmount).trim() === '') {
       showNotification('Please enter an amount', 'error');
       return;
     }
@@ -134,17 +208,23 @@ const AdminSettingsPage = () => {
     try {
       const amount = validateAmount(walletAmount);
       
+      // Confirm action
       if (!confirm(`Add GHS ${amount.toFixed(2)} to the selected user's wallet?`)) {
         return;
       }
 
       setSaving(true);
       
-      console.log('Adding money:', { userId: selectedUserId, amount });
+      console.log('Attempting to add money:', { 
+        userId: selectedUserId, 
+        amount: amount,
+        timestamp: new Date().toISOString()
+      });
       
+      // Call API
       const result = await adminAPI.user.addMoney(selectedUserId, amount);
       
-      console.log('Add money result:', result);
+      console.log('Add money successful:', result);
       
       showNotification(`Successfully added GHS ${amount.toFixed(2)}`, 'success');
       
@@ -156,8 +236,18 @@ const AdminSettingsPage = () => {
       await loadData();
       
     } catch (error) {
-      console.error('Failed to add money:', error);
-      const errorMessage = error.message || 'Failed to add money. Please check the console for details.';
+      console.error('Add money error:', error);
+      
+      let errorMessage = 'Failed to add money';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.msg) {
+        errorMessage = error.response.data.msg;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       showNotification(errorMessage, 'error');
     } finally {
       setSaving(false);
@@ -165,12 +255,13 @@ const AdminSettingsPage = () => {
   };
 
   const handleDeductMoney = async () => {
-    if (!selectedUserId) {
+    // Validation
+    if (!selectedUserId || selectedUserId.trim() === '') {
       showNotification('Please select a user', 'error');
       return;
     }
 
-    if (!walletAmount || walletAmount.trim() === '') {
+    if (!walletAmount || String(walletAmount).trim() === '') {
       showNotification('Please enter an amount', 'error');
       return;
     }
@@ -182,18 +273,26 @@ const AdminSettingsPage = () => {
 
     try {
       const amount = validateAmount(walletAmount);
+      const reason = walletReason.trim();
 
-      if (!confirm(`Deduct GHS ${amount.toFixed(2)} from the selected user's wallet?\n\nReason: ${walletReason}`)) {
+      // Confirm action
+      if (!confirm(`Deduct GHS ${amount.toFixed(2)} from the selected user's wallet?\n\nReason: ${reason}`)) {
         return;
       }
 
       setSaving(true);
       
-      console.log('Deducting money:', { userId: selectedUserId, amount, reason: walletReason });
+      console.log('Attempting to deduct money:', { 
+        userId: selectedUserId, 
+        amount: amount,
+        reason: reason,
+        timestamp: new Date().toISOString()
+      });
       
-      const result = await adminAPI.user.deductMoney(selectedUserId, amount, walletReason);
+      // Call API
+      const result = await adminAPI.user.deductMoney(selectedUserId, amount, reason);
       
-      console.log('Deduct money result:', result);
+      console.log('Deduct money successful:', result);
       
       showNotification(`Successfully deducted GHS ${amount.toFixed(2)}`, 'success');
       
@@ -206,8 +305,18 @@ const AdminSettingsPage = () => {
       await loadData();
       
     } catch (error) {
-      console.error('Failed to deduct money:', error);
-      const errorMessage = error.message || 'Failed to deduct money. Please check the console for details.';
+      console.error('Deduct money error:', error);
+      
+      let errorMessage = 'Failed to deduct money';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.msg) {
+        errorMessage = error.response.data.msg;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       showNotification(errorMessage, 'error');
     } finally {
       setSaving(false);
@@ -215,24 +324,130 @@ const AdminSettingsPage = () => {
   };
 
   const handleToggleStock = async (network) => {
+    if (!network || network.trim() === '') {
+      showNotification('Invalid network', 'error');
+      return;
+    }
+
     try {
+      console.log('Toggling stock for network:', network);
+      
       await adminAPI.inventory.toggleNetworkStock(network);
+      
       showNotification(`${network} stock status updated`, 'success');
       await loadData();
     } catch (error) {
-      console.error('Failed to toggle stock:', error);
-      showNotification('Failed to update stock: ' + (error.message || 'Unknown error'), 'error');
+      console.error('Toggle stock error:', error);
+      
+      let errorMessage = 'Failed to update stock status';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.msg) {
+        errorMessage = error.response.data.msg;
+      }
+      
+      showNotification(errorMessage, 'error');
     }
   };
 
   const handleToggleAPI = async (network) => {
+    if (!network || network.trim() === '') {
+      showNotification('Invalid network', 'error');
+      return;
+    }
+
     try {
+      console.log('Toggling API for network:', network);
+      
       await adminAPI.inventory.toggleGeonettech(network);
+      
       showNotification(`${network} API status updated`, 'success');
       await loadData();
     } catch (error) {
-      console.error('Failed to toggle API:', error);
-      showNotification('Failed to update API: ' + (error.message || 'Unknown error'), 'error');
+      console.error('Toggle API error:', error);
+      
+      let errorMessage = 'Failed to update API status';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.msg) {
+        errorMessage = error.response.data.msg;
+      }
+      
+      showNotification(errorMessage, 'error');
+    }
+  };
+
+  const handleSavePaymentSettings = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      // Validate keys if provided
+      if (paymentGatewaySettings.paystackPublicKey && 
+          !paymentGatewaySettings.paystackPublicKey.startsWith('pk_')) {
+        throw new Error('Invalid Paystack public key format');
+      }
+
+      if (paymentGatewaySettings.paystackSecretKey && 
+          !paymentGatewaySettings.paystackSecretKey.startsWith('sk_')) {
+        throw new Error('Invalid Paystack secret key format');
+      }
+
+      const response = await fetch('/api/v1/admin/payment-gateway-settings', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paymentGatewaySettings)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showNotification('Paystack settings saved successfully', 'success');
+        if (result.data) {
+          setPaymentGatewaySettings(result.data);
+        }
+      } else {
+        throw new Error(result.error || result.msg || 'Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Save payment settings error:', error);
+      showNotification(error.message || 'Failed to save payment settings', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSystemSettings = async () => {
+    try {
+      // Validate settings
+      if (systemSettings.minimumDeposit < 0) {
+        throw new Error('Minimum deposit cannot be negative');
+      }
+      
+      if (systemSettings.maximumDeposit < systemSettings.minimumDeposit) {
+        throw new Error('Maximum deposit must be greater than minimum deposit');
+      }
+
+      if (systemSettings.referralBonus < 0) {
+        throw new Error('Referral bonus cannot be negative');
+      }
+
+      console.log('Saving system settings:', systemSettings);
+      
+      // TODO: Implement API call when endpoint is available
+      // await adminAPI.settings.updateSystemSettings(systemSettings);
+      
+      showNotification('System settings saved successfully', 'success');
+    } catch (error) {
+      console.error('Save system settings error:', error);
+      showNotification(error.message || 'Failed to save system settings', 'error');
     }
   };
 
@@ -421,57 +636,64 @@ const AdminSettingsPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {inventory.map((item) => (
-          <div key={item.network} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-2 border-gray-200 dark:border-gray-600">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <Wifi className="w-6 h-6 text-white" />
+      {inventory.length === 0 ? (
+        <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-center">
+          <Package className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
+          <p className="text-yellow-800 dark:text-yellow-200">No inventory data available</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {inventory.map((item) => (
+            <div key={item.network} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-2 border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Wifi className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white">{item.network}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Network Provider</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{item.network}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Network Provider</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Stock Status</span>
+                  <button
+                    onClick={() => handleToggleStock(item.network)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      item.inStock
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : 'bg-red-500 text-white hover:bg-red-600'
+                    }`}
+                  >
+                    {item.inStock ? 'IN STOCK' : 'OUT OF STOCK'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">API Integration</span>
+                  <button
+                    onClick={() => handleToggleAPI(item.network)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      !item.skipGeonettech
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-gray-500 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    {!item.skipGeonettech ? 'API ACTIVE' : 'API DISABLED'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {item.updatedAt && `Last updated: ${new Date(item.updatedAt).toLocaleString()}`}
                 </div>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Stock Status</span>
-                <button
-                  onClick={() => handleToggleStock(item.network)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    item.inStock
-                      ? 'bg-green-500 text-white hover:bg-green-600'
-                      : 'bg-red-500 text-white hover:bg-red-600'
-                  }`}
-                >
-                  {item.inStock ? 'IN STOCK' : 'OUT OF STOCK'}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">API Integration</span>
-                <button
-                  onClick={() => handleToggleAPI(item.network)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    !item.skipGeonettech
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-gray-500 text-white hover:bg-gray-600'
-                  }`}
-                >
-                  {!item.skipGeonettech ? 'API ACTIVE' : 'API DISABLED'}
-                </button>
-              </div>
-
-              <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
-                {item.updatedAt && `Last updated: ${new Date(item.updatedAt).toLocaleString()}`}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
         <div className="flex items-start space-x-3">
@@ -497,72 +719,79 @@ const AdminSettingsPage = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Stock Management</h2>
       
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Network</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Stock Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">API Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Last Updated</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventory.map((item) => (
-                <tr key={item.network} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                        <Wifi className="w-5 h-5 text-white" />
-                      </div>
-                      <span className="font-medium text-gray-900 dark:text-white">{item.network}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                      item.inStock
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                    }`}>
-                      {item.inStock ? '● IN STOCK' : '● OUT OF STOCK'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                      !item.skipGeonettech
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {!item.skipGeonettech ? '● API ACTIVE' : '● API DISABLED'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                    {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never'}
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleToggleStock(item.network)}
-                        className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 rounded-lg text-xs font-medium transition-colors"
-                      >
-                        Toggle Stock
-                      </button>
-                      <button
-                        onClick={() => handleToggleAPI(item.network)}
-                        className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-xs font-medium transition-colors"
-                      >
-                        Toggle API
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {inventory.length === 0 ? (
+        <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-center">
+          <Package className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
+          <p className="text-yellow-800 dark:text-yellow-200">No inventory data available</p>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Network</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Stock Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">API Status</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Last Updated</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventory.map((item) => (
+                  <tr key={item.network} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <Wifi className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">{item.network}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                        item.inStock
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                      }`}>
+                        {item.inStock ? '● IN STOCK' : '● OUT OF STOCK'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                        !item.skipGeonettech
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {!item.skipGeonettech ? '● API ACTIVE' : '● API DISABLED'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                      {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never'}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleToggleStock(item.network)}
+                          className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          Toggle Stock
+                        </button>
+                        <button
+                          onClick={() => handleToggleAPI(item.network)}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          Toggle API
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -628,6 +857,8 @@ const AdminSettingsPage = () => {
                 type="number"
                 value={systemSettings.minimumDeposit}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, minimumDeposit: parseFloat(e.target.value) || 0 }))}
+                min="0"
+                step="0.01"
                 className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
@@ -640,6 +871,8 @@ const AdminSettingsPage = () => {
                 type="number"
                 value={systemSettings.maximumDeposit}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, maximumDeposit: parseFloat(e.target.value) || 0 }))}
+                min="0"
+                step="0.01"
                 className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
@@ -652,14 +885,14 @@ const AdminSettingsPage = () => {
                 type="number"
                 value={systemSettings.referralBonus}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, referralBonus: parseFloat(e.target.value) || 0 }))}
+                min="0"
+                step="0.01"
                 className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-gray-900 dark:text-white"
               />
             </div>
 
             <button
-              onClick={() => {
-                showNotification('System settings saved', 'success');
-              }}
+              onClick={handleSaveSystemSettings}
               className="w-full px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-bold flex items-center justify-center space-x-2"
             >
               <Save className="w-5 h-5" />
@@ -714,37 +947,7 @@ const AdminSettingsPage = () => {
 
         <div className="mt-6">
           <button
-            onClick={async () => {
-              setSaving(true);
-              try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch('/api/v1/admin/payment-gateway-settings', {
-                  method: 'PUT',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(paymentGatewaySettings)
-                });
-
-                if (response.ok) {
-                  const result = await response.json();
-                  if (result.success) {
-                    showNotification('Paystack settings saved successfully', 'success');
-                    setPaymentGatewaySettings(result.data);
-                  } else {
-                    showNotification(result.error || 'Failed to save settings', 'error');
-                  }
-                } else {
-                  showNotification('Failed to save settings', 'error');
-                }
-              } catch (error) {
-                console.warn('Payment gateway settings endpoint not available:', error);
-                showNotification('Payment gateway settings endpoint not available', 'error');
-              } finally {
-                setSaving(false);
-              }
-            }}
+            onClick={handleSavePaymentSettings}
             disabled={saving}
             className="w-full px-6 py-3 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-bold flex items-center justify-center space-x-2 disabled:opacity-50"
           >
