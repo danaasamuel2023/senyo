@@ -873,7 +873,7 @@ const TransactionSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'transfer', 'refund', 'purchase', 'bonus'],
+    enum: ['deposit', 'withdrawal', 'transfer', 'refund', 'purchase', 'bonus', 'admin-deposit'],
     required: true,
     index: true
   },
@@ -1509,7 +1509,7 @@ const WalletSchema = new Schema({
   transactions: [{
     type: { 
       type: String, 
-      enum: ['deposit', 'purchase', 'refund', 'bonus', 'referral', 'withdrawal'],
+      enum: ['deposit', 'purchase', 'refund', 'bonus', 'referral', 'withdrawal', 'admin-deposit'],
       required: true 
     },
     amount: { 
@@ -1949,7 +1949,7 @@ const NotificationSystem = mongoose.model("NotificationSystem", NotificationSyst
 const Announcement = mongoose.model("Announcement", AnnouncementSchema);
 const UserAnnouncementInteraction = mongoose.model("UserAnnouncementInteraction", UserAnnouncementInteractionSchema);
 
-// Export new models
+// Export additional models
 module.exports.Wallet = Wallet;
 module.exports.Referral = Referral;
 module.exports.PromoCode = PromoCode;
