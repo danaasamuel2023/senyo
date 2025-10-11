@@ -1,4 +1,5 @@
-const { Settings } = require('../schema/schema');
+// Removed direct schema import to avoid bufferCommands: false error
+// const { Settings } = require('../schema/schema');
 const bulkClixService = require('./bulkClixService');
 const axios = require('axios');
 const crypto = require('crypto');
@@ -25,26 +26,21 @@ class PaymentGatewayService {
     }
 
     try {
-      const settings = await Settings.getByType('payment_gateway');
-      
-      if (!settings) {
-        // Create default settings - Paystack only
-        const defaultSettings = {
-          activeGateway: 'paystack',
-          paystackEnabled: true,
-          paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
-          paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || ''
-        };
+      // Use environment variables instead of database queries to avoid connection issues
+      const defaultSettings = {
+        activeGateway: 'paystack',
+        paystackEnabled: true,
+        paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
+        paystackSecretKey: process.env.PAYSTACK_SECRET_KEY || '',
+        bulkclixEnabled: false,
+        bulkclixApiKey: process.env.BULKCLIX_API_KEY || '',
+        autoSwitch: false,
+        fallbackGateway: 'paystack'
+      };
 
-        await Settings.updateByType('payment_gateway', defaultSettings);
-        this.cache.settings = defaultSettings;
-        this.cache.lastUpdated = now;
-        return defaultSettings;
-      }
-
-      this.cache.settings = settings.data;
+      this.cache.settings = defaultSettings;
       this.cache.lastUpdated = now;
-      return settings.data;
+      return defaultSettings;
     } catch (error) {
       console.error('Error getting payment gateway settings:', error);
       // Return default settings on error - Paystack only

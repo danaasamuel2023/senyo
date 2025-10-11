@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Transaction, User, Wallet } = require('../schema/schema');
 const axios = require('axios');
 const crypto = require('crypto');
 const WalletService = require('../services/walletService');
 
 // Paystack configuration
-const PAYSTACK_SECRET_KEY = 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b'; 
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_live_0fba72fb9c4fc71200d2e0cdbb4f2b37c1de396c'; 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 // Initiate Deposit
@@ -23,8 +24,11 @@ router.post('/deposit', async (req, res) => {
     }
 
     // Find user to get their email and check account status
+    console.log(`[DEPOSIT] Looking for user with ID: ${userId}`);
     const user = await User.findById(userId);
+    console.log(`[DEPOSIT] User found:`, !!user);
     if (!user) {
+      console.log(`[DEPOSIT] User not found for ID: ${userId}`);
       return res.status(404).json({ 
         success: false,
         error: 'User not found' 
@@ -41,10 +45,10 @@ router.post('/deposit', async (req, res) => {
       });
     }
 
-    // Generate a unique transaction reference
-    const reference = `DEP-${crypto.randomBytes(10).toString('hex')}-${Date.now()}`;
+    // Generate a unique transaction reference (fixed to match processing logic)
+    const reference = `DEPOSIT-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
 
-    // Create a pending transaction - store the original amount
+    // Create a pending transaction in both Transaction and Wallet collections
     const transaction = new Transaction({
       userId,
       type: 'deposit',
@@ -55,6 +59,37 @@ router.post('/deposit', async (req, res) => {
     });
 
     await transaction.save();
+
+    // Also create wallet transaction for new wallet system
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        currency: 'GHS',
+        frozen: false,
+        transactions: []
+      });
+    }
+
+    // Add pending transaction to wallet
+    wallet.transactions.push({
+      type: 'deposit',
+      amount: parseFloat(amount),
+      balanceBefore: wallet.balance,
+      balanceAfter: wallet.balance, // Will be updated after successful payment
+      description: 'Wallet deposit via Paystack',
+      reference,
+      status: 'pending',
+      metadata: {
+        gateway: 'paystack',
+        paystackReference: reference,
+        userId: userId
+      },
+      createdAt: new Date()
+    });
+
+    await wallet.save();
 
     // Initiate Paystack payment with the total amount including fee
     // Fixed: Parse amount to float, multiply by 100, then round to integer
@@ -102,6 +137,19 @@ async function processSuccessfulPayment(reference) {
   try {
     console.log(`[DEPOSIT] Processing successful payment: ${reference}`);
     
+    // Ensure database connection is ready (simplified)
+    if (mongoose.connection.readyState !== 1) {
+      console.log(`[DEPOSIT] Database not ready, waiting...`);
+      await new Promise((resolve) => {
+        if (mongoose.connection.readyState === 1) {
+          resolve();
+        } else {
+          mongoose.connection.once('connected', resolve);
+        }
+      });
+      console.log(`[DEPOSIT] Database connection ready`);
+    }
+    
     // Check if this is a new wallet-based transaction (starts with DEPOSIT-)
     if (reference.startsWith('DEPOSIT-')) {
       // Find the wallet that contains this transaction
@@ -145,13 +193,14 @@ async function processSuccessfulPayment(reference) {
       );
       
       if (result.success) {
-        // Update transaction status
-        const transactionIndex = wallet.transactions.findIndex(t => t.reference === reference);
+        // Update transaction status (re-fetch wallet to avoid version conflict)
+        const updatedWallet = await Wallet.findOne({ userId: wallet.userId });
+        const transactionIndex = updatedWallet.transactions.findIndex(t => t.reference === reference);
         if (transactionIndex !== -1) {
-          wallet.transactions[transactionIndex].status = 'completed';
-          wallet.transactions[transactionIndex].completedAt = new Date();
-          wallet.transactions[transactionIndex].balanceAfter = result.newBalance;
-          await wallet.save();
+          updatedWallet.transactions[transactionIndex].status = 'completed';
+          updatedWallet.transactions[transactionIndex].completedAt = new Date();
+          updatedWallet.transactions[transactionIndex].balanceAfter = result.newBalance;
+          await updatedWallet.save();
         }
         
         console.log(`[DEPOSIT] ✅ Payment processed successfully: ${reference}`);
@@ -249,6 +298,7 @@ async function processSuccessfulPayment(reference) {
     }
   } catch (error) {
     console.error(`[DEPOSIT] Error processing payment ${reference}:`, error);
+    console.error(`[DEPOSIT] Error stack:`, error.stack);
     return { success: false, message: error.message };
   }
 }

@@ -435,10 +435,17 @@ router.get('/agent-balance', async (req, res) => {
 
 // ===== MAIN PURCHASE DATA ROUTE WITH DATAMART INTEGRATION =====
 router.post('/purchase-data', async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
     const { 
       userId, 
       phoneNumber, 
@@ -1071,6 +1078,14 @@ router.post('/purchase-data', async (req, res) => {
 // Check Order Status (Updated to handle DataMart API)
 router.get('/order-status/:orderId', async (req, res) => {
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
     const orderId = req.params.orderId;
     logOperation('ORDER_STATUS_CHECK_REQUEST', { 
       orderId,

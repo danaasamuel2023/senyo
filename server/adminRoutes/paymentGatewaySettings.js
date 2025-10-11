@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Settings, Transactiondataunlimited } = require('../schema/schema');
 const adminAuth = require('../adminMiddleware/middleware');
 const authMiddleware = require('../middlewareUser/middleware');
@@ -8,6 +9,14 @@ const paymentGatewayService = require('../services/paymentGatewayService');
 // Get payment gateway settings
 router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
     // Find or create payment gateway settings
     let settings = await Settings.findOne({ type: 'payment_gateway' });
     
@@ -41,6 +50,14 @@ router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
 // Update payment gateway settings
 router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
     const {
       paystackPublicKey,
       paystackSecretKey
@@ -151,6 +168,14 @@ router.post('/payment-gateway-settings/test', authMiddleware, adminAuth, async (
 // Get current active gateway
 router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async (req, res) => {
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
     const settings = await Settings.findOne({ type: 'payment_gateway' });
     
     if (!settings) {

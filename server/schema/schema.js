@@ -9,7 +9,7 @@ const { Schema } = mongoose;
 mongoose.set('autoIndex', process.env.NODE_ENV !== 'production');
 
 // Connection pool optimization
-mongoose.set('bufferCommands', false);
+mongoose.set('bufferCommands', true);
 mongoose.set('bufferTimeoutMS', 10000);
 
 // Query optimization defaults

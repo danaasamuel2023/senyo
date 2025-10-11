@@ -3,12 +3,13 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const ConnectDB = () => {
+const ConnectDB = async () => {
     const username = process.env.MONGODB_USERNAME || 'dajounimarket';
     const password = process.env.MONGODB_PASSWORD || '';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
     
-    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
+    const database = process.env.MONGODB_DATABASE || 'unlimiteddata';
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/${database}?retryWrites=true&w=majority&appName=Cluster0`;
 
     // Connection options for better performance and reliability
     const options = {
@@ -16,17 +17,20 @@ const ConnectDB = () => {
         serverSelectionTimeoutMS: 10000, // Increase timeout to 10 seconds
         socketTimeoutMS: 30000, // Reduce socket timeout to 30 seconds
         connectTimeoutMS: 10000, // Add connection timeout
-        bufferCommands: false, // Disable mongoose buffering to prevent timeouts
+        bufferCommands: true, // Enable buffering to prevent connection issues
+        bufferTimeoutMS: 10000, // Buffer timeout
         retryWrites: true,
         w: 'majority'
     };
 
-    mongoose.connect(uri, options).then(() => {
+    try {
+        await mongoose.connect(uri, options);
         console.log('MongoDB connected with optimized settings');
         console.log('Connected to MongoDB');
-    }).catch(err => {
+    } catch (err) {
         console.error('Failed to connect to MongoDB', err);
-    });
+        throw err;
+    }
 
     // Add connection event listeners for better monitoring (only once)
     if (!mongoose.connection.listeners('connected').length) {

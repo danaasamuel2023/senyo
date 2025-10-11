@@ -8,6 +8,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const mongoose = require('mongoose');
 const ConnectDB = require('./DataBaseConnection/connection.js');
 const { DataPurchase, Transaction, User } = require('./schema/schema');
 // Either import just the router or destructure it from the object
@@ -244,7 +245,16 @@ app.use('/api/v1/data/user-dashboard/:userId', (req, res, next) => {
 });
 
 // Connect to Database
-ConnectDB();
+// Initialize database connection
+(async () => {
+  try {
+    await ConnectDB();
+    console.log('✅ Database connection initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize database connection:', error);
+    process.exit(1);
+  }
+})();
 
 // CRITICAL: Define specific routes BEFORE any middleware that might intercept them
 // MOVED TO TOP TO AVOID MIDDLEWARE INTERFERENCE
@@ -256,6 +266,67 @@ app.get('/api/health', (req, res) => {
     status: 'healthy', 
     timestamp: new Date().toISOString() 
   });
+});
+
+// Test User model endpoint
+app.get('/api/test-user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`[TEST] Looking for user with ID: ${userId}`);
+    console.log(`[TEST] Database connection state:`, mongoose.connection.readyState);
+    console.log(`[TEST] User model:`, typeof User);
+    console.log(`[TEST] User model name:`, User.modelName);
+    console.log(`[TEST] Database name:`, mongoose.connection.name);
+    
+    // Wait for database connection if not ready
+    if (mongoose.connection.readyState !== 1) {
+      console.log(`[TEST] Waiting for database connection...`);
+      await new Promise((resolve) => {
+        if (mongoose.connection.readyState === 1) {
+          resolve();
+        } else {
+          mongoose.connection.once('connected', resolve);
+        }
+      });
+    }
+    
+    // Test with different queries
+    console.log(`[TEST] Testing User.findById...`);
+    const user = await User.findById(userId);
+    console.log(`[TEST] User found:`, !!user);
+    
+    if (!user) {
+      console.log(`[TEST] User not found, testing User.find()...`);
+      const allUsers = await User.find({});
+      console.log(`[TEST] Total users found:`, allUsers.length);
+      allUsers.forEach(u => console.log(`[TEST] - ${u.name} (${u.email}) (${u._id})`));
+    }
+    
+    if (user) {
+      res.json({
+        success: true,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          phoneNumber: user.phoneNumber,
+          role: user.role,
+          walletBalance: user.walletBalance
+        }
+      });
+    } else {
+      res.json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+  } catch (error) {
+    console.error('[TEST] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Balance update check endpoint for real-time updates
@@ -320,6 +391,14 @@ app.get('/api/admin/statistics', async (req, res) => {
 // Temporary direct inventory endpoint to fix 404 error
 app.get('/api/v1/admin/inventory', async (req, res) => {
   try {
+    // Ensure database connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not ready'
+      });
+    }
+    
     const { DataInventory } = require('./schema/schema');
     const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
     

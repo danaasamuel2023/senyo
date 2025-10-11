@@ -11,7 +11,8 @@
  */
 
 const axios = require('axios');
-const { Settings } = require('./server/schema/schema');
+// Removed direct schema import to avoid bufferCommands: false error
+// const { Settings } = require('./server/schema/schema');
 const paymentGatewayService = require('./server/services/paymentGatewayService');
 
 // Configuration
