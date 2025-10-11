@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { auth, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/auth');
 const User = require('../schema/schema').User;
 const Announcement = require('../schema/schema').Announcement;
 const NotificationSystem = require('../schema/schema').NotificationSystem;
@@ -9,7 +9,7 @@ const UserAnnouncementInteraction = require('../schema/schema').UserAnnouncement
 // ==================== SYSTEM SETTINGS ====================
 
 // Get notification system settings
-router.get('/settings', auth, adminAuth, async (req, res) => {
+router.get('/settings', authMiddleware, adminAuth, async (req, res) => {
   try {
     let settings = await NotificationSystem.findOne().sort({ createdAt: -1 });
     
@@ -29,7 +29,7 @@ router.get('/settings', auth, adminAuth, async (req, res) => {
 });
 
 // Update notification system settings
-router.put('/settings', auth, adminAuth, async (req, res) => {
+router.put('/settings', authMiddleware, adminAuth, async (req, res) => {
   try {
     const {
       isEnabled,
@@ -64,7 +64,7 @@ router.put('/settings', auth, adminAuth, async (req, res) => {
 });
 
 // Toggle notification system
-router.post('/toggle', auth, adminAuth, async (req, res) => {
+router.post('/toggle', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { enabled } = req.body;
     
@@ -94,7 +94,7 @@ router.post('/toggle', auth, adminAuth, async (req, res) => {
 // ==================== ANNOUNCEMENTS ====================
 
 // Create announcement
-router.post('/announcements', auth, adminAuth, async (req, res) => {
+router.post('/announcements', authMiddleware, adminAuth, async (req, res) => {
   try {
     const announcementData = {
       ...req.body,
@@ -112,7 +112,7 @@ router.post('/announcements', auth, adminAuth, async (req, res) => {
 });
 
 // Get all announcements with analytics
-router.get('/announcements', auth, adminAuth, async (req, res) => {
+router.get('/announcements', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 20, status, type, priority } = req.query;
     
@@ -143,7 +143,7 @@ router.get('/announcements', auth, adminAuth, async (req, res) => {
 });
 
 // Get single announcement
-router.get('/announcements/:id', auth, adminAuth, async (req, res) => {
+router.get('/announcements/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     const announcement = await Announcement.findById(req.params.id)
       .populate('sentBy', 'name email');
@@ -160,7 +160,7 @@ router.get('/announcements/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Update announcement
-router.put('/announcements/:id', auth, adminAuth, async (req, res) => {
+router.put('/announcements/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     const announcement = await Announcement.findByIdAndUpdate(
       req.params.id,
@@ -180,7 +180,7 @@ router.put('/announcements/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Delete announcement
-router.delete('/announcements/:id', auth, adminAuth, async (req, res) => {
+router.delete('/announcements/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     await Announcement.findByIdAndDelete(req.params.id);
     await UserAnnouncementInteraction.deleteMany({ announcementId: req.params.id });
@@ -193,7 +193,7 @@ router.delete('/announcements/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Toggle announcement status
-router.post('/announcements/:id/toggle', auth, adminAuth, async (req, res) => {
+router.post('/announcements/:id/toggle', authMiddleware, adminAuth, async (req, res) => {
   try {
     const announcement = await Announcement.findById(req.params.id);
     if (!announcement) {
@@ -217,7 +217,7 @@ router.post('/announcements/:id/toggle', auth, adminAuth, async (req, res) => {
 // ==================== ANALYTICS ====================
 
 // Get announcement analytics
-router.get('/analytics/:announcementId', auth, adminAuth, async (req, res) => {
+router.get('/analytics/:announcementId', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { announcementId } = req.params;
     const { startDate, endDate } = req.query;
@@ -266,7 +266,7 @@ router.get('/analytics/:announcementId', auth, adminAuth, async (req, res) => {
 });
 
 // Get system-wide analytics
-router.get('/analytics', auth, adminAuth, async (req, res) => {
+router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -314,7 +314,7 @@ router.get('/analytics', auth, adminAuth, async (req, res) => {
 // ==================== USER ENDPOINTS ====================
 
 // Get active announcements for user
-router.get('/user/announcements/:userId', auth, async (req, res) => {
+router.get('/user/announcements/:userId', authMiddleware, async (req, res) => {
   try {
     // Check if notification system is enabled
     const systemSettings = await NotificationSystem.findOne().sort({ createdAt: -1 });
@@ -370,7 +370,7 @@ router.get('/user/announcements/:userId', auth, async (req, res) => {
 });
 
 // Track user interaction
-router.post('/user/interaction', auth, async (req, res) => {
+router.post('/user/interaction', authMiddleware, async (req, res) => {
   try {
     const { announcementId, action, metadata } = req.body;
     
@@ -410,7 +410,7 @@ router.post('/user/interaction', auth, async (req, res) => {
 });
 
 // Dismiss announcement for user
-router.post('/user/dismiss/:announcementId', auth, async (req, res) => {
+router.post('/user/dismiss/:announcementId', authMiddleware, async (req, res) => {
   try {
     const announcementId = req.params.announcementId;
     
