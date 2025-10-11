@@ -281,13 +281,18 @@ router.get('/verify-payment', async (req, res) => {
 
     // If transaction is already completed, we can return success
     if (transaction.status === 'completed') {
+      // Get current user balance
+      const user = await User.findById(transaction.userId);
+      const currentBalance = user ? user.walletBalance : 0;
+      
       return res.json({
         success: true,
         message: 'Payment already verified and completed',
         data: {
           reference,
           amount: transaction.amount,
-          status: transaction.status
+          status: transaction.status,
+          newBalance: currentBalance
         }
       });
     }
@@ -320,7 +325,8 @@ router.get('/verify-payment', async (req, res) => {
               data: {
                 reference,
                 amount: transaction.amount,
-                status: 'completed'
+                status: 'completed',
+                newBalance: result.newBalance
               }
             });
           } else {
