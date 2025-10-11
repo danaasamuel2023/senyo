@@ -147,6 +147,8 @@ const Footer = ({ hideOnAdmin = true }) => {
             <div className="space-y-1.5">
               <input
                 type="email"
+                id="newsletter-email"
+                name="newsletter-email"
                 placeholder="Your email"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-500 focus:border-[#FFCC08]/50 focus:outline-none focus:ring-1 focus:ring-[#FFCC08]/50"
               />
