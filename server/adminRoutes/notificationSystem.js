@@ -1,10 +1,38 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/auth');
-const User = require('../schema/schema').User;
-const Announcement = require('../schema/schema').Announcement;
-const NotificationSystem = require('../schema/schema').NotificationSystem;
-const UserAnnouncementInteraction = require('../schema/schema').UserAnnouncementInteraction;
+
+// Defensive imports with error handling
+let authMiddleware, adminAuth, User, Announcement, NotificationSystem, UserAnnouncementInteraction;
+
+try {
+  const authModule = require('../middleware/auth');
+  authMiddleware = authModule.authMiddleware;
+  adminAuth = authModule.adminAuth;
+  
+  if (!authMiddleware || !adminAuth) {
+    throw new Error('Auth middleware not properly exported');
+  }
+} catch (error) {
+  console.error('Failed to import auth middleware:', error);
+  console.error('Server will continue with limited functionality');
+  // Don't throw error to prevent server crash
+}
+
+try {
+  const schemaModule = require('../schema/schema');
+  User = schemaModule.User;
+  Announcement = schemaModule.Announcement;
+  NotificationSystem = schemaModule.NotificationSystem;
+  UserAnnouncementInteraction = schemaModule.UserAnnouncementInteraction;
+  
+  if (!User || !Announcement || !NotificationSystem || !UserAnnouncementInteraction) {
+    throw new Error('Schema models not properly exported');
+  }
+} catch (error) {
+  console.error('Failed to import schema models:', error);
+  console.error('Server will continue with limited functionality');
+  // Don't throw error to prevent server crash
+}
 
 // ==================== SYSTEM SETTINGS ====================
 

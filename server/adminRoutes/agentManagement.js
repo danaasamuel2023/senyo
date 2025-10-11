@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middlewareUser/middleware');
-const { User, Order, AgentCatalog } = require('../schema/schema');
+const { User, DataPurchase, AgentCatalog } = require('../schema/schema');
 
 // ============================================
 // ADMIN AGENT MANAGEMENT
@@ -47,18 +47,18 @@ router.get('/agents', auth, async (req, res) => {
     // Get additional stats for each agent
     const agentsWithStats = await Promise.all(
       agents.map(async (agent) => {
-        const orders = await Order.find({ agentId: agent._id });
+        const orders = await DataPurchase.find({ agentId: agent._id });
         const totalSales = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-        const totalOrders = orders.length;
-        const completedOrders = orders.filter(order => order.status === 'completed').length;
+        const totalDataPurchases = orders.length;
+        const completedDataPurchases = orders.filter(order => order.status === 'completed').length;
 
         return {
           ...agent,
           stats: {
             totalSales,
-            totalOrders,
-            completedOrders,
-            conversionRate: totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0
+            totalDataPurchases,
+            completedDataPurchases,
+            conversionRate: totalDataPurchases > 0 ? (completedDataPurchases / totalDataPurchases) * 100 : 0
           }
         };
       })
@@ -106,18 +106,18 @@ router.get('/agents/:agentId', auth, async (req, res) => {
     }
 
     // Get agent's orders
-    const orders = await Order.find({ agentId }).sort({ createdAt: -1 }).limit(10);
+    const orders = await DataPurchase.find({ agentId }).sort({ createdAt: -1 }).limit(10);
     
     // Get agent's catalog
     const catalog = await AgentCatalog.findOne({ agentId });
     
     // Calculate stats
-    const allOrders = await Order.find({ agentId });
-    const totalSales = allOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-    const totalOrders = allOrders.length;
-    const completedOrders = allOrders.filter(order => order.status === 'completed').length;
-    const pendingOrders = allOrders.filter(order => order.status === 'pending').length;
-    const failedOrders = allOrders.filter(order => order.status === 'failed').length;
+    const allDataPurchases = await DataPurchase.find({ agentId });
+    const totalSales = allDataPurchases.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const totalDataPurchases = allDataPurchases.length;
+    const completedDataPurchases = allDataPurchases.filter(order => order.status === 'completed').length;
+    const pendingDataPurchases = allDataPurchases.filter(order => order.status === 'pending').length;
+    const failedDataPurchases = allDataPurchases.filter(order => order.status === 'failed').length;
 
     res.json({
       success: true,
@@ -125,13 +125,13 @@ router.get('/agents/:agentId', auth, async (req, res) => {
         ...agent.toObject(),
         stats: {
           totalSales,
-          totalOrders,
-          completedOrders,
-          pendingOrders,
-          failedOrders,
-          conversionRate: totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0
+          totalDataPurchases,
+          completedDataPurchases,
+          pendingDataPurchases,
+          failedDataPurchases,
+          conversionRate: totalDataPurchases > 0 ? (completedDataPurchases / totalDataPurchases) * 100 : 0
         },
-        recentOrders: orders,
+        recentDataPurchases: orders,
         catalog: catalog ? {
           totalProducts: catalog.products?.length || 0,
           activeProducts: catalog.products?.filter(p => p.isActive !== false).length || 0
@@ -367,17 +367,17 @@ router.get('/agents/:agentId/analytics', auth, async (req, res) => {
     }
 
     // Get agent's orders for the period
-    const orders = await Order.find({
+    const orders = await DataPurchase.find({
       agentId: agentId,
       createdAt: { $gte: startDate }
     });
 
     // Calculate metrics
     const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-    const totalOrders = orders.length;
-    const completedOrders = orders.filter(order => order.status === 'completed').length;
-    const pendingOrders = orders.filter(order => order.status === 'pending').length;
-    const failedOrders = orders.filter(order => order.status === 'failed').length;
+    const totalDataPurchases = orders.length;
+    const completedDataPurchases = orders.filter(order => order.status === 'completed').length;
+    const pendingDataPurchases = orders.filter(order => order.status === 'pending').length;
+    const failedDataPurchases = orders.filter(order => order.status === 'failed').length;
 
     // Calculate commission
     const agent = await User.findById(agentId);
@@ -404,13 +404,13 @@ router.get('/agents/:agentId/analytics', auth, async (req, res) => {
       analytics: {
         overview: {
           totalRevenue,
-          totalOrders,
-          completedOrders,
-          pendingOrders,
-          failedOrders,
+          totalDataPurchases,
+          completedDataPurchases,
+          pendingDataPurchases,
+          failedDataPurchases,
           totalCommission,
           commissionRate,
-          conversionRate: totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0
+          conversionRate: totalDataPurchases > 0 ? (completedDataPurchases / totalDataPurchases) * 100 : 0
         },
         dailySales: dailySalesArray,
         period: {
