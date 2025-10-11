@@ -348,7 +348,7 @@ const MTNBundleSelect = () => {
   const inventoryAvailable = true;
   
   const bundles = [
-    { value: '1', label: '1GB', capacity: '1', price: '5.0', network: 'YELLO', inStock: inventoryAvailable },
+    { value: '1', label: '1GB', capacity: '1', price: '4.9', network: 'YELLO', inStock: inventoryAvailable },
     { value: '2', label: '2GB', capacity: '2', price: '9.9', network: 'YELLO', inStock: inventoryAvailable },
     { value: '3', label: '3GB', capacity: '3', price: '14.4', network: 'YELLO', inStock: inventoryAvailable },
     { value: '4', label: '4GB', capacity: '4', price: '19.0', network: 'YELLO', inStock: inventoryAvailable },
