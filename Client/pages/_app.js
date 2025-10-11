@@ -1,7 +1,7 @@
 import '@/app/globals.css'
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Footer from "@/component/footer";
-import FloatingWhatsAppIcon from "@/component/groupIcon";
+// FloatingWhatsAppIcon moved to app/layout.js to avoid conflicts
 import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
@@ -33,7 +33,6 @@ export default function App({ Component, pageProps }) {
         <ToastProvider>
           <ErrorBoundary>
             <Component {...pageProps} />
-            <FloatingWhatsAppIcon />
             <Footer hideOnAdmin={true} />
             <BottomNav />
             <PWAInstaller />
