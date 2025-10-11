@@ -109,7 +109,8 @@ export default function VerificationHistoryPage() {
       }
       
       // Fetch verification history
-      const response = await fetch(`https://unlimitedata.onrender.com/api/verifications/history?${params}`);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+      const response = await fetch(`${API_URL}/api/verifications/history?${params}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch history: ${response.status} ${response.statusText}`);

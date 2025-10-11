@@ -31,7 +31,8 @@ function PaymentCallbackClient() {
       const verifyPayment = async () => {
         try {
           // Call your backend to verify the payment status
-          const response = await axios.get(`https://unlimitedata.onrender.com/api/v1/verify-payment?reference=${reference}`, {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+          const response = await axios.get(`${API_URL}/api/v1/verify-payment?reference=${reference}`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'

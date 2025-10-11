@@ -11,7 +11,8 @@ const DashboardSummary = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('https://unlimitedata.onrender.com/api/v1/admin/daily-summary', {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+        const response = await axios.get(`${API_URL}/api/v1/admin/daily-summary`, {
 // const response = await axios.get('https://unlimitedata.onrender.com/api/admin/daily-summary', { --- IGNORE ---
           headers: {
             'x-auth-token': localStorage.getItem('authToken'),
