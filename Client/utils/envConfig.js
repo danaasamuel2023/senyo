@@ -80,10 +80,10 @@ export const getRateLimits = () => {
 // Database configuration
 export const getDbConfig = () => {
   return {
-    useNewUrlParser: false, // Deprecated option
-    useUnifiedTopology: false, // Deprecated option
     maxPoolSize: isDevelopment() ? 10 : 5,
-    serverSelectionTimeoutMS: isDevelopment() ? 5000 : 30000
+    serverSelectionTimeoutMS: isDevelopment() ? 5000 : 30000,
+    connectTimeoutMS: isDevelopment() ? 5000 : 10000,
+    socketTimeoutMS: isDevelopment() ? 30000 : 45000
   };
 };
 
