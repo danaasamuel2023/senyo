@@ -41,6 +41,7 @@ const priceManagementRoutes = require('./adminRoutes/priceManagement.js')
 const notificationSystemRoutes = require('./adminRoutes/notificationSystem.js')
 const storeRoutes = require('./storeRoutes/store.js')
 const paystackWebhookRoutes = require('./routes/paystackWebhook');
+const testDataMartRoutes = require('./test-datamart-endpoint.js');
 
 // New feature routes
 const walletRoutes = require('./walletRoutes/wallet.js')
@@ -683,6 +684,7 @@ const adminV1Routes = require('./adminRoutes/adminV1Routes');
 // Note: Admin routes are now consolidated to avoid conflicts
 // Individual admin routes should be registered within AdminManagement router
 app.use('/api/store', storeRoutes);
+app.use('/api/test-datamart', testDataMartRoutes);
 
 // BulkClix withdrawal and deposit routes
 const withdrawalRoutes = require('./walletRoutes/withdrawals');

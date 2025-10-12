@@ -55,6 +55,41 @@ const syncMTNPrices = async () => {
     // Try to get data from DataMart API
     try {
       console.log('📡 Attempting to connect to DataMart API...');
+      
+      // Try smart endpoint first (includes fallback)
+      try {
+        const smartResponse = await axios.get('http://localhost:5001/api/test-datamart/smart-packages', {
+          params: { network: 'MTN' },
+          timeout: 10000
+        });
+        
+        if (smartResponse.data.success) {
+          console.log('✅ Smart endpoint working, using data from:', smartResponse.data.source);
+          const packages = smartResponse.data.data;
+          
+          if (packages && packages.length > 0) {
+            console.log(`📦 Found ${packages.length} MTN packages from ${smartResponse.data.source}`);
+            
+            // Update local pricing with smart endpoint data
+            for (const pkg of packages) {
+              const capacity = pkg.capacity.toString();
+              const price = parseFloat(pkg.price);
+              
+              if (OFFICIAL_PRICING['YELLO'][capacity] !== price) {
+                console.log(`🔄 Updating ${capacity}GB: ${OFFICIAL_PRICING['YELLO'][capacity]} → ${price}`);
+                OFFICIAL_PRICING['YELLO'][capacity] = price;
+              }
+            }
+            
+            console.log('✅ Local pricing updated from smart endpoint');
+            return;
+          }
+        }
+      } catch (smartError) {
+        console.log('⚠️ Smart endpoint failed, trying direct DataMart API...');
+      }
+      
+      // Fallback to direct DataMart API
       const datamartResponse = await datamartClient.get('/api/data-packages', {
         params: { network: 'MTN' }
       });
