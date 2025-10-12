@@ -648,6 +648,14 @@ const adminRouter = express.Router();
 
 // Import paymentGatewaySettingsRoutes here to avoid circular dependency
 const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings.js');
+const performanceMonitoringRoutes = require('./adminRoutes/performanceMonitoring.js');
+const customerSupportRoutes = require('./adminRoutes/customerSupport.js');
+const marketingToolsRoutes = require('./adminRoutes/marketingTools.js');
+const contentManagementRoutes = require('./adminRoutes/contentManagement.js');
+const inventoryManagementRoutes = require('./adminRoutes/inventoryManagement.js');
+const businessProcessAutomationRoutes = require('./adminRoutes/businessProcessAutomation.js');
+const thirdPartyIntegrationsRoutes = require('./adminRoutes/thirdPartyIntegrations.js');
+const mobileAdminAppRoutes = require('./adminRoutes/mobileAdminApp.js');
 const adminV1Routes = require('./adminRoutes/adminV1Routes');
 
 // Mount all admin routes on the consolidated router
@@ -657,6 +665,14 @@ adminRouter.use('/', packageManagementRoutes);
 adminRouter.use('/', priceManagementRoutes);
 adminRouter.use('/notifications', notificationSystemRoutes);
 adminRouter.use('/', paymentGatewaySettingsRoutes);
+adminRouter.use('/performance', performanceMonitoringRoutes);
+adminRouter.use('/support', customerSupportRoutes);
+adminRouter.use('/marketing', marketingToolsRoutes);
+adminRouter.use('/content', contentManagementRoutes);
+adminRouter.use('/advanced-inventory', inventoryManagementRoutes);
+adminRouter.use('/automation', businessProcessAutomationRoutes);
+adminRouter.use('/integrations', thirdPartyIntegrationsRoutes);
+adminRouter.use('/mobile', mobileAdminAppRoutes);
 adminRouter.use('/', adminV1Routes);
 
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT

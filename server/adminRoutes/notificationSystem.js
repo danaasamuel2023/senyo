@@ -1,38 +1,22 @@
 const express = require('express');
 const router = express.Router();
 
-// Defensive imports with error handling
-let authMiddleware, adminAuth, User, Announcement, NotificationSystem, UserAnnouncementInteraction;
+// Import middleware and models
+const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { User, Announcement, NotificationSystem, UserAnnouncementInteraction } = require('../schema/schema');
 
-try {
-  const authModule = require('../middleware/auth');
-  authMiddleware = authModule.authMiddleware;
-  adminAuth = authModule.adminAuth;
-  
-  if (!authMiddleware || !adminAuth) {
-    throw new Error('Auth middleware not properly exported');
-  }
-} catch (error) {
-  console.error('Failed to import auth middleware:', error);
-  console.error('Server will continue with limited functionality');
-  // Don't throw error to prevent server crash
+// Validate imports
+if (!authMiddleware || !adminAuth) {
+  console.error('❌ Auth middleware not properly imported');
+  throw new Error('Auth middleware not available');
 }
 
-try {
-  const schemaModule = require('../schema/schema');
-  User = schemaModule.User;
-  Announcement = schemaModule.Announcement;
-  NotificationSystem = schemaModule.NotificationSystem;
-  UserAnnouncementInteraction = schemaModule.UserAnnouncementInteraction;
-  
-  if (!User || !Announcement || !NotificationSystem || !UserAnnouncementInteraction) {
-    throw new Error('Schema models not properly exported');
-  }
-} catch (error) {
-  console.error('Failed to import schema models:', error);
-  console.error('Server will continue with limited functionality');
-  // Don't throw error to prevent server crash
+if (!User || !Announcement || !NotificationSystem || !UserAnnouncementInteraction) {
+  console.error('❌ Schema models not properly imported');
+  throw new Error('Schema models not available');
 }
+
+console.log('✅ Notification system routes loaded successfully');
 
 // ==================== SYSTEM SETTINGS ====================
 
@@ -44,7 +28,7 @@ router.get('/settings', authMiddleware, adminAuth, async (req, res) => {
     if (!settings) {
       // Create default settings
       settings = new NotificationSystem({
-        lastUpdatedBy: req.userId
+        lastUpdatedBy: req.user._id
       });
       await settings.save();
     }
@@ -68,7 +52,7 @@ router.put('/settings', authMiddleware, adminAuth, async (req, res) => {
     } = req.body;
     
     const updateData = {
-      lastUpdatedBy: req.userId,
+      lastUpdatedBy: req.user._id,
       lastUpdatedAt: new Date()
     };
     
@@ -101,7 +85,7 @@ router.post('/toggle', authMiddleware, adminAuth, async (req, res) => {
       { 
         $set: { 
           isEnabled: enabled,
-          lastUpdatedBy: req.userId,
+          lastUpdatedBy: req.user._id,
           lastUpdatedAt: new Date()
         }
       },
@@ -126,7 +110,7 @@ router.post('/announcements', authMiddleware, adminAuth, async (req, res) => {
   try {
     const announcementData = {
       ...req.body,
-      sentBy: req.userId
+      sentBy: req.user._id
     };
     
     const announcement = new Announcement(announcementData);
@@ -421,7 +405,7 @@ router.post('/user/interaction', authMiddleware, async (req, res) => {
     
     // Check if interaction already exists for this user and announcement
     const existingInteraction = await UserAnnouncementInteraction.findOne({
-      userId: req.userId,
+      userId: req.user._id,
       announcementId,
       action
     });
@@ -431,7 +415,7 @@ router.post('/user/interaction', authMiddleware, async (req, res) => {
     }
     
     const interaction = new UserAnnouncementInteraction({
-      userId: req.userId,
+      userId: req.user._id,
       announcementId,
       action,
       metadata,
@@ -439,15 +423,23 @@ router.post('/user/interaction', authMiddleware, async (req, res) => {
       ipAddress: req.ip
     });
     
-    await interaction.save();
-    
-    // Update announcement analytics
-    const updateField = `analytics.total${action.charAt(0).toUpperCase() + action.slice(1)}s`;
-    await Announcement.findByIdAndUpdate(announcementId, {
-      $inc: { [updateField]: 1 }
-    });
-    
-    res.json({ success: true, message: 'Interaction tracked' });
+    try {
+      await interaction.save();
+      
+      // Update announcement analytics
+      const updateField = `analytics.total${action.charAt(0).toUpperCase() + action.slice(1)}s`;
+      await Announcement.findByIdAndUpdate(announcementId, {
+        $inc: { [updateField]: 1 }
+      });
+      
+      res.json({ success: true, message: 'Interaction tracked' });
+    } catch (saveError) {
+      // Handle duplicate key error gracefully
+      if (saveError.code === 11000) {
+        return res.json({ success: true, message: 'Interaction already tracked' });
+      }
+      throw saveError;
+    }
   } catch (error) {
     console.error('Error tracking user interaction:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -459,23 +451,42 @@ router.post('/user/dismiss/:announcementId', authMiddleware, async (req, res) =>
   try {
     const announcementId = req.params.announcementId;
     
+    // Check if dismissal already exists
+    const existingInteraction = await UserAnnouncementInteraction.findOne({
+      userId: req.user._id,
+      announcementId,
+      action: 'dismissed'
+    });
+    
+    if (existingInteraction) {
+      return res.json({ success: true, message: 'Announcement already dismissed' });
+    }
+    
     // Track dismissal
     const interaction = new UserAnnouncementInteraction({
-      userId: req.userId,
+      userId: req.user._id,
       announcementId,
       action: 'dismissed',
       userAgent: req.get('User-Agent'),
       ipAddress: req.ip
     });
     
-    await interaction.save();
-    
-    // Update announcement analytics
-    await Announcement.findByIdAndUpdate(announcementId, {
-      $inc: { 'analytics.totalDismissals': 1 }
-    });
-    
-    res.json({ success: true, message: 'Announcement dismissed' });
+    try {
+      await interaction.save();
+      
+      // Update announcement analytics
+      await Announcement.findByIdAndUpdate(announcementId, {
+        $inc: { 'analytics.totalDismissals': 1 }
+      });
+      
+      res.json({ success: true, message: 'Announcement dismissed' });
+    } catch (saveError) {
+      // Handle duplicate key error gracefully
+      if (saveError.code === 11000) {
+        return res.json({ success: true, message: 'Announcement already dismissed' });
+      }
+      throw saveError;
+    }
   } catch (error) {
     console.error('Error dismissing announcement:', error);
     res.status(500).json({ success: false, message: error.message });

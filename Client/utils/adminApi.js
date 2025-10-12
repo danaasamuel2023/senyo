@@ -331,7 +331,7 @@ export const orderAPI = {
     const params = new URLSearchParams(filters);
     
     // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/admin/orders')}?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/orders')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -389,7 +389,7 @@ export const transactionAPI = {
     const params = new URLSearchParams(filters);
     
     // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/admin/transactions')}?${params}`, {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/transactions')}?${params}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -476,7 +476,7 @@ export const inventoryAPI = {
   getNetworkInventory: async (network) => {
     try {
       // Use local backend for admin features
-      const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}`), {
+      const response = await fetch(getApiUrl(`/api/v1/admin/advanced-inventory/${network}`), {
         headers: getAuthHeaders()
       });
       return handleResponse(response);
@@ -499,7 +499,7 @@ export const inventoryAPI = {
   toggleNetworkStock: async (network) => {
     try {
       // Use local backend for admin features
-      const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}/toggle`), {
+      const response = await fetch(getApiUrl(`/api/v1/admin/advanced-inventory/${network}/toggle`), {
         method: 'PUT',
         headers: getAuthHeaders()
       });
@@ -517,7 +517,7 @@ export const inventoryAPI = {
   toggleGeonettech: async (network) => {
     try {
       // Use local backend for admin features
-      const response = await fetch(getApiUrl(`/api/v1/admin/inventory/${network}/toggle-geonettech`), {
+      const response = await fetch(getApiUrl(`/api/v1/admin/advanced-inventory/${network}/toggle-geonettech`), {
         method: 'PUT',
         headers: getAuthHeaders()
       });
@@ -621,6 +621,1231 @@ export const agentAPI = {
   }
 };
 
+// Performance Monitoring APIs
+export const performanceAPI = {
+  // Get performance metrics
+  getMetrics: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/performance/metrics')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get system health
+  getHealth: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/performance/health')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get performance alerts
+  getAlerts: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/performance/alerts')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get API endpoint performance
+  getEndpoints: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/performance/endpoints')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+};
+
+// Customer Support APIs
+export const supportAPI = {
+  // Get support tickets
+  getTickets: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/tickets')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get live chat sessions
+  getChatSessions: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/chat')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get knowledge base articles
+  getKnowledgeBase: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/knowledge-base')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get FAQs
+  getFAQs: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/faq')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Get support statistics
+  getStats: async () => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/stats')}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  // Create new ticket
+  createTicket: async (ticketData) => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/tickets')}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(ticketData)
+    });
+    return handleResponse(response);
+  },
+
+  // Update ticket
+  updateTicket: async (ticketId, updateData) => {
+    const response = await fetch(`${getApiUrl(`/api/v1/admin/support/tickets/${ticketId}`)}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updateData)
+    });
+    return handleResponse(response);
+  },
+
+  // Send chat message
+  sendChatMessage: async (chatId, message) => {
+    const response = await fetch(`${getApiUrl(`/api/v1/admin/support/chat/${chatId}/message`)}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ message })
+    });
+    return handleResponse(response);
+  },
+
+  // Create FAQ
+  createFAQ: async (faqData) => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/faq')}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(faqData)
+    });
+    return handleResponse(response);
+  },
+
+  // Create knowledge base article
+  createArticle: async (articleData) => {
+    const response = await fetch(`${getApiUrl('/api/v1/admin/support/knowledge-base')}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(articleData)
+    });
+    return handleResponse(response);
+  }
+};
+
+// Marketing Tools API
+export const marketingAPI = {
+  getCampaigns: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/campaigns`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+      throw error;
+    }
+  },
+
+  getPromotions: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/promotions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      throw error;
+    }
+  },
+
+  getNewsletters: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/newsletters`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching newsletters:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching marketing analytics:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching marketing stats:', error);
+      throw error;
+    }
+  },
+
+  createCampaign: async (campaignData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/campaigns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(campaignData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      throw error;
+    }
+  },
+
+  updateCampaign: async (campaignId, updateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/campaigns/${campaignId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(updateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating campaign:', error);
+      throw error;
+    }
+  },
+
+  createPromotion: async (promotionData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/promotions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(promotionData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating promotion:', error);
+      throw error;
+    }
+  },
+
+  sendNewsletter: async (newsletterId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/newsletters/${newsletterId}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending newsletter:', error);
+      throw error;
+    }
+  },
+
+  createNewsletter: async (newsletterData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/marketing/newsletters`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(newsletterData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating newsletter:', error);
+      throw error;
+    }
+  }
+};
+
+// Content Management API
+export const contentAPI = {
+  getPages: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/pages`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching pages:', error);
+      throw error;
+    }
+  },
+
+  getBlogPosts: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/blog`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      throw error;
+    }
+  },
+
+  getMedia: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/media`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching media:', error);
+      throw error;
+    }
+  },
+
+  getCategories: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/categories`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching content analytics:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching content stats:', error);
+      throw error;
+    }
+  },
+
+  createPage: async (pageData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/pages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(pageData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating page:', error);
+      throw error;
+    }
+  },
+
+  updatePage: async (pageId, updateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/pages/${pageId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(updateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating page:', error);
+      throw error;
+    }
+  },
+
+  createBlogPost: async (postData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/blog`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(postData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating blog post:', error);
+      throw error;
+    }
+  },
+
+  updateBlogPost: async (postId, updateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/blog/${postId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(updateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating blog post:', error);
+      throw error;
+    }
+  },
+
+  createCategory: async (categoryData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(categoryData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  },
+
+  uploadMedia: async (mediaData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/content/media/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(mediaData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      throw error;
+    }
+  }
+};
+
+// Advanced Inventory Management API
+export const advancedInventoryAPI = {
+  getProducts: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/products`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+
+  getSuppliers: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/suppliers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      throw error;
+    }
+  },
+
+  getOrders: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/orders`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching inventory analytics:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching inventory stats:', error);
+      throw error;
+    }
+  },
+
+  getAlerts: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/alerts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching inventory alerts:', error);
+      throw error;
+    }
+  },
+
+  createProduct: async (productData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(productData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+
+  updateProduct: async (productId, updateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(updateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+
+  createOrder: async (orderData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(orderData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  },
+
+  restockProduct: async (productId, restockData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/products/${productId}/restock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(restockData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error restocking product:', error);
+      throw error;
+    }
+  },
+
+  acknowledgeAlert: async (alertId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/advanced-inventory/alerts/${alertId}/acknowledge`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      throw error;
+    }
+  }
+};
+
+// Business Process Automation API
+export const automationAPI = {
+  getWorkflows: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/workflows`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+      throw error;
+    }
+  },
+
+  getTriggers: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/triggers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching triggers:', error);
+      throw error;
+    }
+  },
+
+  getExecutions: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/executions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching executions:', error);
+      throw error;
+    }
+  },
+
+  getTemplates: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/templates`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching automation analytics:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching automation stats:', error);
+      throw error;
+    }
+  },
+
+  createWorkflow: async (workflowData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/workflows`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(workflowData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating workflow:', error);
+      throw error;
+    }
+  },
+
+  updateWorkflow: async (workflowId, updateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/workflows/${workflowId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(updateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+      throw error;
+    }
+  },
+
+  executeWorkflow: async (workflowId, input) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/workflows/${workflowId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(input)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error executing workflow:', error);
+      throw error;
+    }
+  },
+
+  createTrigger: async (triggerData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/triggers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(triggerData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating trigger:', error);
+      throw error;
+    }
+  },
+
+  createTemplate: async (templateData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/automation/templates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(templateData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating template:', error);
+      throw error;
+    }
+  }
+};
+
+// Third-party Integrations API
+export const integrationsAPI = {
+  getIntegrations: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/integrations`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching integrations:', error);
+      throw error;
+    }
+  },
+
+  getWebhooks: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/webhooks`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching webhooks:', error);
+      throw error;
+    }
+  },
+
+  getLogs: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/logs`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching integration logs:', error);
+      throw error;
+    }
+  },
+
+  getHealth: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching integration health:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching integration analytics:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching integration stats:', error);
+      throw error;
+    }
+  },
+
+  testIntegration: async (integrationId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/integrations/${integrationId}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error testing integration:', error);
+      throw error;
+    }
+  },
+
+  updateIntegrationConfig: async (integrationId, config) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/integrations/${integrationId}/config`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(config)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating integration config:', error);
+      throw error;
+    }
+  },
+
+  createWebhook: async (webhookData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/webhooks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(webhookData)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating webhook:', error);
+      throw error;
+    }
+  },
+
+  syncIntegration: async (integrationId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/integrations/integrations/${integrationId}/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error syncing integration:', error);
+      throw error;
+    }
+  }
+};
+
+// Mobile Admin App API
+export const mobileAPI = {
+  getDashboard: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile dashboard:', error);
+      throw error;
+    }
+  },
+
+  getNotifications: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/notifications`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile notifications:', error);
+      throw error;
+    }
+  },
+
+  getUsers: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile users:', error);
+      throw error;
+    }
+  },
+
+  getOrders: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/orders`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile orders:', error);
+      throw error;
+    }
+  },
+
+  getInventory: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/inventory`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile inventory:', error);
+      throw error;
+    }
+  },
+
+  getTransactions: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/transactions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile transactions:', error);
+      throw error;
+    }
+  },
+
+  getAnalytics: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/analytics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile analytics:', error);
+      throw error;
+    }
+  },
+
+  getSettings: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/settings`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile settings:', error);
+      throw error;
+    }
+  },
+
+  getVersion: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/version`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching mobile version:', error);
+      throw error;
+    }
+  },
+
+  markNotificationRead: async (notificationId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  updateSettings: async (settings) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(settings)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating mobile settings:', error);
+      throw error;
+    }
+  },
+
+  syncData: async (data) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/admin/mobile/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(data)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error syncing mobile data:', error);
+      throw error;
+    }
+  }
+};
+
 // Export all APIs
 export default {
   user: userAPI,
@@ -628,5 +1853,13 @@ export default {
   transaction: transactionAPI,
   inventory: inventoryAPI,
   dashboard: dashboardAPI,
-  agent: agentAPI
+  agent: agentAPI,
+  performance: performanceAPI,
+  support: supportAPI,
+  marketing: marketingAPI,
+  content: contentAPI,
+  advancedInventory: advancedInventoryAPI,
+  automation: automationAPI,
+  integrations: integrationsAPI,
+  mobile: mobileAPI
 };

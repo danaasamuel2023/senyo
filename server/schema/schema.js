@@ -1943,7 +1943,9 @@ NotificationSystemSchema.index({ isEnabled: 1 });
 AnnouncementSchema.index({ isActive: 1, targetAudience: 1, expiresAt: 1 });
 AnnouncementSchema.index({ priority: -1, createdAt: -1 });
 UserAnnouncementInteractionSchema.index({ announcementId: 1, action: 1, timestamp: -1 });
-UserAnnouncementInteractionSchema.index({ userId: 1, announcementId: 1 }, { unique: true });
+// Allow multiple interactions per user/announcement but unique per action
+UserAnnouncementInteractionSchema.index({ userId: 1, announcementId: 1, action: 1 }, { unique: true });
+// Remove the old restrictive index by not defining it
 
 // Create models
 const NotificationSystem = mongoose.model("NotificationSystem", NotificationSystemSchema);
