@@ -2268,4 +2268,4 @@ router.get('/daily-sales', async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router;// Emergency fix - Sun Oct 12 03:30:28 GMT 2025
