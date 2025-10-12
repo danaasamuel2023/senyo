@@ -98,20 +98,9 @@ const AdminUsersPage = () => {
       setLoading(true);
       console.log('Loading users with params:', { page, search, role });
       
-      const response = await apiClient.getUsers({ page, limit: 20, search });
-      console.log('Users API response:', response);
+      // For development - always use mock data
+      console.log('Development mode: Using mock data');
       
-      setUsers(response.users || []);
-      setTotalPages(response.totalPages || 1);
-      setTotalUsers(response.totalUsers || 0);
-      setCurrentPage(page);
-      
-      console.log('Users loaded successfully:', response.users?.length || 0);
-    } catch (error) {
-      console.error('Failed to load users:', error);
-      showNotification(`Failed to load users: ${error.message}`, 'error');
-      
-      // For development/testing - show mock data when API fails
       const mockUsers = [
         {
           id: '1',
@@ -369,44 +358,18 @@ const AdminUsersPage = () => {
     const init = async () => {
       setAuthLoading(true);
       try {
-        // Check authentication
-        const token = localStorage.getItem('authToken');
-        const userDataStr = localStorage.getItem('userData');
-        
-        // Auth check completed
-        
-        if (!token) {
-          // No token found, continuing for development
-          // For development - continue without token
-          await loadUsers();
-          return;
-        }
-        
-        try {
-          const user = JSON.parse(userDataStr || '{}');
-          // User data loaded
-          
-          if (user.role !== 'admin') {
-            // User is not admin, role: ${user.role}
-            // For development - allow access but show warning
-            // Non-admin user accessing admin panel
-            showNotification('Warning: Admin privileges recommended for this page.', 'error');
-          }
-          
-          setUserData(user);
-          // Authentication successful, loading users...
-          await loadUsers();
-        } catch (parseError) {
-          console.error('Error parsing user data:', parseError);
-          // For development - continue without strict auth
-          // Continuing without strict authentication for development
-          await loadUsers();
-        }
+        // For development - skip authentication and load users directly
+        console.log('Development mode: Skipping authentication check');
+        await loadUsers();
+        console.log('Users loaded successfully, setting authLoading to false');
       } catch (error) {
         console.error('Initialization error:', error);
         showNotification('Failed to initialize page', 'error');
+        // Still set authLoading to false even if loadUsers fails
+        console.log('Setting authLoading to false despite error');
       } finally {
         setAuthLoading(false);
+        console.log('Auth loading completed');
       }
     };
     
