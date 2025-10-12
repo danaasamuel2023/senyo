@@ -4,7 +4,7 @@ import { getAuthToken, getCurrentUser, isAuthenticated, logout } from './auth';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
-// Helper function to get the correct API URL (use environment config)
+// Helper function to get the correct API URL (use environment config) - Hot reload test
 const getApiUrl = (endpoint) => {
   const apiUrl = getNextPublicApiUrl();
   return `${apiUrl}${endpoint}`;

@@ -46,6 +46,9 @@ const WalletTransactionsPage = () => {
   }, [pagination.page, filters]);
 
   const checkAuth = () => {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') return false;
+    
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
     
@@ -59,6 +62,10 @@ const WalletTransactionsPage = () => {
   const loadTransactions = async () => {
     try {
       setLoading(true);
+      
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') return;
+      
       const token = localStorage.getItem('authToken');
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
       

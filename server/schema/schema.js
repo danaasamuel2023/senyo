@@ -903,11 +903,19 @@ const TransactionSchema = new Schema({
   // Prevent double processing
   processing: { type: Boolean, default: false, sparse: true },
   
-  // Optional metadata
+  // Optional metadata - Fixed to handle both Map and Object
   metadata: {
-    type: Map,
-    of: Schema.Types.Mixed,
-    sparse: true
+    type: Schema.Types.Mixed,
+    sparse: true,
+    validate: {
+      validator: function(v) {
+        // Allow both Map and Object types
+        return v === null || v === undefined || 
+               v instanceof Map || 
+               (typeof v === 'object' && v.constructor === Object);
+      },
+      message: 'Metadata must be a Map or Object'
+    }
   }
 }, {
   timestamps: true,
@@ -1542,8 +1550,16 @@ const WalletSchema = new Schema({
       default: 'completed' 
     },
     metadata: { 
-      type: Map, 
-      of: Schema.Types.Mixed 
+      type: Schema.Types.Mixed,
+      validate: {
+        validator: function(v) {
+          // Allow both Map and Object types
+          return v === null || v === undefined || 
+                 v instanceof Map || 
+                 (typeof v === 'object' && v.constructor === Object);
+        },
+        message: 'Metadata must be a Map or Object'
+      }
     },
     createdAt: { 
       type: Date, 
