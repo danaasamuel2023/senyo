@@ -15,7 +15,10 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Edit,
+  Shield,
+  X
 } from 'lucide-react';
 import adminAPI from '../../../utils/adminApi';
 import apiClient from '../../../utils/apiClient.js';
@@ -37,10 +40,18 @@ const AdminUsersPage = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [showDeductMoneyModal, setShowDeductMoneyModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [addMoneyAmount, setAddMoneyAmount] = useState('');
   const [addMoneyReason, setAddMoneyReason] = useState('');
+  const [deductMoneyAmount, setDeductMoneyAmount] = useState('');
+  const [deductMoneyReason, setDeductMoneyReason] = useState('');
+  const [editUserData, setEditUserData] = useState({});
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // API Configuration
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -107,7 +118,7 @@ const AdminUsersPage = () => {
           name: 'John Doe',
           email: 'john@example.com',
           phone: '+233123456789',
-          role: 'user',
+          role: 'buyer',
           isDisabled: false,
           walletBalance: 150.50,
           joinDate: new Date().toISOString(),
@@ -227,10 +238,86 @@ const AdminUsersPage = () => {
     }
   };
 
+  // Deduct money from user wallet
+  const deductMoney = async (userId, amount, reason) => {
+    try {
+      setActionLoading(true);
+      await adminAPI.user.deductMoney(userId, parseFloat(amount), reason);
+      showNotification(`Successfully deducted GHS ${amount} from user wallet`);
+      loadUsers(currentPage, searchTerm, filterRole);
+      setShowDeductMoneyModal(false);
+      setDeductMoneyAmount('');
+      setDeductMoneyReason('');
+    } catch (error) {
+      console.error('Failed to deduct money:', error);
+      showNotification('Failed to deduct money from wallet', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Edit user details
+  const editUser = async (userId, userData) => {
+    try {
+      setActionLoading(true);
+      await adminAPI.user.updateUser(userId, userData);
+      showNotification('User details updated successfully');
+      loadUsers(currentPage, searchTerm, filterRole);
+      setShowEditModal(false);
+      setEditUserData({});
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      showNotification('Failed to update user details', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Reset user password
+  const resetPassword = async (userId, newPassword) => {
+    try {
+      setActionLoading(true);
+      await adminAPI.user.resetPassword(userId, newPassword);
+      showNotification('Password reset successfully');
+      setShowPasswordResetModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Failed to reset password:', error);
+      showNotification('Failed to reset password', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Handle add money modal
   const handleAddMoney = (user) => {
     setSelectedUser(user);
     setShowAddMoneyModal(true);
+  };
+
+  // Handle deduct money modal
+  const handleDeductMoney = (user) => {
+    setSelectedUser(user);
+    setShowDeductMoneyModal(true);
+  };
+
+  // Handle edit user modal
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setEditUserData({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      role: user.role || 'buyer'
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle password reset modal
+  const handlePasswordReset = (user) => {
+    setSelectedUser(user);
+    setShowPasswordResetModal(true);
   };
 
   // Submit add money
@@ -240,6 +327,41 @@ const AdminUsersPage = () => {
       return;
     }
     addMoney(selectedUser.id, addMoneyAmount, addMoneyReason);
+  };
+
+  // Submit deduct money
+  const submitDeductMoney = () => {
+    if (!deductMoneyAmount || parseFloat(deductMoneyAmount) <= 0) {
+      showNotification('Please enter a valid amount', 'error');
+      return;
+    }
+    if (parseFloat(deductMoneyAmount) > (selectedUser.walletBalance || 0)) {
+      showNotification('Amount exceeds user wallet balance', 'error');
+      return;
+    }
+    deductMoney(selectedUser.id, deductMoneyAmount, deductMoneyReason);
+  };
+
+  // Submit edit user
+  const submitEditUser = () => {
+    if (!editUserData.name || !editUserData.email) {
+      showNotification('Name and email are required', 'error');
+      return;
+    }
+    editUser(selectedUser.id, editUserData);
+  };
+
+  // Submit password reset
+  const submitPasswordReset = () => {
+    if (!newPassword || newPassword.length < 6) {
+      showNotification('Password must be at least 6 characters', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showNotification('Passwords do not match', 'error');
+      return;
+    }
+    resetPassword(selectedUser.id, newPassword);
   };
 
   // Initialize
@@ -332,12 +454,14 @@ const AdminUsersPage = () => {
     const roleColors = {
       admin: 'bg-purple-100 text-purple-800',
       agent: 'bg-blue-100 text-blue-800',
-      user: 'bg-gray-100 text-gray-800',
-      dealer: 'bg-yellow-100 text-yellow-800'
+      buyer: 'bg-gray-100 text-gray-800',
+      seller: 'bg-green-100 text-green-800',
+      Dealer: 'bg-yellow-100 text-yellow-800',
+      reporter: 'bg-orange-100 text-orange-800'
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[role] || roleColors.user}`}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[role] || roleColors.buyer}`}>
         {role.charAt(0).toUpperCase() + role.slice(1)}
       </span>
     );
@@ -491,8 +615,10 @@ const AdminUsersPage = () => {
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
               <option value="agent">Agent</option>
-              <option value="user">User</option>
-              <option value="dealer">Dealer</option>
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+              <option value="Dealer">Dealer</option>
+              <option value="reporter">Reporter</option>
             </select>
           </div>
           
@@ -631,6 +757,30 @@ const AdminUsersPage = () => {
                         title="Add Money"
                       >
                         <Wallet className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeductMoney(user)}
+                        disabled={actionLoading}
+                        className="text-orange-600 hover:text-orange-900 p-1"
+                        title="Deduct Money"
+                      >
+                        <Wallet className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        disabled={actionLoading}
+                        className="text-blue-600 hover:text-blue-900 p-1"
+                        title="Edit User"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handlePasswordReset(user)}
+                        disabled={actionLoading}
+                        className="text-purple-600 hover:text-purple-900 p-1"
+                        title="Reset Password"
+                      >
+                        <Shield className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => toggleUserStatus(user.id, user.isDisabled)}
@@ -796,6 +946,260 @@ const AdminUsersPage = () => {
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {actionLoading ? 'Adding...' : 'Add Money'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deduct Money Modal */}
+      {showDeductMoneyModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Deduct Money from User</h3>
+              <button
+                onClick={() => {
+                  setShowDeductMoneyModal(false);
+                  setDeductMoneyAmount('');
+                  setDeductMoneyReason('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Deducting money from: <span className="font-semibold">{selectedUser.name}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Current balance: <span className="font-semibold text-green-600">
+                  {formatCurrency(selectedUser.walletBalance || 0)}
+                </span>
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Amount (GHS)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={selectedUser.walletBalance || 0}
+                value={deductMoneyAmount}
+                onChange={(e) => setDeductMoneyAmount(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter amount to deduct"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason (Required)
+              </label>
+              <textarea
+                value={deductMoneyReason}
+                onChange={(e) => setDeductMoneyReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="3"
+                placeholder="Enter reason for deducting money"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeductMoneyModal(false);
+                  setDeductMoneyAmount('');
+                  setDeductMoneyReason('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitDeductMoney}
+                disabled={actionLoading || !deductMoneyAmount || parseFloat(deductMoneyAmount) <= 0 || !deductMoneyReason}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? 'Deducting...' : 'Deduct Money'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Edit User Details</h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditUserData({});
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={editUserData.name}
+                onChange={(e) => setEditUserData({...editUserData, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter full name"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={editUserData.email}
+                onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter email address"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={editUserData.phone}
+                onChange={(e) => setEditUserData({...editUserData, phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
+              <select
+                value={editUserData.role}
+                onChange={(e) => setEditUserData({...editUserData, role: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
+                <option value="agent">Agent</option>
+                <option value="Dealer">Dealer</option>
+                <option value="admin">Admin</option>
+                <option value="reporter">Reporter</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditUserData({});
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEditUser}
+                disabled={actionLoading || !editUserData.name || !editUserData.email}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? 'Updating...' : 'Update User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Modal */}
+      {showPasswordResetModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Reset User Password</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordResetModal(false);
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Resetting password for: <span className="font-semibold">{selectedUser.name}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Email: <span className="font-semibold">{selectedUser.email}</span>
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter new password (min 6 characters)"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Confirm new password"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowPasswordResetModal(false);
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitPasswordReset}
+                disabled={actionLoading || !newPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? 'Resetting...' : 'Reset Password'}
               </button>
             </div>
           </div>

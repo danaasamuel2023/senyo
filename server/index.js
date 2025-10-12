@@ -648,6 +648,7 @@ const adminRouter = express.Router();
 
 // Import paymentGatewaySettingsRoutes here to avoid circular dependency
 const paymentGatewaySettingsRoutes = require('./adminRoutes/paymentGatewaySettings.js');
+const adminV1Routes = require('./adminRoutes/adminV1Routes');
 
 // Mount all admin routes on the consolidated router
 adminRouter.use('/', AdminManagement);
@@ -656,6 +657,7 @@ adminRouter.use('/', packageManagementRoutes);
 adminRouter.use('/', priceManagementRoutes);
 adminRouter.use('/notifications', notificationSystemRoutes);
 adminRouter.use('/', paymentGatewaySettingsRoutes);
+adminRouter.use('/', adminV1Routes);
 
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT
 if (process.env.NODE_ENV !== 'development') {
@@ -694,7 +696,6 @@ app.use('/api/agent/payments', agentPaymentRoutes);
 const agentApprovalRoutes = require('./adminRoutes/agentApproval');
 const productAssignmentRoutes = require('./adminRoutes/productAssignment');
 const adminDashboardRoutes = require('./adminRoutes/dashboard');
-const adminV1Routes = require('./adminRoutes/adminV1Routes');
 
 // Note: Admin routes are now consolidated to avoid conflicts
 // Individual admin routes should be registered within AdminManagement router

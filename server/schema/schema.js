@@ -873,7 +873,7 @@ const TransactionSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'transfer', 'refund', 'purchase', 'bonus', 'admin-deposit'],
+    enum: ['deposit', 'withdrawal', 'transfer', 'refund', 'purchase', 'bonus', 'admin-deposit', 'admin-deduction'],
     required: true,
     index: true
   },
@@ -1509,7 +1509,7 @@ const WalletSchema = new Schema({
   transactions: [{
     type: { 
       type: String, 
-      enum: ['deposit', 'purchase', 'refund', 'bonus', 'referral', 'withdrawal', 'admin-deposit'],
+      enum: ['deposit', 'purchase', 'refund', 'bonus', 'referral', 'withdrawal', 'admin-deposit', 'admin-deduction'],
       required: true 
     },
     amount: { 

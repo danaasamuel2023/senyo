@@ -272,6 +272,317 @@ router.put('/users/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Add money to user wallet
+router.put('/users/:id/add-money', auth, adminAuth, async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+    const userId = req.params.id;
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid amount. Amount must be greater than 0.' 
+      });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    const amountToAdd = parseFloat(amount);
+    const oldBalance = user.walletBalance || 0;
+    const newBalance = oldBalance + amountToAdd;
+    
+    // Update user wallet balance
+    user.walletBalance = newBalance;
+    await user.save();
+    
+    // Create transaction record
+    const Transaction = require('../schema/schema').Transaction;
+    const transaction = new Transaction({
+      userId: userId,
+      type: 'admin-deposit',
+      amount: amountToAdd,
+      status: 'completed',
+      description: `Admin credit: ${reason || 'Manual credit by admin'}`,
+      metadata: {
+        adminId: req.user._id,
+        adminName: req.user.name,
+        reason: reason || 'Manual credit by admin',
+        oldBalance: oldBalance,
+        newBalance: newBalance
+      }
+    });
+    await transaction.save();
+    
+    res.json({
+      success: true,
+      message: `Successfully added GHS ${amountToAdd.toFixed(2)} to user wallet`,
+      data: {
+        userId: userId,
+        userName: user.name,
+        oldBalance: oldBalance,
+        newBalance: newBalance,
+        amountAdded: amountToAdd,
+        transactionId: transaction._id
+      }
+    });
+  } catch (err) {
+    console.error('Add money error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to add money to user wallet' 
+    });
+  }
+});
+
+// Deduct money from user wallet
+router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+    const userId = req.params.id;
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid amount. Amount must be greater than 0.' 
+      });
+    }
+    
+    if (!reason || reason.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reason is required for money deduction.' 
+      });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    const amountToDeduct = parseFloat(amount);
+    const currentBalance = user.walletBalance || 0;
+    
+    if (amountToDeduct > currentBalance) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Insufficient balance. User has GHS ${currentBalance.toFixed(2)} but trying to deduct GHS ${amountToDeduct.toFixed(2)}.` 
+      });
+    }
+    
+    const newBalance = currentBalance - amountToDeduct;
+    
+    // Update user wallet balance
+    user.walletBalance = newBalance;
+    await user.save();
+    
+    // Create transaction record
+    const Transaction = require('../schema/schema').Transaction;
+    const transaction = new Transaction({
+      userId: userId,
+      type: 'admin_debit',
+      amount: -amountToDeduct, // Negative amount for deduction
+      status: 'completed',
+      description: `Admin debit: ${reason}`,
+      metadata: {
+        adminId: req.user._id,
+        adminName: req.user.name,
+        reason: reason,
+        oldBalance: currentBalance,
+        newBalance: newBalance
+      }
+    });
+    await transaction.save();
+    
+    res.json({
+      success: true,
+      message: `Successfully deducted GHS ${amountToDeduct.toFixed(2)} from user wallet`,
+      data: {
+        userId: userId,
+        userName: user.name,
+        oldBalance: currentBalance,
+        newBalance: newBalance,
+        amountDeducted: amountToDeduct,
+        transactionId: transaction._id
+      }
+    });
+  } catch (err) {
+    console.error('Deduct money error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to deduct money from user wallet' 
+    });
+  }
+});
+
+// Reset user password
+router.put('/users/:id/reset-password', auth, adminAuth, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const userId = req.params.id;
+    
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters long.' 
+      });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Hash the new password
+    const bcrypt = require('bcryptjs');
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update user password
+    user.password = hashedPassword;
+    user.lastPasswordReset = new Date();
+    await user.save();
+    
+    // Log the password reset action
+    console.log(`[ADMIN] Password reset for user ${user.name} (${user.email}) by admin ${req.user.name} (${req.user._id})`);
+    
+    res.json({
+      success: true,
+      message: 'Password reset successfully',
+      data: {
+        userId: userId,
+        userName: user.name,
+        userEmail: user.email,
+        resetBy: req.user.name,
+        resetAt: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to reset user password' 
+    });
+  }
+});
+
+// Toggle user status (enable/disable)
+router.put('/users/:id/toggle-status', auth, adminAuth, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const userId = req.params.id;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    const currentStatus = user.isDisabled;
+    const newStatus = !currentStatus;
+    
+    // Update user status
+    user.isDisabled = newStatus;
+    if (newStatus) {
+      user.disableReason = reason || 'Disabled by admin';
+      user.disabledAt = new Date();
+    } else {
+      user.disableReason = undefined;
+      user.disabledAt = undefined;
+    }
+    await user.save();
+    
+    const action = newStatus ? 'disabled' : 'enabled';
+    console.log(`[ADMIN] User ${user.name} (${user.email}) ${action} by admin ${req.user.name} (${req.user._id})`);
+    
+    res.json({
+      success: true,
+      message: `User ${action} successfully`,
+      data: {
+        userId: userId,
+        userName: user.name,
+        userEmail: user.email,
+        newStatus: newStatus ? 'disabled' : 'active',
+        reason: reason || null,
+        actionBy: req.user.name,
+        actionAt: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Toggle user status error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update user status' 
+    });
+  }
+});
+
+// Delete user
+router.delete('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Prevent deletion of admin users
+    if (user.role === 'admin' || user.role === 'superadmin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot delete admin users' 
+      });
+    }
+    
+    // Delete user and related data
+    await User.findByIdAndDelete(userId);
+    
+    // Also delete related transactions and wallet data
+    const Transaction = require('../schema/schema').Transaction;
+    const Wallet = require('../schema/schema').Wallet;
+    
+    await Transaction.deleteMany({ userId: userId });
+    await Wallet.deleteMany({ userId: userId });
+    
+    console.log(`[ADMIN] User ${user.name} (${user.email}) deleted by admin ${req.user.name} (${req.user._id})`);
+    
+    res.json({
+      success: true,
+      message: 'User deleted successfully',
+      data: {
+        deletedUserId: userId,
+        deletedUserName: user.name,
+        deletedUserEmail: user.email,
+        deletedBy: req.user.name,
+        deletedAt: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Delete user error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete user' 
+    });
+  }
+});
+
 // Orders Management Routes
 router.get('/orders', auth, adminAuth, async (req, res) => {
   try {

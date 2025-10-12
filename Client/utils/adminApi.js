@@ -256,6 +256,71 @@ export const userAPI = {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
+  },
+
+  // Update user details
+  updateUser: async (userId, userData) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(userData)
+    });
+
+    return handleResponse(response);
+  },
+
+  // Add money to user wallet
+  addMoney: async (userId, amount, reason) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}/add-money`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ amount, reason })
+    });
+
+    return handleResponse(response);
+  },
+
+  // Deduct money from user wallet
+  deductMoney: async (userId, amount, reason) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}/deduct-money`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ amount, reason })
+    });
+
+    return handleResponse(response);
+  },
+
+  // Reset user password
+  resetPassword: async (userId, newPassword) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}/reset-password`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ newPassword })
+    });
+
+    return handleResponse(response);
+  },
+
+  // Toggle user status (enable/disable)
+  toggleUserStatus: async (userId, reason) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}/toggle-status`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason })
+    });
+
+    return handleResponse(response);
+  },
+
+  // Delete user
+  deleteUser: async (userId) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    return handleResponse(response);
   }
 };
 
