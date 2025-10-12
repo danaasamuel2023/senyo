@@ -96,12 +96,16 @@ export const isAuthenticated = () => {
   const tokenValid = !isTokenExpired();
   
   const result = !!token && sessionAuth === 'true' && tokenValid;
-  console.log('isAuthenticated check:', { 
-    hasToken: !!token, 
-    sessionAuth, 
-    tokenValid, 
-    result 
-  });
+  
+  // Only log in development mode to prevent infinite loops
+  if (process.env.NODE_ENV === 'development') {
+    console.log('isAuthenticated check:', { 
+      hasToken: !!token, 
+      sessionAuth, 
+      tokenValid, 
+      result 
+    });
+  }
   
   return result;
 };
@@ -114,18 +118,22 @@ export const getCurrentUser = () => {
   const userData = SecureStorage.getItem(USER_DATA_KEY);
   
   if (!userData) {
-    console.log('getCurrentUser: No user data found');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getCurrentUser: No user data found');
+    }
     return null;
   }
   
   try {
     const parsed = JSON.parse(userData);
-    console.log('getCurrentUser: Parsed user data:', { 
-      hasId: !!(parsed.id || parsed._id),
-      id: parsed.id,
-      _id: parsed._id,
-      keys: Object.keys(parsed)
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getCurrentUser: Parsed user data:', { 
+        hasId: !!(parsed.id || parsed._id),
+        id: parsed.id,
+        _id: parsed._id,
+        keys: Object.keys(parsed)
+      });
+    }
     return parsed;
   } catch (error) {
     console.error('Error parsing user data:', error);
@@ -378,10 +386,19 @@ export const useAuth = () => {
       const authenticated = isAuthenticated();
       const user = authenticated ? getCurrentUser() : null;
       
-      setAuth({
-        isAuthenticated: authenticated,
-        user,
-        loading: false
+      setAuth(prevAuth => {
+        // Only update if the state has actually changed
+        if (prevAuth.isAuthenticated === authenticated && 
+            prevAuth.user === user && 
+            !prevAuth.loading) {
+          return prevAuth;
+        }
+        
+        return {
+          isAuthenticated: authenticated,
+          user,
+          loading: false
+        };
       });
     };
     

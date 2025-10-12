@@ -147,12 +147,14 @@ const AdminDashboard = () => {
   // Check authentication using centralized auth hook
   const checkAuth = useCallback(() => {
     try {
-      console.log('🔐 Auth check:', {
-        isAuthenticated,
-        hasUser: !!user,
-        userRole: user?.role,
-        authLoading
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 Auth check:', {
+          isAuthenticated,
+          hasUser: !!user,
+          userRole: user?.role,
+          authLoading
+        });
+      }
       
       if (authLoading) {
         return false; // Still loading
@@ -160,21 +162,26 @@ const AdminDashboard = () => {
       
       // Check if user is authenticated and has admin role
       if (!isAuthenticated || !user || !['admin', 'superadmin'].includes(user.role)) {
-        console.warn('Authentication failed or user is not admin - redirecting to login');
-        console.log('Auth failure details:', {
-          isAuthenticated,
-          hasUser: !!user,
-          userRole: user?.role,
-          allowedRoles: ['admin', 'superadmin']
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Authentication failed or user is not admin - redirecting to login');
+          console.log('Auth failure details:', {
+            isAuthenticated,
+            hasUser: !!user,
+            userRole: user?.role,
+            allowedRoles: ['admin', 'superadmin']
+          });
+        }
         logout('/SignIn');
         return false;
       }
       
       setUserData(user);
-      return true;
       
-      console.log('✅ Admin authentication successful');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Admin authentication successful');
+      }
+      
+      return true;
       
     } catch (error) {
       console.error('Authentication check failed:', error);
@@ -182,7 +189,7 @@ const AdminDashboard = () => {
       setAuthChecked(true);
       logout('/SignIn');
     }
-  }, []);
+  }, [isAuthenticated, user, authLoading, logout]);
 
   // Retry function with exponential backoff
   const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
@@ -636,7 +643,7 @@ const AdminDashboard = () => {
   // Initialize dashboard
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, [isAuthenticated, user, authLoading]);
 
   // Load dashboard data when authenticated with auto-refresh
   useEffect(() => {
