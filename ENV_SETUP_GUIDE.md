@@ -70,6 +70,15 @@ ARKESEL_API_KEY=your_arkesel_api_key_here
 DATAMART_API_KEY=your_datamart_api_key_here
 ```
 
+### Redis Configuration
+```env
+# Redis for high-performance caching
+REDIS_HOST=your_redis_host_here
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password_here
+REDIS_DB=0
+```
+
 ### API Keys & External Services
 ```env
 # Hubtel/SMS Service

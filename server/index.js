@@ -9,6 +9,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
+const compression = require('compression');
 const ConnectDB = require('./DataBaseConnection/connection.js');
 const { DataPurchase, Transaction, User } = require('./schema/schema');
 // Either import just the router or destructure it from the object
@@ -75,6 +76,20 @@ validateEnvironment();
 
 // Initialize Express app
 const app = express();
+
+// Enable response compression for better performance
+app.use(compression({
+  level: 6, // Compression level (1-9, 6 is good balance)
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: (req, res) => {
+    // Don't compress if client doesn't support it
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression for all other responses
+    return compression.filter(req, res);
+  }
+}));
 
 // CRITICAL: Define basic routes BEFORE any middleware
 // Simple test route to verify routing works
@@ -781,6 +796,69 @@ app.use((err, req, res, next) => {
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
+});
+
+// Enhanced Health Check Endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      environment: process.env.NODE_ENV,
+      version: process.env.npm_package_version || '1.0.0',
+      services: {
+        database: 'connected', // Will be updated with actual DB health check
+        redis: 'disconnected', // Will be updated with actual Redis health check
+        externalAPIs: 'unknown' // Will be updated with actual API health checks
+      },
+      performance: {
+        responseTime: Date.now() - req.startTime || 0,
+        activeConnections: process._getActiveHandles().length,
+        activeRequests: process._getActiveRequests().length
+      }
+    };
+
+    // Check database health
+    try {
+      await mongoose.connection.db.admin().ping();
+      health.services.database = 'connected';
+    } catch (error) {
+      health.services.database = 'disconnected';
+      health.status = 'degraded';
+    }
+
+    // Check Redis health (if available)
+    try {
+      const redisService = require('./services/redisService');
+      if (redisService.isConnected) {
+        health.services.redis = 'connected';
+      }
+    } catch (error) {
+      health.services.redis = 'disconnected';
+    }
+
+    // Check external APIs
+    try {
+      // Test DataMart API
+      const axios = require('axios');
+      await axios.get('https://api.datamartgh.shop/', { timeout: 5000 });
+      health.services.externalAPIs = 'connected';
+    } catch (error) {
+      health.services.externalAPIs = 'disconnected';
+      health.status = 'degraded';
+    }
+
+    const statusCode = health.status === 'healthy' ? 200 : 503;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
 });
 
 // Default Route

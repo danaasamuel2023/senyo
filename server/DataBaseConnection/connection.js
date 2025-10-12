@@ -13,14 +13,18 @@ const ConnectDB = async () => {
 
     // Connection options for better performance and reliability
     const options = {
-        maxPoolSize: 5, // Reduce pool size to avoid timeouts
-        serverSelectionTimeoutMS: 10000, // Increase timeout to 10 seconds
-        socketTimeoutMS: 30000, // Reduce socket timeout to 30 seconds
-        connectTimeoutMS: 10000, // Add connection timeout
+        maxPoolSize: 50, // Increased for high traffic (10M users/day)
+        serverSelectionTimeoutMS: 5000, // Reduced for faster failover
+        socketTimeoutMS: 45000, // Increased for better reliability
+        connectTimeoutMS: 10000, // Connection timeout
         bufferCommands: true, // Enable buffering to prevent connection issues
-        bufferTimeoutMS: 10000, // Buffer timeout
+        bufferTimeoutMS: 5000, // Reduced buffer timeout
         retryWrites: true,
-        w: 'majority'
+        w: 'majority',
+        // Additional performance optimizations
+        maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+        minPoolSize: 10, // Maintain minimum connections
+        maxIdleTimeMS: 30000
     };
 
     try {

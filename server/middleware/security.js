@@ -2,10 +2,10 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 
-// Rate limiter for general API requests - Bypassed in development
+// Rate limiter for general API requests - Optimized for 10M users/day
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // Very high limit to effectively bypass
+  max: 100, // Reduced per IP limit for security
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -38,10 +38,10 @@ const generalLimiter = rateLimit({
   }
 });
 
-// Rate limiter for authentication routes - Bypassed for development
+// Rate limiter for authentication routes - Optimized for 10M users/day
 const authLimiter = rateLimit({
-  windowMs: 5 * 1000, // 5 seconds
-  max: 1000, // Very high limit to effectively bypass
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Reduced per IP limit for security
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -76,10 +76,10 @@ const authLimiter = rateLimit({
   }
 });
 
-// Rate limiter for payment/withdrawal routes - Bypassed in development
+// Rate limiter for payment/withdrawal routes - Optimized for 10M users/day
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10000, // Very high limit to effectively bypass
+  max: 50, // Reduced per IP limit for security
   message: 'Too many payment requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
