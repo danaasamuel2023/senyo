@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Info, AlertTriangle } from 'lucide-react';
 
 const MTNStyleNotification = ({ 
@@ -15,13 +15,13 @@ const MTNStyleNotification = ({
   const [isVisible, setIsVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setIsAnimating(true);
     setTimeout(() => {
       setIsVisible(false);
       onDismiss?.();
     }, 300);
-  };
+  }, [onDismiss]);
 
   const getIcon = () => {
     switch (type) {
@@ -54,7 +54,7 @@ const MTNStyleNotification = ({
       }, autoDismissDelay);
       return () => clearTimeout(timer);
     }
-  }, [autoDismiss, autoDismissDelay]);
+  }, [autoDismiss, autoDismissDelay, handleDismiss]);
 
   if (!isVisible) return null;
 

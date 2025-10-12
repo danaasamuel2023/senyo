@@ -64,7 +64,7 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, onAnnouncementsLoaded]);
+  }, [userId]);
 
   const trackInteraction = async (announcementId, action, metadata = {}) => {
     try {
