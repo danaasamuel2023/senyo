@@ -838,5 +838,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});# Trigger redeploy - fix pricing validation
+});
+
+// Trigger redeploy - fix pricing validation
 // Force redeploy - Sun Oct 12 03:29:10 GMT 2025
