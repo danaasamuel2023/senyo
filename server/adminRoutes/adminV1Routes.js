@@ -721,4 +721,30 @@ router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Get user orders
+router.get('/user-orders/:userId', auth, adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 100 } = req.query;
+    
+    const orders = await DataPurchase.find({ userId })
+      .populate('userId', 'name email phoneNumber')
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ createdAt: -1 });
+    
+    const total = await DataPurchase.countDocuments({ userId });
+    
+    res.json({
+      orders,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

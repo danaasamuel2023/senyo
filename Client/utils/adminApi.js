@@ -4,9 +4,9 @@ import { getAuthToken, getCurrentUser, isAuthenticated, logout } from './auth';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
-// Helper function to get the correct API URL (use production backend)
+// Helper function to get the correct API URL (use environment config)
 const getApiUrl = (endpoint) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
+  const apiUrl = getNextPublicApiUrl();
   return `${apiUrl}${endpoint}`;
 };
 

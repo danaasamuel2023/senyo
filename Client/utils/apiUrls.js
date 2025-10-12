@@ -23,9 +23,9 @@ const isProduction = () => {
 // API URL Configuration
 export const API_URLS = {
   DEVELOPMENT: {
-    BASE: 'http://localhost:5001',
-    FRONTEND: 'http://localhost:3003',
-    NEXT_PUBLIC: 'http://localhost:5001'
+    BASE: 'http://localhost:3001',
+    FRONTEND: 'http://localhost:3000',
+    NEXT_PUBLIC: 'http://localhost:3001'
   },
   PRODUCTION: {
     BASE: 'https://unlimitedata.onrender.com',
