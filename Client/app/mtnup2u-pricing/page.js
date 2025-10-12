@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 const PricingComparisonTable = () => {
   // Pricing data from your document
   const normalPrices = [
-    { capacity: '1', mb: '1000', price: '5.7' },
+    { capacity: '1', mb: '1000', price: '4.9' },
     { capacity: '2', mb: '2000', price: '10.70' },
     { capacity: '3', mb: '3000', price: '16.00' },
     { capacity: '4', mb: '4000', price: '20.00' },
