@@ -16,7 +16,51 @@ if (!PAYSTACK_SECRET_KEY) {
 // Middleware to check if user is admin
 
 // const mongoose = require('mongoose');
-const ARKESEL_API_KEY = 'QkNhS0l2ZUZNeUdweEtmYVRUREg';
+const ARKESEL_API_KEY = process.env.ARKESEL_API_KEY;
+
+// Validate Arkesel configuration
+if (!process.env.ARKESEL_API_KEY) {
+  console.warn('⚠️  ARKESEL_API_KEY not set. Admin SMS notifications will fail.');
+}
+
+/**
+ * Format phone number for Arkesel SMS service
+ * @param {string} phoneNumber - Phone number to format
+ * @returns {string} - Formatted phone number
+ */
+const formatPhoneNumberForArkesel = (phoneNumber) => {
+  if (!phoneNumber || phoneNumber === '' || phoneNumber === null || phoneNumber === undefined) {
+    throw new Error('Phone number is required');
+  }
+  
+  // Remove all non-numeric characters
+  let cleaned = phoneNumber.toString().replace(/\D/g, '');
+  
+  // Check if we have any digits after cleaning
+  if (cleaned === '') {
+    throw new Error(`Invalid phone number format: ${phoneNumber}`);
+  }
+  
+  // Handle different formats
+  if (cleaned.startsWith('233')) {
+    // Convert from +233 format to 0 format
+    cleaned = '0' + cleaned.substring(3);
+  } else if (cleaned.startsWith('0')) {
+    // Already in correct format
+    cleaned = cleaned;
+  } else if (cleaned.length === 9) {
+    // Add leading 0 for 9-digit numbers
+    cleaned = '0' + cleaned;
+  }
+  
+  // Validate Ghana phone number format
+  const ghanaPhoneRegex = /^0[2-5][0-9]{8}$/;
+  if (!ghanaPhoneRegex.test(cleaned)) {
+    throw new Error(`Invalid Ghana phone number format: ${phoneNumber}`);
+  }
+  
+  return cleaned;
+};
 
 const sendSMS = async (phoneNumber, message, options = {}) => {
   const {
@@ -25,16 +69,30 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
     senderID = 'Bundle'
   } = options;
 
+  // Validate API key before proceeding
+  if (!ARKESEL_API_KEY) {
+    throw new Error('ARKESEL_API_KEY not configured. SMS service unavailable.');
+  }
+
   // Input validation
   if (!phoneNumber || !message) {
     throw new Error('Phone number and message are required');
+  }
+
+  // Format phone number for Arkesel
+  let formattedPhone;
+  try {
+    formattedPhone = formatPhoneNumberForArkesel(phoneNumber);
+  } catch (error) {
+    console.error(`❌ Phone number formatting error: ${error.message}`);
+    throw new Error(error.message);
   }
 
   // Base parameters
   const params = {
     action: 'send-sms',
     api_key: ARKESEL_API_KEY,
-    to: phoneNumber,
+    to: formattedPhone,
     from: senderID,
     sms: message
   };
@@ -78,7 +136,8 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
     }
 
     console.log('SMS sent successfully:', {
-      to: phoneNumber,
+      to: formattedPhone,
+      original: phoneNumber,
       status: response.data.code,
       balance: response.data.balance,
       mainBalance: response.data.main_balance

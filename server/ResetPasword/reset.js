@@ -8,10 +8,15 @@ const JWT_SECRET = 'DatAmArt';
 
 // mNotify SMS configuration
 const SMS_CONFIG = {
-  API_KEY: process.env.MNOTIFY_API_KEY || 'w3rGWhv4e235nDwYvD5gVDyrW',
+  API_KEY: process.env.MNOTIFY_API_KEY,
   SENDER_ID: 'Unlimiteddatagh',
   BASE_URL: 'https://apps.mnotify.net/smsapi'
 };
+
+// Validate mNotify configuration
+if (!process.env.MNOTIFY_API_KEY) {
+  console.warn('⚠️  MNOTIFY_API_KEY not set. Password reset SMS will fail.');
+}
 
 /**
  * Format phone number to Ghana format for mNotify
@@ -45,6 +50,11 @@ const formatPhoneNumber = (phone) => {
  */
 const sendSMS = async (to, message) => {
   try {
+    // Validate API key before proceeding
+    if (!SMS_CONFIG.API_KEY) {
+      throw new Error('MNOTIFY_API_KEY not configured. SMS service unavailable.');
+    }
+    
     const formattedPhone = formatPhoneNumber(to);
     
     // Validate phone number
@@ -140,17 +150,36 @@ router.post('/request-password-reset', async (req, res) => {
       });
     }
 
-    // Validate phone number format
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (!phoneRegex.test(phoneNumber)) {
+    // Format phone number for mNotify (ensure it starts with 0)
+    let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    
+    // Handle different formats
+    if (formattedPhone.startsWith('233')) {
+      // Convert from +233 format to 0 format
+      formattedPhone = '0' + formattedPhone.substring(3);
+    } else if (formattedPhone.startsWith('0')) {
+      // Already in correct format
+      formattedPhone = formattedPhone;
+    } else if (formattedPhone.length === 9) {
+      // Add leading 0 for 9-digit numbers
+      formattedPhone = '0' + formattedPhone;
+    }
+    
+    // Validate Ghana phone number format
+    const ghanaPhoneRegex = /^0[2-5][0-9]{8}$/;
+    if (!ghanaPhoneRegex.test(formattedPhone)) {
       return res.status(400).json({
-        message: 'Invalid phone number format',
-        details: { phoneNumber: 'Please enter a valid phone number' }
+        message: 'Invalid Ghana phone number format',
+        details: { phoneNumber: 'Please enter a valid Ghana phone number (e.g., 0241234567)' }
       });
     }
 
-    // Find user by phone number
-    const user = await User.findOne({ phoneNumber });
+    // Find user by phone number (try both original and formatted)
+    let user = await User.findOne({ phoneNumber: formattedPhone });
+    if (!user) {
+      // Try with original phone number as fallback
+      user = await User.findOne({ phoneNumber });
+    }
     if (!user) {
       return res.status(404).json({ message: 'User not found with this phone number' });
     }
@@ -177,7 +206,7 @@ router.post('/request-password-reset', async (req, res) => {
     
     // Send OTP via SMS using mNotify
     const message = `Your Unlimiteddatagh password reset code is: ${otp}. This code is valid for 10 minutes. If you didn't request this, please ignore.`;
-    const smsResult = await sendSMS(user.phoneNumber, message);
+    const smsResult = await sendSMS(formattedPhone, message);
     
     if (!smsResult.success) {
       console.error('Failed to send OTP SMS:', smsResult.error);
@@ -188,7 +217,7 @@ router.post('/request-password-reset', async (req, res) => {
     }
     
     // For privacy, only show last 4 digits of phone number
-    const maskedPhoneNumber = user.phoneNumber.replace(/\d(?=\d{4})/g, '*');
+    const maskedPhoneNumber = formattedPhone.replace(/\d(?=\d{4})/g, '*');
     
     res.status(200).json({
       message: 'Password reset code sent successfully',
@@ -308,17 +337,36 @@ router.post('/resend-password-reset-otp', async (req, res) => {
       });
     }
     
-    // Validate phone number format
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (!phoneRegex.test(phoneNumber)) {
+    // Format phone number for mNotify (ensure it starts with 0)
+    let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    
+    // Handle different formats
+    if (formattedPhone.startsWith('233')) {
+      // Convert from +233 format to 0 format
+      formattedPhone = '0' + formattedPhone.substring(3);
+    } else if (formattedPhone.startsWith('0')) {
+      // Already in correct format
+      formattedPhone = formattedPhone;
+    } else if (formattedPhone.length === 9) {
+      // Add leading 0 for 9-digit numbers
+      formattedPhone = '0' + formattedPhone;
+    }
+    
+    // Validate Ghana phone number format
+    const ghanaPhoneRegex = /^0[2-5][0-9]{8}$/;
+    if (!ghanaPhoneRegex.test(formattedPhone)) {
       return res.status(400).json({
-        message: 'Invalid phone number format',
-        details: { phoneNumber: 'Please enter a valid phone number' }
+        message: 'Invalid Ghana phone number format',
+        details: { phoneNumber: 'Please enter a valid Ghana phone number (e.g., 0241234567)' }
       });
     }
     
-    // Find user by phone number
-    const user = await User.findOne({ phoneNumber });
+    // Find user by phone number (try both original and formatted)
+    let user = await User.findOne({ phoneNumber: formattedPhone });
+    if (!user) {
+      // Try with original phone number as fallback
+      user = await User.findOne({ phoneNumber });
+    }
     if (!user) {
       return res.status(404).json({ message: 'User not found with this phone number' });
     }
@@ -354,7 +402,7 @@ router.post('/resend-password-reset-otp', async (req, res) => {
     
     // Send OTP via SMS using mNotify
     const message = `Your new Unlimiteddatagh password reset code is: ${otp}. This code is valid for 10 minutes.`;
-    const smsResult = await sendSMS(user.phoneNumber, message);
+    const smsResult = await sendSMS(formattedPhone, message);
     
     if (!smsResult.success) {
       console.error('Failed to send OTP SMS:', smsResult.error);
@@ -365,7 +413,7 @@ router.post('/resend-password-reset-otp', async (req, res) => {
     }
     
     // For privacy, only show last 4 digits of phone number
-    const maskedPhoneNumber = user.phoneNumber.replace(/\d(?=\d{4})/g, '*');
+    const maskedPhoneNumber = formattedPhone.replace(/\d(?=\d{4})/g, '*');
     
     res.status(200).json({
       message: 'New password reset code sent successfully',

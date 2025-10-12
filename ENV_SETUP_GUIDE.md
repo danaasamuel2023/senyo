@@ -55,6 +55,15 @@ PAYSTACK_SECRET_KEY=sk_test_your_paystack_secret_key
 PAYSTACK_PUBLIC_KEY=pk_test_your_paystack_public_key
 ```
 
+### SMS Service Configuration
+```env
+# mNotify SMS Service (for password reset OTP)
+MNOTIFY_API_KEY=your_mnotify_api_key_here
+
+# Arkesel SMS Service (for admin notifications)
+ARKESEL_API_KEY=your_arkesel_api_key_here
+```
+
 ### API Keys & External Services
 ```env
 # Hubtel/SMS Service

@@ -1,5 +1,49 @@
 const axios = require('axios');
-const ARKESEL_API_KEY = 'QkNhS0l2ZUZNeUdweEtmYVRUREg';
+const ARKESEL_API_KEY = process.env.ARKESEL_API_KEY;
+
+// Validate Arkesel configuration
+if (!process.env.ARKESEL_API_KEY) {
+  console.warn('⚠️  ARKESEL_API_KEY not set. SMS service will fail.');
+}
+
+/**
+ * Format phone number for Arkesel SMS service
+ * @param {string} phoneNumber - Phone number to format
+ * @returns {string} - Formatted phone number
+ */
+const formatPhoneNumberForArkesel = (phoneNumber) => {
+  if (!phoneNumber || phoneNumber === '' || phoneNumber === null || phoneNumber === undefined) {
+    throw new Error('Phone number is required');
+  }
+  
+  // Remove all non-numeric characters
+  let cleaned = phoneNumber.toString().replace(/\D/g, '');
+  
+  // Check if we have any digits after cleaning
+  if (cleaned === '') {
+    throw new Error(`Invalid phone number format: ${phoneNumber}`);
+  }
+  
+  // Handle different formats
+  if (cleaned.startsWith('233')) {
+    // Convert from +233 format to 0 format
+    cleaned = '0' + cleaned.substring(3);
+  } else if (cleaned.startsWith('0')) {
+    // Already in correct format
+    cleaned = cleaned;
+  } else if (cleaned.length === 9) {
+    // Add leading 0 for 9-digit numbers
+    cleaned = '0' + cleaned;
+  }
+  
+  // Validate Ghana phone number format
+  const ghanaPhoneRegex = /^0[2-5][0-9]{8}$/;
+  if (!ghanaPhoneRegex.test(cleaned)) {
+    throw new Error(`Invalid Ghana phone number format: ${phoneNumber}`);
+  }
+  
+  return cleaned;
+};
 
 // Function to send SMS with retry capability
 const sendSMS = async (phoneNumber, message, options = {}) => {
@@ -9,10 +53,24 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
     timeout = 15000 // Increased timeout to 15 seconds
   } = options;
 
+  // Validate API key before proceeding
+  if (!ARKESEL_API_KEY) {
+    throw new Error('ARKESEL_API_KEY not configured. SMS service unavailable.');
+  }
+
+  // Format phone number for Arkesel
+  let formattedPhone;
+  try {
+    formattedPhone = formatPhoneNumberForArkesel(phoneNumber);
+  } catch (error) {
+    console.error(`❌ Phone number formatting error: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+
   const params = {
     action: 'send-sms',
     api_key: ARKESEL_API_KEY,
-    to: phoneNumber,
+    to: formattedPhone,
     from: senderID,
     sms: message,
     use_case: 'transactional'
@@ -25,7 +83,7 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
     attempts++;
     
     try {
-      console.log(`Sending SMS to ${phoneNumber} (Attempt ${attempts}/${maxRetries + 1})`);
+      console.log(`Sending SMS to ${formattedPhone} (original: ${phoneNumber}) (Attempt ${attempts}/${maxRetries + 1})`);
       
       const response = await axios.get('https://sms.arkesel.com/sms/api', {
         params,
@@ -33,11 +91,11 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
       });
 
       if (response.data.code === 'ok') {
-        console.log(`✅ SUCCESS: SMS sent to ${phoneNumber}`);
+        console.log(`✅ SUCCESS: SMS sent to ${formattedPhone}`);
         return { success: true, data: response.data };
       } else {
         const errorMessage = `API returned non-success code: ${response.data.code}`;
-        console.error(`❌ FAILED: SMS to ${phoneNumber} - ${errorMessage}`);
+        console.error(`❌ FAILED: SMS to ${formattedPhone} - ${errorMessage}`);
         
         // If this is the last attempt, return the error
         if (attempts > maxRetries) {
@@ -52,11 +110,11 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
       
       // Log different error types differently
       if (error.code === 'ECONNABORTED') {
-        console.error(`⏱️ TIMEOUT: SMS to ${phoneNumber} - Request timed out`);
+        console.error(`⏱️ TIMEOUT: SMS to ${formattedPhone} - Request timed out`);
       } else if (error.response) {
-        console.error(`❌ API ERROR: SMS to ${phoneNumber} - ${error.response.status} ${error.response.statusText}`);
+        console.error(`❌ API ERROR: SMS to ${formattedPhone} - ${error.response.status} ${error.response.statusText}`);
       } else {
-        console.error(`❌ ERROR: SMS to ${phoneNumber} - ${errorMessage}`);
+        console.error(`❌ ERROR: SMS to ${formattedPhone} - ${errorMessage}`);
       }
       
       // If this is the last attempt, return the error
