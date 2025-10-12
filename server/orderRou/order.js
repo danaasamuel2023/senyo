@@ -483,6 +483,7 @@ router.get('/debug-pricing', (req, res) => {
 
 // ===== MAIN PURCHASE DATA ROUTE WITH DATAMART INTEGRATION =====
 router.post('/purchase-data', async (req, res) => {
+  let session;
   try {
     // Ensure database connection is ready
     if (mongoose.connection.readyState !== 1) {
@@ -492,7 +493,7 @@ router.post('/purchase-data', async (req, res) => {
       });
     }
     
-    const session = await mongoose.startSession();
+    session = await mongoose.startSession();
     session.startTransaction();
     const { 
       userId, 
@@ -1103,8 +1104,10 @@ router.post('/purchase-data', async (req, res) => {
     });
 
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
     
     logOperation('DATA_PURCHASE_ERROR', {
       message: error.message,
