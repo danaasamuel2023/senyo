@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const WalletService = require('../services/walletService');
 
 // Paystack configuration
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_live_0fba72fb9c4fc71200d2e0cdbb4f2b37c1de396c'; 
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_live_d5228090985d3b7d9f8df6de2921b02615ccf73b'; 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 // Initiate Deposit
@@ -124,9 +124,17 @@ router.post('/deposit', async (req, res) => {
 
   } catch (error) {
     console.error('Deposit Error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     return res.status(500).json({ 
       success: false,
-      error: 'Internal server error' 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
