@@ -15,12 +15,23 @@ const MTNStyleNotification = ({
   const [isVisible, setIsVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Validate required props
+  if (!message) {
+    console.error('MTNStyleNotification: message prop is required');
+    return null;
+  }
+
   const handleDismiss = useCallback(() => {
-    setIsAnimating(true);
-    setTimeout(() => {
+    try {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        onDismiss?.();
+      }, 300);
+    } catch (error) {
+      console.error('Error in MTNStyleNotification handleDismiss:', error);
       setIsVisible(false);
-      onDismiss?.();
-    }, 300);
+    }
   }, [onDismiss]);
 
   const getIcon = () => {

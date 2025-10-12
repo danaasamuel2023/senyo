@@ -5,11 +5,41 @@ import LoginAnnouncement from './LoginAnnouncement';
 import AnnouncementBanner from './AnnouncementBanner';
 import MTNStyleNotification from './MTNStyleNotification';
 
+// Error boundary for notification components
+class NotificationErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Notification system error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // Fail silently for notifications
+    }
+
+    return this.props.children;
+  }
+}
+
 const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [systemSettings, setSystemSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Don't render if there's an error - let ErrorBoundary handle it
+  if (error) {
+    console.error('NotificationManager error:', error);
+    return null;
+  }
 
   const loadAnnouncements = useCallback(async () => {
     if (!userId) return;
@@ -185,4 +215,13 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   );
 };
 
-export default NotificationManager;
+// Wrap NotificationManager with error boundary
+const NotificationManagerWithErrorBoundary = (props) => {
+  return (
+    <NotificationErrorBoundary>
+      <NotificationManager {...props} />
+    </NotificationErrorBoundary>
+  );
+};
+
+export default NotificationManagerWithErrorBoundary;
