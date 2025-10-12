@@ -19,7 +19,13 @@ export const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // Always use production backend
+  // Use local backend for development
+  const env = getCurrentEnv();
+  if (env === 'DEVELOPMENT') {
+    return 'http://localhost:3001';
+  }
+  
+  // Use production backend for production
   return 'https://unlimitedata.onrender.com';
 };
 
@@ -36,7 +42,13 @@ export const getNextPublicApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // Always use production backend
+  // Use local backend for development
+  const env = getCurrentEnv();
+  if (env === 'DEVELOPMENT') {
+    return 'http://localhost:3001';
+  }
+  
+  // Use production backend for production
   return 'https://unlimitedata.onrender.com';
 };
 
