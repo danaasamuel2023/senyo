@@ -182,6 +182,19 @@ const validatePrice = (network, capacity, submittedPrice, userId, phoneNumber) =
       userId,
       phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX'
     });
+    
+    // Enhanced debugging for pricing mismatch
+    console.error('🚨 PRICE VALIDATION FAILED:', {
+      network,
+      capacity: capacityStr,
+      submittedPrice: submittedPriceFloat,
+      officialPrice,
+      difference: Math.abs(submittedPriceFloat - officialPrice),
+      tolerance,
+      OFFICIAL_PRICING_YELLO: OFFICIAL_PRICING['YELLO'],
+      availableCapacities: Object.keys(OFFICIAL_PRICING['YELLO'] || {})
+    });
+    
     return {
       isValid: false,
       message: 'Invalid price. Please refresh the page and try again.',
@@ -434,6 +447,16 @@ router.get('/agent-balance', async (req, res) => {
       details: error.response ? error.response.data : error.message
     });
   }
+});
+
+// ===== DEBUG ENDPOINT TO CHECK PRICING =====
+router.get('/debug-pricing', (req, res) => {
+  res.json({
+    success: true,
+    OFFICIAL_PRICING,
+    timestamp: new Date().toISOString(),
+    message: 'Current pricing configuration'
+  });
 });
 
 // ===== MAIN PURCHASE DATA ROUTE WITH DATAMART INTEGRATION =====
