@@ -64,6 +64,12 @@ MNOTIFY_API_KEY=your_mnotify_api_key_here
 ARKESEL_API_KEY=your_arkesel_api_key_here
 ```
 
+### DataMart API Configuration
+```env
+# DataMart API Key for data package purchases
+DATAMART_API_KEY=your_datamart_api_key_here
+```
+
 ### API Keys & External Services
 ```env
 # Hubtel/SMS Service
