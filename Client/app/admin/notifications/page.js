@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../utils/auth.js';
 import { 
   Bell, 
   Settings, 
@@ -24,6 +26,8 @@ import {
 } from 'lucide-react';
 
 const AdminNotifications = () => {
+  const router = useRouter();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('announcements');
   const [systemSettings, setSystemSettings] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
@@ -31,6 +35,25 @@ const AdminNotifications = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+
+  // Redirect if not authenticated or not admin
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
+      router.push('/SignIn');
+    }
+  }, [isAuthenticated, user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'admin') {
+    return null;
+  }
 
   useEffect(() => {
     loadData();
@@ -573,10 +596,12 @@ const SettingsTab = ({ settings, onUpdate }) => {
               <option value="banner">Banner</option>
               <option value="modal">Modal</option>
               <option value="popup">Popup</option>
+              <option value="mtn-popup">MTN Style Popup</option>
             </select>
           </div>
         </div>
       </div>
+
 
       <div className="flex justify-end">
         <button
@@ -664,7 +689,11 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
       dismissible: true,
       autoDismiss: true,
       autoDismissDelay: 10000,
-      showIcon: true
+      showIcon: true,
+      style: 'toast'
+    },
+    actionButton: {
+      text: "I've Read This - Dismiss Forever"
     },
     expiresAt: ''
   });
@@ -683,7 +712,11 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
           dismissible: announcement.displaySettings?.dismissible !== false,
           autoDismiss: announcement.displaySettings?.autoDismiss !== false,
           autoDismissDelay: announcement.displaySettings?.autoDismissDelay || 10000,
-          showIcon: announcement.displaySettings?.showIcon !== false
+          showIcon: announcement.displaySettings?.showIcon !== false,
+          style: announcement.displaySettings?.style || 'toast'
+        },
+        actionButton: {
+          text: announcement.actionButton?.text || "I've Read This - Dismiss Forever"
         },
         expiresAt: announcement.expiresAt ? new Date(announcement.expiresAt).toISOString().slice(0, 16) : ''
       });
@@ -805,22 +838,46 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Target Audience
-            </label>
-            <select
-              value={formData.targetAudience}
-              onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Users</option>
-              <option value="buyer">Buyers Only</option>
-              <option value="seller">Sellers Only</option>
-              <option value="agent">Agents Only</option>
-              <option value="dealer">Dealers Only</option>
-              <option value="admin">Admins Only</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Target Audience
+              </label>
+              <select
+                value={formData.targetAudience}
+                onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Users</option>
+                <option value="buyer">Buyers Only</option>
+                <option value="seller">Sellers Only</option>
+                <option value="agent">Agents Only</option>
+                <option value="dealer">Dealers Only</option>
+                <option value="admin">Admins Only</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Display Style
+              </label>
+              <select
+                value={formData.displaySettings?.style || 'toast'}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  displaySettings: {
+                    ...formData.displaySettings,
+                    style: e.target.value
+                  }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="toast">Toast Notification</option>
+                <option value="banner">Banner</option>
+                <option value="modal">Modal</option>
+                <option value="mtn-popup">MTN Style Popup</option>
+              </select>
+            </div>
           </div>
           
           <div>
@@ -834,6 +891,71 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+          
+          {/* MTN Style Specific Fields */}
+          {formData.displaySettings?.style === 'mtn-popup' && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="text-sm font-medium text-blue-800 mb-3">MTN Style Settings</h4>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dismiss Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.actionButton?.text || "I've Read This - Dismiss Forever"}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      actionButton: {
+                        ...formData.actionButton,
+                        text: e.target.value
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="I've Read This - Dismiss Forever"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Auto Dismiss Delay (ms)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.displaySettings?.autoDismissDelay || 15000}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      displaySettings: {
+                        ...formData.displaySettings,
+                        autoDismissDelay: parseInt(e.target.value) || 15000
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="15000"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.displaySettings?.autoDismiss || false}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      displaySettings: {
+                        ...formData.displaySettings,
+                        autoDismiss: e.target.checked
+                      }
+                    })}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Enable auto-dismiss</span>
+                </label>
+              </div>
+            </div>
+          )}
           
           <div className="flex items-center space-x-6">
             <label className="flex items-center">

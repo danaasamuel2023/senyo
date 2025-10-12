@@ -1795,7 +1795,8 @@ const NotificationSystemSchema = new Schema({
     autoDismissDelay: { type: Number, default: 10000 }, // milliseconds
     maxAnnouncementsPerUser: { type: Number, default: 5 },
     allowUserDismiss: { type: Boolean, default: true },
-    showPriorityBadges: { type: Boolean, default: true }
+    showPriorityBadges: { type: Boolean, default: true },
+    whatsappNumber: { type: String, default: "233123456789", maxlength: 20 }
   },
   displaySettings: {
     position: { 
@@ -1805,7 +1806,7 @@ const NotificationSystemSchema = new Schema({
     },
     style: { 
       type: String, 
-      enum: ["toast", "banner", "modal", "popup"], 
+      enum: ["toast", "banner", "modal", "popup", "mtn-popup"], 
       default: "toast" 
     },
     animation: { 

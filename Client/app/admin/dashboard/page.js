@@ -783,6 +783,7 @@ const AdminDashboard = () => {
     { id: 'agent-stores', label: 'Agent Stores', icon: Store, badge: null },
     { id: 'orders', label: 'Orders', icon: Package, badge: stats.pendingOrders || null },
     { id: 'products', label: 'Products', icon: Package2, badge: null },
+    { id: 'notifications', label: 'Notifications', icon: Bell, badge: null },
     { id: 'bulk-messaging', label: 'Bulk Messaging', icon: MessageSquare, badge: null },
     { id: 'package-management', label: 'Package Management', icon: Package2, badge: null },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: null },
@@ -796,6 +797,7 @@ const AdminDashboard = () => {
     const navigationTabs = {
       'control-center': '/admin/control-center',
       'products': '/admin/products',
+      'notifications': '/admin/notifications',
       'bulk-messaging': '/admin/bulk-messaging',
       'package-management': '/admin/package-management',
       'analytics': '/admin/analytics',

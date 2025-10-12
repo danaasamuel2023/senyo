@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import LoginAnnouncement from './LoginAnnouncement';
 import AnnouncementBanner from './AnnouncementBanner';
+import MTNStyleNotification from './MTNStyleNotification';
 
 const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   const [announcements, setAnnouncements] = useState([]);
@@ -137,6 +138,19 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
           announcements={announcements}
           onDismiss={handleDismiss}
           systemSettings={systemSettings}
+        />
+      )}
+      
+      {/* MTN Style Notification */}
+      {displayStyle === 'mtn-popup' && announcements.length > 0 && (
+        <MTNStyleNotification
+          title={announcements[0].title}
+          message={announcements[0].message}
+          type={announcements[0].type === 'urgent' ? 'urgent' : announcements[0].type === 'maintenance' ? 'warning' : 'info'}
+          onDismiss={() => handleDismiss(announcements[0]._id)}
+          dismissText={announcements[0].actionButton?.text || "I've Read This - Dismiss Forever"}
+          autoDismiss={announcements[0].displaySettings?.autoDismiss || false}
+          autoDismissDelay={announcements[0].displaySettings?.autoDismissDelay || 15000}
         />
       )}
       
