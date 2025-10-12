@@ -13,7 +13,11 @@ import {
   Upload, Edit, Trash2, Eye, Database, Shield, Activity, PieChart, ArrowUp, 
   ArrowDown, Bell, HelpCircle, Save, XCircle, Home, ShoppingCart, Wallet,
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
-  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare
+  Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare,
+  // Phase 1 & 2 & 3 Features
+  Monitor, TrendingDown, Headphones, Megaphone, FileImage, Warehouse, 
+  Workflow, Trigger, Template, Target, Smartphone, Globe, Cpu, HardDrive,
+  Lock, UserCog, DollarSign as Money, BarChart as Analytics, ShoppingBag
 } from 'lucide-react';
 // Temporarily disabled Recharts due to D3 import issues
 // import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -785,15 +789,36 @@ const AdminDashboard = () => {
   const sidebarItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: Home, badge: null },
     { id: 'control-center', label: 'Control Center', icon: Zap, badge: null, highlight: true },
+    
+    // Core Management
     { id: 'users', label: 'Users', icon: Users, badge: stats.activeUsers || null },
+    { id: 'user-management', label: 'Advanced Users', icon: UserCog, badge: null },
     { id: 'agents', label: 'Agents', icon: Briefcase, badge: null },
     { id: 'agent-stores', label: 'Agent Stores', icon: Store, badge: null },
     { id: 'orders', label: 'Orders', icon: Package, badge: stats.pendingOrders || null },
     { id: 'products', label: 'Products', icon: Package2, badge: null },
+    
+    // Phase 1: Performance & Monitoring
+    { id: 'performance', label: 'Performance', icon: Monitor, badge: null },
+    { id: 'financial', label: 'Financial', icon: Money, badge: null },
+    { id: 'security', label: 'Security', icon: Lock, badge: null },
+    
+    // Phase 2: Customer Support & Content
+    { id: 'support', label: 'Support', icon: Headphones, badge: null },
+    { id: 'content', label: 'Content', icon: FileImage, badge: null },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone, badge: null },
+    
+    // Phase 3: Advanced Features
+    { id: 'inventory', label: 'Inventory', icon: Warehouse, badge: null },
+    { id: 'automation', label: 'Automation', icon: Workflow, badge: null },
+    { id: 'integrations', label: 'Integrations', icon: Globe, badge: null },
+    { id: 'mobile', label: 'Mobile App', icon: Smartphone, badge: null },
+    
+    // Communication & Analytics
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: null },
     { id: 'bulk-messaging', label: 'Bulk Messaging', icon: MessageSquare, badge: null },
     { id: 'package-management', label: 'Package Management', icon: Package2, badge: null },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: null },
+    { id: 'analytics', label: 'Analytics', icon: Analytics, badge: null },
     { id: 'transactions', label: 'Transactions', icon: CreditCard, badge: null },
     { id: 'reports', label: 'Reports', icon: FileText, badge: null },
     { id: 'settings', label: 'Settings', icon: Settings, badge: null }
@@ -803,13 +828,34 @@ const AdminDashboard = () => {
   const handleTabClick = useCallback(async (tabId) => {
     const navigationTabs = {
       'control-center': '/admin/control-center',
+      'users': '/admin/users',
+      'user-management': '/admin/user-management',
+      'agents': '/admin/agents',
+      'agent-stores': '/admin/agent-stores',
+      'orders': '/admin/orders',
       'products': '/admin/products',
+      
+      // Phase 1: Performance & Monitoring
+      'performance': '/admin/performance',
+      'financial': '/admin/financial',
+      'security': '/admin/security',
+      
+      // Phase 2: Customer Support & Content
+      'support': '/admin/support',
+      'content': '/admin/content',
+      'marketing': '/admin/marketing',
+      
+      // Phase 3: Advanced Features
+      'inventory': '/admin/inventory',
+      'automation': '/admin/automation',
+      'integrations': '/admin/integrations',
+      'mobile': '/admin/mobile',
+      
+      // Communication & Analytics
       'notifications': '/admin/notifications',
       'bulk-messaging': '/admin/bulk-messaging',
       'package-management': '/admin/package-management',
       'analytics': '/admin/analytics',
-      'agents': '/admin/agents',
-      'agent-stores': '/admin/agent-stores',
       'transactions': '/admin/transactions',
       'reports': '/admin/reports',
       'settings': '/admin/settings'
@@ -1751,12 +1797,34 @@ const AdminDashboard = () => {
                   // Prefetch route on hover for faster navigation
                   const navigationTabs = {
                     'control-center': '/admin/control-center',
+                    'users': '/admin/users',
+                    'user-management': '/admin/user-management',
+                    'agents': '/admin/agents',
+                    'agent-stores': '/admin/agent-stores',
+                    'orders': '/admin/orders',
                     'products': '/admin/products',
+                    
+                    // Phase 1: Performance & Monitoring
+                    'performance': '/admin/performance',
+                    'financial': '/admin/financial',
+                    'security': '/admin/security',
+                    
+                    // Phase 2: Customer Support & Content
+                    'support': '/admin/support',
+                    'content': '/admin/content',
+                    'marketing': '/admin/marketing',
+                    
+                    // Phase 3: Advanced Features
+                    'inventory': '/admin/inventory',
+                    'automation': '/admin/automation',
+                    'integrations': '/admin/integrations',
+                    'mobile': '/admin/mobile',
+                    
+                    // Communication & Analytics
+                    'notifications': '/admin/notifications',
                     'bulk-messaging': '/admin/bulk-messaging',
                     'package-management': '/admin/package-management',
                     'analytics': '/admin/analytics',
-                    'agents': '/admin/agents',
-                    'agent-stores': '/admin/agent-stores',
                     'transactions': '/admin/transactions',
                     'reports': '/admin/reports',
                     'settings': '/admin/settings'

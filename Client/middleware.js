@@ -35,7 +35,8 @@ const PROTECTED_ROUTES = [
   '/waiting',
   '/toggle',
   '/testing',
-  '/toast-test'
+  '/toast-test',
+  '/wallet'
 ];
 
 // Admin-only routes
