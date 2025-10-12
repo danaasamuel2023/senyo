@@ -7,7 +7,7 @@ import {
   Zap, Play, Pause, Settings, Plus, ArrowLeft, RefreshCw,
   Search, Filter, Eye, Edit, Trash2, TrendingUp, TrendingDown,
   BarChart3, Clock, CheckCircle, X, AlertCircle, Activity,
-  Workflow, Trigger, Template, Bell, Target, Target as Execution
+  Workflow, Trigger, Template, Bell, Target, Play as Execution
 } from 'lucide-react';
 
 const BusinessProcessAutomationPage = () => {
