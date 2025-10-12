@@ -8,15 +8,20 @@ const testAdminAuth = async () => {
     // Test credentials (using existing admin)
     const adminCredentials = {
       email: 'sunumanfred14@gmail.com',
-      password: 'Kingfred4190$'
+      password: 'admin123'
     };
     
     console.log('1. 🔐 Testing admin login...');
     
     // Step 1: Login as admin
-    const loginResponse = await axios.post('http://localhost:5001/api/v1/login', {
+    const loginResponse = await axios.post('http://localhost:3001/api/v1/login', {
       email: adminCredentials.email,
       password: adminCredentials.password
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
     });
     
     if (loginResponse.data.token) {
@@ -33,7 +38,7 @@ const testAdminAuth = async () => {
       
       try {
         const verifyResponse = await axios.get(
-          `http://localhost:5001/api/v1/admin/verify-paystack/${testReference}`,
+          `http://localhost:3001/api/v1/admin/verify-paystack/${testReference}`,
           {
             headers: {
               'x-auth-token': token,
@@ -63,7 +68,7 @@ const testAdminAuth = async () => {
       
       try {
         const validVerifyResponse = await axios.get(
-          `http://localhost:5001/api/v1/admin/verify-paystack/${validReference}`,
+          `http://localhost:3001/api/v1/admin/verify-paystack/${validReference}`,
           {
             headers: {
               'x-auth-token': token,
@@ -93,6 +98,12 @@ const testAdminAuth = async () => {
     if (error.response) {
       console.log('   Status:', error.response.status);
       console.log('   Data:', error.response.data);
+      console.log('   Headers:', error.response.headers);
+    } else if (error.request) {
+      console.log('   Request made but no response received');
+      console.log('   Request:', error.request);
+    } else {
+      console.log('   Error setting up request:', error.message);
     }
   }
 };
