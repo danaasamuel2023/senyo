@@ -87,52 +87,52 @@ const OFFICIAL_PRICING = {
     '80': 328.5,
     '100': 410.5
   },
-  'at': { // AirtelTigo pricing structure
-    '1': 3.95,
-    '2': 8.35,
-    '3': 13.25,
-    '4': 16.50,
-    '5': 19.50,
-    '6': 23.50,
-    '8': 30.50,
-    '10': 38.50,
-    '12': 45.50,
-    '15': 57.50,
-    '25': 95.00,
-    '30': 115.00,
-    '40': 151.00,
-    '50': 190.00
+  'at': { // AirtelTigo pricing structure (updated to match frontend)
+    '1': 3.9,
+    '2': 8.30,
+    '3': 13.20,
+    '4': 16.00,
+    '5': 19.00,
+    '6': 23.00,
+    '8': 30.00,
+    '10': 37.50,
+    '12': 42.50,
+    '15': 54.50,
+    '25': 87.00,
+    '30': 110.00,
+    '40': 145.00,
+    '50': 180.00
   },
-  'AT_PREMIUM': { // AirtelTigo Premium pricing structure (same as regular AT)
-    '1': 3.95,
-    '2': 8.35,
-    '3': 13.25,
-    '4': 16.50,
-    '5': 19.50,
-    '6': 23.50,
-    '8': 30.50,
-    '10': 38.50,
-    '12': 45.50,
-    '15': 57.50,
-    '25': 95.00,
-    '30': 115.00,
-    '40': 151.00,
-    '50': 190.00
+  'AT_PREMIUM': { // AirtelTigo Premium pricing structure (updated to match frontend)
+    '1': 3.9,
+    '2': 8.30,
+    '3': 13.20,
+    '4': 16.00,
+    '5': 19.00,
+    '6': 23.00,
+    '8': 30.00,
+    '10': 37.50,
+    '12': 42.50,
+    '15': 54.50,
+    '25': 87.00,
+    '30': 110.00,
+    '40': 145.00,
+    '50': 180.00
   },
-  'TELECEL': { // Telecel pricing structure
-    '5': 19.50,
+  'TELECEL': { // Telecel pricing structure (updated to match frontend)
+    '5': 23.00,
     '8': 34.64,
-    '10': 36.50,
-    '12': 43.70,
-    '15': 52.85,
-    '20': 69.80,
-    '25': 86.75,
-    '30': 103.70,
-    '35': 120.65,
-    '40': 137.60,
-    '45': 154.55,
-    '50': 171.50,
-    '100': 341.00
+    '10': 40.50,
+    '12': 48.50,
+    '15': 60.50,
+    '20': 81.00,
+    '25': 99.00,
+    '30': 118.00,
+    '35': 137.00,
+    '40': 155.00,
+    '45': 174.00,
+    '50': 195.00,
+    '100': 385.00
   }
 };
 
@@ -170,7 +170,23 @@ const validatePrice = (network, capacity, submittedPrice, userId, phoneNumber) =
   }
 
   const submittedPriceFloat = parseFloat(submittedPrice);
-  const tolerance = 0.01;
+  
+  // Check if submitted price is a valid number
+  if (isNaN(submittedPriceFloat) || !isFinite(submittedPriceFloat)) {
+    logOperation('PRICE_VALIDATION_INVALID_FORMAT', {
+      network,
+      capacity: capacityStr,
+      submittedPrice,
+      userId
+    });
+    return {
+      isValid: false,
+      message: 'Invalid price format. Please refresh the page and try again.',
+      code: 'INVALID_PRICE_FORMAT'
+    };
+  }
+  
+  const tolerance = 0.05; // Increased tolerance to handle floating point precision issues
   
   if (Math.abs(submittedPriceFloat - officialPrice) > tolerance) {
     logOperation('PRICE_VALIDATION_MISMATCH', {
@@ -197,8 +213,14 @@ const validatePrice = (network, capacity, submittedPrice, userId, phoneNumber) =
     
     return {
       isValid: false,
-      message: 'Invalid price. Please refresh the page and try again.',
-      code: 'PRICE_MISMATCH'
+      message: `Price mismatch detected. Expected: ₵${officialPrice}, Received: ₵${submittedPriceFloat}. Please refresh the page and try again.`,
+      code: 'PRICE_MISMATCH',
+      details: {
+        expected: officialPrice,
+        received: submittedPriceFloat,
+        difference: Math.abs(submittedPriceFloat - officialPrice),
+        tolerance
+      }
     };
   }
 
