@@ -119,13 +119,13 @@ function isPublicRoute(pathname) {
 // Helper function to get user role from token
 function getUserRoleFromToken(request) {
   try {
-    // Try to get token from headers first (for API calls)
-    let token = request.headers.get('x-auth-token') ||
-                request.headers.get('authorization')?.replace('Bearer ', '');
+    // Try to get token from cookies first (set by auth.js)
+    let token = request.cookies.get('authToken')?.value;
     
-    // If no token in headers, try cookies as fallback
+    // If no token in cookies, try headers as fallback (for API calls)
     if (!token) {
-      token = request.cookies.get('authToken')?.value;
+      token = request.headers.get('x-auth-token') ||
+              request.headers.get('authorization')?.replace('Bearer ', '');
     }
     
     if (!token) {

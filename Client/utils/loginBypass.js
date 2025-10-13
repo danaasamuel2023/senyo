@@ -183,6 +183,9 @@ export function storeLoginData(data) {
   
   localStorage.setItem('authToken', data.token);
   localStorage.setItem('user', JSON.stringify(data.user));
+  
+  // Also set as HTTP-only cookie for middleware access
+  document.cookie = `authToken=${data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
 }
 
 /**
@@ -193,6 +196,9 @@ export function clearLoginData() {
   
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
+  
+  // Also clear auth cookies
+  document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 /**

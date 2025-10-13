@@ -90,6 +90,9 @@ function storeAuthToken(token, userData) {
     localStorage.setItem(CONFIG.userKey, JSON.stringify(userData));
     localStorage.setItem(CONFIG.tokenExpiryKey, validation.payload.exp.toString());
     
+    // Also set as HTTP-only cookie for middleware access
+    document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+    
     console.log('✅ Auth token stored successfully');
     return true;
   } catch (error) {
@@ -158,6 +161,9 @@ function clearAuthToken() {
     localStorage.removeItem(CONFIG.userKey);
     localStorage.removeItem(CONFIG.tokenExpiryKey);
     localStorage.removeItem(CONFIG.refreshTokenKey);
+    
+    // Also clear auth cookies
+    document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     console.log('🚪 Auth token cleared');
   } catch (error) {

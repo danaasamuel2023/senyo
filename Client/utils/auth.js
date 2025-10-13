@@ -29,6 +29,11 @@ class SecureStorage {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, value);
+      
+      // Also set as HTTP-only cookie for middleware access
+      if (key === AUTH_TOKEN_KEY) {
+        document.cookie = `authToken=${value}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      }
     } catch (error) {
       console.error(`Error setting localStorage for key ${key}:`, error);
     }
@@ -38,6 +43,11 @@ class SecureStorage {
     if (typeof window === 'undefined') return;
     try {
       localStorage.removeItem(key);
+      
+      // Also remove cookie for middleware access
+      if (key === AUTH_TOKEN_KEY) {
+        document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      }
     } catch (error) {
       console.error(`Error removing localStorage key ${key}:`, error);
     }
@@ -48,6 +58,9 @@ class SecureStorage {
     try {
       localStorage.clear();
       sessionStorage.clear();
+      
+      // Also clear auth cookies
+      document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     } catch (error) {
       console.error('Error clearing storage:', error);
     }

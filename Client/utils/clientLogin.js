@@ -88,6 +88,9 @@ function storeClientAuth(token, user) {
     localStorage.setItem(CONFIG.userKey, JSON.stringify(user));
     localStorage.setItem(CONFIG.storageKey, 'true');
     
+    // Also set as HTTP-only cookie for middleware access
+    document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+    
     console.log('💾 Client auth stored in localStorage');
   } catch (error) {
     console.error('❌ Failed to store client auth:', error);
@@ -151,6 +154,9 @@ export function clientLogout() {
     localStorage.removeItem(CONFIG.tokenKey);
     localStorage.removeItem(CONFIG.userKey);
     localStorage.removeItem(CONFIG.storageKey);
+    
+    // Also clear auth cookies
+    document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     
     console.log('🚪 Client logout successful');
   } catch (error) {
