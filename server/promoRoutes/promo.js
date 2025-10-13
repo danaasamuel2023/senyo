@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PromoCode } = require('../schema/schema.js');
 const adminAuth = require('../adminMiddleware/middleware.js');
-const verifyAuth = require('../middlewareUser/middleware.js');
+const { auth } = require('../middleware/auth');
 
 // Create promo code (Admin only)
 router.post('/create', adminAuth, async (req, res) => {
@@ -241,7 +241,7 @@ router.get('/:id/stats', adminAuth, async (req, res) => {
 });
 
 // Validate promo code (Public - for users during checkout)
-router.post('/validate', verifyAuth, async (req, res) => {
+router.post('/validate', auth, async (req, res) => {
   try {
     const { code } = req.body;
 

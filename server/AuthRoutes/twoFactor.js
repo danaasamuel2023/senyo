@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { TwoFactorAuth, User } = require('../schema/schema.js');
-const verifyAuth = require('../middlewareUser/middleware.js');
+const { auth } = require('../middleware/auth');
 const { send2FACode } = require('../services/emailService.js');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
@@ -13,7 +13,7 @@ const generate2FACode = () => {
 };
 
 // Get 2FA status
-router.get('/status', verifyAuth, async (req, res) => {
+router.get('/status', auth, async (req, res) => {
   try {
     const twoFA = await TwoFactorAuth.findOne({ userId: req.user._id });
     
@@ -29,7 +29,7 @@ router.get('/status', verifyAuth, async (req, res) => {
 });
 
 // Enable 2FA via email
-router.post('/enable-email', verifyAuth, async (req, res) => {
+router.post('/enable-email', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
@@ -54,7 +54,7 @@ router.post('/enable-email', verifyAuth, async (req, res) => {
 });
 
 // Enable 2FA via authenticator app
-router.post('/enable-authenticator', verifyAuth, async (req, res) => {
+router.post('/enable-authenticator', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
@@ -92,7 +92,7 @@ router.post('/enable-authenticator', verifyAuth, async (req, res) => {
 });
 
 // Verify and complete authenticator setup
-router.post('/verify-authenticator', verifyAuth, async (req, res) => {
+router.post('/verify-authenticator', auth, async (req, res) => {
   try {
     const { code } = req.body;
 
@@ -142,7 +142,7 @@ router.post('/verify-authenticator', verifyAuth, async (req, res) => {
 });
 
 // Disable 2FA
-router.post('/disable', verifyAuth, async (req, res) => {
+router.post('/disable', auth, async (req, res) => {
   try {
     const { password } = req.body;
 

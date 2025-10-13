@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Test authentication endpoint
-router.get('/test-auth', authMiddleware, (req, res) => {
+router.get('/test-auth', auth, (req, res) => {
   res.json({
     success: true,
     message: 'Authentication successful',
@@ -18,7 +18,7 @@ router.get('/test-auth', authMiddleware, (req, res) => {
 });
 
 // Test protected route
-router.get('/user/profile', authMiddleware, (req, res) => {
+router.get('/user/profile', auth, (req, res) => {
   res.json({
     success: true,
     message: 'Profile access granted',

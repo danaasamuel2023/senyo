@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const { User, Order, AgentCatalog } = require('../schema/schema');
 
 // Get agent dashboard analytics
-router.get('/analytics', authMiddleware, async (req, res) => {
+router.get('/analytics', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { period = 'today' } = req.query;
@@ -138,7 +138,7 @@ router.get('/analytics', authMiddleware, async (req, res) => {
 });
 
 // Get agent profile
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
     
@@ -187,7 +187,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 });
 
 // Get agent store statistics
-router.get('/store-stats', authMiddleware, async (req, res) => {
+router.get('/store-stats', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
     
@@ -247,7 +247,7 @@ router.get('/store-stats', authMiddleware, async (req, res) => {
 });
 
 // Get agent recent activity
-router.get('/recent-activity', authMiddleware, async (req, res) => {
+router.get('/recent-activity', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { limit = 10 } = req.query;

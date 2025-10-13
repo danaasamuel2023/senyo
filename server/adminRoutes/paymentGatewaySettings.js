@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { Settings, Transactiondataunlimited } = require('../schema/schema');
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 const paymentGatewayService = require('../services/paymentGatewayService');
 
 // Get payment gateway settings
-router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
+router.get('/payment-gateway-settings', auth, adminAuth, async (req, res) => {
   try {
     // Ensure database connection is ready
     if (mongoose.connection.readyState !== 1) {
@@ -47,7 +47,7 @@ router.get('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
 });
 
 // Update payment gateway settings
-router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, res) => {
+router.put('/payment-gateway-settings', auth, adminAuth, async (req, res) => {
   try {
     // Ensure database connection is ready
     if (mongoose.connection.readyState !== 1) {
@@ -119,7 +119,7 @@ router.put('/payment-gateway-settings', authMiddleware, adminAuth, async (req, r
 });
 
 // Test Paystack connection
-router.post('/payment-gateway-settings/test', authMiddleware, adminAuth, async (req, res) => {
+router.post('/payment-gateway-settings/test', auth, adminAuth, async (req, res) => {
   try {
     const { apiKey } = req.body;
 
@@ -165,7 +165,7 @@ router.post('/payment-gateway-settings/test', authMiddleware, adminAuth, async (
 });
 
 // Get current active gateway
-router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async (req, res) => {
+router.get('/payment-gateway-settings/active', auth, adminAuth, async (req, res) => {
   try {
     // Ensure database connection is ready
     if (mongoose.connection.readyState !== 1) {
@@ -204,7 +204,7 @@ router.get('/payment-gateway-settings/active', authMiddleware, adminAuth, async 
 });
 
 // Clear pending transactions (Admin only)
-router.post('/payment-gateway-settings/clear-pending', authMiddleware, adminAuth, async (req, res) => {
+router.post('/payment-gateway-settings/clear-pending', auth, adminAuth, async (req, res) => {
   try {
     const { userId, reference } = req.body;
     

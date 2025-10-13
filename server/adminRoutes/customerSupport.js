@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Customer Support routes
-router.get('/tickets', authMiddleware, adminAuth, async (req, res) => {
+router.get('/tickets', auth, adminAuth, async (req, res) => {
   try {
     // Mock ticket data
     const tickets = [
@@ -64,7 +64,7 @@ router.get('/tickets', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/chat', authMiddleware, adminAuth, async (req, res) => {
+router.get('/chat', auth, adminAuth, async (req, res) => {
   try {
     // Mock live chat data
     const chats = [
@@ -101,7 +101,7 @@ router.get('/chat', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/knowledge-base', authMiddleware, adminAuth, async (req, res) => {
+router.get('/knowledge-base', auth, adminAuth, async (req, res) => {
   try {
     // Mock knowledge base data
     const articles = [
@@ -140,7 +140,7 @@ router.get('/knowledge-base', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/faq', authMiddleware, adminAuth, async (req, res) => {
+router.get('/faq', auth, adminAuth, async (req, res) => {
   try {
     // Mock FAQ data
     const faqs = [
@@ -175,7 +175,7 @@ router.get('/faq', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock support statistics
     const stats = {
@@ -209,7 +209,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create new ticket
-router.post('/tickets', authMiddleware, adminAuth, async (req, res) => {
+router.post('/tickets', auth, adminAuth, async (req, res) => {
   try {
     const { title, description, customer, priority, category } = req.body;
     
@@ -244,7 +244,7 @@ router.post('/tickets', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update ticket status
-router.put('/tickets/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/tickets/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, assignedTo, priority } = req.body;
@@ -264,7 +264,7 @@ router.put('/tickets/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Send chat message
-router.post('/chat/:id/message', authMiddleware, adminAuth, async (req, res) => {
+router.post('/chat/:id/message', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { message } = req.body;
@@ -292,7 +292,7 @@ router.post('/chat/:id/message', authMiddleware, adminAuth, async (req, res) => 
 });
 
 // Create FAQ
-router.post('/faq', authMiddleware, adminAuth, async (req, res) => {
+router.post('/faq', auth, adminAuth, async (req, res) => {
   try {
     const { question, answer, category } = req.body;
     
@@ -322,7 +322,7 @@ router.post('/faq', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create knowledge base article
-router.post('/knowledge-base', authMiddleware, adminAuth, async (req, res) => {
+router.post('/knowledge-base', auth, adminAuth, async (req, res) => {
   try {
     const { title, content, category } = req.body;
     

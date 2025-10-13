@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus, DataInventory, AgentCatalog, ProductPricing } = require('../schema/schema');
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Dashboard Statistics Routes
-router.get('/dashboard/statistics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/dashboard/statistics', auth, adminAuth, async (req, res) => {
   try {
     // Get total users
     const totalUsers = await User.countDocuments();
@@ -57,7 +57,7 @@ router.get('/dashboard/statistics', authMiddleware, adminAuth, async (req, res) 
 });
 
 // Daily Summary Route
-router.get('/dashboard/daily-summary/:date', authMiddleware, adminAuth, async (req, res) => {
+router.get('/dashboard/daily-summary/:date', auth, adminAuth, async (req, res) => {
   try {
     const { date } = req.params;
     const startDate = new Date(date);
@@ -122,7 +122,7 @@ router.get('/dashboard/daily-summary/:date', authMiddleware, adminAuth, async (r
 });
 
 // Batch Daily Summary Route - Get multiple days in one request
-router.get('/dashboard/daily-summary-batch', authMiddleware, adminAuth, async (req, res) => {
+router.get('/dashboard/daily-summary-batch', auth, adminAuth, async (req, res) => {
   try {
     const { days = 7 } = req.query;
     const results = [];
@@ -183,7 +183,7 @@ router.get('/dashboard/daily-summary-batch', authMiddleware, adminAuth, async (r
 });
 
 // Users Management Routes
-router.get('/users', authMiddleware, adminAuth, async (req, res) => {
+router.get('/users', auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     
@@ -219,7 +219,7 @@ router.get('/users', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get user by ID
-router.get('/users/:id', authMiddleware, adminAuth, async (req, res) => {
+router.get('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -238,7 +238,7 @@ router.get('/users/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update user details
-router.put('/users/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const { name, email, phoneNumber, role, walletBalance, referralCode } = req.body;
     
@@ -306,7 +306,7 @@ router.put('/users/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Add money to user wallet
-router.put('/users/:id/add-money', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/add-money', auth, adminAuth, async (req, res) => {
   try {
     const { amount, reason } = req.body;
     const userId = req.params.id;
@@ -373,7 +373,7 @@ router.put('/users/:id/add-money', authMiddleware, adminAuth, async (req, res) =
 });
 
 // Deduct money from user wallet
-router.put('/users/:id/deduct-money', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
   try {
     const { amount, reason } = req.body;
     const userId = req.params.id;
@@ -473,7 +473,7 @@ router.put('/users/:id/deduct-money', authMiddleware, adminAuth, async (req, res
 });
 
 // Reset user password
-router.put('/users/:id/reset-password', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/reset-password', auth, adminAuth, async (req, res) => {
   try {
     const { newPassword } = req.body;
     const userId = req.params.id;
@@ -527,7 +527,7 @@ router.put('/users/:id/reset-password', authMiddleware, adminAuth, async (req, r
 });
 
 // Toggle user status (enable/disable)
-router.put('/users/:id/toggle-status', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/toggle-status', auth, adminAuth, async (req, res) => {
   try {
     const { reason } = req.body;
     const userId = req.params.id;
@@ -580,7 +580,7 @@ router.put('/users/:id/toggle-status', authMiddleware, adminAuth, async (req, re
 });
 
 // Delete user
-router.delete('/users/:id', authMiddleware, adminAuth, async (req, res) => {
+router.delete('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const userId = req.params.id;
     
@@ -633,7 +633,7 @@ router.delete('/users/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Orders Management Routes
-router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
+router.get('/orders', auth, adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
@@ -692,7 +692,7 @@ router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Transactions Management Routes
-router.get('/transactions', authMiddleware, adminAuth, async (req, res) => {
+router.get('/transactions', auth, adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
@@ -751,7 +751,7 @@ router.get('/transactions', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get transaction by ID
-router.get('/transactions/:id', authMiddleware, adminAuth, async (req, res) => {
+router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
       .populate('userId', 'name email phoneNumber');
@@ -771,7 +771,7 @@ router.get('/transactions/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Verify Paystack transaction
-router.post('/transactions/:id/verify', authMiddleware, adminAuth, async (req, res) => {
+router.post('/transactions/:id/verify', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -851,7 +851,7 @@ router.post('/transactions/:id/verify', authMiddleware, adminAuth, async (req, r
 });
 
 // Update transaction status
-router.put('/transactions/:id/status', authMiddleware, adminAuth, async (req, res) => {
+router.put('/transactions/:id/status', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -902,7 +902,7 @@ router.put('/transactions/:id/status', authMiddleware, adminAuth, async (req, re
 });
 
 // Get user orders
-router.get('/user-orders/:userId', authMiddleware, adminAuth, async (req, res) => {
+router.get('/user-orders/:userId', auth, adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { page = 1, limit = 100 } = req.query;

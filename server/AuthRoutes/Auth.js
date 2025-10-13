@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { User, ReferralBonus, AgentCatalog } = require("../schema/schema");
 const authMonitor = require("../monitoring/auth-monitor");
+const { auth } = require("../middleware/auth");
 
 dotenv.config();
 const router = express.Router();
@@ -271,7 +272,7 @@ const authorize = (roles = []) => {
 };
 
 // Auth check route
-router.get('/me', authMiddleware, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   try {
     console.log('Debug - req.userId:', req.userId);
     console.log('Debug - req.user:', req.user);

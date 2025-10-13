@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Referral, Wallet, User } = require('../schema/schema.js');
-const verifyAuth = require('../middlewareUser/middleware.js');
+const { auth } = require('../middleware/auth');
 const crypto = require('crypto');
 
 // Generate unique referral code
@@ -12,7 +12,7 @@ const generateReferralCode = (name) => {
 };
 
 // Get user's referral code and stats
-router.get('/my-code', verifyAuth, async (req, res) => {
+router.get('/my-code', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
@@ -46,7 +46,7 @@ router.get('/my-code', verifyAuth, async (req, res) => {
 });
 
 // Get user's referral history
-router.get('/history', verifyAuth, async (req, res) => {
+router.get('/history', auth, async (req, res) => {
   try {
     const referrals = await Referral.find({ referrerId: req.user._id })
       .populate('referredUserId', 'name email createdAt')

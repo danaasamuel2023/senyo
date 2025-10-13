@@ -24,6 +24,19 @@ export async function DELETE(request) {
   return handleBackendRequest(request, 'DELETE');
 }
 
+export async function OPTIONS(request) {
+  // Handle CORS preflight requests
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-auth-token',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 async function handleBackendRequest(request, method) {
   try {
     console.log(`🔗 Backend API ${method} request`);
@@ -99,6 +112,11 @@ async function handleBackendRequest(request, method) {
     
     // Return the response with the same status code and headers
     const nextResponse = NextResponse.json(responseData, { status: response.status });
+    
+    // FIXED: Add CORS headers to prevent CORS errors
+    nextResponse.headers.set('Access-Control-Allow-Origin', '*');
+    nextResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    nextResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token');
     
     // Copy important headers
     const headersToCopy = ['content-type', 'authorization', 'x-auth-token'];

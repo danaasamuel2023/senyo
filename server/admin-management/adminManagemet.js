@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus,DataInventory, AgentCatalog, ProductPricing } = require('../schema/schema');
 const mongoose = require('mongoose');
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY; 
@@ -182,7 +182,7 @@ const sendSMS = async (phoneNumber, message, options = {}) => {
  * @desc    Get all users
  * @access  Admin
  */
-router.get('/users',authMiddleware, adminAuth, async (req, res) => {
+router.get('/users', auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     
@@ -242,7 +242,7 @@ router.get('/users',authMiddleware, adminAuth, async (req, res) => {
  * @desc    Get user by ID
  * @access  Admin
  */
-router.get('/users/:id',authMiddleware, adminAuth, async (req, res) => {
+router.get('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -265,7 +265,7 @@ router.get('/users/:id',authMiddleware, adminAuth, async (req, res) => {
  * @desc    Update user details
  * @access  Admin
  */
-router.put('/users/:id',authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const { name, email, phoneNumber, role, walletBalance, referralCode } = req.body;
     
@@ -337,7 +337,7 @@ router.put('/users/:id',authMiddleware, adminAuth, async (req, res) => {
  * @desc    Add money to user wallet
  * @access  Admin
  */
-router.put('/users/:id/add-money',authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/add-money', auth, adminAuth, async (req, res) => {
   try {
     const { amount, reason } = req.body;
     
@@ -403,7 +403,7 @@ router.put('/users/:id/add-money',authMiddleware, adminAuth, async (req, res) =>
  * @desc    Deduct money from user wallet
  * @access  Admin
  */
-router.put('/users/:id/deduct-money', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
   try {
     const { amount, reason } = req.body;
     
@@ -494,7 +494,7 @@ router.put('/users/:id/deduct-money', authMiddleware, adminAuth, async (req, res
  * @desc    Delete user
  * @access  Admin
  */
-router.delete('/users/:id',authMiddleware, adminAuth, async (req, res) => {
+router.delete('/users/:id', auth, adminAuth, async (req, res) => {
   try {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -545,7 +545,7 @@ router.delete('/users/:id',authMiddleware, adminAuth, async (req, res) => {
  * @desc    Get all data purchase orders
  * @access  Admin
  */
-router.get('/admin/orders',authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/orders', auth, adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
@@ -608,7 +608,7 @@ router.get('/admin/orders',authMiddleware, adminAuth, async (req, res) => {
  * @desc    Update order status
  * @access  Admin
  */
-router.put('/admin/orders/:id/status', authMiddleware, adminAuth, async (req, res) => {
+router.put('/admin/orders/:id/status', auth, adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
     const orderId = req.params.id;
@@ -772,7 +772,7 @@ router.put('/admin/orders/:id/status', authMiddleware, adminAuth, async (req, re
  * @desc    Bulk update order statuses with improved error handling
  * @access  Admin
  */
-router.post('/admin/orders/bulk-status-update', authMiddleware, adminAuth, async (req, res) => {
+router.post('/admin/orders/bulk-status-update', auth, adminAuth, async (req, res) => {
   try {
     const { orderIds, status } = req.body;
     
@@ -982,7 +982,7 @@ const DataPurchaseSchema = new mongoose.Schema({
 });
 */
 
-router.put('/inventory/:network/toggle', authMiddleware, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -1024,7 +1024,7 @@ router.put('/inventory/:network/toggle', authMiddleware, adminAuth, async (req, 
  * @desc    Toggle Geonettech API for specific network
  * @access  Admin
  */
-router.put('/inventory/:network/toggle-geonettech', authMiddleware, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -1066,7 +1066,7 @@ router.put('/inventory/:network/toggle-geonettech', authMiddleware, adminAuth, a
  * @desc    Get all inventory items with current status
  * @access  Admin
  */
-router.get('/inventory', authMiddleware, adminAuth, async (req, res) => {
+router.get('/inventory', auth, adminAuth, async (req, res) => {
   try {
     const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
     
@@ -1113,7 +1113,7 @@ router.get('/inventory', authMiddleware, adminAuth, async (req, res) => {
  * @desc    Get specific network inventory status
  * @access  Admin
  */
-router.get('/inventory/:network', authMiddleware, adminAuth, async (req, res) => {
+router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -1145,7 +1145,7 @@ router.get('/inventory/:network', authMiddleware, adminAuth, async (req, res) =>
  * @desc    Get all transactions with pagination, filtering and sorting
  * @access  Admin
  */
-router.get('/admin/transactions', authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/transactions', auth, adminAuth, async (req, res) => {
   try {
     const {
       page = 1,
@@ -1252,7 +1252,7 @@ router.get('/admin/transactions', authMiddleware, adminAuth, async (req, res) =>
  * @desc    Get transaction details by ID
  * @access  Admin
  */
-router.get('/admin/transactions/:id', authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/transactions/:id', auth, adminAuth, async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
       .populate('userId', 'name email phoneNumber');
@@ -1276,7 +1276,7 @@ router.get('/admin/transactions/:id', authMiddleware, adminAuth, async (req, res
  * @desc    Verify payment status from Paystack
  * @access  Admin
  */
-router.get('/verify-paystack/:reference', authMiddleware, adminAuth, async (req, res) => {
+router.get('/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
   try {
     const { reference } = req.params;
     
@@ -1397,7 +1397,7 @@ router.get('/verify-paystack/:reference', authMiddleware, adminAuth, async (req,
  * @desc    Manually update transaction status
  * @access  Admin
  */
-router.put('/admin/transactions/:id/update-status', authMiddleware, adminAuth, async (req, res) => {
+router.put('/admin/transactions/:id/update-status', auth, adminAuth, async (req, res) => {
   try {
     const { status, adminNotes } = req.body;
     
@@ -1440,7 +1440,7 @@ router.put('/admin/transactions/:id/update-status', authMiddleware, adminAuth, a
   }
 });
 
-router.put('/users/:id/toggle-status', authMiddleware, adminAuth, async (req, res) => {
+router.put('/users/:id/toggle-status', auth, adminAuth, async (req, res) => {
   try {
     const { disableReason } = req.body;
     const userId = req.params.id;
@@ -1523,7 +1523,7 @@ router.put('/users/:id/toggle-status', authMiddleware, adminAuth, async (req, re
   }
 });
 
-router.get('/admin/daily-summary', authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/daily-summary', auth, adminAuth, async (req, res) => {
   try {
     const { date = new Date().toISOString().split('T')[0] } = req.query;
     
@@ -1654,7 +1654,7 @@ router.get('/admin/daily-summary', authMiddleware, adminAuth, async (req, res) =
   }
 });
 
-router.get('/admin/user-orders/:userId', authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/user-orders/:userId', auth, adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { page = 1, limit = 100 } = req.query;
@@ -1702,7 +1702,7 @@ router.get('/admin/user-orders/:userId', authMiddleware, adminAuth, async (req, 
  * @desc    Get admin dashboard statistics
  * @access  Admin
  */
-router.get('/admin/dashboard/statistics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/admin/dashboard/statistics', auth, adminAuth, async (req, res) => {
   try {
     // Get total users count
     const totalUsers = await User.countDocuments();
@@ -1775,7 +1775,7 @@ const generateReferralCode = () => Math.random().toString(36).substring(2, 8).to
  * @desc    Create a new admin user (requires existing admin)
  * @access  Admin only
  */
-router.post('/create-admin', authMiddleware, adminAuth, async (req, res) => {
+router.post('/create-admin', auth, adminAuth, async (req, res) => {
   try {
     const { name, email, password, phoneNumber } = req.body;
     
@@ -1867,7 +1867,7 @@ router.post('/create-admin', authMiddleware, adminAuth, async (req, res) => {
  * @desc    Convert existing user to admin (requires existing admin)
  * @access  Admin only
  */
-router.put('/make-admin/:userId', authMiddleware, adminAuth, async (req, res) => {
+router.put('/make-admin/:userId', auth, adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -1935,7 +1935,7 @@ module.exports = router;
  */
 
 // List agents (admin only)
-router.get('/agents', authMiddleware, adminAuth, async (req, res) => {
+router.get('/agents', auth, adminAuth, async (req, res) => {
   try {
     const { page = 1, limit = 50, search = '' } = req.query;
 
@@ -1984,7 +1984,7 @@ async function ensureAgentCatalog(agentId) {
 }
 
 // Get agent catalog (admin)
-router.get('/agents/:id/catalog', authMiddleware, adminAuth, async (req, res) => {
+router.get('/agents/:id/catalog', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id);
@@ -2000,7 +2000,7 @@ router.get('/agents/:id/catalog', authMiddleware, adminAuth, async (req, res) =>
 });
 
 // Add catalog item (admin)
-router.post('/agents/:id/catalog/item', authMiddleware, adminAuth, async (req, res) => {
+router.post('/agents/:id/catalog/item', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { network, capacity, price, title, description, enabled = true } = req.body;
@@ -2036,7 +2036,7 @@ router.post('/agents/:id/catalog/item', authMiddleware, adminAuth, async (req, r
 });
 
 // Update catalog item (admin)
-router.put('/agents/:id/catalog/item/:itemId', authMiddleware, adminAuth, async (req, res) => {
+router.put('/agents/:id/catalog/item/:itemId', auth, adminAuth, async (req, res) => {
   try {
     const { id, itemId } = req.params;
     const updates = req.body || {};
@@ -2068,7 +2068,7 @@ router.put('/agents/:id/catalog/item/:itemId', authMiddleware, adminAuth, async 
 });
 
 // Delete catalog item (admin)
-router.delete('/agents/:id/catalog/item/:itemId', authMiddleware, adminAuth, async (req, res) => {
+router.delete('/agents/:id/catalog/item/:itemId', auth, adminAuth, async (req, res) => {
   try {
     const { id, itemId } = req.params;
     const catalog = await ensureAgentCatalog(id);
@@ -2087,7 +2087,7 @@ router.delete('/agents/:id/catalog/item/:itemId', authMiddleware, adminAuth, asy
 });
 
 // Agent self: get my catalog (agent only)
-router.get('/agent/catalog', authMiddleware, async (req, res) => {
+router.get('/agent/catalog', auth, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'agent') {
       return res.status(403).json({ msg: 'Agent access required' });
@@ -2162,7 +2162,7 @@ router.get('/public/agent-store/:identifier', async (req, res) => {
 + */
 
 // Get all products
-router.get('/products', authMiddleware, adminAuth, async (req, res) => {
+router.get('/products', auth, adminAuth, async (req, res) => {
   try {
     const products = await ProductPricing.find({}).sort({ network: 1, capacity: 1 });
     res.json({ success: true, products });
@@ -2173,7 +2173,7 @@ router.get('/products', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Add new product/package
-router.post('/products', authMiddleware, adminAuth, async (req, res) => {
+router.post('/products', auth, adminAuth, async (req, res) => {
   try {
     const { network, capacity, price, description, enabled = true } = req.body;
     
@@ -2204,7 +2204,7 @@ router.post('/products', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update product price/details
-router.put('/products/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/products/:id', auth, adminAuth, async (req, res) => {
   try {
     const { price, description, enabled } = req.body;
     const product = await ProductPricing.findById(req.params.id);
@@ -2227,7 +2227,7 @@ router.put('/products/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Delete product
-router.delete('/products/:id', authMiddleware, adminAuth, async (req, res) => {
+router.delete('/products/:id', auth, adminAuth, async (req, res) => {
   try {
     const product = await ProductPricing.findByIdAndDelete(req.params.id);
     
@@ -2243,7 +2243,7 @@ router.delete('/products/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Agent: update store customization (agent only)
-router.put('/agent/customize-store', authMiddleware, async (req, res) => {
+router.put('/agent/customize-store', auth, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'agent') {
       return res.status(403).json({ msg: 'Agent access required' });

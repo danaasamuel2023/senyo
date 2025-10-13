@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { User, Wallet, Transaction } = require('../schema/schema');
 const { collectMobileMoney, getSupportedNetworks, validateMobileMoneyNumber } = require('../services/bulkClixCollectionService');
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 
 // Enhanced logging
 const logMobileMoneyDeposit = (operation, data) => {
@@ -28,7 +28,7 @@ const validateDepositAmount = (amount) => {
 };
 
 // Mobile money deposit with intelligent processing
-router.post('/deposit/mobile-money', authMiddleware, async (req, res) => {
+router.post('/deposit/mobile-money', auth, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -261,7 +261,7 @@ router.get('/networks', async (req, res) => {
 });
 
 // Validate mobile money number
-router.post('/validate-number', authMiddleware, async (req, res) => {
+router.post('/validate-number', auth, async (req, res) => {
   try {
     const { phoneNumber, network } = req.body;
     
@@ -292,7 +292,7 @@ router.post('/validate-number', authMiddleware, async (req, res) => {
 });
 
 // Get mobile money deposit history
-router.get('/deposits', authMiddleware, async (req, res) => {
+router.get('/deposits', auth, async (req, res) => {
   try {
     const { page = 1, limit = 20, status, network } = req.query;
     const userId = req.user._id;

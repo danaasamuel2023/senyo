@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Mobile Admin App routes
-router.get('/dashboard', authMiddleware, adminAuth, async (req, res) => {
+router.get('/dashboard', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile dashboard data
     const dashboard = {
@@ -78,7 +78,7 @@ router.get('/dashboard', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/notifications', authMiddleware, adminAuth, async (req, res) => {
+router.get('/notifications', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile notifications data
     const notifications = [
@@ -149,7 +149,7 @@ router.get('/notifications', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/users', authMiddleware, adminAuth, async (req, res) => {
+router.get('/users', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile users data
     const users = [
@@ -207,7 +207,7 @@ router.get('/users', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
+router.get('/orders', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile orders data
     const orders = [
@@ -269,7 +269,7 @@ router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/inventory', authMiddleware, adminAuth, async (req, res) => {
+router.get('/inventory', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile inventory data
     const inventory = [
@@ -324,7 +324,7 @@ router.get('/inventory', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/transactions', authMiddleware, adminAuth, async (req, res) => {
+router.get('/transactions', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile transactions data
     const transactions = [
@@ -380,7 +380,7 @@ router.get('/transactions', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile analytics data
     const analytics = {
@@ -426,7 +426,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/settings', authMiddleware, adminAuth, async (req, res) => {
+router.get('/settings', auth, adminAuth, async (req, res) => {
   try {
     // Mock mobile settings data
     const settings = {
@@ -473,7 +473,7 @@ router.get('/settings', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Mark notification as read
-router.put('/notifications/:id/read', authMiddleware, adminAuth, async (req, res) => {
+router.put('/notifications/:id/read', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -492,7 +492,7 @@ router.put('/notifications/:id/read', authMiddleware, adminAuth, async (req, res
 });
 
 // Update mobile settings
-router.put('/settings', authMiddleware, adminAuth, async (req, res) => {
+router.put('/settings', auth, adminAuth, async (req, res) => {
   try {
     const { notifications, display, security, sync } = req.body;
     
@@ -511,7 +511,7 @@ router.put('/settings', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Sync mobile data
-router.post('/sync', authMiddleware, adminAuth, async (req, res) => {
+router.post('/sync', auth, adminAuth, async (req, res) => {
   try {
     const { data } = req.body;
     
@@ -538,7 +538,7 @@ router.post('/sync', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get mobile app version info
-router.get('/version', authMiddleware, adminAuth, async (req, res) => {
+router.get('/version', auth, adminAuth, async (req, res) => {
   try {
     const versionInfo = {
       currentVersion: '1.2.0',

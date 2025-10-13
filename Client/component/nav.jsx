@@ -547,23 +547,34 @@ const MobileNavbar = memo(() => {
     setLastScrollY(currentScrollY);
   }, [lastScrollY]);
 
+  // FIXED: Separate useEffect for scroll handling to prevent infinite loops
   useEffect(() => {
     if (forceHideNavbar) {
       setIsNavbarHidden(true);
       return;
     }
 
-    if (!forceHideNavbar) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      setIsNavbarHidden(false);
-    }
+    // Only add scroll listener if not force hiding
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    setIsNavbarHidden(false);
 
     return () => {
-      if (!forceHideNavbar) {
-        window.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [forceHideNavbar, handleScroll]);
+  }, [forceHideNavbar]); // Removed handleScroll from dependencies
+
+  // Separate effect to handle scroll function updates
+  useEffect(() => {
+    if (forceHideNavbar) return;
+    
+    // Remove old listener and add new one when handleScroll changes
+    window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll, forceHideNavbar]);
 
   // Handle body scroll lock and focus management
   useEffect(() => {

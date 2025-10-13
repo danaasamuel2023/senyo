@@ -17,8 +17,8 @@ export const useBalanceUpdate = (userId, enabled = true) => {
       const authToken = getAuthToken();
       if (!authToken) return;
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
-      const response = await fetch(`${API_URL}/api/balance-update/${userId}`, {
+      // FIXED: Use Next.js API proxy to avoid CORS issues
+      const response = await fetch(`/api/backend?path=/api/balance-update/${userId}`, {
         headers: {
           'x-auth-token': authToken,
           'Content-Type': 'application/json'
@@ -55,9 +55,13 @@ export const useBalanceUpdate = (userId, enabled = true) => {
             console.error('Error updating localStorage:', error);
           }
         }
+      } else if (response.status === 429) {
+        console.warn('⚠️ Rate limited on balance check, will retry later');
+        // Don't throw error, just log and continue
       }
     } catch (error) {
       console.error('Error checking balance update:', error);
+      // Don't throw error to prevent breaking the polling
     }
   }, [userId, enabled]);
 

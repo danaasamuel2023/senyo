@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const { ProductPricing, Order } = require('../schema/schema');
 
 // ============================================
@@ -155,7 +155,7 @@ router.get('/featured', async (req, res) => {
 // ============================================
 
 // Process store order (similar to existing order processing)
-router.post('/order', authMiddleware, async (req, res) => {
+router.post('/order', auth, async (req, res) => {
   try {
     const { items, totalAmount, customerInfo } = req.body;
     const userId = req.user._id;
@@ -241,7 +241,7 @@ router.post('/order', authMiddleware, async (req, res) => {
 });
 
 // Get user's store orders
-router.get('/orders', authMiddleware, async (req, res) => {
+router.get('/orders', auth, async (req, res) => {
   try {
     const userId = req.user._id;
     const { page = 1, limit = 10, status } = req.query;
@@ -290,7 +290,7 @@ router.get('/orders', authMiddleware, async (req, res) => {
 // ============================================
 
 // Get store analytics
-router.get('/analytics', authMiddleware, async (req, res) => {
+router.get('/analytics', auth, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {

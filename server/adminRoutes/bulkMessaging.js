@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const adminAuth = require('../adminMiddleware/middleware');
 const { User } = require('../schema/schema');
 
 // Get all users for bulk messaging
-router.get('/users', authMiddleware, adminAuth, async (req, res) => {
+router.get('/users', auth, adminAuth, async (req, res) => {
   try {
     const users = await User.find({}, {
       _id: 1,
@@ -31,7 +31,7 @@ router.get('/users', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Send bulk SMS
-router.post('/bulk-sms', authMiddleware, adminAuth, async (req, res) => {
+router.post('/bulk-sms', auth, adminAuth, async (req, res) => {
   try {
     const { content, userIds, metadata } = req.body;
 
@@ -105,7 +105,7 @@ router.post('/bulk-sms', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Send bulk email
-router.post('/bulk-email', authMiddleware, adminAuth, async (req, res) => {
+router.post('/bulk-email', auth, adminAuth, async (req, res) => {
   try {
     const { subject, content, userIds, metadata } = req.body;
 
@@ -179,7 +179,7 @@ router.post('/bulk-email', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Unified bulk messaging endpoint
-router.post('/bulk-message', authMiddleware, adminAuth, async (req, res) => {
+router.post('/bulk-message', auth, adminAuth, async (req, res) => {
   try {
     const { type, content, subject, userIds, metadata } = req.body;
 
@@ -309,7 +309,7 @@ async function sendBulkEmail(subject, content, userIds, metadata) {
 }
 
 // Get messaging campaigns
-router.get('/campaigns', authMiddleware, adminAuth, async (req, res) => {
+router.get('/campaigns', auth, adminAuth, async (req, res) => {
   try {
     // In a real implementation, you would have a Campaign model
     // For now, return empty array

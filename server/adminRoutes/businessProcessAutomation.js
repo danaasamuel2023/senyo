@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Business Process Automation routes
-router.get('/workflows', authMiddleware, adminAuth, async (req, res) => {
+router.get('/workflows', auth, adminAuth, async (req, res) => {
   try {
     // Mock workflow data
     const workflows = [
@@ -70,7 +70,7 @@ router.get('/workflows', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/triggers', authMiddleware, adminAuth, async (req, res) => {
+router.get('/triggers', auth, adminAuth, async (req, res) => {
   try {
     // Mock trigger data
     const triggers = [
@@ -133,7 +133,7 @@ router.get('/triggers', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/executions', authMiddleware, adminAuth, async (req, res) => {
+router.get('/executions', auth, adminAuth, async (req, res) => {
   try {
     // Mock execution data
     const executions = [
@@ -200,7 +200,7 @@ router.get('/executions', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/templates', authMiddleware, adminAuth, async (req, res) => {
+router.get('/templates', auth, adminAuth, async (req, res) => {
   try {
     // Mock template data
     const templates = [
@@ -261,7 +261,7 @@ router.get('/templates', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock automation analytics data
     const analytics = [
@@ -306,7 +306,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock automation statistics
     const stats = {
@@ -338,7 +338,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create new workflow
-router.post('/workflows', authMiddleware, adminAuth, async (req, res) => {
+router.post('/workflows', auth, adminAuth, async (req, res) => {
   try {
     const { name, description, trigger, steps, variables } = req.body;
     
@@ -372,7 +372,7 @@ router.post('/workflows', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update workflow
-router.put('/workflows/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/workflows/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, status, steps } = req.body;
@@ -392,7 +392,7 @@ router.put('/workflows/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Execute workflow
-router.post('/workflows/:id/execute', authMiddleware, adminAuth, async (req, res) => {
+router.post('/workflows/:id/execute', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { input } = req.body;
@@ -422,7 +422,7 @@ router.post('/workflows/:id/execute', authMiddleware, adminAuth, async (req, res
 });
 
 // Create trigger
-router.post('/triggers', authMiddleware, adminAuth, async (req, res) => {
+router.post('/triggers', auth, adminAuth, async (req, res) => {
   try {
     const { name, type, event, condition, schedule, workflows } = req.body;
     
@@ -456,7 +456,7 @@ router.post('/triggers', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create template
-router.post('/templates', authMiddleware, adminAuth, async (req, res) => {
+router.post('/templates', auth, adminAuth, async (req, res) => {
   try {
     const { name, category, description, steps, variables } = req.body;
     

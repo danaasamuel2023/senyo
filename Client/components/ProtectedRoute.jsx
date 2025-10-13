@@ -31,10 +31,11 @@ export default function ProtectedRoute({ children, requiredRole = null, redirect
           });
         }
 
+        // Use unified auth-manager - single check, no retries
         const authenticated = authManager.isAuthenticated();
         const user = authManager.getUser();
         
-        console.log('🔐 ProtectedRoute: Auth check result:', {
+        console.log('🔐 UNIFIED ProtectedRoute: Auth check result:', {
           authenticated,
           hasUser: !!user,
           userRole: user?.role,
@@ -42,14 +43,14 @@ export default function ProtectedRoute({ children, requiredRole = null, redirect
         });
 
         if (!authenticated) {
-          console.log('❌ ProtectedRoute: User not authenticated, redirecting to login');
+          console.log('❌ UNIFIED ProtectedRoute: User not authenticated, redirecting to login');
           router.push(redirectTo);
           return;
         }
 
         // Check role requirement if specified
         if (requiredRole && user?.role !== requiredRole) {
-          console.log('❌ ProtectedRoute: Insufficient permissions, redirecting');
+          console.log('❌ UNIFIED ProtectedRoute: Insufficient permissions, redirecting');
           router.push('/unauthorized');
           return;
         }
@@ -57,9 +58,9 @@ export default function ProtectedRoute({ children, requiredRole = null, redirect
         setIsAuthenticated(true);
         setIsLoading(false);
         
-        console.log('✅ ProtectedRoute: Access granted');
+        console.log('✅ UNIFIED ProtectedRoute: Access granted');
       } catch (error) {
-        console.error('❌ ProtectedRoute: Error checking authentication:', error);
+        console.error('❌ UNIFIED ProtectedRoute: Error checking authentication:', error);
         router.push(redirectTo);
       }
     };

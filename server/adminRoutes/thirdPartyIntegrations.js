@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Third-party Integrations routes
-router.get('/integrations', authMiddleware, adminAuth, async (req, res) => {
+router.get('/integrations', auth, adminAuth, async (req, res) => {
   try {
     // Mock integrations data
     const integrations = [
@@ -119,7 +119,7 @@ router.get('/integrations', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/webhooks', authMiddleware, adminAuth, async (req, res) => {
+router.get('/webhooks', auth, adminAuth, async (req, res) => {
   try {
     // Mock webhook data
     const webhooks = [
@@ -177,7 +177,7 @@ router.get('/webhooks', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/logs', authMiddleware, adminAuth, async (req, res) => {
+router.get('/logs', auth, adminAuth, async (req, res) => {
   try {
     // Mock integration logs data
     const logs = [
@@ -238,7 +238,7 @@ router.get('/logs', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/health', authMiddleware, adminAuth, async (req, res) => {
+router.get('/health', auth, adminAuth, async (req, res) => {
   try {
     // Mock health check data
     const health = [
@@ -293,7 +293,7 @@ router.get('/health', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock integration analytics data
     const analytics = [
@@ -338,7 +338,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock integration statistics
     const stats = {
@@ -370,7 +370,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Test integration
-router.post('/integrations/:id/test', authMiddleware, adminAuth, async (req, res) => {
+router.post('/integrations/:id/test', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -398,7 +398,7 @@ router.post('/integrations/:id/test', authMiddleware, adminAuth, async (req, res
 });
 
 // Update integration configuration
-router.put('/integrations/:id/config', authMiddleware, adminAuth, async (req, res) => {
+router.put('/integrations/:id/config', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { configuration } = req.body;
@@ -418,7 +418,7 @@ router.put('/integrations/:id/config', authMiddleware, adminAuth, async (req, re
 });
 
 // Create webhook
-router.post('/webhooks', authMiddleware, adminAuth, async (req, res) => {
+router.post('/webhooks', auth, adminAuth, async (req, res) => {
   try {
     const { name, url, integration, events, secret } = req.body;
     
@@ -452,7 +452,7 @@ router.post('/webhooks', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Sync integration
-router.post('/integrations/:id/sync', authMiddleware, adminAuth, async (req, res) => {
+router.post('/integrations/:id/sync', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     

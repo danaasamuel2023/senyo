@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Performance monitoring routes
-router.get('/metrics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/metrics', auth, adminAuth, async (req, res) => {
   try {
     // In a real implementation, you would collect actual system metrics
     // For now, we'll return mock data that simulates real performance metrics
@@ -118,7 +118,7 @@ router.get('/metrics', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get system health status
-router.get('/health', authMiddleware, adminAuth, async (req, res) => {
+router.get('/health', auth, adminAuth, async (req, res) => {
   try {
     const health = {
       status: 'healthy',
@@ -146,7 +146,7 @@ router.get('/health', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get performance alerts
-router.get('/alerts', authMiddleware, adminAuth, async (req, res) => {
+router.get('/alerts', auth, adminAuth, async (req, res) => {
   try {
     const alerts = [
       {
@@ -179,7 +179,7 @@ router.get('/alerts', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Get API endpoint performance
-router.get('/endpoints', authMiddleware, adminAuth, async (req, res) => {
+router.get('/endpoints', auth, adminAuth, async (req, res) => {
   try {
     const endpoints = [
       {

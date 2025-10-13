@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus, DataInventory } = require('../schema/schema');
 const mongoose = require('mongoose');
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const adminAuth = require('../adminMiddleware/middleware');
 const axios = require('axios');
 
@@ -51,7 +51,7 @@ const ensureDeviceSchema = async (req, res, next) => {
  * @desc    Get a user's blocked devices
  * @access  Admin
  */
-router.get('/users/:id/blocked-devices', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.get('/users/:id/blocked-devices', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     // Find user with populated admin names for blocked devices
     const user = await User.findById(req.params.id)
@@ -97,7 +97,7 @@ router.get('/users/:id/blocked-devices', authMiddleware, adminAuth, ensureDevice
  * @desc    Block a user's device
  * @access  Admin
  */
-router.put('/users/:id/block-device', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.put('/users/:id/block-device', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     const { deviceId, reason, userAgent, ipAddress } = req.body;
     
@@ -177,7 +177,7 @@ router.put('/users/:id/block-device', authMiddleware, adminAuth, ensureDeviceSch
  * @desc    Unblock a user's device
  * @access  Admin
  */
-router.put('/users/:id/unblock-device/:deviceId', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.put('/users/:id/unblock-device/:deviceId', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     const { id, deviceId } = req.params;
     

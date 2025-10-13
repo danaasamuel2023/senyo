@@ -68,7 +68,7 @@ const {
 const { errorHandler, asyncHandler } = require('./middleware/errorHandler.js');
 
 // Authentication middleware
-const { authMiddleware, adminAuth, agentAuth, optionalAuth } = require('./middleware/unified-auth.js');
+const { auth, adminAuth, agentAuth, optionalAuth } = require('./middleware/auth.js');
 
 dotenv.config();
 
@@ -348,7 +348,7 @@ app.get('/api/test-user/:userId', async (req, res) => {
 });
 
 // Balance update check endpoint for real-time updates
-app.get('/api/balance-update/:userId', authMiddleware, async (req, res) => {
+app.get('/api/balance-update/:userId', auth, async (req, res) => {
   try {
     const { userId } = req.params;
     

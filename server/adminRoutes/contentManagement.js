@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Content Management routes
-router.get('/pages', authMiddleware, adminAuth, async (req, res) => {
+router.get('/pages', auth, adminAuth, async (req, res) => {
   try {
     // Mock page data
     const pages = [
@@ -58,7 +58,7 @@ router.get('/pages', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/blog', authMiddleware, adminAuth, async (req, res) => {
+router.get('/blog', auth, adminAuth, async (req, res) => {
   try {
     // Mock blog data
     const blogPosts = [
@@ -122,7 +122,7 @@ router.get('/blog', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/media', authMiddleware, adminAuth, async (req, res) => {
+router.get('/media', auth, adminAuth, async (req, res) => {
   try {
     // Mock media data
     const media = [
@@ -177,7 +177,7 @@ router.get('/media', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/categories', authMiddleware, adminAuth, async (req, res) => {
+router.get('/categories', auth, adminAuth, async (req, res) => {
   try {
     // Mock categories data
     const categories = [
@@ -223,7 +223,7 @@ router.get('/categories', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock content analytics data
     const analytics = [
@@ -266,7 +266,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock content statistics
     const stats = {
@@ -298,7 +298,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create new page
-router.post('/pages', authMiddleware, adminAuth, async (req, res) => {
+router.post('/pages', auth, adminAuth, async (req, res) => {
   try {
     const { title, slug, content, status, category, seoTitle, seoDescription } = req.body;
     
@@ -333,7 +333,7 @@ router.post('/pages', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update page
-router.put('/pages/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/pages/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, content, status, seoTitle, seoDescription } = req.body;
@@ -353,7 +353,7 @@ router.put('/pages/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create blog post
-router.post('/blog', authMiddleware, adminAuth, async (req, res) => {
+router.post('/blog', auth, adminAuth, async (req, res) => {
   try {
     const { title, slug, content, category, tags, status, featured, excerpt } = req.body;
     
@@ -391,7 +391,7 @@ router.post('/blog', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update blog post
-router.put('/blog/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/blog/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, content, status, featured, tags } = req.body;
@@ -411,7 +411,7 @@ router.put('/blog/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create category
-router.post('/categories', authMiddleware, adminAuth, async (req, res) => {
+router.post('/categories', auth, adminAuth, async (req, res) => {
   try {
     const { name, slug, description, color } = req.body;
     
@@ -441,7 +441,7 @@ router.post('/categories', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Upload media
-router.post('/media/upload', authMiddleware, adminAuth, async (req, res) => {
+router.post('/media/upload', auth, adminAuth, async (req, res) => {
   try {
     // In real implementation, this would handle file upload
     const { filename, originalName, type, size, alt } = req.body;

@@ -574,18 +574,9 @@ export default function RootLayout({ children }) {
                 window.appInstalledListenerAdded = window.appInstalledListenerAdded || false;
                 window.installPromptShown = window.installPromptShown || false;
                 
-                // Global PWA install prompt handler
+                // Global PWA install prompt handler - removed to prevent conflicts
+                // The PWAInstaller component will handle the install prompt
                 window.globalDeferredPrompt = null;
-                
-                // Listen for install prompt globally
-                if (!window.beforeInstallPromptListenerAdded && 'serviceWorker' in navigator) {
-                  window.addEventListener('beforeinstallprompt', (e) => {
-                    console.log('Global PWA install prompt received');
-                    e.preventDefault();
-                    window.globalDeferredPrompt = e;
-                  });
-                  window.beforeInstallPromptListenerAdded = true;
-                }
               }
             `,
           }}

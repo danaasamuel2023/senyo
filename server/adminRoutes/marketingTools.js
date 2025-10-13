@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Marketing Tools routes
-router.get('/campaigns', authMiddleware, adminAuth, async (req, res) => {
+router.get('/campaigns', auth, adminAuth, async (req, res) => {
   try {
     // Mock campaign data
     const campaigns = [
@@ -54,7 +54,7 @@ router.get('/campaigns', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/promotions', authMiddleware, adminAuth, async (req, res) => {
+router.get('/promotions', auth, adminAuth, async (req, res) => {
   try {
     // Mock promotion data
     const promotions = [
@@ -101,7 +101,7 @@ router.get('/promotions', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/newsletters', authMiddleware, adminAuth, async (req, res) => {
+router.get('/newsletters', auth, adminAuth, async (req, res) => {
   try {
     // Mock newsletter data
     const newsletters = [
@@ -144,7 +144,7 @@ router.get('/newsletters', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock analytics data
     const analytics = [
@@ -187,7 +187,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock marketing statistics
     const stats = {
@@ -217,7 +217,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create new campaign
-router.post('/campaigns', authMiddleware, adminAuth, async (req, res) => {
+router.post('/campaigns', auth, adminAuth, async (req, res) => {
   try {
     const { name, type, target, budget, startDate, endDate } = req.body;
     
@@ -255,7 +255,7 @@ router.post('/campaigns', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update campaign
-router.put('/campaigns/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/campaigns/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, budget, target } = req.body;
@@ -275,7 +275,7 @@ router.put('/campaigns/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create promotion
-router.post('/promotions', authMiddleware, adminAuth, async (req, res) => {
+router.post('/promotions', auth, adminAuth, async (req, res) => {
   try {
     const { title, description, type, value, code, limit, startDate, endDate } = req.body;
     
@@ -311,7 +311,7 @@ router.post('/promotions', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Send newsletter
-router.post('/newsletters/:id/send', authMiddleware, adminAuth, async (req, res) => {
+router.post('/newsletters/:id/send', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -330,7 +330,7 @@ router.post('/newsletters/:id/send', authMiddleware, adminAuth, async (req, res)
 });
 
 // Create newsletter
-router.post('/newsletters', authMiddleware, adminAuth, async (req, res) => {
+router.post('/newsletters', auth, adminAuth, async (req, res) => {
   try {
     const { subject, content, recipients, scheduledDate } = req.body;
     

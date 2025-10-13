@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { User, Wallet } = require('../schema/schema');
 const { sendToBank, sendToMobileMoney, getBanksList, verifyBankAccount } = require('../services/bulkClixService');
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 
 // Enhanced logging
 const logWithdrawalOperation = (operation, data) => {
@@ -46,7 +46,7 @@ const validateAccountNumber = (accountNumber, type) => {
 };
 
 // Bank withdrawal with intelligent processing
-router.post('/withdraw/bank', authMiddleware, async (req, res) => {
+router.post('/withdraw/bank', auth, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -216,7 +216,7 @@ router.post('/withdraw/bank', authMiddleware, async (req, res) => {
 });
 
 // Mobile money withdrawal
-router.post('/withdraw/mobile', authMiddleware, async (req, res) => {
+router.post('/withdraw/mobile', auth, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -417,7 +417,7 @@ router.get('/banks', async (req, res) => {
 });
 
 // Verify bank account
-router.post('/verify-account', authMiddleware, async (req, res) => {
+router.post('/verify-account', auth, async (req, res) => {
   try {
     const { accountNumber, bankId } = req.body;
     
@@ -451,7 +451,7 @@ router.post('/verify-account', authMiddleware, async (req, res) => {
 });
 
 // Get withdrawal history
-router.get('/withdrawals', authMiddleware, async (req, res) => {
+router.get('/withdrawals', auth, async (req, res) => {
   try {
     const { page = 1, limit = 20, status, type } = req.query;
     const userId = req.user._id;

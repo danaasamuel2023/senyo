@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const { User, Order, Transaction } = require('../schema/schema');
 
 // ============================================
@@ -8,7 +8,7 @@ const { User, Order, Transaction } = require('../schema/schema');
 // ============================================
 
 // Process agent store payment
-router.post('/process', authMiddleware, async (req, res) => {
+router.post('/process', auth, async (req, res) => {
   try {
     const { orderId, paymentMethod, agentCode } = req.body;
     const userId = req.user._id;
@@ -109,7 +109,7 @@ router.post('/process', authMiddleware, async (req, res) => {
 });
 
 // Verify agent store payment
-router.post('/verify', authMiddleware, async (req, res) => {
+router.post('/verify', auth, async (req, res) => {
   try {
     const { reference } = req.body;
 
@@ -167,7 +167,7 @@ router.post('/verify', authMiddleware, async (req, res) => {
 });
 
 // Get agent earnings
-router.get('/earnings', authMiddleware, async (req, res) => {
+router.get('/earnings', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
 
@@ -216,7 +216,7 @@ router.get('/earnings', authMiddleware, async (req, res) => {
 });
 
 // Request withdrawal
-router.post('/withdraw', authMiddleware, async (req, res) => {
+router.post('/withdraw', auth, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { amount, bankDetails } = req.body;

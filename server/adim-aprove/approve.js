@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { User, ReferralBonus } = require('../schema/schema'); // Adjust path as needed
 const jwt = require('jsonwebtoken');
-const  authMiddleware = require('../middlewareUser/middleware'); // Adjust path as needed
+const { auth } = require('../middleware/auth'); // Adjust path as needed
 
 // Middleware to check if user is authenticated
-// const authMiddleware = async (req, res, next) => {
+// const auth = async (req, res, next) => {
 //   try {
 //     const token = req.headers.authorization?.split(' ')[1];
 //     if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
@@ -80,7 +80,7 @@ router.get('/check-approval/:userId', async (req, res) => {
 });
 
 // Route to check if user is approved (for user's own status)
-router.get('/user/approval-status', authMiddleware, async (req, res) => {
+router.get('/user/approval-status', auth, async (req, res) => {
   try {
     // Handle users that might not have the approvalStatus field
     if (!req.user.hasOwnProperty('approvalStatus')) {
@@ -112,7 +112,7 @@ router.get('/admin/users/pending', async (req, res) => {
 });
 
 /// Route to approve a user
-router.put('/admin/users/:userId/approve', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/admin/users/:userId/approve', auth, adminMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -207,7 +207,7 @@ router.put('/admin/users/:userId/approve', authMiddleware, adminMiddleware, asyn
 });
 
 // Route to reject a user
-router.put('/admin/users/:userId/reject', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/admin/users/:userId/reject', auth, adminMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
     const { rejectionReason } = req.body;

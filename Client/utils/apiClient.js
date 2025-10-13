@@ -15,7 +15,7 @@ class ApiClient {
     }
   }
 
-  // Get authentication headers
+  // Get authentication headers - FIXED: Send tokens in both formats
   getAuthHeaders() {
     const token = getAuthToken();
     const headers = {
@@ -25,7 +25,9 @@ class ApiClient {
     };
 
     if (token) {
-      headers['x-auth-token'] = token;
+      // Send token in both formats for maximum compatibility
+      headers['x-auth-token'] = token; // For frontend middleware
+      headers['Authorization'] = `Bearer ${token}`; // For backend API
     }
 
     return headers;
@@ -100,7 +102,16 @@ class ApiClient {
         }
       }
 
-      const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
+      // FIXED: Always use Next.js API proxy for external requests to avoid CORS
+      let url;
+      if (endpoint.startsWith('http')) {
+        // External URL - use Next.js API proxy
+        const proxyPath = encodeURIComponent(endpoint);
+        url = `/api/backend?path=${proxyPath}`;
+      } else {
+        // Internal API endpoint
+        url = endpoint.startsWith('/api/') ? endpoint : `/api/backend?path=${endpoint}`;
+      }
       
       // Debug logging in development
       if (process.env.NODE_ENV === 'development') {

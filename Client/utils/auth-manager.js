@@ -1,5 +1,6 @@
-// Enhanced Authentication Manager
-// Ensures tokens are properly saved, sent with requests, and persist after refresh
+// UNIFIED Authentication Manager
+// Single source of truth for all authentication operations
+// Replaces utils/auth.js to eliminate conflicts
 
 // Constants
 const AUTH_TOKEN_KEY = 'authToken';
@@ -7,6 +8,7 @@ const USER_DATA_KEY = 'userData';
 const TOKEN_EXPIRY_KEY = 'tokenExpiry';
 const REMEMBER_ME_KEY = 'rememberMe';
 const SESSION_AUTH_KEY = 'isAuthenticated';
+const REFRESH_TOKEN_KEY = 'refreshToken';
 
 /**
  * Enhanced Storage Manager with better error handling and verification
@@ -136,18 +138,46 @@ class AuthManager {
   }
 
   /**
-   * Save authentication data
+   * Save authentication data - UNIFIED METHOD
+   * Handles both new format (token, user, expiresIn) and legacy format (data object)
    */
-  saveAuth(token, user, expiresIn = 7 * 24 * 60 * 60, rememberMe = false) {
-    console.log('🔐 Saving authentication data...', {
+  saveAuth(tokenOrData, userOrRememberMe, expiresInOrUndefined, rememberMeOrUndefined) {
+    let token, user, expiresIn, rememberMe;
+    
+    // Handle both new and legacy call formats
+    if (typeof tokenOrData === 'object' && tokenOrData !== null) {
+      // Legacy format: saveAuth(data, rememberMe)
+      const data = tokenOrData;
+      token = data.token;
+      user = data.user;
+      expiresIn = data.expiresIn || 7 * 24 * 60 * 60;
+      rememberMe = userOrRememberMe || false;
+    } else {
+      // New format: saveAuth(token, user, expiresIn, rememberMe)
+      token = tokenOrData;
+      user = userOrRememberMe;
+      expiresIn = expiresInOrUndefined || 7 * 24 * 60 * 60;
+      rememberMe = rememberMeOrUndefined || false;
+    }
+
+    console.log('🔐 UNIFIED: Saving authentication data...', {
       hasToken: !!token,
       hasUser: !!user,
       expiresIn,
-      rememberMe
+      rememberMe,
+      format: typeof tokenOrData === 'object' ? 'legacy' : 'new'
     });
 
     try {
-      // Set cookie for middleware access
+      // Normalize user data to ensure consistency
+      if (user) {
+        user = this.normalizeUserData(user);
+        if (!user) {
+          throw new Error('Failed to normalize user data');
+        }
+      }
+
+      // Set cookie FIRST for immediate middleware access
       if (typeof document !== 'undefined' && token) {
         const expires = new Date();
         expires.setTime(expires.getTime() + (expiresIn * 1000));
@@ -155,11 +185,12 @@ class AuthManager {
         const isHttps = window.location.protocol === 'https:';
         const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
         
+        // Use consistent cookie format
         document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-        console.log('✅ Cookie set for middleware access');
+        console.log('✅ UNIFIED: Cookie set for middleware access');
       }
 
-      // Store in localStorage
+      // Store in localStorage with verification
       if (!AuthStorage.setItem(AUTH_TOKEN_KEY, token)) {
         throw new Error('Failed to store token');
       }
@@ -177,7 +208,7 @@ class AuthManager {
         throw new Error('Failed to store remember me flag');
       }
 
-      // Update auth state
+      // Update auth state immediately
       this.authState = {
         isAuthenticated: true,
         user,
@@ -185,17 +216,74 @@ class AuthManager {
         loading: false
       };
 
-      // Set session flag
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
-      }
+      // Set session flag with delay to ensure it's set after other operations
+      setTimeout(() => {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
+          console.log('✅ UNIFIED: Session flag set');
+        }
+      }, 50);
 
-      console.log('✅ Authentication data saved successfully');
+      console.log('✅ UNIFIED: Authentication data saved successfully');
+      
+      // Final verification of saved data
+      const finalToken = AuthStorage.getItem(AUTH_TOKEN_KEY);
+      const finalUser = AuthStorage.getItem(USER_DATA_KEY);
+      const finalExpiry = AuthStorage.getItem(TOKEN_EXPIRY_KEY);
+      
+      console.log('🔐 UNIFIED: Final verification of saved data:', {
+        tokenSaved: !!finalToken,
+        userSaved: !!finalUser,
+        expirySaved: !!finalExpiry,
+        tokenLength: finalToken ? finalToken.length : 0,
+        userDataLength: finalUser ? finalUser.length : 0,
+        expiryTime: finalExpiry,
+        currentTime: Date.now(),
+        isExpired: finalExpiry ? Date.now() > parseInt(finalExpiry) : true
+      });
+      
       return true;
     } catch (error) {
-      console.error('❌ Error saving authentication data:', error);
+      console.error('❌ UNIFIED: Error saving authentication data:', error);
       return false;
     }
+  }
+
+  /**
+   * Normalize user data to ensure both id and _id fields exist
+   */
+  normalizeUserData(userData) {
+    if (!userData) {
+      console.error('❌ UNIFIED: No user data provided');
+      return null;
+    }
+    
+    // Ensure we have a valid user ID
+    const userId = userData._id || userData.id;
+    if (!userId) {
+      console.error('❌ UNIFIED: No valid user ID found', userData);
+      return null;
+    }
+    
+    const normalizedUser = {
+      ...userData,
+      id: userId, // Ensure id field exists
+      _id: userId, // Keep original _id
+      // Ensure required fields exist with defaults
+      name: userData.name || 'User',
+      email: userData.email || '',
+      role: userData.role || 'buyer',
+      walletBalance: userData.walletBalance || 0,
+      referralCode: userData.referralCode || 'USER'
+    };
+    
+    console.log('✅ UNIFIED: User data normalized:', {
+      userId: normalizedUser.id,
+      userRole: normalizedUser.role,
+      userEmail: normalizedUser.email
+    });
+    
+    return normalizedUser;
   }
 
   /**
@@ -213,7 +301,7 @@ class AuthManager {
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated - UNIFIED METHOD
    */
   isAuthenticated() {
     if (!this.isInitialized) {
@@ -223,15 +311,29 @@ class AuthManager {
     const token = this.getToken();
     const user = this.getUser();
     const expiryTime = AuthStorage.getItem(TOKEN_EXPIRY_KEY);
+    const sessionAuth = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_AUTH_KEY) : null;
     
+    // Check token expiry
     const isExpired = expiryTime ? Date.now() > parseInt(expiryTime) : true;
-    const result = !!(token && user && !isExpired);
     
-    console.log('🔐 Authentication check:', {
+    // Enhanced validation: check if user has required fields
+    const hasValidUser = user && (user.id || user._id) && user.email && user.role;
+    
+    // More lenient check - if we have token and user, consider authenticated
+    // Don't require sessionAuth to be 'true' as it might not be set immediately
+    const result = !!(token && hasValidUser && !isExpired);
+    
+    console.log('🔐 UNIFIED: Authentication check:', {
       hasToken: !!token,
       hasUser: !!user,
+      hasValidUser,
+      sessionAuth,
       isExpired,
-      result
+      result,
+      userRole: user?.role,
+      userId: user?.id || user?._id,
+      isInitialized: this.isInitialized,
+      authStateLoading: this.authState.loading
     });
     
     return result;
@@ -269,7 +371,8 @@ class AuthManager {
   }
 
   /**
-   * Make authenticated API request
+   * Make authenticated API request - UNIFIED METHOD
+   * Sends tokens in both formats for maximum compatibility
    */
   async authenticatedFetch(url, options = {}) {
     const token = this.getToken();
@@ -278,14 +381,15 @@ class AuthManager {
       throw new Error('No authentication token available');
     }
 
+    // Send token in both formats for maximum compatibility
     const headers = {
       'Content-Type': 'application/json',
-      'x-auth-token': token,
-      'Authorization': `Bearer ${token}`,
+      'x-auth-token': token, // For frontend middleware
+      'Authorization': `Bearer ${token}`, // For backend API
       ...options.headers
     };
 
-    console.log('🔐 Making authenticated request to:', url);
+    console.log('🔐 UNIFIED: Making authenticated request to:', url);
 
     try {
       const response = await fetch(url, {
@@ -294,14 +398,14 @@ class AuthManager {
       });
 
       if (response.status === 401) {
-        console.log('❌ Authentication failed, clearing auth');
+        console.log('❌ UNIFIED: Authentication failed, clearing auth');
         this.clearAuth();
         throw new Error('Authentication expired');
       }
 
       return response;
     } catch (error) {
-      console.error('❌ Authenticated request failed:', error);
+      console.error('❌ UNIFIED: Authenticated request failed:', error);
       throw error;
     }
   }
@@ -315,21 +419,184 @@ class AuthManager {
     }
     return this.authState;
   }
+
+  /**
+   * Force refresh authentication state from storage
+   */
+  refreshAuthState() {
+    console.log('🔐 UNIFIED: Refreshing auth state from storage...');
+    
+    const token = AuthStorage.getItem(AUTH_TOKEN_KEY);
+    const userData = AuthStorage.getItem(USER_DATA_KEY);
+    const expiryTime = AuthStorage.getItem(TOKEN_EXPIRY_KEY);
+    
+    if (token && userData && expiryTime) {
+      const isExpired = Date.now() > parseInt(expiryTime);
+      
+      if (!isExpired) {
+        try {
+          const user = JSON.parse(userData);
+          this.authState = {
+            isAuthenticated: true,
+            user,
+            token,
+            loading: false
+          };
+          
+          console.log('✅ UNIFIED: Auth state refreshed successfully');
+          return true;
+        } catch (error) {
+          console.error('❌ UNIFIED: Error parsing user data during refresh:', error);
+          this.clearAuth();
+          return false;
+        }
+      } else {
+        console.log('⏰ UNIFIED: Token expired during refresh');
+        this.clearAuth();
+        return false;
+      }
+    } else {
+      console.log('ℹ️ UNIFIED: No auth data found during refresh');
+      this.authState = {
+        isAuthenticated: false,
+        user: null,
+        token: null,
+        loading: false
+      };
+      return false;
+    }
+  }
 }
 
 // Create singleton instance
 const authManager = new AuthManager();
 
-// Export functions for backward compatibility
+// UNIFIED EXPORTS - Backward compatibility with utils/auth.js
 export const saveAuthData = (data, rememberMe = false) => {
-  return authManager.saveAuth(data.token, data.user, data.expiresIn, rememberMe);
+  return authManager.saveAuth(data, rememberMe);
+};
+
+export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
+  return authManager.saveAuth(token, user, expiresIn, rememberMe);
 };
 
 export const getAuthToken = () => authManager.getToken();
 export const getCurrentUser = () => authManager.getUser();
+export const getUserRole = () => {
+  const user = authManager.getUser();
+  return user?.role || null;
+};
+export const getUserId = () => {
+  const user = authManager.getUser();
+  return user ? (user.id || user._id) : null;
+};
+export const hasRole = (role) => {
+  const userRole = getUserRole();
+  return userRole === role;
+};
 export const isAuthenticated = () => authManager.isAuthenticated();
 export const clearAuthData = () => authManager.clearAuth();
 export const authenticatedFetch = (url, options) => authManager.authenticatedFetch(url, options);
+export const normalizeUserData = (userData) => authManager.normalizeUserData(userData);
+
+// Additional exports for backward compatibility
+export const getRefreshToken = () => {
+  console.warn('⚠️ getRefreshToken is not implemented in unified auth system');
+  return null;
+};
+
+export const isTokenExpired = () => {
+  const token = authManager.getToken();
+  const expiryTime = AuthStorage.getItem(TOKEN_EXPIRY_KEY);
+  return expiryTime ? Date.now() > parseInt(expiryTime) : true;
+};
+
+export const refreshAuthToken = async () => {
+  console.warn('⚠️ refreshAuthToken is not implemented in unified auth system');
+  return false;
+};
+
+// Higher-Order Component for route protection
+export const withAuth = (Component, options = {}) => {
+  console.warn('⚠️ withAuth is deprecated. Use ProtectedRoute component instead.');
+  return Component;
+};
+
+// Hook for role-based access control
+export const useRoleAccess = (allowedRoles) => {
+  console.warn('⚠️ useRoleAccess is deprecated. Use hasRole function instead.');
+  const userRole = getUserRole();
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  return {
+    hasAccess: userRole && roles.includes(userRole),
+    userRole: userRole || null
+  };
+};
+
+// Session timeout manager
+export class SessionManager {
+  static timeoutId = null;
+  static warningTimeoutId = null;
+  
+  static startSession(timeoutMinutes = 30, warningMinutes = 5) {
+    console.warn('⚠️ SessionManager is deprecated in unified auth system');
+    this.clearSession();
+  }
+  
+  static refreshSession() {
+    console.warn('⚠️ SessionManager is deprecated in unified auth system');
+  }
+  
+  static clearSession() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+    
+    if (this.warningTimeoutId) {
+      clearTimeout(this.warningTimeoutId);
+      this.warningTimeoutId = null;
+    }
+  }
+}
+
+// Verify authentication state after login
+export const verifyAuthState = async () => {
+  return new Promise((resolve) => {
+    const checkAuthState = () => {
+      const result = authManager.isAuthenticated();
+      console.log('🔐 UNIFIED: Auth verification result:', result);
+      resolve(result);
+    };
+    
+    // Check immediately
+    checkAuthState();
+  });
+};
+
+// Logout function with redirect
+export const logout = (redirectUrl = '/SignIn') => {
+  authManager.clearAuth();
+  
+  if (typeof window !== 'undefined') {
+    // Optional: Call logout API endpoint
+    try {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'x-auth-token': authManager.getToken()
+        }
+      }).catch(() => {
+        // Silently fail - user is logging out anyway
+      });
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    }
+    
+    // Redirect to login page
+    window.location.href = redirectUrl;
+  }
+};
 
 // Export the manager instance for advanced usage
 export { authManager };

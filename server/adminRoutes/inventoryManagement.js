@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Advanced Inventory Management routes
-router.get('/products', authMiddleware, adminAuth, async (req, res) => {
+router.get('/products', auth, adminAuth, async (req, res) => {
   try {
     // Mock product inventory data
     const products = [
@@ -85,7 +85,7 @@ router.get('/products', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/suppliers', authMiddleware, adminAuth, async (req, res) => {
+router.get('/suppliers', auth, adminAuth, async (req, res) => {
   try {
     // Mock supplier data
     const suppliers = [
@@ -149,7 +149,7 @@ router.get('/suppliers', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
+router.get('/orders', auth, adminAuth, async (req, res) => {
   try {
     // Mock purchase orders data
     const orders = [
@@ -199,7 +199,7 @@ router.get('/orders', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
+router.get('/analytics', auth, adminAuth, async (req, res) => {
   try {
     // Mock inventory analytics data
     const analytics = [
@@ -244,7 +244,7 @@ router.get('/analytics', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
+router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
     // Mock inventory statistics
     const stats = {
@@ -277,7 +277,7 @@ router.get('/stats', authMiddleware, adminAuth, async (req, res) => {
   }
 });
 
-router.get('/alerts', authMiddleware, adminAuth, async (req, res) => {
+router.get('/alerts', auth, adminAuth, async (req, res) => {
   try {
     // Mock inventory alerts
     const alerts = [
@@ -336,7 +336,7 @@ router.get('/alerts', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create new product
-router.post('/products', authMiddleware, adminAuth, async (req, res) => {
+router.post('/products', auth, adminAuth, async (req, res) => {
   try {
     const { name, category, provider, price, cost, stock, minStock, maxStock, sku, description, tags } = req.body;
     
@@ -379,7 +379,7 @@ router.post('/products', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Update product
-router.put('/products/:id', authMiddleware, adminAuth, async (req, res) => {
+router.put('/products/:id', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, price, cost, stock, minStock, maxStock, status } = req.body;
@@ -399,7 +399,7 @@ router.put('/products/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Create purchase order
-router.post('/orders', authMiddleware, adminAuth, async (req, res) => {
+router.post('/orders', auth, adminAuth, async (req, res) => {
   try {
     const { supplierId, items, notes, deliveryDate } = req.body;
     
@@ -433,7 +433,7 @@ router.post('/orders', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Restock product
-router.post('/products/:id/restock', authMiddleware, adminAuth, async (req, res) => {
+router.post('/products/:id/restock', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { quantity, cost, supplierId, notes } = req.body;
@@ -453,7 +453,7 @@ router.post('/products/:id/restock', authMiddleware, adminAuth, async (req, res)
 });
 
 // Acknowledge alert
-router.put('/alerts/:id/acknowledge', authMiddleware, adminAuth, async (req, res) => {
+router.put('/alerts/:id/acknowledge', auth, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     

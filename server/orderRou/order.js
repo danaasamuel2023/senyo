@@ -8,7 +8,7 @@ const { handleFallbackPurchase } = require('../fallback-purchase-handler');
 const fallbackPricing = require('../fallback-pricing.json');
 
 const dotenv = require('dotenv');
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 
 dotenv.config();
 
@@ -1428,7 +1428,7 @@ router.get('/data-packages', async (req, res) => {
 });
 
 // Get User Data Purchase History
-router.get('/purchase-history/:userId', authMiddleware, async (req, res) => {
+router.get('/purchase-history/:userId', auth, async (req, res) => {
   try {
     const { page = 1, limit = 20, startDate, endDate, network } = req.query;
     const userId = req.params.userId;
@@ -1618,7 +1618,7 @@ router.options('/user-dashboard/:userId', (req, res) => {
   res.status(204).send();
 });
 
-router.get('/user-dashboard/:userId', authMiddleware, async (req, res) => {
+router.get('/user-dashboard/:userId', auth, async (req, res) => {
   try {
     // Set comprehensive CORS headers for this specific endpoint
     const origin = req.headers.origin;

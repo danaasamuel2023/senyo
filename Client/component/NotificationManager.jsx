@@ -56,6 +56,15 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
       
       console.log('🔔 Loading announcements for userId:', userId);
       
+      // FIXED: Add proper debounce and rate limiting to prevent 429 errors
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if we're already loading to prevent duplicate requests
+      if (loading) {
+        console.log('⏳ Already loading announcements, skipping...');
+        return;
+      }
+      
       const response = await fetch(`/api/backend?path=/api/v1/admin/notifications/user/announcements/${userId}`, {
         headers: {
           'x-auth-token': localStorage.getItem('authToken')
@@ -67,28 +76,46 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
         setAnnouncements(data.announcements || []);
         setSystemSettings(data.systemSettings);
         
-        // Track view interactions for each announcement
+        // Track view interactions for each announcement (with delay to prevent rate limiting)
         if (data.announcements && data.announcements.length > 0) {
-          data.announcements.forEach(announcement => {
-            trackInteraction(announcement._id, 'viewed');
-          });
+          setTimeout(() => {
+            data.announcements.forEach((announcement, index) => {
+              setTimeout(() => {
+                trackInteraction(announcement._id, 'viewed');
+              }, index * 100); // Stagger requests by 100ms
+            });
+          }, 1000); // Wait 1 second before tracking
         }
         
         // Notify parent component
         if (onAnnouncementsLoaded) {
           onAnnouncementsLoaded(data.announcements, data.systemSettings);
         }
+      } else if (response.status === 429) {
+        // Handle rate limiting gracefully
+        console.warn('⚠️ Rate limited, will retry later');
+        setError('Too many authentication attempts, please try again later.');
+        // Retry after 30 seconds
+        setTimeout(() => {
+          if (userId) {
+            loadAnnouncements();
+          }
+        }, 30000);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         setError(errorData.message || 'Failed to load announcements');
       }
     } catch (err) {
       console.error('Error loading announcements:', err);
-      setError('Failed to load announcements');
+      if (err.message.includes('429') || err.message.includes('Too Many Requests')) {
+        setError('Too many authentication attempts, please try again later.');
+      } else {
+        setError('Failed to load announcements');
+      }
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, loading]);
 
   const trackInteraction = async (announcementId, action, metadata = {}) => {
     try {
@@ -138,7 +165,7 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
 
   useEffect(() => {
     loadAnnouncements();
-  }, [loadAnnouncements]);
+  }, [userId]); // Only reload when userId changes
 
   // Don't render if there's an error - let ErrorBoundary handle it
   if (error) {

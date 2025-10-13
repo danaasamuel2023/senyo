@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/unified-auth');
+const { auth } = require('../middleware/auth');
 const User = require('../schema/schema').User;
 const DataPurchase = require('../schema/schema').DataPurchase;
 
 // Get dashboard statistics
-router.get('/statistics', authMiddleware, async (req, res) => {
+router.get('/statistics', auth, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -98,7 +98,7 @@ router.get('/statistics', authMiddleware, async (req, res) => {
 });
 
 // Get daily summary
-router.get('/daily-summary', authMiddleware, async (req, res) => {
+router.get('/daily-summary', auth, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
