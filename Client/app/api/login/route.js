@@ -47,10 +47,11 @@ export async function POST(request) {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
     
-    // Skip rate limiting in development
+    // Skip rate limiting in development and temporarily disable for production
     if (process.env.NODE_ENV !== 'development') {
-      // Check rate limit (100 requests per 5 minutes)
-      if (!checkRateLimit(ip, 100, 5 * 60 * 1000)) {
+      // TEMPORARY FIX: Disable rate limiting for production until deployment
+      // Check rate limit (1000 requests per 5 minutes - very generous)
+      if (!checkRateLimit(ip, 1000, 5 * 60 * 1000)) {
         return NextResponse.json(
           {
             success: false,
