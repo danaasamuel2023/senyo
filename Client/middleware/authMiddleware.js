@@ -3,6 +3,7 @@
  * Handles token validation and route protection
  */
 
+import React, { useState, useEffect, createContext } from 'react';
 import { isAuthenticated, getCurrentUser, getAuthHeader, hasPermission } from '../utils/tokenAuth';
 
 /**
@@ -255,7 +256,6 @@ export function AuthProvider({ children }) {
 }
 
 // Create auth context
-import { createContext } from 'react';
 export const AuthContext = createContext({
   isAuthenticated: false,
   user: null,

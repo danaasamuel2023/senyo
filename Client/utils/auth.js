@@ -232,8 +232,13 @@ export const saveAuthData = (data, rememberMe = false) => {
     if (typeof document !== 'undefined') {
       const expires = new Date();
       expires.setTime(expires.getTime() + (expiresIn * 1000));
-      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+      
+      // FIX 2: Better cookie setting for production
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
+      const domainFlag = process.env.NODE_ENV === 'production' ? '; Domain=' + window.location.hostname : '';
+      
+      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}${domainFlag}`;
       console.log('🔐 saveAuthData: Cookie set immediately for middleware access');
     }
     
@@ -672,8 +677,13 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
   if (typeof document !== 'undefined' && token) {
     const expires = new Date();
     expires.setTime(expires.getTime() + (expiresIn * 1000));
-    const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+    
+    // FIX 2: Better cookie setting for production
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
+    const domainFlag = process.env.NODE_ENV === 'production' ? '; Domain=' + window.location.hostname : '';
+    
+    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}${domainFlag}`;
     console.log('🔐 setAuthToken: Cookie set immediately for middleware access');
   }
   
@@ -738,6 +748,7 @@ export default {
   getCurrentUser,
   getUserRole,
   hasRole,
+  normalizeUserData,
   saveAuthData,
   setAuthToken, // Add backward compatibility alias
   clearAuthData,

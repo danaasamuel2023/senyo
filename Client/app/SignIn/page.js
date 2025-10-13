@@ -275,7 +275,7 @@ export default function LoginPage() {
         showToast('Authentication verified! Redirecting...', 'success');
         
         // Redirect based on user role and redirect parameter
-        // Increased delay to ensure cookie is properly set for middleware
+        // FIX 3: Increased delay to ensure cookie is properly set for middleware
         setTimeout(() => {
           try {
             let redirectUrl = '/';
@@ -290,19 +290,20 @@ export default function LoginPage() {
               } else if (data.user && data.user.role === 'agent') {
                 redirectUrl = '/agent/dashboard';
               } else {
-                // Regular users go to main dashboard (which shows UserDashboard component)
+                // Regular users go to main dashboard
                 redirectUrl = '/';
               }
             }
             
             console.log('🔐 Redirecting to:', redirectUrl);
-            // Use router.push for better navigation
-            router.push(redirectUrl);
+            
+            // FIX 3: Use window.location.href instead of router.push for better cookie handling
+            window.location.href = redirectUrl;
           } catch (err) {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
           }
-        }, 1500); // Increased from 500ms to 1500ms
+        }, 2000); // Increased delay to ensure cookie is set
       } else {
         setError(data.message || 'Login failed');
         showToast(data.message || 'Login failed', 'error');
