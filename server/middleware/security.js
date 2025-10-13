@@ -41,7 +41,7 @@ const generalLimiter = rateLimit({
 // Rate limiter for authentication routes - Optimized for 10M users/day
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Reduced per IP limit for security
+  max: 50, // Increased per IP limit for better user experience
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -164,6 +164,44 @@ const proxyLimiter = rateLimit({
   }
 });
 
+// Lenient rate limiter for Next.js API login routes - More user-friendly
+const nextjsApiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 100, // Very generous limit for frontend API routes
+  message: {
+    success: false,
+    error: 'Rate limit exceeded',
+    details: 'Too many requests. Please try again in a few minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip ALL rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    // Skip for admin users
+    const body = req.body;
+    if (body && body.email) {
+      const adminEmails = [
+        'sunumanfred41@gmail.com',
+        'testadmin@example.com',
+        'admin@unlimiteddatagh.com'
+      ];
+      return adminEmails.includes(body.email);
+    }
+    
+    // Skip for localhost in non-production
+    if (process.env.NODE_ENV !== 'production' && 
+        (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    
+    return false;
+  }
+});
+
 // Security headers configuration
 const securityHeaders = helmet({
   contentSecurityPolicy: {
@@ -193,6 +231,7 @@ module.exports = {
   agentLimiter,
   adminLimiter,
   proxyLimiter,
+  nextjsApiLimiter,
   securityHeaders,
   sanitizeData,
 };
