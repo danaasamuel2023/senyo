@@ -20,7 +20,7 @@ export default function LoginForm() {
       if (result.success) {
         storeLoginData(result.data);
         // Redirect to dashboard
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       } else {
         setError('Login failed. Please try again.');
       }

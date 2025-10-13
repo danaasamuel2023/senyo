@@ -26,7 +26,7 @@ export default function ClientLoginForm() {
         
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = '/';
         }, 1000);
       } else {
         setError(result.error || 'Login failed');
@@ -51,7 +51,7 @@ export default function ClientLoginForm() {
           Welcome back, {user?.name || user?.email}!
         </p>
         <button
-          onClick={() => window.location.href = '/dashboard'}
+          onClick={() => window.location.href = '/'}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
         >
           Go to Dashboard

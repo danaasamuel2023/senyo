@@ -43,7 +43,7 @@ export default function TokenSigninForm() {
         
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = '/';
         }, 1000);
       } else {
         setError(result.error || 'Signin failed');
@@ -86,7 +86,7 @@ export default function TokenSigninForm() {
 
         <div className="space-y-3">
           <button
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => window.location.href = '/'}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
           >
             Go to Dashboard

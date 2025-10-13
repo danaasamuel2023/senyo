@@ -8,7 +8,7 @@ import apiClient from '../../../utils/apiClient.js';
 import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth.js';
 import { useBottomNav } from '../../providers/BottomNavProvider.jsx';
 import { 
-  User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
+  User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, UserCog, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
   AlertCircle, CheckCircle, RefreshCw, Plus, Filter, Download, 
   Upload, Edit, Trash2, Eye, Database, Shield, Activity, PieChart, ArrowUp, 
@@ -17,7 +17,7 @@ import {
   Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare,
   Monitor, TrendingDown, Headphones, Megaphone, FileImage, Warehouse, 
   Workflow, Target, Smartphone, Globe, Cpu, HardDrive,
-  Lock, UserCog, ShoppingBag, Sparkles, Layers, BarChart2
+  Lock, ShoppingBag, Sparkles, Layers, BarChart2
 } from 'lucide-react';
 import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders.jsx';
 import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates.jsx';
@@ -511,6 +511,19 @@ const AdminDashboard = () => {
   
   const navScrollRef = useRef(null);
 
+  // Prefetch route for better navigation performance
+  const prefetchRoute = useCallback(async (route) => {
+    if (prefetchedRoutes.has(route)) return;
+    
+    try {
+      // Prefetch the route
+      await router.prefetch(route);
+      setPrefetchedRoutes(prev => new Set([...prev, route]));
+    } catch (error) {
+      console.error('Failed to prefetch route:', error);
+    }
+  }, [router, prefetchedRoutes]);
+
   // Load dashboard data
   const loadDashboardData = useCallback(async () => {
     if (!isAuthenticated || !user) return;
@@ -665,17 +678,6 @@ const AdminDashboard = () => {
     }
   }, [activeTab, loadUsers, isAuthenticated, user]);
 
-  // Route prefetching
-  const prefetchRoute = useCallback(async (route) => {
-    if (prefetchedRoutes.has(route)) return;
-    
-    try {
-      await router.prefetch(route);
-      setPrefetchedRoutes(prev => new Set([...prev, route]));
-    } catch (error) {
-      console.warn(`Failed to prefetch route ${route}:`, error);
-    }
-  }, [router, prefetchedRoutes]);
 
   // Prefetch routes
   useEffect(() => {
