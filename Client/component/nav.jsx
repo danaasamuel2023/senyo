@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from '
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from '../app/providers/ThemeProvider';
+import { useBottomNav } from '../app/providers/BottomNavProvider';
 import {
   Home,
   LayoutDashboard,
@@ -494,6 +495,7 @@ const MobileNavbar = memo(() => {
   const { isAuthenticated, userData, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { hideBottomNav, showBottomNav } = useBottomNav();
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -522,6 +524,15 @@ const MobileNavbar = memo(() => {
     setShowNotifications(false);
     setShowQuickNav(false);
   }, [pathname]);
+
+  // Hide/show bottom nav when mobile menu opens/closes
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      hideBottomNav('mobile-sidebar');
+    } else {
+      showBottomNav('mobile-sidebar');
+    }
+  }, [isMobileMenuOpen, hideBottomNav, showBottomNav]);
 
   // Auto-hide navbar on scroll
   const handleScroll = useCallback(() => {

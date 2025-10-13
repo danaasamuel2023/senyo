@@ -6,6 +6,7 @@ import adminAPI, { userAPI } from '../../../utils/adminApi';
 import { getApiUrl } from '../../../utils/envConfig';
 import apiClient from '../../../utils/apiClient.js';
 import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth.js';
+import { useBottomNav } from '../../providers/BottomNavProvider';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
@@ -24,6 +25,7 @@ import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptySta
 const AdminDashboard = () => {
   const router = useRouter();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const { hideBottomNav, showBottomNav } = useBottomNav();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -140,6 +142,15 @@ const AdminDashboard = () => {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Hide/show bottom nav when admin sidebar opens/closes on mobile
+  useEffect(() => {
+    if (sidebarOpen && !isDesktop) {
+      hideBottomNav('admin-sidebar');
+    } else {
+      showBottomNav('admin-sidebar');
+    }
+  }, [sidebarOpen, isDesktop, hideBottomNav, showBottomNav]);
 
   // Animated counter effect for stats
   useEffect(() => {
