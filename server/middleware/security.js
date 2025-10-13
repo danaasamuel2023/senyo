@@ -41,7 +41,7 @@ const generalLimiter = rateLimit({
 // Rate limiter for authentication routes - Optimized for 10M users/day
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Increased per IP limit for better user experience
+  max: 1000, // TEMP: Very high limit to resolve 429 errors
   message: {
     success: false,
     error: 'Rate limit exceeded',
