@@ -727,18 +727,29 @@ const AdminDashboard = () => {
 
   const scrollNav = useCallback((direction) => {
     if (navScrollRef.current) {
-      const scrollAmount = 200;
+      const scrollAmount = 250; // Increased scroll amount for better navigation
       const currentScroll = navScrollRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? Math.max(0, currentScroll - scrollAmount)
-        : currentScroll + scrollAmount;
+      const containerWidth = navScrollRef.current.clientWidth;
+      const contentWidth = navScrollRef.current.scrollWidth;
+      
+      let newScroll;
+      if (direction === 'left') {
+        newScroll = Math.max(0, currentScroll - scrollAmount);
+      } else {
+        newScroll = Math.min(contentWidth - containerWidth, currentScroll + scrollAmount);
+      }
       
       navScrollRef.current.scrollTo({
         left: newScroll,
         behavior: 'smooth'
       });
+      
+      // Update scroll buttons after a short delay
+      setTimeout(() => {
+        updateScrollButtons();
+      }, 300);
     }
-  }, []);
+  }, [updateScrollButtons]);
 
   const handleNavScroll = useCallback(() => {
     if (navScrollRef.current) {
@@ -753,6 +764,22 @@ const AdminDashboard = () => {
         updateScrollButtons();
         navScrollRef.current.addEventListener('scroll', handleNavScroll);
         
+        // Add touch support for mobile devices
+        let isScrolling = false;
+        const handleTouchStart = () => {
+          isScrolling = true;
+        };
+        
+        const handleTouchEnd = () => {
+          setTimeout(() => {
+            isScrolling = false;
+            updateScrollButtons();
+          }, 150);
+        };
+        
+        navScrollRef.current.addEventListener('touchstart', handleTouchStart);
+        navScrollRef.current.addEventListener('touchend', handleTouchEnd);
+        
         const handleResize = () => {
           setTimeout(updateScrollButtons, 100);
         };
@@ -762,6 +789,8 @@ const AdminDashboard = () => {
         return () => {
           if (navScrollRef.current) {
             navScrollRef.current.removeEventListener('scroll', handleNavScroll);
+            navScrollRef.current.removeEventListener('touchstart', handleTouchStart);
+            navScrollRef.current.removeEventListener('touchend', handleTouchEnd);
           }
           window.removeEventListener('resize', handleResize);
         };
@@ -1884,32 +1913,36 @@ const AdminDashboard = () => {
         
         {/* Scrollable Navigation */}
         <div className="relative">
-          {canScrollLeft && (
-            <button
-              onClick={() => scrollNav('left')}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110"
-            >
-              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-          )}
+          {/* Left scroll button */}
+          <button
+            onClick={() => scrollNav('left')}
+            className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110 active:scale-95 ${
+              canScrollLeft ? 'opacity-100' : 'opacity-30 pointer-events-none'
+            }`}
+            disabled={!canScrollLeft}
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
 
-          {canScrollRight && (
-            <button
-              onClick={() => scrollNav('right')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110"
-            >
-              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-          )}
+          {/* Right scroll button */}
+          <button
+            onClick={() => scrollNav('right')}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110 active:scale-95 ${
+              canScrollRight ? 'opacity-100' : 'opacity-30 pointer-events-none'
+            }`}
+            disabled={!canScrollRight}
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
 
           <nav 
             ref={navScrollRef}
-            className="flex space-x-2 p-4 overflow-x-auto scrollbar-hide"
+            className="flex space-x-2 p-4 overflow-x-auto nav-horizontal-scroll nav-scrollbar-custom"
             style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
+              scrollBehavior: 'smooth',
               WebkitOverflowScrolling: 'touch'
             }}
+            onScroll={handleNavScroll}
           >
             {sidebarItems.map((item, index) => {
               const Icon = item.icon;

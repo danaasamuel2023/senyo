@@ -8,6 +8,7 @@ import {
   Search, Filter, Grid, List, SortAsc, SortDesc, Package, TrendingUp,
   DollarSign, Calendar, Clock, Loader2, Eye, ShoppingCart, Heart
 } from 'lucide-react';
+import { useBottomNav } from '@/app/providers/BottomNavProvider';
 
 // API Configuration
 const getApiEndpoint = (path) => {
@@ -323,6 +324,7 @@ const LoadingOverlay = ({ isLoading }) => {
 
 const TelecelBundleSelect = () => {
   const router = useRouter();
+  const { hideBottomNav, showBottomNav } = useBottomNav();
   
   // State Management
   const [selectedBundle, setSelectedBundle] = useState('');
@@ -487,6 +489,7 @@ const TelecelBundleSelect = () => {
     setPhoneNumber(''); // Reset phone number
     setError(''); // Clear any previous errors
     setIsPurchaseModalOpen(true);
+    hideBottomNav('purchase-modal');
   };
 
   // Process the actual purchase
@@ -527,6 +530,7 @@ const TelecelBundleSelect = () => {
         setError('');
         setIsPurchaseModalOpen(false);
         setPendingPurchase(null);
+        showBottomNav('purchase-modal');
       } else {
         throw new Error(data.message || 'Purchase failed');
       }
@@ -577,6 +581,7 @@ const TelecelBundleSelect = () => {
           setPendingPurchase(null);
           setPhoneNumber('');
           setError('');
+          showBottomNav('purchase-modal');
         }}
         bundle={pendingPurchase}
         phoneNumber={phoneNumber}

@@ -7,6 +7,7 @@ import PWAInstaller from "@/component/PWAInstaller";
 import BottomNav from "@/component/BottomNav";
 // import PullToRefreshWrapper from "@/component/PullToRefreshWrapper"; // Temporarily disabled
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
+import { BottomNavProvider } from "@/app/providers/BottomNavProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
 // Temporarily disabled to fix webpack errors
@@ -470,7 +471,8 @@ export default function RootLayout({ children }) {
         
         {/* Modern layout structure with error boundary */}
         <ThemeProvider>
-          <ToastProvider>
+          <BottomNavProvider>
+            <ToastProvider>
             {/* Dynamic background based on theme - SIMPLIFIED FOR MOBILE */}
             <div className="fixed inset-0 -z-20 bg-[var(--color-bg-primary)] dark:bg-black transition-colors duration-300" />
             
@@ -553,7 +555,8 @@ export default function RootLayout({ children }) {
             
             {/* PWA Install Prompt and Push Notifications */}
             <PWAInstaller />
-          </ToastProvider>
+            </ToastProvider>
+          </BottomNavProvider>
         </ThemeProvider>
         
         {/* PWA and Service Worker Global Configuration */}

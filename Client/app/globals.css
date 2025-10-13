@@ -172,6 +172,42 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Enhanced horizontal navigation scroll */
+.nav-horizontal-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 2rem;
+}
+
+.nav-horizontal-scroll > * {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* Custom scrollbar for horizontal navigation */
+.nav-scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 204, 8, 0.3) transparent;
+}
+
+.nav-scrollbar-custom::-webkit-scrollbar {
+  height: 4px;
+}
+
+.nav-scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-scrollbar-custom::-webkit-scrollbar-thumb {
+  background: rgba(255, 204, 8, 0.3);
+  border-radius: 2px;
+}
+
+.nav-scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 204, 8, 0.5);
+}
+
 /* Additional scrollbar utilities for better compatibility */
 .scrollbar-thin {
   scrollbar-width: thin;

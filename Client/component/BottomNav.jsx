@@ -3,11 +3,13 @@
 import { Home, Package, Wallet, User, ShoppingBag } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useBottomNav } from '@/app/providers/BottomNavProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isVisible } = useBottomNav();
 
   useEffect(() => {
     // Check if user is authenticated with multiple checks
@@ -53,7 +55,8 @@ export default function BottomNav() {
   const hideBottomNavPaths = ['/SignIn', '/SignUp', '/admin', '/verify-otp'];
   const shouldHide = hideBottomNavPaths.some(path => pathname.startsWith(path));
 
-  if (shouldHide) return null;
+  // Hide if should hide for path reasons OR if context says to hide
+  if (shouldHide || !isVisible) return null;
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/', requireAuth: false },

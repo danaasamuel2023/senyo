@@ -8,6 +8,7 @@ import {
   Search, Filter, Grid, List, SortAsc, SortDesc, Package, TrendingUp,
   DollarSign, Calendar, Clock, Loader2, Eye, ShoppingCart, Heart
 } from 'lucide-react';
+import { useBottomNav } from '@/app/providers/BottomNavProvider';
 
 // API Configuration
 const getApiEndpoint = (path) => {
@@ -319,6 +320,7 @@ const LoadingOverlay = ({ isLoading }) => {
 
 const ATBundleCards = () => {
   const router = useRouter();
+  const { hideBottomNav, showBottomNav } = useBottomNav();
   
   // State Management
   const [selectedBundleIndex, setSelectedBundleIndex] = useState(null);
@@ -484,6 +486,7 @@ const ATBundleCards = () => {
     setPhoneNumber(''); // Reset phone number
     setError(''); // Clear any previous errors
     setIsPurchaseModalOpen(true);
+    hideBottomNav('purchase-modal');
   };
 
   // Process the actual purchase
@@ -523,6 +526,7 @@ const ATBundleCards = () => {
         setError('');
         setIsPurchaseModalOpen(false);
         setPendingPurchase(null);
+        showBottomNav('purchase-modal');
       } else {
         throw new Error(data.message || 'Purchase failed');
       }
@@ -573,6 +577,7 @@ const ATBundleCards = () => {
           setPendingPurchase(null);
           setPhoneNumber('');
           setError('');
+          showBottomNav('purchase-modal');
         }}
         bundle={pendingPurchase}
         phoneNumber={phoneNumber}
