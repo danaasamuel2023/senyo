@@ -1,0 +1,10 @@
+{
+  "totalLogins": 12,
+  "successfulLogins": 0,
+  "failedLogins": 12,
+  "tokenValidations": 0,
+  "tokenExpirations": 0,
+  "apiCalls": 0,
+  "unauthorizedAccess": 0,
+  "lastUpdated": "2025-10-13T14:10:10.782Z"
+}

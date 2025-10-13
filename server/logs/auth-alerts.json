@@ -1,0 +1,14 @@
+[
+  {
+    "type": "security",
+    "severity": "high",
+    "message": "Multiple failed login attempts for test@test.com",
+    "timestamp": "2025-10-13T14:08:49.155Z"
+  },
+  {
+    "type": "security",
+    "severity": "high",
+    "message": "Multiple failed login attempts for test@test.com",
+    "timestamp": "2025-10-13T14:09:56.445Z"
+  }
+]
