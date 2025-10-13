@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const BottomNavContext = createContext();
+export const BottomNavContext = createContext();
 
 export const useBottomNav = () => {
   const context = useContext(BottomNavContext);
