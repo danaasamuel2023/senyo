@@ -2087,7 +2087,7 @@ router.delete('/agents/:id/catalog/item/:itemId', authMiddleware, adminAuth, asy
 });
 
 // Agent self: get my catalog (agent only)
-router.get('/agent/catalog', auth, async (req, res) => {
+router.get('/agent/catalog', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'agent') {
       return res.status(403).json({ msg: 'Agent access required' });
@@ -2243,7 +2243,7 @@ router.delete('/products/:id', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Agent: update store customization (agent only)
-router.put('/agent/customize-store', auth, async (req, res) => {
+router.put('/agent/customize-store', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'agent') {
       return res.status(403).json({ msg: 'Agent access required' });
