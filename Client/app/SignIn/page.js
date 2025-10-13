@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { setAuthToken, normalizeUserData, verifyAuthState } from '../../utils/auth.js';
 import { 
   Mail, 
   Lock, 
@@ -241,7 +242,6 @@ export default function LoginPage() {
 
       if (response.ok) {
         // Normalize user data to include both id and _id for compatibility
-        const { setAuthToken, normalizeUserData } = await import('../../utils/auth.js');
         const normalizedUser = normalizeUserData(data.user);
         
         if (!normalizedUser) {
@@ -259,11 +259,20 @@ export default function LoginPage() {
         // Store token securely using the auth utility
         setAuthToken(data.token, normalizedUser, 7 * 24 * 60 * 60, rememberMe); // 7 days expiry
 
-        console.log('🔐 Login successful - Auth token stored, showing success notification');
-        showToast('Login successful! Redirecting...', 'success');
+        console.log('🔐 Login successful - Auth token stored, verifying authentication state');
+        showToast('Login successful! Verifying authentication...', 'success');
         
-        // Wait for localStorage and cookies to be updated before redirecting
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Verify authentication state before redirecting
+        const authVerified = await verifyAuthState();
+        
+        if (!authVerified) {
+          console.error('🔐 Authentication verification failed');
+          showToast('Authentication verification failed. Please try again.', 'error');
+          return;
+        }
+        
+        console.log('🔐 Authentication verified successfully, proceeding with redirect');
+        showToast('Authentication verified! Redirecting...', 'success');
         
         // Redirect based on user role and redirect parameter
         setTimeout(() => {
@@ -290,7 +299,7 @@ export default function LoginPage() {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
           }
-        }, 1000);
+        }, 500);
       } else {
         setError(data.message || 'Login failed');
         showToast(data.message || 'Login failed', 'error');

@@ -1,7 +1,7 @@
 // utils/auth.js - Modern authentication utilities with enhanced security
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// Note: React imports removed for Node.js compatibility
+// React hooks and components are only used in browser environment
 
 // Constants
 const AUTH_TOKEN_KEY = 'authToken';
@@ -109,7 +109,9 @@ export const isAuthenticated = () => {
   const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
   const tokenValid = !isTokenExpired();
   
-  const result = !!token && !!user && sessionAuth === 'true' && tokenValid;
+  // More lenient check - if we have token and user, consider authenticated
+  // Don't require sessionAuth to be 'true' as it might not be set immediately after login
+  const result = !!token && !!user && tokenValid;
   
   // Debug logging for authentication issues
   console.log('🔐 isAuthenticated check:', { 
@@ -259,7 +261,14 @@ export const saveAuthData = (data, rememberMe = false) => {
   }
   
   SecureStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
-  sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
+  
+  // Set session auth flag with a small delay to ensure it's set after other operations
+  setTimeout(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
+      console.log('🔐 Session auth flag set successfully');
+    }
+  }, 100);
   
   return true;
 };
@@ -417,8 +426,19 @@ export const authenticatedFetch = async (url, options = {}) => {
 
 /**
  * Hook for authentication state
+ * Only works in browser environment with React
  */
 export const useAuth = () => {
+  // Check if we're in a browser environment with React
+  if (typeof window === 'undefined' || typeof React === 'undefined') {
+    return {
+      isAuthenticated: false,
+      user: null,
+      loading: false
+    };
+  }
+  
+  const { useState, useEffect } = React;
   const [auth, setAuth] = useState({
     isAuthenticated: false,
     user: null,
@@ -446,12 +466,13 @@ export const useAuth = () => {
       });
     };
     
-    checkAuth();
+    // Initial check with a small delay to ensure localStorage is ready
+    setTimeout(checkAuth, 50);
     
     // Listen for storage changes (logout from another tab)
     const handleStorageChange = (e) => {
-      if (e.key === AUTH_TOKEN_KEY || e.key === USER_DATA_KEY) {
-        checkAuth();
+      if (e.key === AUTH_TOKEN_KEY || e.key === USER_DATA_KEY || e.key === SESSION_AUTH_KEY) {
+        setTimeout(checkAuth, 10); // Small delay to ensure storage is updated
       }
     };
     
@@ -467,21 +488,44 @@ export const useAuth = () => {
 
 /**
  * Modern loading spinner component with red theme
+ * Moved to separate component file to avoid JSX parsing issues
  */
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-    <div className="relative">
-      <div className="w-20 h-20 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
-      <div className="absolute top-0 left-0 w-20 h-20 rounded-full border-4 border-red-500 border-t-transparent animate-spin"></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg animate-pulse shadow-lg shadow-red-500/25"></div>
-      </div>
-    </div>
-    <div className="ml-4 text-gray-700 dark:text-gray-300 font-semibold">
-      Authenticating...
-    </div>
-  </div>
-);
+const LoadingSpinner = () => {
+  // Return null for server-side rendering compatibility
+  if (typeof window === 'undefined') return null;
+  
+  // Create DOM elements programmatically to avoid JSX
+  const container = document.createElement('div');
+  container.className = 'min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900';
+  
+  const spinnerContainer = document.createElement('div');
+  spinnerContainer.className = 'relative';
+  
+  const outerCircle = document.createElement('div');
+  outerCircle.className = 'w-20 h-20 rounded-full border-4 border-gray-200 dark:border-gray-700';
+  
+  const innerCircle = document.createElement('div');
+  innerCircle.className = 'absolute top-0 left-0 w-20 h-20 rounded-full border-4 border-red-500 border-t-transparent animate-spin';
+  
+  const centerDot = document.createElement('div');
+  centerDot.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2';
+  
+  const dot = document.createElement('div');
+  dot.className = 'w-8 h-8 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg animate-pulse shadow-lg shadow-red-500/25';
+  
+  const text = document.createElement('div');
+  text.className = 'ml-4 text-gray-700 dark:text-gray-300 font-semibold';
+  text.textContent = 'Authenticating...';
+  
+  centerDot.appendChild(dot);
+  spinnerContainer.appendChild(outerCircle);
+  spinnerContainer.appendChild(innerCircle);
+  spinnerContainer.appendChild(centerDot);
+  container.appendChild(spinnerContainer);
+  container.appendChild(text);
+  
+  return container;
+};
 
 /**
  * Higher-Order Component for route protection
@@ -490,6 +534,11 @@ const LoadingSpinner = () => (
  * @returns {React.Component} Protected component
  */
 export const withAuth = (Component, options = {}) => {
+  // Check if we're in a browser environment with React
+  if (typeof window === 'undefined' || typeof React === 'undefined') {
+    return Component; // Return component as-is in non-React environments
+  }
+  
   const { 
     redirectTo = '/SignIn',
     requiredRole = null,
@@ -497,7 +546,17 @@ export const withAuth = (Component, options = {}) => {
   } = options;
   
   return function ProtectedComponent(props) {
-    const router = useRouter();
+    const { useState, useEffect } = React;
+    
+    // Mock router for non-Next.js environments
+    const router = typeof useRouter === 'function' ? useRouter() : {
+      replace: (url) => {
+        if (typeof window !== 'undefined') {
+          window.location.href = url;
+        }
+      }
+    };
+    
     const { isAuthenticated: isAuth, user, loading } = useAuth();
     const [authorized, setAuthorized] = useState(false);
     
@@ -515,14 +574,14 @@ export const withAuth = (Component, options = {}) => {
     
     if (loading) {
       const FallbackComponent = fallback;
-      return <FallbackComponent />;
+      return React.createElement(FallbackComponent);
     }
     
     if (!authorized) {
       return null;
     }
     
-    return <Component {...props} user={user} />;
+    return React.createElement(Component, { ...props, user });
   };
 };
 
@@ -616,6 +675,50 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
   }
 };
 
+/**
+ * Verify authentication state after login
+ * @returns {Promise<boolean>} True if authentication is properly set up
+ */
+export const verifyAuthState = async () => {
+  if (typeof window === 'undefined') return false;
+  
+  return new Promise((resolve) => {
+    // Check multiple times with increasing delays to ensure auth is properly set
+    const checkAuthState = (attempt = 1) => {
+      const token = getAuthToken();
+      const user = getCurrentUser();
+      const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
+      const tokenValid = !isTokenExpired();
+      
+      const isAuth = !!token && !!user && tokenValid;
+      
+      console.log(`🔐 Auth verification attempt ${attempt}:`, {
+        hasToken: !!token,
+        hasUser: !!user,
+        sessionAuth,
+        tokenValid,
+        isAuth,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (isAuth) {
+        resolve(true);
+        return;
+      }
+      
+      // If not authenticated and we haven't exceeded max attempts, try again
+      if (attempt < 5) {
+        setTimeout(() => checkAuthState(attempt + 1), 100 * attempt);
+      } else {
+        console.warn('🔐 Auth verification failed after 5 attempts');
+        resolve(false);
+      }
+    };
+    
+    checkAuthState();
+  });
+};
+
 export default {
   getAuthToken,
   getRefreshToken,
@@ -632,5 +735,6 @@ export default {
   useAuth,
   withAuth,
   useRoleAccess,
-  SessionManager
+  SessionManager,
+  verifyAuthState
 };

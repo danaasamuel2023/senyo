@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Zap, Sparkles } from 'lucide-react';
+import { isAuthenticated as checkIsAuthenticated, getCurrentUser, verifyAuthState } from '../utils/auth.js';
 
 const AuthGuard = ({ children }) => {
   const router = useRouter();
@@ -24,10 +25,10 @@ const AuthGuard = ({ children }) => {
     // Check if user is authenticated using the auth utility
     const checkAuth = async () => {
       try {
-        // Import auth utilities dynamically to avoid SSR issues
-        const { isAuthenticated, getCurrentUser } = await import('../utils/auth.js');
+        // Use statically imported auth utilities
         
-        const authenticated = isAuthenticated();
+        // First check basic authentication
+        const authenticated = checkIsAuthenticated();
         const user = getCurrentUser();
         
         if (authenticated && user) {
@@ -35,9 +36,19 @@ const AuthGuard = ({ children }) => {
           setIsAuthenticated(true);
           setLoading(false);
         } else {
-          // AuthGuard: Not authenticated, redirecting to SignIn
-          router.push('/SignIn');
-          setLoading(false);
+          // If basic check fails, try verification with retries
+          console.log('🔐 AuthGuard: Basic auth check failed, trying verification...');
+          const authVerified = await verifyAuthState();
+          
+          if (authVerified) {
+            setIsAuthenticated(true);
+            setLoading(false);
+          } else {
+            // AuthGuard: Not authenticated, redirecting to SignIn
+            console.log('🔐 AuthGuard: Authentication verification failed, redirecting to SignIn');
+            router.push('/SignIn');
+            setLoading(false);
+          }
         }
       } catch (error) {
         // AuthGuard: Error checking authentication
@@ -52,8 +63,8 @@ const AuthGuard = ({ children }) => {
       }
     };
     
-    // Add a small delay to ensure localStorage is updated
-    setTimeout(checkAuth, 50);
+    // Add a longer delay to ensure localStorage and sessionStorage are updated after login
+    setTimeout(checkAuth, 200);
   }, [router, isPublicPath, pathname]);
 
   if (loading) {
