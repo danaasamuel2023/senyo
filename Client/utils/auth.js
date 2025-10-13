@@ -110,15 +110,14 @@ export const isAuthenticated = () => {
   
   const result = !!token && sessionAuth === 'true' && tokenValid;
   
-  // Only log in development mode to prevent infinite loops
-  if (process.env.NODE_ENV === 'development') {
-    console.log('isAuthenticated check:', { 
-      hasToken: !!token, 
-      sessionAuth, 
-      tokenValid, 
-      result 
-    });
-  }
+  // Debug logging for authentication issues
+  console.log('🔐 isAuthenticated check:', { 
+    hasToken: !!token, 
+    sessionAuth, 
+    tokenValid, 
+    result,
+    timestamp: new Date().toISOString()
+  });
   
   return result;
 };
@@ -131,22 +130,19 @@ export const getCurrentUser = () => {
   const userData = SecureStorage.getItem(USER_DATA_KEY);
   
   if (!userData) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('getCurrentUser: No user data found');
-    }
+    console.log('🔐 getCurrentUser: No user data found');
     return null;
   }
   
   try {
     const parsed = JSON.parse(userData);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('getCurrentUser: Parsed user data:', { 
-        hasId: !!(parsed.id || parsed._id),
-        id: parsed.id,
-        _id: parsed._id,
-        keys: Object.keys(parsed)
-      });
-    }
+    console.log('🔐 getCurrentUser: Parsed user data:', { 
+      hasId: !!(parsed.id || parsed._id),
+      id: parsed.id,
+      _id: parsed._id,
+      keys: Object.keys(parsed),
+      timestamp: new Date().toISOString()
+    });
     return parsed;
   } catch (error) {
     console.error('Error parsing user data:', error);
@@ -205,6 +201,15 @@ export const hasRole = (role) => {
 export const saveAuthData = (data, rememberMe = false) => {
   const { token, refreshToken, user, expiresIn } = data;
   
+  console.log('🔐 saveAuthData: Saving authentication data:', {
+    hasToken: !!token,
+    hasRefreshToken: !!refreshToken,
+    hasUser: !!user,
+    expiresIn,
+    rememberMe,
+    timestamp: new Date().toISOString()
+  });
+  
   if (token) {
     SecureStorage.setItem(AUTH_TOKEN_KEY, token);
     
@@ -212,7 +217,9 @@ export const saveAuthData = (data, rememberMe = false) => {
     if (typeof document !== 'undefined') {
       const expires = new Date();
       expires.setTime(expires.getTime() + (expiresIn * 1000));
-      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+      const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+      console.log('🔐 saveAuthData: Cookie set successfully');
     }
   }
   
@@ -561,6 +568,14 @@ export class SessionManager {
 
 // Export setAuthToken as an alias for saveAuthData for backward compatibility
 export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
+  console.log('🔐 setAuthToken: Setting authentication token:', {
+    hasToken: !!token,
+    hasUser: !!user,
+    expiresIn,
+    rememberMe,
+    timestamp: new Date().toISOString()
+  });
+  
   saveAuthData({
     token,
     user,
@@ -571,7 +586,9 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
   if (typeof document !== 'undefined' && token) {
     const expires = new Date();
     expires.setTime(expires.getTime() + (expiresIn * 1000));
-    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+    console.log('🔐 setAuthToken: Cookie set successfully');
   }
 };
 

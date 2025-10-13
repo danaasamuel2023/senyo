@@ -8,7 +8,8 @@ const connectDB = async () => {
     const password = process.env.MONGODB_PASSWORD || '0246783840Sa';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
     
-    const MONGODB_URI = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
+    const database = process.env.MONGODB_DATABASE || 'unlimiteddata';
+    const MONGODB_URI = `mongodb+srv://${username}:${password}@${cluster}/${database}?retryWrites=true&w=majority&appName=Cluster0`;
     
     await mongoose.connect(MONGODB_URI, {
       maxPoolSize: 10,

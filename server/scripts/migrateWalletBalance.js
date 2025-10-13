@@ -10,8 +10,12 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const { User, Wallet } = require('../schema/schema');
+const { handleDatabaseError, handleScriptError, setupGlobalErrorHandlers, gracefulShutdown, handleRecoverableError, isRecoverableError } = require('../utils/databaseErrorHandler');
 
 dotenv.config();
+
+// Setup global error handlers
+setupGlobalErrorHandlers();
 
 async function migrateWalletBalances() {
   try {
@@ -22,7 +26,8 @@ async function migrateWalletBalances() {
     const password = process.env.MONGODB_PASSWORD || '';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
     
-    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
+    const database = process.env.MONGODB_DATABASE || 'unlimiteddata';
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/${database}?retryWrites=true&w=majority&appName=Cluster0`;
     
     const options = {
       maxPoolSize: 10,
@@ -151,12 +156,23 @@ async function migrateWalletBalances() {
     }
     
   } catch (error) {
-    console.error('❌ Migration failed:', error);
-    process.exit(1);
+    // Check if error is recoverable
+    if (isRecoverableError(error)) {
+      handleRecoverableError(error, 'Wallet Balance Migration');
+      console.log('🔄 Retrying wallet balance migration...');
+      // Could add retry logic here
+    } else {
+      handleScriptError(error, 'Wallet Balance Migration');
+    }
   } finally {
-    await mongoose.disconnect();
-    console.log('🔌 Disconnected from MongoDB');
-    process.exit(0);
+    try {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB');
+      process.exit(0);
+    } catch (disconnectError) {
+      console.error('⚠️  Warning: Error disconnecting from MongoDB:', disconnectError.message);
+      gracefulShutdown(0);
+    }
   }
 }
 

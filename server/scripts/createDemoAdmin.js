@@ -12,7 +12,8 @@ const connectDB = async () => {
     const password = process.env.MONGODB_PASSWORD || '';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
     
-    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
+    const database = process.env.MONGODB_DATABASE || 'unlimiteddata';
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/${database}?retryWrites=true&w=majority&appName=Cluster0`;
     
     await mongoose.connect(uri, {
       maxPoolSize: 10,
@@ -66,7 +67,8 @@ const createDemoAdmin = async () => {
   } catch (error) {
     console.error('Error creating demo admin:', error);
   } finally {
-    mongoose.connection.close();
+    await mongoose.connection.close();
+    console.log('\n👋 Database connection closed.');
     process.exit(0);
   }
 };

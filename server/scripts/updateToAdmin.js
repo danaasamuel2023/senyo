@@ -3,8 +3,12 @@
 
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const { handleDatabaseError, handleScriptError, setupGlobalErrorHandlers } = require('../utils/databaseErrorHandler');
 
 dotenv.config();
+
+// Setup global error handlers
+setupGlobalErrorHandlers();
 
 // Import User model
 const { User } = require('../schema/schema');
@@ -16,7 +20,8 @@ const connectDB = async () => {
     const password = process.env.MONGODB_PASSWORD || '';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0.kp8c2.mongodb.net';
     
-    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=Cluster0`;
+    const database = process.env.MONGODB_DATABASE || 'unlimiteddata';
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/${database}?retryWrites=true&w=majority&appName=Cluster0`;
     
     await mongoose.connect(uri, {
       maxPoolSize: 10,
@@ -26,8 +31,7 @@ const connectDB = async () => {
     });
     console.log('MongoDB Connected...');
   } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1);
+    handleDatabaseError(err, 'MongoDB Connection');
   }
 };
 
@@ -106,6 +110,5 @@ const main = async () => {
 
 // Run the script
 main().catch(err => {
-  console.error('Script error:', err);
-  process.exit(1);
+  handleScriptError(err, 'Update To Admin Script');
 });

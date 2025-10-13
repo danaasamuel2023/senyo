@@ -232,16 +232,19 @@ export default function LoginPage() {
         console.log('🔐 Login successful - User data normalized:', {
           originalId: data.user._id,
           normalizedId: normalizedUser.id,
-          userName: normalizedUser.name
+          userName: normalizedUser.name,
+          userRole: normalizedUser.role,
+          timestamp: new Date().toISOString()
         });
         
         // Store token securely using the auth utility
         setAuthToken(data.token, normalizedUser, 7 * 24 * 60 * 60, rememberMe); // 7 days expiry
 
+        console.log('🔐 Login successful - Auth token stored, showing success notification');
         showToast('Login successful! Redirecting...', 'success');
         
-        // Wait for localStorage to be updated before redirecting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for localStorage and cookies to be updated before redirecting
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Redirect based on user role and redirect parameter
         setTimeout(() => {
@@ -274,7 +277,12 @@ export default function LoginPage() {
         showToast(data.message || 'Login failed', 'error');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('🔐 Login error:', {
+        error: err.message,
+        stack: err.stack,
+        timestamp: new Date().toISOString(),
+        email: email.substring(0, 3) + '***@' + email.split('@')[1]
+      });
       
       let errorMessage = 'An error occurred. Please try again.';
       

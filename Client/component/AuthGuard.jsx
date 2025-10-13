@@ -21,45 +21,32 @@ const AuthGuard = ({ children }) => {
       return;
     }
     
-    // Check if user is authenticated
-    const checkAuth = () => {
+    // Check if user is authenticated using the auth utility
+    const checkAuth = async () => {
       try {
-        const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
-        const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+        // Import auth utilities dynamically to avoid SSR issues
+        const { isAuthenticated, getCurrentUser } = await import('../utils/auth.js');
         
-        // AuthGuard check - removed console.log for production
+        const authenticated = isAuthenticated();
+        const user = getCurrentUser();
         
-        if (!userData || !authToken) {
-          // AuthGuard: Missing auth data, redirecting to SignIn
-          router.push('/SignIn');
-          setLoading(false);
-          return;
-        }
-        
-        // Parse user data to validate it
-        try {
-          const parsedUserData = JSON.parse(userData);
-          if (!parsedUserData._id && !parsedUserData.id) {
-            // AuthGuard: Invalid user data, redirecting to SignIn
-            localStorage.removeItem('userData');
-            localStorage.removeItem('authToken');
-            router.push('/SignIn');
-            setLoading(false);
-            return;
-          }
-          
+        if (authenticated && user) {
           // AuthGuard: User authenticated successfully
           setIsAuthenticated(true);
           setLoading(false);
-        } catch (parseError) {
-          // AuthGuard: Error parsing user data
-          localStorage.removeItem('userData');
-          localStorage.removeItem('authToken');
+        } else {
+          // AuthGuard: Not authenticated, redirecting to SignIn
           router.push('/SignIn');
           setLoading(false);
         }
       } catch (error) {
-        // AuthGuard localStorage access error
+        // AuthGuard: Error checking authentication
+        console.error('🔐 AuthGuard error:', {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
+          pathname: window.location.pathname
+        });
         router.push('/SignIn');
         setLoading(false);
       }

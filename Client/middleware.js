@@ -128,14 +128,21 @@ function getUserRoleFromToken(request) {
               request.headers.get('authorization')?.replace('Bearer ', '');
     }
     
+    console.log('🔐 getUserRoleFromToken: Token validation:', {
+      hasToken: !!token,
+      tokenType: token ? (token.includes('bypass') ? 'bypass' : 'jwt') : 'none',
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
+      timestamp: new Date().toISOString()
+    });
+    
     if (!token) {
-      console.log('No auth token found in middleware');
+      console.log('❌ No auth token found in middleware');
       return null;
     }
     
     // Check if token is a bypass token (simple format)
     if (token.includes('bypass-token') || token.includes('client-token') || token.includes('fallback-token') || token.includes('immediate-bypass-token') || token.includes('error-bypass-token')) {
-      console.log('Bypass token detected, allowing access');
+      console.log('✅ Bypass token detected, allowing access');
       return 'user'; // Default role for bypass tokens
     }
     
@@ -200,11 +207,15 @@ export function middleware(request) {
     const userRole = getUserRoleFromToken(request);
     
     // Debug logging for authentication issues
+    const authCookie = request.cookies.get('authToken')?.value;
     console.log('🔐 Middleware auth check:', {
       pathname,
       userRole,
-      hasAuthCookie: !!request.cookies.get('authToken')?.value,
-      cookieValue: request.cookies.get('authToken')?.value?.substring(0, 20) + '...'
+      hasAuthCookie: !!authCookie,
+      cookieValue: authCookie ? authCookie.substring(0, 30) + '...' : 'none',
+      allCookies: Object.fromEntries(request.cookies.getAll().map(c => [c.name, c.value.substring(0, 20) + '...'])),
+      timestamp: new Date().toISOString(),
+      userAgent: request.headers.get('user-agent')?.substring(0, 50) + '...'
     });
     
     // If no token or role, redirect to login
