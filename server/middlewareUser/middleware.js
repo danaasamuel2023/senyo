@@ -25,6 +25,22 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
+    // Validate token format before attempting verification
+    if (typeof token !== 'string' || token.trim() === '') {
+      return res.status(401).json({ msg: 'Invalid token format' });
+    }
+
+    // Check if token has proper JWT structure (3 parts separated by dots)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.warn('Malformed JWT token detected:', {
+        tokenLength: token.length,
+        parts: tokenParts.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+      return res.status(401).json({ msg: 'Invalid token structure' });
+    }
+
     // Verify token with consistent secret
     const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     const decoded = jwt.verify(token, jwtSecret);
@@ -48,6 +64,10 @@ const auth = async (req, res, next) => {
     }
     
     if (err.name === 'JsonWebTokenError') {
+      console.warn('JWT verification failed:', {
+        error: err.message,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'no token'
+      });
       return res.status(401).json({ msg: 'Token is not valid' });
     }
     

@@ -20,7 +20,7 @@ export const useBalanceUpdate = (userId, enabled = true) => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://unlimitedata.onrender.com';
       const response = await fetch(`${API_URL}/api/balance-update/${userId}`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          'x-auth-token': authToken,
           'Content-Type': 'application/json'
         }
       });

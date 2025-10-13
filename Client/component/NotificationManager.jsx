@@ -35,12 +35,6 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Don't render if there's an error - let ErrorBoundary handle it
-  if (error) {
-    console.error('NotificationManager error:', error);
-    return null;
-  }
-
   const loadAnnouncements = useCallback(async () => {
     if (!userId) return;
     
@@ -64,7 +58,7 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
       
       const response = await fetch(`/api/backend?path=/api/v1/admin/notifications/user/announcements/${userId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'x-auth-token': localStorage.getItem('authToken')
         }
       });
       
@@ -101,7 +95,7 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
       await fetch('/api/backend?path=/api/v1/admin/notifications/user/interaction', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'x-auth-token': localStorage.getItem('authToken'),
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -127,7 +121,7 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
       await fetch(`/api/backend?path=/api/v1/admin/notifications/user/dismiss/${announcementId}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'x-auth-token': localStorage.getItem('authToken')
         }
       });
     } catch (err) {
@@ -145,6 +139,12 @@ const NotificationManager = ({ userId, onAnnouncementsLoaded }) => {
   useEffect(() => {
     loadAnnouncements();
   }, [loadAnnouncements]);
+
+  // Don't render if there's an error - let ErrorBoundary handle it
+  if (error) {
+    console.error('NotificationManager error:', error);
+    return null;
+  }
 
   // Don't render anything if system is disabled or no announcements
   if (!systemSettings || !systemSettings.isEnabled || announcements.length === 0) {

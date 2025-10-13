@@ -21,6 +21,30 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    // Validate token format before attempting verification
+    if (typeof token !== 'string' || token.trim() === '') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token format',
+        error: 'Malformed token'
+      });
+    }
+
+    // Check if token has proper JWT structure (3 parts separated by dots)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.warn('Malformed JWT token detected:', {
+        tokenLength: token.length,
+        parts: tokenParts.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token structure',
+        error: 'Malformed JWT token'
+      });
+    }
+
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
     
@@ -41,9 +65,16 @@ const authMiddleware = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    // Only log non-JWT errors to reduce console spam
+    if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
+      console.error('Auth middleware error:', error);
+    }
     
     if (error.name === 'JsonWebTokenError') {
+      console.warn('JWT verification failed:', {
+        error: error.message,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'no token'
+      });
       return res.status(401).json({
         success: false,
         message: 'Token is not valid',
@@ -120,14 +151,18 @@ const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
     
-    if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findById(decoded.userId).select('-password');
-      
-      if (user) {
-        req.user = user;
-        req.userId = decoded.userId;
-        req.userRole = decoded.role;
+    if (token && typeof token === 'string' && token.trim() !== '') {
+      // Check if token has proper JWT structure
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3) {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.userId).select('-password');
+        
+        if (user) {
+          req.user = user;
+          req.userId = decoded.userId;
+          req.userRole = decoded.role;
+        }
       }
     }
     
