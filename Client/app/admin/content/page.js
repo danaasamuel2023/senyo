@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { withAuth } from '../../../utils/auth';
 import {
   FileText, Image, Video, Music, Upload, Download, Plus, Edit, Trash2,
   ArrowLeft, RefreshCw, Search, Filter, Eye, Save, X, Settings, Bell,
@@ -11,7 +12,7 @@ import {
   AlertCircle, CheckCircle, Clock, Users, Activity
 } from 'lucide-react';
 
-const ContentManagementPage = () => {
+const ContentManagementPage = ({ user }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -57,19 +58,8 @@ const ContentManagementPage = () => {
   const [contentStatus, setContentStatus] = useState('draft');
 
   useEffect(() => {
-    checkAuth();
     loadContentData();
   }, [currentPage, itemsPerPage]);
-
-  const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    if (!token || user.role !== 'admin') {
-      router.push('/SignIn');
-      return;
-    }
-  };
 
   const showNotification = useCallback((message, type = 'success') => {
     setNotification({ message, type });
@@ -932,4 +922,17 @@ const ContentManagementPage = () => {
   );
 };
 
-export default ContentManagementPage;
+// Export with authentication protection
+export default withAuth(ContentManagementPage, {
+  redirectTo: '/SignIn?redirect=/admin/content',
+  requiredRole: 'admin',
+  fallback: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Authenticating...</h2>
+        <p className="text-gray-500 dark:text-gray-400">Please wait while we verify your admin access.</p>
+      </div>
+    </div>
+  )
+});

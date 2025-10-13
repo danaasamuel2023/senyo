@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { withAuth } from '../../../utils/auth';
 import {
   Package2, Plus, Edit, Trash2, Search, Filter, Download, Upload,
   ArrowLeft, Save, X, AlertCircle, CheckCircle, RefreshCw, Eye,
   DollarSign, TrendingUp, BarChart3, ShoppingCart, Zap, Wifi
 } from 'lucide-react';
 
-const ProductsPage = () => {
+const ProductsPage = ({ user }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
@@ -46,23 +47,10 @@ const ProductsPage = () => {
   ];
 
   useEffect(() => {
-    checkAuth();
     loadInventory();
   }, []);
 
-  const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
-    
-    if (!token || user.role !== 'admin') {
-      router.push('/SignIn');
-      return false;
-    }
-    return true;
-  };
-
   const loadInventory = async () => {
-    if (!checkAuth()) return;
     
     setLoading(true);
     try {
@@ -454,4 +442,17 @@ const ProductsPage = () => {
   );
 };
 
-export default ProductsPage;
+// Export with authentication protection
+export default withAuth(ProductsPage, {
+  redirectTo: '/SignIn?redirect=/admin/products',
+  requiredRole: 'admin',
+  fallback: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Authenticating...</h2>
+        <p className="text-gray-500 dark:text-gray-400">Please wait while we verify your admin access.</p>
+      </div>
+    </div>
+  )
+});

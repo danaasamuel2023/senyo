@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { withAuth } from '../../../utils/auth';
 import {
   BarChart3, TrendingUp, TrendingDown, Users, Package, DollarSign,
   Activity, PieChart, Calendar, Download, Filter, RefreshCw, ArrowLeft,
@@ -10,7 +11,7 @@ import {
   AlertCircle, CheckCircle, X, ArrowUp, ArrowDown
 } from 'lucide-react';
 
-const AnalyticsPage = () => {
+const AnalyticsPage = ({ user }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState('week'); // week, month, year
@@ -453,4 +454,17 @@ const AnalyticsPage = () => {
   );
 };
 
-export default AnalyticsPage;
+// Export with authentication protection
+export default withAuth(AnalyticsPage, {
+  redirectTo: '/SignIn?redirect=/admin/analytics',
+  requiredRole: 'admin',
+  fallback: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Authenticating...</h2>
+        <p className="text-gray-500 dark:text-gray-400">Please wait while we verify your admin access.</p>
+      </div>
+    </div>
+  )
+});
