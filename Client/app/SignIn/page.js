@@ -1,8 +1,26 @@
 'use client';
 
+console.log('🔐 SignIn page.js file loaded');
+
+// Add error handler to catch any JavaScript errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (e) => {
+    console.error('🔐 JavaScript Error in SignIn page:', e.error);
+  });
+  
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('🔐 Unhandled Promise Rejection in SignIn page:', e.reason);
+  });
+}
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { setAuthToken, normalizeUserData, verifyAuthState } from '../../utils/auth.js';
+
+console.log('🔐 React imports loaded');
+
+import { normalizeUserData, authManager } from '../../utils/auth-manager.js';
+
+console.log('🔐 Auth manager imported');
 import { 
   Mail, 
   Lock, 
@@ -21,9 +39,7 @@ import apiClient from '../../utils/apiClient.js';
 
 // Expose auth functions globally for testing
 if (typeof window !== 'undefined') {
-  window.setAuthToken = setAuthToken;
   window.normalizeUserData = normalizeUserData;
-  window.verifyAuthState = verifyAuthState;
   
   // Capture console errors for debugging
   window.consoleErrors = window.consoleErrors || [];
@@ -127,9 +143,13 @@ const ErrorDisplay = ({ message }) => (
 );
 
 export default function LoginPage() {
+  console.log('🔐 LoginPage component loaded');
+  
   const searchParams = useSearchParams();
   const router = useRouter();
   const redirectPath = searchParams.get('redirect') || '/';
+  
+  console.log('🔐 LoginPage initialized with redirectPath:', redirectPath);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -300,6 +320,11 @@ export default function LoginPage() {
     if (e) e.preventDefault();
 
     console.log('🔐 handleLogin: Starting login process');
+    console.log('🔐 handleLogin: Form data:', {
+      email: formData.email,
+      hasPassword: !!formData.password,
+      rememberMe: formData.rememberMe
+    });
     
     // Expose handleLogin globally for testing
     if (typeof window !== 'undefined') {
@@ -351,6 +376,8 @@ export default function LoginPage() {
         password: password ? '***' : 'empty'
       });
       
+      console.log('🔐 handleLogin: Making API request to /api/login');
+      
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -360,11 +387,26 @@ export default function LoginPage() {
         }),
       });
 
+      console.log('🔐 handleLogin: API response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       let data;
       try {
         data = await response.json();
+        console.log('🔐 handleLogin: API response data:', {
+          success: data.success,
+          hasToken: !!data.token,
+          hasUser: !!data.user,
+          userRole: data.user?.role,
+          message: data.message
+        });
       } catch (jsonError) {
         const text = await response.text();
+        console.error('🔐 handleLogin: JSON parse error:', jsonError);
+        console.error('🔐 handleLogin: Response text:', text);
         throw new Error(`Server returned invalid JSON: ${text}`);
       }
 
@@ -389,10 +431,9 @@ export default function LoginPage() {
         timestamp: new Date().toISOString()
       });
 
-      // Store authentication token using enhanced auth manager
-      console.log('🔐 handleLogin: Setting auth token...');
+      // Store authentication token using unified auth manager
+      console.log('🔐 UNIFIED: Setting auth token...');
       try {
-        const { authManager } = await import('../../utils/auth-manager.js');
         const success = authManager.saveAuth(
           data.token,
           normalizedUser,
@@ -404,22 +445,64 @@ export default function LoginPage() {
           throw new Error('Failed to save authentication data');
         }
         
-        console.log('🔐 handleLogin: Auth token set successfully');
+        console.log('🔐 UNIFIED: Auth token set successfully');
+        
+        // Wait for auth state to be fully saved and verified
+        let authVerified = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        console.log('🔐 UNIFIED: Starting auth verification process...');
+        
+        while (!authVerified && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔐 UNIFIED: Auth verification attempt ${attempts}/${maxAttempts}`);
+          
+          // Check current auth state
+          const token = authManager.getToken();
+          const user = authManager.getUser();
+          const isAuth = authManager.isAuthenticated();
+          
+          console.log('🔐 UNIFIED: Auth state check:', {
+            hasToken: !!token,
+            hasUser: !!user,
+            isAuthenticated: isAuth,
+            tokenLength: token ? token.length : 0,
+            userRole: user?.role,
+            userId: user?.id || user?._id,
+            attempt: attempts
+          });
+          
+          authVerified = isAuth;
+          
+          if (!authVerified && attempts < maxAttempts) {
+            console.log(`🔐 UNIFIED: Auth not verified, waiting 50ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+        }
+        
+        if (!authVerified) {
+          console.error('❌ UNIFIED: Authentication verification failed after all attempts');
+          console.log('🔐 UNIFIED: Final auth state:', {
+            token: authManager.getToken() ? 'exists' : 'missing',
+            user: authManager.getUser() ? 'exists' : 'missing',
+            isAuthenticated: authManager.isAuthenticated(),
+            localStorage: {
+              authToken: localStorage.getItem('authToken') ? 'exists' : 'missing',
+              userData: localStorage.getItem('userData') ? 'exists' : 'missing',
+              tokenExpiry: localStorage.getItem('tokenExpiry') ? 'exists' : 'missing'
+            }
+          });
+          throw new Error('Authentication verification failed after login');
+        }
+        
+        console.log('✅ UNIFIED: Authentication verified successfully');
+        showToast('Login successful! Redirecting...', 'success');
         
       } catch (authError) {
-        console.error('🔐 handleLogin: Error setting auth token:', authError);
+        console.error('🔐 UNIFIED: Error setting auth token:', authError);
         throw authError;
       }
-
-      showToast('Login successful! Verifying authentication...', 'success');
-
-      // Verify authentication
-      const authVerified = await verifyAuthState();
-      if (!authVerified) {
-        throw new Error('Authentication verification failed');
-      }
-
-      showToast('Authentication verified! Redirecting...', 'success');
 
       // Determine redirect URL based on user role
       let redirectUrl = redirectPath !== '/' ? redirectPath : '/';
@@ -434,12 +517,36 @@ export default function LoginPage() {
         }
       }
 
-      console.log('Redirecting to:', redirectUrl, 'for role:', data.user?.role);
+      console.log('🔐 Redirecting to:', redirectUrl, 'for role:', data.user?.role);
 
-      // Use Next.js router for better navigation
+      // Use Next.js router for better navigation - increased delay to ensure auth is saved
+      console.log('🔐 UNIFIED: About to redirect in 500ms to:', redirectUrl);
+      console.log('🔐 UNIFIED: Current auth state before redirect:', {
+        isAuthenticated: authManager.isAuthenticated(),
+        hasUser: !!authManager.getUser(),
+        hasToken: !!authManager.getToken(),
+        userRole: authManager.getUser()?.role
+      });
+      
       setTimeout(() => {
+        console.log('🔐 UNIFIED: Executing redirect to:', redirectUrl);
+        console.log('🔐 UNIFIED: Final auth check before redirect:', {
+          isAuthenticated: authManager.isAuthenticated(),
+          hasUser: !!authManager.getUser(),
+          hasToken: !!authManager.getToken()
+        });
+        
+        // Force cookie to be set before redirect
+        const token = authManager.getToken();
+        if (token && typeof document !== 'undefined') {
+          const expires = new Date();
+          expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+          document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+          console.log('🔐 UNIFIED: Cookie force-set before redirect');
+        }
+        
         router.push(redirectUrl);
-      }, 1500);
+      }, 1000); // Increased delay to ensure auth state is fully saved
 
     } catch (err) {
       console.error('Login error:', {
@@ -459,8 +566,8 @@ export default function LoginPage() {
   // In development, ignore rate limiting to allow testing
   const isFormValid = formData.email && formData.password && (process.env.NODE_ENV === 'development' ? true : !rateLimitState.isLimited);
   
-  // Debug logging for form validation
-  if (process.env.NODE_ENV === 'development') {
+  // Debug logging for form validation - reduced frequency
+  if (process.env.NODE_ENV === 'development' && Math.random() < 0.1) {
     console.log('🔐 Form validation debug:', {
       email: formData.email,
       password: formData.password ? '***' : 'empty',
@@ -609,6 +716,16 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading || !isFormValid}
+                onClick={() => {
+                  console.log('🔐 LOGIN BUTTON CLICKED!');
+                  console.log('🔐 Button state:', {
+                    isLoading,
+                    isFormValid,
+                    rateLimitState: rateLimitState.isLimited,
+                    email: formData.email,
+                    hasPassword: !!formData.password
+                  });
+                }}
                 className={`w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-xl text-black transition-all duration-300 font-bold ${
                   rateLimitState.isLimited || isLoading || !isFormValid
                     ? 'bg-gray-500 cursor-not-allowed opacity-50' 

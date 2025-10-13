@@ -327,6 +327,11 @@ export function middleware(request) {
     return NextResponse.next();
   }
   
+  // Skip middleware for dashboard routes - let AuthGuard handle them
+  if (pathname.startsWith('/admin/dashboard') || pathname.startsWith('/agent/dashboard')) {
+    return NextResponse.next();
+  }
+  
   // Check if route requires authentication
   if (isProtectedRoute(pathname)) {
     // FIX 1: Only apply rate limiting to login attempts, not all requests

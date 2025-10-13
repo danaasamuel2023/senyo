@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Zap, Sparkles } from 'lucide-react';
-import { isAuthenticated as checkIsAuthenticated, getCurrentUser, verifyAuthState } from '../utils/auth.js';
+import { authManager } from '../utils/auth-manager.js';
 
 const AuthGuard = ({ children }) => {
   const router = useRouter();
@@ -34,14 +34,55 @@ const AuthGuard = ({ children }) => {
       return;
     }
     
-    // Check if user is authenticated using the auth utility
+    // Check if user is authenticated using auth-manager
     const checkAuth = async () => {
       try {
-        // Use statically imported auth utilities
+        // Wait for auth manager to initialize
+        if (!authManager.isInitialized) {
+          await new Promise(resolve => {
+            const checkInit = () => {
+              if (authManager.isInitialized) {
+                resolve();
+              } else {
+                setTimeout(checkInit, 10);
+              }
+            };
+            checkInit();
+          });
+        }
+
+        // Use unified auth-manager - refresh state first, then check
+        console.log('🔐 UNIFIED AuthGuard: Starting auth check for path:', pathname);
+        console.log('🔐 UNIFIED AuthGuard: Current localStorage state:', {
+          authToken: localStorage.getItem('authToken') ? 'exists' : 'missing',
+          userData: localStorage.getItem('userData') ? 'exists' : 'missing',
+          tokenExpiry: localStorage.getItem('tokenExpiry') ? 'exists' : 'missing'
+        });
         
-        // First check basic authentication
-        const authenticated = checkIsAuthenticated();
-        const user = getCurrentUser();
+        const refreshResult = authManager.refreshAuthState();
+        console.log('🔐 UNIFIED AuthGuard: Auth state refresh result:', refreshResult);
+        
+        const authenticated = authManager.isAuthenticated();
+        const user = authManager.getUser();
+        const token = authManager.getToken();
+        
+        console.log('🔐 UNIFIED AuthGuard: Detailed auth check result:', {
+          authenticated,
+          hasUser: !!user,
+          hasToken: !!token,
+          userRole: user?.role,
+          userId: user?.id || user?._id,
+          pathname,
+          isPublicPath,
+          localStorage: {
+            authToken: localStorage.getItem('authToken') ? 'exists' : 'missing',
+            userData: localStorage.getItem('userData') ? 'exists' : 'missing',
+            tokenExpiry: localStorage.getItem('tokenExpiry') ? 'exists' : 'missing'
+          },
+          sessionStorage: {
+            isAuthenticated: sessionStorage.getItem('isAuthenticated')
+          }
+        });
         
         if (authenticated && user) {
           // Check role-based access
@@ -56,8 +97,7 @@ const AuthGuard = ({ children }) => {
             return;
           }
           
-          // AuthGuard: User authenticated successfully
-          console.log('🔐 AuthGuard: User authenticated successfully', {
+          console.log('🔐 UNIFIED AuthGuard: User authenticated successfully', {
             userId: user.id || user._id,
             role: user.role,
             pathname
@@ -66,42 +106,11 @@ const AuthGuard = ({ children }) => {
           setIsAuthenticated(true);
           setLoading(false);
         } else {
-          // If basic check fails, try verification with retries
-          console.log('🔐 AuthGuard: Basic auth check failed, trying verification...');
-          const authVerified = await verifyAuthState();
-          
-          if (authVerified) {
-            const verifiedUser = getCurrentUser();
-            
-            // Check role-based access for verified user
-            if (!checkRoleAccess(verifiedUser.role, pathname)) {
-              console.log('🔐 AuthGuard: Role access denied for verified user', {
-                userRole: verifiedUser.role,
-                pathname,
-                requiredRole: pathname.startsWith('/admin/') ? 'admin' : 'agent'
-              });
-              router.push('/unauthorized');
-              setLoading(false);
-              return;
-            }
-            
-            console.log('🔐 AuthGuard: Authentication verification successful', {
-              userId: verifiedUser?.id || verifiedUser?._id,
-              role: verifiedUser?.role,
-              pathname
-            });
-            setUser(verifiedUser);
-            setIsAuthenticated(true);
-            setLoading(false);
-          } else {
-            // AuthGuard: Not authenticated, redirecting to SignIn
-            console.log('🔐 AuthGuard: Authentication verification failed, redirecting to SignIn');
-            router.push('/SignIn');
-            setLoading(false);
-          }
+          console.log('🔐 UNIFIED AuthGuard: User not authenticated, redirecting to SignIn');
+          router.push('/SignIn');
+          setLoading(false);
         }
       } catch (error) {
-        // AuthGuard: Error checking authentication
         console.error('🔐 AuthGuard error:', {
           error: error.message,
           stack: error.stack,
@@ -114,7 +123,7 @@ const AuthGuard = ({ children }) => {
     };
     
     // Add a longer delay to ensure localStorage and sessionStorage are updated after login
-    setTimeout(checkAuth, 200);
+    setTimeout(checkAuth, 1000); // Increased delay to ensure auth state is fully saved
   }, [router, isPublicPath, pathname]);
 
   if (loading) {
