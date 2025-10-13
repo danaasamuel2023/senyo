@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders.jsx';
 import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates.jsx';
+import DailyUsageMonitor from '../../../component/DailyUsageMonitor.jsx';
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -1053,6 +1054,9 @@ const AdminDashboard = () => {
           loading={loading}
         />
       </div>
+
+      {/* Daily Usage Monitor */}
+      <DailyUsageMonitor />
 
       {/* Charts and Activities with enhanced design */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

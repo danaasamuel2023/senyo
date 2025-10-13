@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { trackDailyUser, isDailyLimitReached, getDailyUsageStats } from './utils/dailyUsageLimiter';
 
 // Rate limiting for token validation attempts
 const tokenValidationAttempts = new Map();
@@ -270,6 +271,36 @@ export function middleware(request) {
   // Handle other development-only requests
   if (pathname.includes('hot-update') || pathname.includes('webpack')) {
     return new NextResponse(null, { status: 404 });
+  }
+  
+  // DAILY USAGE LIMIT CHECK (10M users per day)
+  // Only check for main page visits, not API calls or static assets
+  if (pathname === '/' || pathname === '/SignIn' || pathname === '/SignUp') {
+    try {
+      // Track user visit and check daily limit
+      const userTracking = trackDailyUser();
+      
+      if (userTracking.isLimitReached) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('🚫 Daily user limit reached (10M users)');
+        }
+        
+        // Redirect to maintenance page when limit is reached
+        const maintenanceUrl = new URL('/maintenance', request.url);
+        maintenanceUrl.searchParams.set('reason', 'daily_limit_reached');
+        return NextResponse.redirect(maintenanceUrl);
+      }
+      
+      // Log usage in development
+      if (process.env.NODE_ENV === 'development' && userTracking.isNewUser) {
+        console.log(`👤 Daily users: ${userTracking.dailyCount}/${10000000} (${userTracking.remainingUsers} remaining)`);
+      }
+    } catch (error) {
+      // If tracking fails, allow the request to proceed
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Daily usage tracking error:', error);
+      }
+    }
   }
   
   // Skip authentication check for public routes
