@@ -6,6 +6,7 @@ const express = require('express');
 // Redeploy triggered: 2025-10-11T09:40:25.909Z
 
 // ADMIN ROUTES DEPLOYMENT FIX: 2025-10-13T01:31:00.000Z - Fix 404 errors for admin endpoints
+// FORCE REDEPLOY: 2025-10-13T01:35:00.000Z - Admin routes not loading in production
 
 const dotenv = require('dotenv');
 const cors = require('cors');
