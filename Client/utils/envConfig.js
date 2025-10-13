@@ -22,7 +22,7 @@ export const getApiUrl = () => {
   // Use local backend for development
   const env = getCurrentEnv();
   if (env === 'DEVELOPMENT') {
-    return 'http://localhost:3001';
+    return 'http://localhost:5001';
   }
   
   // Use production backend for production
@@ -45,7 +45,7 @@ export const getNextPublicApiUrl = () => {
   // Use local backend for development
   const env = getCurrentEnv();
   if (env === 'DEVELOPMENT') {
-    return 'http://localhost:3001';
+    return 'http://localhost:5001';
   }
   
   // Use production backend for production
@@ -68,7 +68,7 @@ export const getApiEndpoint = (endpoint) => {
 export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
-    'http://localhost:3001',
+    'http://localhost:5001',
     'https://unlimitedata.onrender.com',
     'https://unlimitedatagh.com',
     'https://www.unlimitedatagh.com'

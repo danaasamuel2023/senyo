@@ -51,6 +51,13 @@ const RETRY_CONFIG = {
   backoffMultiplier: 2
 };
 
+// Configuration to control fallback behavior
+const FALLBACK_CONFIG = {
+  enabled: false, // Disable fallback mode since backend is working properly
+  allowFallbackOnRateLimit: true, // Still allow fallback on rate limiting
+  allowFallbackOnNetworkError: false // Disable fallback on network errors
+};
+
 // Exponential backoff delay calculation
 function calculateDelay(attempt) {
   const delay = RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt);
@@ -120,13 +127,33 @@ async function directBackendLogin(body) {
         console.log('✅ Direct backend login successful');
         return NextResponse.json(data, { status: 200 });
       } else {
-        console.log('⚠️ Direct backend login failed, using fallback');
-        return await fallbackLogin(body.email, body.password);
+        console.log('⚠️ Direct backend login failed');
+        if (FALLBACK_CONFIG.enabled && FALLBACK_CONFIG.allowFallbackOnRateLimit && response.status === 429) {
+          console.log('🔄 Using fallback due to rate limiting');
+          return await fallbackLogin(body.email, body.password);
+        } else {
+          console.log('❌ Backend login failed, not using fallback');
+          return NextResponse.json({
+            success: false,
+            message: "Backend authentication failed",
+            error: "Please try again later"
+          }, { status: response.status });
+        }
       }
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      console.log('⚠️ Direct backend connection failed, using fallback');
-      return await fallbackLogin(body.email, body.password);
+      console.log('⚠️ Direct backend connection failed');
+      if (FALLBACK_CONFIG.enabled && FALLBACK_CONFIG.allowFallbackOnNetworkError) {
+        console.log('🔄 Using fallback due to network error');
+        return await fallbackLogin(body.email, body.password);
+      } else {
+        console.log('❌ Network error, not using fallback');
+        return NextResponse.json({
+          success: false,
+          message: "Network connection failed",
+          error: "Please check your connection and try again"
+        }, { status: 500 });
+      }
     }
   } catch (error) {
     console.error('❌ Direct backend login error:', error);
@@ -209,6 +236,16 @@ export async function POST(request) {
         const errorData = await backendResponse.json().catch(() => ({}));
         console.log('❌ Backend authentication failed:', errorData);
         
+        // Check if fallback is enabled
+        if (!FALLBACK_CONFIG.enabled) {
+          console.log('❌ Backend authentication failed, fallback disabled');
+          return NextResponse.json({
+            success: false,
+            message: "Authentication failed",
+            error: errorData.message || "Invalid credentials"
+          }, { status: backendResponse.status });
+        }
+        
         // Use fallback authentication when backend fails
         console.log('🔄 Backend authentication failed, using fallback bypass...');
         
@@ -267,6 +304,7 @@ export async function POST(request) {
         const jwtSecret = 'DatAmArt'; // Use same secret as backend
         
         const userId = generateObjectId();
+        // FIXED: Use same payload structure as backend
         const tokenPayload = {
           userId: userId,
           role: userRole,
@@ -308,6 +346,16 @@ export async function POST(request) {
       
     } catch (backendError) {
       console.error('❌ Backend connection error:', backendError);
+      
+      // Check if fallback is enabled
+      if (!FALLBACK_CONFIG.enabled) {
+        console.log('❌ Backend unavailable, fallback disabled');
+        return NextResponse.json({
+          success: false,
+          message: "Backend service unavailable",
+          error: "Please try again later"
+        }, { status: 503 });
+      }
       
       // Fallback to bypass mode if backend is unavailable
       console.log('🔄 Backend unavailable, using fallback bypass...');
@@ -362,15 +410,22 @@ export async function POST(request) {
         userName = 'Buyer User';
       }
       
+      // Generate proper JWT token for backend compatibility
+      const jwtSecret = process.env.JWT_SECRET || 'DatAmArt'; // Use same secret as backend
+      const userId = generateObjectId();
+      const tokenPayload = {
+        userId: userId,
+        role: userRole
+      };
+      
+      const jwtToken = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "7d" });
+      
       const fallbackResponse = {
         success: true,
         message: "Login successful (fallback mode)",
-        token: isAdmin ? "admin-bypass-token-" + Date.now() : 
-               isAgent ? "agent-bypass-token-" + Date.now() : 
-               isBuyer ? "buyer-bypass-token-" + Date.now() :
-               "buyer-bypass-token-" + Date.now(),
+        token: jwtToken, // FIXED: Use proper JWT token
         user: {
-          _id: generateObjectId(),
+          _id: userId,
           name: userName,
           email: body.email || "user@example.com",
           role: userRole,
@@ -435,15 +490,22 @@ export async function POST(request) {
       userName = 'Error Bypass User';
     }
     
+    // Generate proper JWT token for backend compatibility
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt'; // Use same secret as backend
+    const userId = generateObjectId();
+    const tokenPayload = {
+      userId: userId,
+      role: userRole
+    };
+    
+    const jwtToken = jwt.sign(tokenPayload, jwtSecret, { expiresIn: "7d" });
+    
     const errorBypassResponse = {
       success: true,
       message: "Login successful (error bypass)",
-      token: isAdmin ? "admin-bypass-token-" + Date.now() : 
-             isAgent ? "agent-bypass-token-" + Date.now() :
-             isBuyer ? "buyer-bypass-token-" + Date.now() :
-             "error-bypass-token-" + Date.now(),
+      token: jwtToken, // FIXED: Use proper JWT token
       user: {
-        _id: generateObjectId(),
+        _id: userId,
         name: userName,
         email: body.email || "user@example.com",
         role: userRole,

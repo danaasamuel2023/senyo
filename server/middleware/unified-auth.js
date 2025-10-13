@@ -22,9 +22,11 @@ const createErrorResponse = (status, message, error = null) => {
  * Standardizes error responses and adds req.userId and req.userRole
  */
 const authMiddleware = async (req, res, next) => {
+  let token = null;
+  
   try {
     // Get token from header - check both x-auth-token and Authorization header
-    let token = req.header('x-auth-token');
+    token = req.header('x-auth-token');
     
     // If no x-auth-token, check Authorization header
     if (!token) {

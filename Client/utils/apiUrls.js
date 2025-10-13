@@ -23,9 +23,9 @@ const isProduction = () => {
 // API URL Configuration
 export const API_URLS = {
   DEVELOPMENT: {
-    BASE: 'http://localhost:3001',
+    BASE: 'http://localhost:5001',
     FRONTEND: 'http://localhost:3000',
-    NEXT_PUBLIC: 'http://localhost:3001'
+    NEXT_PUBLIC: 'http://localhost:5001'
   },
   PRODUCTION: {
     BASE: 'https://unlimitedata.onrender.com',
@@ -127,7 +127,7 @@ export const getApiUrl = (endpoint) => {
 export const getCorsOrigins = () => {
   return [
     'http://localhost:3000',
-    'http://localhost:3001',
+    'http://localhost:5001',
     'https://unlimitedata.onrender.com',
     'https://www.unlimitedata.onrender.com',
     'https://unlimiteddatagh.com',
