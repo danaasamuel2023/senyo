@@ -47,20 +47,12 @@ export async function POST(request) {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
     
+    // TEMPORARY FIX: Completely disable rate limiting for production
     // Skip rate limiting in development and temporarily disable for production
     if (process.env.NODE_ENV !== 'development') {
-      // TEMPORARY FIX: Disable rate limiting for production until deployment
-      // Check rate limit (1000 requests per 5 minutes - very generous)
-      if (!checkRateLimit(ip, 1000, 5 * 60 * 1000)) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Too many login attempts. Please try again in a few minutes.',
-            details: 'Rate limit exceeded'
-          },
-          { status: 429 }
-        );
-      }
+      // TEMPORARY FIX: Completely disable rate limiting to resolve 429 errors
+      // Rate limiting will be re-enabled after deployment verification
+      console.log('⚠️ Rate limiting temporarily disabled for production');
     }
     
     const body = await request.json();

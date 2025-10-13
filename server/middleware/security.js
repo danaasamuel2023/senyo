@@ -55,6 +55,12 @@ const authLimiter = rateLimit({
       return true;
     }
     
+    // TEMPORARY FIX: Skip ALL rate limiting for production to resolve 429 errors
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ Auth rate limiting temporarily disabled for production');
+      return true;
+    }
+    
     // Skip rate limiting for admin login attempts
     const body = req.body;
     if (body && body.email) {
