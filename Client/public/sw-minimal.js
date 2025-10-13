@@ -1,5 +1,6 @@
 // Minimal Service Worker for UnlimitedData GH PWA
 // This version avoids potential redirect issues
+// Fixed: Added redirect handling to prevent FetchEvent warnings
 
 const CACHE_NAME = 'unlimiteddata-minimal-v1';
 
@@ -18,8 +19,14 @@ self.addEventListener('install', (event) => {
       console.log('[Service Worker] Caching essential assets');
       return cache.addAll(ESSENTIAL_ASSETS).catch((error) => {
         console.log('[Service Worker] Essential cache failed:', error);
-        // Don't fail installation if caching fails
-        return Promise.resolve();
+        // Don't fail installation if caching fails - try individual caching
+        return Promise.allSettled(
+          ESSENTIAL_ASSETS.map(url => 
+            cache.add(url).catch(err => 
+              console.log(`[Service Worker] Failed to cache ${url}:`, err)
+            )
+          )
+        );
       });
     })
   );
@@ -68,10 +75,15 @@ self.addEventListener('fetch', (event) => {
   
   event.respondWith(
     // Try network first, fallback to cache
-    fetch(event.request)
+    // FIX: Add redirect mode to handle server redirects
+    fetch(event.request, { 
+      redirect: 'follow',
+      mode: 'cors',
+      credentials: 'same-origin'
+    })
       .then((response) => {
-        // Only cache successful responses
-        if (response.status === 200 && response.type === 'basic') {
+        // Only cache successful responses that aren't redirected
+        if (response.status === 200 && response.type === 'basic' && !response.redirected) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache).catch((error) => {

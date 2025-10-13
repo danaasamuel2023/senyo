@@ -1,4 +1,5 @@
 // Service Worker for UnlimitedData GH PWA
+// Fixed: Added redirect handling to prevent FetchEvent warnings
 const CACHE_NAME = 'unlimiteddata-v2';
 const OFFLINE_URL = '/offline.html';
 
@@ -19,7 +20,7 @@ self.addEventListener('install', (event) => {
       console.log('[Service Worker] Caching assets');
       return cache.addAll(ASSETS_TO_CACHE).catch((error) => {
         console.log('[Service Worker] Cache addAll failed:', error);
-        // Cache individual files that exist
+        // Cache individual files that exist with redirect handling
         return Promise.allSettled(
           ASSETS_TO_CACHE.map(url => 
             cache.add(url).catch(err => 
@@ -74,9 +75,14 @@ self.addEventListener('fetch', (event) => {
         return response;
       }
 
-      return fetch(event.request).then((response) => {
-        // Don't cache non-successful responses or non-GET requests
-        if (!response || response.status !== 200 || response.type !== 'basic' || event.request.method !== 'GET') {
+      // FIX: Add redirect mode to handle server redirects
+      return fetch(event.request, { 
+        redirect: 'follow',
+        mode: 'cors',
+        credentials: 'same-origin'
+      }).then((response) => {
+        // Don't cache non-successful responses, redirected responses, or non-GET requests
+        if (!response || response.status !== 200 || response.type !== 'basic' || response.redirected || event.request.method !== 'GET') {
           return response;
         }
 
