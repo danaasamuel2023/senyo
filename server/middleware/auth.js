@@ -164,6 +164,57 @@ const agentAuth = (req, res, next) => {
 };
 
 /**
+ * Role-based authorization middleware
+ * Must be used after auth middleware
+ * @param {string[]} allowedRoles - Array of allowed roles
+ */
+const authorize = (allowedRoles = []) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      const { status, response } = createErrorResponse(401, 'Authentication required', 'not_authenticated');
+      return res.status(status).json(response);
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
+      const { status, response } = createErrorResponse(403, `Access denied. Required roles: ${allowedRoles.join(', ')}`, 'insufficient_permissions');
+      return res.status(status).json(response);
+    }
+    
+    next();
+  };
+};
+
+/**
+ * User-specific authorization middleware
+ * Ensures user can only access their own resources
+ * Must be used after auth middleware
+ * @param {string} userIdParam - Name of the user ID parameter in the route (default: 'userId')
+ */
+const userSpecificAuth = (userIdParam = 'userId') => {
+  return (req, res, next) => {
+    if (!req.user) {
+      const { status, response } = createErrorResponse(401, 'Authentication required', 'not_authenticated');
+      return res.status(status).json(response);
+    }
+    
+    const requestedUserId = req.params[userIdParam] || req.body[userIdParam] || req.query[userIdParam];
+    
+    // Admin can access any user's resources
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    
+    // Users can only access their own resources
+    if (req.userId !== requestedUserId) {
+      const { status, response } = createErrorResponse(403, 'Access denied. You can only access your own resources.', 'insufficient_permissions');
+      return res.status(status).json(response);
+    }
+    
+    next();
+  };
+};
+
+/**
  * Optional authentication middleware (doesn't fail if no token)
  */
 const optionalAuth = async (req, res, next) => {
