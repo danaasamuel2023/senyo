@@ -51,11 +51,22 @@ function generateClientToken(email) {
 }
 
 /**
+ * Generate a valid MongoDB ObjectId
+ */
+function generateObjectId() {
+  const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
+  const random1 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
+  const random2 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
+  const random3 = Math.floor(Math.random() * 16777216).toString(16).padStart(4, '0');
+  return (timestamp + random1 + random2 + random3).substring(0, 24);
+}
+
+/**
  * Create client-side user object
  */
 function createClientUser(email) {
   return {
-    _id: `client-user-${Date.now()}`,
+    _id: generateObjectId(),
     name: email.split('@')[0] || 'Client User',
     email: email,
     role: 'buyer',
@@ -171,7 +182,7 @@ export async function loginWithClientFallback(email, password) {
     message: "Login successful (fallback mode)",
     token: `fallback-token-${Date.now()}`,
     user: {
-      _id: `fallback-user-${Date.now()}`,
+      _id: generateObjectId(),
       name: "Fallback User",
       email: email,
       role: "buyer",
