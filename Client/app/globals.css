@@ -178,11 +178,15 @@ body {
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
   scroll-padding: 0 2rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
 }
 
 .nav-horizontal-scroll > * {
   scroll-snap-align: start;
   scroll-snap-stop: normal;
+  flex-shrink: 0;
 }
 
 /* Custom scrollbar for horizontal navigation */

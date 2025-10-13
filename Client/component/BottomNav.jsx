@@ -4,7 +4,7 @@ import { Home, Package, Wallet, User, ShoppingBag } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useContext } from 'react';
-import { BottomNavContext } from '@/app/providers/BottomNavProvider';
+import { BottomNavContext, useBottomNav } from '@/app/providers/BottomNavProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -12,8 +12,14 @@ export default function BottomNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Safely use the context with fallback
-  const context = useContext(BottomNavContext);
-  const isVisible = context?.isVisible ?? true;
+  let isVisible = true;
+  try {
+    const context = useBottomNav();
+    isVisible = context.isVisible;
+  } catch (error) {
+    // Context not available, use default visible state
+    console.warn('BottomNavProvider not found, using default visibility');
+  }
 
   useEffect(() => {
     // Check if user is authenticated with multiple checks
