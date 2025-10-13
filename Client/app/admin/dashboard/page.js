@@ -6,21 +6,21 @@ import adminAPI, { userAPI } from '../../../utils/adminApi';
 import { getApiUrl } from '../../../utils/envConfig';
 import apiClient from '../../../utils/apiClient.js';
 import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth.js';
-import { useBottomNav } from '../../providers/BottomNavProvider';
+import { useBottomNav } from '../../providers/BottomNavProvider.jsx';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, 
   Search, Calendar, DollarSign, TrendingUp, LogOut, Sun, Moon, Menu, X, 
-  ChevronRight, AlertCircle, CheckCircle, RefreshCw, Plus, Filter, Download, 
+  AlertCircle, CheckCircle, RefreshCw, Plus, Filter, Download, 
   Upload, Edit, Trash2, Eye, Database, Shield, Activity, PieChart, ArrowUp, 
   ArrowDown, Bell, HelpCircle, Save, XCircle, Home, ShoppingCart, Wallet,
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
   Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare,
   Monitor, TrendingDown, Headphones, Megaphone, FileImage, Warehouse, 
   Workflow, Target, Smartphone, Globe, Cpu, HardDrive,
-  Lock, UserCog, ShoppingBag, ChevronLeft, Sparkles, Layers, BarChart2
+  Lock, UserCog, ShoppingBag, Sparkles, Layers, BarChart2
 } from 'lucide-react';
-import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders';
-import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates';
+import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders.jsx';
+import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates.jsx';
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -380,26 +380,32 @@ const AdminDashboard = () => {
     return 'Just now';
   }, []);
 
-  // Load recent activities
+  // Load recent activities with throttling
   const loadRecentActivities = useCallback(async () => {
     if (!isAuthenticated || !user) return;
     
     try {
-      const [ordersData, transactionsData] = await Promise.all([
+      // Add small delay between API calls to prevent rate limiting
+      const [ordersData, transactionsData] = await Promise.allSettled([
         adminAPI.order.getOrders({ limit: 5 }).catch(error => {
           console.error('Orders API error:', error);
           return { orders: [] };
         }),
-        adminAPI.transaction.getTransactions({ limit: 5 }).catch(error => {
-          console.error('Transactions API error:', error);
-          return { transactions: [] };
-        })
+        new Promise(resolve => setTimeout(() => 
+          adminAPI.transaction.getTransactions({ limit: 5 }).catch(error => {
+            console.error('Transactions API error:', error);
+            return { transactions: [] };
+          }).then(resolve), 200 // 200ms delay
+        ))
       ]);
+
+      const ordersResult = ordersData.status === 'fulfilled' ? ordersData.value : { orders: [] };
+      const transactionsResult = transactionsData.status === 'fulfilled' ? transactionsData.value : { transactions: [] };
 
       const activities = [];
       
-      if (ordersData.orders) {
-        ordersData.orders.forEach(order => {
+      if (ordersResult.orders) {
+        ordersResult.orders.forEach(order => {
           const timeAgo = getTimeAgo(new Date(order.createdAt));
           activities.push({
             id: `order-${order._id}`,
@@ -411,8 +417,8 @@ const AdminDashboard = () => {
         });
       }
 
-      if (transactionsData.transactions) {
-        transactionsData.transactions.forEach(transaction => {
+      if (transactionsResult.transactions) {
+        transactionsResult.transactions.forEach(transaction => {
           const timeAgo = getTimeAgo(new Date(transaction.createdAt));
           if (transaction.type === 'deposit' && transaction.status === 'completed') {
             activities.push({
@@ -503,9 +509,6 @@ const AdminDashboard = () => {
   const [prefetchedRoutes, setPrefetchedRoutes] = useState(new Set());
   const REFRESH_DEBOUNCE_DELAY = 1000;
   
-  const [navScrollPosition, setNavScrollPosition] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
   const navScrollRef = useRef(null);
 
   // Load dashboard data
@@ -618,7 +621,7 @@ const AdminDashboard = () => {
         
         const refreshInterval = setInterval(() => {
           loadDashboardData();
-        }, 30000);
+        }, 60000); // Increased from 30s to 60s to reduce API calls
         
         window.dashboardRefreshInterval = refreshInterval;
       }, 100);
@@ -727,90 +730,6 @@ const AdminDashboard = () => {
     return () => window.removeEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
   }, [loadDashboardData]);
 
-  // Navigation scroll
-  const updateScrollButtons = useCallback(() => {
-    if (navScrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = navScrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-    }
-  }, []);
-
-  const scrollNav = useCallback((direction) => {
-    if (navScrollRef.current) {
-      const scrollAmount = 250; // Increased scroll amount for better navigation
-      const currentScroll = navScrollRef.current.scrollLeft;
-      const containerWidth = navScrollRef.current.clientWidth;
-      const contentWidth = navScrollRef.current.scrollWidth;
-      
-      let newScroll;
-      if (direction === 'left') {
-        newScroll = Math.max(0, currentScroll - scrollAmount);
-      } else {
-        newScroll = Math.min(contentWidth - containerWidth, currentScroll + scrollAmount);
-      }
-      
-      navScrollRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-      
-      // Update scroll buttons after a short delay
-      setTimeout(() => {
-        updateScrollButtons();
-      }, 300);
-    }
-  }, [updateScrollButtons]);
-
-  const handleNavScroll = useCallback(() => {
-    if (navScrollRef.current) {
-      setNavScrollPosition(navScrollRef.current.scrollLeft);
-      updateScrollButtons();
-    }
-  }, [updateScrollButtons]);
-
-  useEffect(() => {
-    const initializeNavScroll = () => {
-      if (navScrollRef.current) {
-        updateScrollButtons();
-        navScrollRef.current.addEventListener('scroll', handleNavScroll);
-        
-        // Add touch support for mobile devices
-        let isScrolling = false;
-        const handleTouchStart = () => {
-          isScrolling = true;
-        };
-        
-        const handleTouchEnd = () => {
-          setTimeout(() => {
-            isScrolling = false;
-            updateScrollButtons();
-          }, 150);
-        };
-        
-        navScrollRef.current.addEventListener('touchstart', handleTouchStart);
-        navScrollRef.current.addEventListener('touchend', handleTouchEnd);
-        
-        const handleResize = () => {
-          setTimeout(updateScrollButtons, 100);
-        };
-        
-        window.addEventListener('resize', handleResize);
-        
-        return () => {
-          if (navScrollRef.current) {
-            navScrollRef.current.removeEventListener('scroll', handleNavScroll);
-            navScrollRef.current.removeEventListener('touchstart', handleTouchStart);
-            navScrollRef.current.removeEventListener('touchend', handleTouchEnd);
-          }
-          window.removeEventListener('resize', handleResize);
-        };
-      }
-    };
-
-    const timer = setTimeout(initializeNavScroll, 100);
-    return () => clearTimeout(timer);
-  }, [handleNavScroll, updateScrollButtons]);
 
   // Logout
   const handleLogout = useCallback(() => {
@@ -1924,36 +1843,14 @@ const AdminDashboard = () => {
         
         {/* Scrollable Navigation */}
         <div className="relative">
-          {/* Left scroll button */}
-          <button
-            onClick={() => scrollNav('left')}
-            className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110 active:scale-95 ${
-              canScrollLeft ? 'opacity-100' : 'opacity-30 pointer-events-none'
-            }`}
-            disabled={!canScrollLeft}
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          </button>
-
-          {/* Right scroll button */}
-          <button
-            onClick={() => scrollNav('right')}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110 active:scale-95 ${
-              canScrollRight ? 'opacity-100' : 'opacity-30 pointer-events-none'
-            }`}
-            disabled={!canScrollRight}
-          >
-            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          </button>
 
           <nav 
             ref={navScrollRef}
-            className="flex space-x-2 p-4 overflow-x-auto nav-horizontal-scroll nav-scrollbar-custom"
+            className="flex flex-col space-y-1 p-3 overflow-y-auto overflow-x-hidden"
             style={{
               scrollBehavior: 'smooth',
               WebkitOverflowScrolling: 'touch'
             }}
-            onScroll={handleNavScroll}
           >
             {sidebarItems.map((item, index) => {
               const Icon = item.icon;
@@ -2000,30 +1897,66 @@ const AdminDashboard = () => {
                       prefetchRoute(navigationTabs[item.id]);
                     }
                   }}
-                  className={`flex items-center space-x-2 px-3 py-2.5 rounded-xl transition-all whitespace-nowrap flex-shrink-0 transform hover:scale-105 active:scale-95 animate-slide-up ${
+                  className={`group relative flex items-center w-full px-3 py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] ${
                     isActive
                       ? item.highlight 
-                        ? 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-xl scale-105'
-                        : 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-lg'
+                        ? 'bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-[#FFCC08] text-black shadow-lg shadow-yellow-500/25 border border-yellow-300'
+                        : 'bg-gradient-to-r from-[#FFCC08] to-yellow-400 text-black shadow-md border border-yellow-200'
                       : item.highlight
-                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 text-[#FFCC08] hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/20 dark:hover:to-orange-900/20'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600'
+                        ? 'text-[#FFCC08] hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-yellow-900/20 dark:hover:to-orange-900/20 hover:text-yellow-600 dark:hover:text-yellow-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-gray-900 dark:hover:text-white'
                   }`}
-                  style={{ animationDelay: `${index * 0.02}s` }}
+                  style={{ animationDelay: `${index * 0.03}s` }}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-r-full shadow-sm" />
+                  )}
+                  
+                  {/* Icon with enhanced styling */}
+                  <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
+                    isActive 
+                      ? 'bg-black/10 shadow-sm' 
+                      : 'bg-transparent group-hover:bg-white/10 dark:group-hover:bg-gray-600/20'
+                  }`}>
+                    <Icon className={`w-5 h-5 transition-all duration-200 ${
+                      isActive ? 'scale-110' : 'group-hover:scale-105'
+                    }`} />
+                    
+                    {/* Notification dot for highlight items */}
+                    {item.highlight && !isActive && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse" />
+                    )}
+                  </div>
+                  
+                  {/* Label and badge */}
                   {sidebarOpen && (
-                    <>
-                      <span className="font-medium text-sm">{item.label}</span>
+                    <div className="flex items-center justify-between flex-1 ml-3 min-w-0">
+                      <span className={`font-medium text-sm truncate transition-all duration-200 ${
+                        isActive ? 'font-semibold' : 'group-hover:font-medium'
+                      }`}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Badge with modern styling */}
                       {item.badge && item.badge > 0 && (
-                        <span className={`px-1.5 py-0.5 text-xs rounded-full animate-pulse ${
-                          isActive ? 'bg-black text-[#FFCC08]' : 'bg-[#FFCC08] text-black'
+                        <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full transition-all duration-200 ${
+                          isActive 
+                            ? 'bg-black text-[#FFCC08] shadow-sm' 
+                            : 'bg-gradient-to-r from-[#FFCC08] to-yellow-400 text-black shadow-sm group-hover:shadow-md'
                         }`}>
                           {item.badge}
                         </span>
                       )}
-                    </>
+                    </div>
                   )}
+                  
+                  {/* Hover effect overlay */}
+                  <div className={`absolute inset-0 rounded-lg transition-all duration-200 pointer-events-none ${
+                    isActive 
+                      ? 'bg-gradient-to-r from-white/20 to-transparent' 
+                      : 'bg-gradient-to-r from-transparent to-transparent group-hover:from-white/5 group-hover:to-transparent'
+                  }`} />
                 </button>
               );
             })}

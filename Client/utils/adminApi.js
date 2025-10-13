@@ -1,6 +1,7 @@
 // Admin API Service
 import { getNextPublicApiUrl, isDevelopment } from './envConfig';
 import { getAuthToken, getCurrentUser, isAuthenticated, logout } from './auth';
+import { makeRateLimitedRequest } from './rateLimitHandler.js';
 
 const API_BASE_URL = getNextPublicApiUrl();
 
@@ -46,10 +47,15 @@ const handleResponse = async (response) => {
   if (!response.ok) {
     const errorText = await response.text();
     
-    // Handle rate limiting gracefully in development
-    if (response.status === 429 && process.env.NODE_ENV === 'development') {
-      console.warn(`Rate limit encountered in development (${response.status}):`, errorText);
-      throw new Error(`Rate limit bypassed in development: ${errorText}`);
+    // Handle rate limiting with user-friendly message
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After');
+      const message = retryAfter 
+        ? `Too many requests. Please try again in ${retryAfter} seconds.`
+        : 'Too many requests. Please wait a moment and try again.';
+      
+      console.warn('Rate limit exceeded:', message);
+      throw new Error(`HTTP ${response.status}: ${message}`);
     }
     
     console.error(`API Error ${response.status}:`, errorText);
@@ -329,11 +335,14 @@ export const orderAPI = {
   // Get all orders with filters
   getOrders: async (filters = {}) => {
     const params = new URLSearchParams(filters);
+    const endpoint = `${getApiUrl('/api/v1/admin/orders')}?${params}`;
     
-    // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/orders')}?${params}`, {
-      headers: getAuthHeaders()
-    });
+    // Use rate-limited request
+    const response = await makeRateLimitedRequest(endpoint, () => 
+      fetch(endpoint, {
+        headers: getAuthHeaders()
+      })
+    );
     return handleResponse(response);
   },
 
@@ -387,11 +396,14 @@ export const transactionAPI = {
   // Get all transactions with filters
   getTransactions: async (filters = {}) => {
     const params = new URLSearchParams(filters);
+    const endpoint = `${getApiUrl('/api/v1/admin/transactions')}?${params}`;
     
-    // Use the correct admin endpoint
-    const response = await fetch(`${getApiUrl('/api/v1/admin/transactions')}?${params}`, {
-      headers: getAuthHeaders()
-    });
+    // Use rate-limited request
+    const response = await makeRateLimitedRequest(endpoint, () => 
+      fetch(endpoint, {
+        headers: getAuthHeaders()
+      })
+    );
     return handleResponse(response);
   },
 
