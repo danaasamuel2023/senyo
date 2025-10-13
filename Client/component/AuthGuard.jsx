@@ -2,38 +2,87 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Zap, Sparkles } from 'lucide-react';
+import { authManager, isAuthenticated, getUserRole } from '../utils/auth-manager';
 
 const AuthGuard = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [authState, setAuthState] = useState({
+    isAuthenticated: false,
+    loading: true,
+    userRole: null
+  });
   
   // List of paths that should bypass authentication
-  const publicPaths = ['/SignIn', '/SignUp'];
+  const publicPaths = ['/SignIn', '/SignUp', '/reset', '/help', '/landing', '/error', '/unauthorized'];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
-    // If current path is public, don't check auth
-    if (isPublicPath) {
-      setLoading(false);
-      setIsAuthenticated(true);
-      return;
-    }
+    const checkAuthentication = async () => {
+      try {
+        // If current path is public, don't check auth
+        if (isPublicPath) {
+          setAuthState({
+            isAuthenticated: true,
+            loading: false,
+            userRole: null
+          });
+          return;
+        }
+        
+        // Use the unified auth manager to check authentication
+        const authenticated = isAuthenticated();
+        const userRole = getUserRole();
+        
+        console.log('🔐 AuthGuard: Authentication check:', {
+          authenticated,
+          userRole,
+          pathname
+        });
+        
+        if (!authenticated) {
+          // Redirect to sign in with current path as redirect parameter
+          const redirectUrl = `/SignIn?redirect=${encodeURIComponent(pathname)}`;
+          console.log('🔐 AuthGuard: Not authenticated, redirecting to:', redirectUrl);
+          router.push(redirectUrl);
+          return;
+        }
+        
+        // User is authenticated - check if they should be redirected to their dashboard
+        if (pathname === '/') {
+          let dashboardPath = '/';
+          
+          if (userRole === 'admin') {
+            dashboardPath = '/admin/dashboard';
+          } else if (userRole === 'agent') {
+            dashboardPath = '/agent/dashboard';
+          }
+          
+          if (dashboardPath !== '/') {
+            console.log('🔐 AuthGuard: Redirecting authenticated user to dashboard:', dashboardPath);
+            router.push(dashboardPath);
+            return;
+          }
+        }
+        
+        // User is authenticated and on appropriate page
+        setAuthState({
+          isAuthenticated: true,
+          loading: false,
+          userRole
+        });
+        
+      } catch (error) {
+        console.error('🔐 AuthGuard: Error checking authentication:', error);
+        // On error, redirect to sign in
+        router.push('/SignIn');
+      }
+    };
     
-    // Check if user is authenticated
-    const userData = localStorage.getItem('userData');
-    
-    if (!userData) {
-      router.push('/SignUp');
-    } else {
-      setIsAuthenticated(true);
-    }
-    
-    setLoading(false);
-  }, [router, isPublicPath, pathname]);
+    checkAuthentication();
+  }, [router, pathname, isPublicPath]);
 
-  if (loading) {
+  if (authState.loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="text-center">
@@ -64,7 +113,7 @@ const AuthGuard = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : null;
+  return authState.isAuthenticated ? children : null;
 };
 
 export default AuthGuard;
