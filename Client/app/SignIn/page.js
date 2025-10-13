@@ -290,6 +290,7 @@ export default function LoginPage() {
               } else if (data.user && data.user.role === 'agent') {
                 redirectUrl = '/agent/dashboard';
               } else {
+                // Regular users go to main dashboard (which shows UserDashboard component)
                 redirectUrl = '/';
               }
             }
