@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, createContext } from 'react';
-import { isAuthenticated, getCurrentUser, getAuthHeader, hasPermission } from '../utils/tokenAuth';
+import { isAuthenticated, getCurrentUser, getAuthToken } from '../utils/auth.js';
 
 /**
  * Middleware to protect routes that require authentication
@@ -15,7 +15,7 @@ export function requireAuth(Component) {
     if (!isAuthenticated()) {
       // Redirect to signin page
       if (typeof window !== 'undefined') {
-        window.location.href = '/signin-token';
+        window.location.href = '/SignIn';
       }
       return null;
     }
@@ -88,7 +88,7 @@ export function withAuth(Component, options = {}) {
     // Check basic authentication
     if (!isAuthenticated()) {
       if (typeof window !== 'undefined') {
-        window.location.href = '/signin-token';
+        window.location.href = '/SignIn';
       }
       return null;
     }
@@ -168,7 +168,7 @@ export class AuthenticatedApiClient {
     if (response.status === 401) {
       // Redirect to signin
       if (typeof window !== 'undefined') {
-        window.location.href = '/signin-token';
+        window.location.href = '/SignIn';
       }
       throw new Error('Authentication required');
     }
@@ -220,7 +220,7 @@ export function RouteGuard({ children, requireRole, requirePermission }) {
 
   if (!isAuthenticated) {
     if (typeof window !== 'undefined') {
-      window.location.href = '/signin-token';
+      window.location.href = '/SignIn';
     }
     return null;
   }
