@@ -31,7 +31,7 @@ router.get('/users', authMiddleware, adminAuth, async (req, res) => {
 });
 
 // Send bulk SMS
-router.post('/bulk-sms', auth, adminAuth, async (req, res) => {
+router.post('/bulk-sms', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { content, userIds, metadata } = req.body;
 
@@ -105,7 +105,7 @@ router.post('/bulk-sms', auth, adminAuth, async (req, res) => {
 });
 
 // Send bulk email
-router.post('/bulk-email', auth, adminAuth, async (req, res) => {
+router.post('/bulk-email', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { subject, content, userIds, metadata } = req.body;
 
@@ -179,7 +179,7 @@ router.post('/bulk-email', auth, adminAuth, async (req, res) => {
 });
 
 // Unified bulk messaging endpoint
-router.post('/bulk-message', auth, adminAuth, async (req, res) => {
+router.post('/bulk-message', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { type, content, subject, userIds, metadata } = req.body;
 
