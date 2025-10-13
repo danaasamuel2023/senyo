@@ -9,9 +9,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
  * Enhanced authentication middleware with comprehensive error handling
  */
 const authMiddleware = async (req, res, next) => {
+  let token = null;
+  
   try {
     // Get token from header or cookies
-    let token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
+    token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
     
     // If no token in header, check cookies (for frontend requests)
     if (!token && req.cookies && req.cookies.authToken) {

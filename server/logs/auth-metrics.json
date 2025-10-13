@@ -1,10 +1,10 @@
 {
-  "totalLogins": 20,
-  "successfulLogins": 3,
-  "failedLogins": 17,
+  "totalLogins": 22,
+  "successfulLogins": 4,
+  "failedLogins": 18,
   "tokenValidations": 0,
   "tokenExpirations": 0,
   "apiCalls": 0,
   "unauthorizedAccess": 0,
-  "lastUpdated": "2025-10-13T20:12:39.513Z"
+  "lastUpdated": "2025-10-13T20:26:44.776Z"
 }

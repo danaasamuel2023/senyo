@@ -434,10 +434,10 @@ useEffect(() => {
     // Check if we're on the client side
     if (typeof window === 'undefined') return;
     
-    // Use unified auth system
-    const { isAuthenticated, getCurrentUser } = await import('../utils/unified-auth.js');
+    // Use enhanced auth manager
+    const { authManager } = await import('../utils/auth-manager.js');
     
-    if (!isAuthenticated()) {
+    if (!authManager.isAuthenticated()) {
       console.warn('❌ User not authenticated');
       if (isMounted) {
         setError('Please login to access your dashboard');
@@ -446,7 +446,7 @@ useEffect(() => {
       return;
     }
     
-    const userData = getCurrentUser();
+    const userData = authManager.getUser();
     console.log('🔐 UserDashboard Auth Check:', {
       isAuthenticated: true,
       hasUserData: !!userData,
@@ -474,8 +474,8 @@ useEffect(() => {
         console.warn('❌ Invalid user data - missing ID');
         if (isMounted) {
           setError('Invalid user data. Please login again.');
-          const { clearAuthData } = await import('../utils/unified-auth.js');
-          clearAuthData();
+          const { authManager } = await import('../utils/auth-manager.js');
+          authManager.clearAuth();
           router.push('/SignIn');
         }
         return;

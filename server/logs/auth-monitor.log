@@ -38,3 +38,7 @@
 {"timestamp":"2025-10-13T20:12:35.623Z","event":"login_failure","data":{"email":"test@test.com","reason":"user_not_found","ip":"::1"},"level":"info"}
 {"timestamp":"2025-10-13T20:12:38.526Z","event":"login_attempt","data":{"email":"admin@unlimiteddata.gh","ip":"::1"},"level":"info"}
 {"timestamp":"2025-10-13T20:12:39.512Z","event":"login_success","data":{"email":"admin@unlimiteddata.gh","userId":"68ed5c5b6e303bd60558f955","role":"admin","ip":"::1"},"level":"info"}
+{"timestamp":"2025-10-13T20:26:38.471Z","event":"login_attempt","data":{"email":"test@test.com","ip":"::1"},"level":"info"}
+{"timestamp":"2025-10-13T20:26:38.633Z","event":"login_failure","data":{"email":"test@test.com","reason":"user_not_found","ip":"::1"},"level":"info"}
+{"timestamp":"2025-10-13T20:26:44.548Z","event":"login_attempt","data":{"email":"admin@unlimiteddata.gh","ip":"::1"},"level":"info"}
+{"timestamp":"2025-10-13T20:26:44.776Z","event":"login_success","data":{"email":"admin@unlimiteddata.gh","userId":"68ed5c5b6e303bd60558f955","role":"admin","ip":"::1"},"level":"info"}

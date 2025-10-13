@@ -389,15 +389,16 @@ export default function LoginPage() {
         timestamp: new Date().toISOString()
       });
 
-      // Store authentication token using unified auth system
+      // Store authentication token using enhanced auth manager
       console.log('🔐 handleLogin: Setting auth token...');
       try {
-        const { saveAuthData } = await import('../../utils/unified-auth.js');
-        const success = saveAuthData({
-          token: data.token,
-          user: normalizedUser,
-          expiresIn: 7 * 24 * 60 * 60 // 7 days
-        }, formData.rememberMe);
+        const { authManager } = await import('../../utils/auth-manager.js');
+        const success = authManager.saveAuth(
+          data.token,
+          normalizedUser,
+          7 * 24 * 60 * 60, // 7 days
+          formData.rememberMe
+        );
         
         if (!success) {
           throw new Error('Failed to save authentication data');
