@@ -46,7 +46,7 @@ const validateAccountNumber = (accountNumber, type) => {
 };
 
 // Bank withdrawal with intelligent processing
-router.post('/withdraw/bank', auth, async (req, res) => {
+router.post('/withdraw/bank', authMiddleware, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -216,7 +216,7 @@ router.post('/withdraw/bank', auth, async (req, res) => {
 });
 
 // Mobile money withdrawal
-router.post('/withdraw/mobile', auth, async (req, res) => {
+router.post('/withdraw/mobile', authMiddleware, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -417,7 +417,7 @@ router.get('/banks', async (req, res) => {
 });
 
 // Verify bank account
-router.post('/verify-account', auth, async (req, res) => {
+router.post('/verify-account', authMiddleware, async (req, res) => {
   try {
     const { accountNumber, bankId } = req.body;
     

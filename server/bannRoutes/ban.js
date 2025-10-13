@@ -97,7 +97,7 @@ router.get('/users/:id/blocked-devices', authMiddleware, adminAuth, ensureDevice
  * @desc    Block a user's device
  * @access  Admin
  */
-router.put('/users/:id/block-device', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.put('/users/:id/block-device', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     const { deviceId, reason, userAgent, ipAddress } = req.body;
     
@@ -177,7 +177,7 @@ router.put('/users/:id/block-device', auth, adminAuth, ensureDeviceSchema, async
  * @desc    Unblock a user's device
  * @access  Admin
  */
-router.put('/users/:id/unblock-device/:deviceId', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.put('/users/:id/unblock-device/:deviceId', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     const { id, deviceId } = req.params;
     

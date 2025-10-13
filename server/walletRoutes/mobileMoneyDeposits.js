@@ -28,7 +28,7 @@ const validateDepositAmount = (amount) => {
 };
 
 // Mobile money deposit with intelligent processing
-router.post('/deposit/mobile-money', auth, async (req, res) => {
+router.post('/deposit/mobile-money', authMiddleware, async (req, res) => {
   const session = await mongoose.startSession();
   
   try {
@@ -261,7 +261,7 @@ router.get('/networks', async (req, res) => {
 });
 
 // Validate mobile money number
-router.post('/validate-number', auth, async (req, res) => {
+router.post('/validate-number', authMiddleware, async (req, res) => {
   try {
     const { phoneNumber, network } = req.body;
     

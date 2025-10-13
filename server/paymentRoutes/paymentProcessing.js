@@ -8,7 +8,7 @@ const { Order, User } = require('../schema/schema');
 // ============================================
 
 // Initialize payment (Paystack integration)
-router.post('/initialize', auth, async (req, res) => {
+router.post('/initialize', authMiddleware, async (req, res) => {
   try {
     const { orderId, amount, email, phoneNumber } = req.body;
     const userId = req.user._id;
@@ -205,7 +205,7 @@ router.get('/status/:orderId', authMiddleware, async (req, res) => {
 // ============================================
 
 // Initialize mobile money payment
-router.post('/mobile-money', auth, async (req, res) => {
+router.post('/mobile-money', authMiddleware, async (req, res) => {
   try {
     const { orderId, phoneNumber, network } = req.body;
     const userId = req.user._id;

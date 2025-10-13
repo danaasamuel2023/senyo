@@ -155,7 +155,7 @@ router.get('/featured', async (req, res) => {
 // ============================================
 
 // Process store order (similar to existing order processing)
-router.post('/order', auth, async (req, res) => {
+router.post('/order', authMiddleware, async (req, res) => {
   try {
     const { items, totalAmount, customerInfo } = req.body;
     const userId = req.user._id;
