@@ -31,25 +31,55 @@ export default function PWAInstaller() {
 
     // Register service worker only once
     if ('serviceWorker' in navigator && !window.serviceWorkerRegistered) {
-      navigator.serviceWorker
-        .register('/sw.js', {
-          scope: '/',
-          updateViaCache: 'none'
-        })
-        .then((registration) => {
-          console.log('Service Worker registered:', registration);
-          window.serviceWorkerRegistered = true;
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-          // Don't fail silently - log the specific error
-          if (error.message.includes('redirect')) {
-            console.warn('Service Worker registration failed due to redirect. This is often caused by server configuration.');
-            console.warn('The app will continue to work without Service Worker features.');
+      const registerServiceWorker = async (swUrl, isFallback = false) => {
+        try {
+          // Check if the service worker file exists before registering
+          const response = await fetch(swUrl, { method: 'HEAD' });
+          if (!response.ok) {
+            throw new Error(`Service Worker file not found: ${response.status}`);
           }
-          // Mark as registered to prevent retry loops
+          
+          const registration = await navigator.serviceWorker.register(swUrl, {
+            scope: '/',
+            updateViaCache: 'none'
+          });
+          
+          console.log(`Service Worker registered${isFallback ? ' (fallback)' : ''}:`, registration);
           window.serviceWorkerRegistered = true;
-        });
+          return true;
+        } catch (error) {
+          console.error(`Service Worker registration failed${isFallback ? ' (fallback)' : ''}:`, error);
+          return false;
+        }
+      };
+      
+      // Async function to handle service worker registration
+      const initServiceWorker = async () => {
+        // Try main service worker first
+        const mainSwUrl = `${window.location.origin}/sw.js`;
+        const success = await registerServiceWorker(mainSwUrl);
+        
+        // If main service worker fails, try minimal fallback
+        if (!success) {
+          console.warn('Main Service Worker failed, trying minimal fallback...');
+          const fallbackSwUrl = `${window.location.origin}/sw-minimal.js`;
+          const fallbackSuccess = await registerServiceWorker(fallbackSwUrl, true);
+          
+          if (!fallbackSuccess) {
+            console.warn('Both Service Workers failed. PWA features will be disabled.');
+            console.warn('Service Worker registration failed due to redirect or other server configuration issues.');
+          }
+        }
+        
+        // Mark as registered to prevent retry loops
+        window.serviceWorkerRegistered = true;
+      };
+      
+      // Execute the async function
+      initServiceWorker().catch(error => {
+        console.error('Service Worker initialization failed:', error);
+        window.serviceWorkerRegistered = true;
+      });
     }
 
     // Listen for install prompt

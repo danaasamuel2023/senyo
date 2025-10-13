@@ -177,6 +177,17 @@ function getUserRoleFromToken(request) {
 export function middleware(request) {
   const { pathname } = request.nextUrl;
   
+  // Skip middleware for Service Worker and PWA files
+  if (
+    pathname === '/sw.js' ||
+    pathname === '/sw-minimal.js' ||
+    pathname === '/manifest.json' ||
+    pathname.startsWith('/icon') ||
+    pathname === '/offline.html'
+  ) {
+    return NextResponse.next();
+  }
+  
   // Handle Chrome DevTools requests
   if (pathname.includes('.well-known/appspecific/com.chrome.devtools.json')) {
     return new NextResponse(null, { status: 404 });
@@ -244,6 +255,6 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sw.js|sw-minimal.js|manifest.json|icon|offline.html).*)',
   ],
 };
