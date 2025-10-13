@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/unified-auth');
 const { User, Transaction } = require('../schema/schema');
 
 // ============================================
@@ -8,7 +8,7 @@ const { User, Transaction } = require('../schema/schema');
 // ============================================
 
 // Get withdrawal history
-router.get('/history', auth, async (req, res) => {
+router.get('/history', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
@@ -46,7 +46,7 @@ router.get('/history', auth, async (req, res) => {
 });
 
 // Request withdrawal
-router.post('/request', auth, async (req, res) => {
+router.post('/request', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { amount, bankDetails, withdrawalMethod } = req.body;
@@ -126,7 +126,7 @@ router.post('/request', auth, async (req, res) => {
 });
 
 // Get withdrawal statistics
-router.get('/stats', auth, async (req, res) => {
+router.get('/stats', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
 
@@ -186,7 +186,7 @@ router.get('/stats', auth, async (req, res) => {
 });
 
 // Cancel withdrawal request
-router.post('/cancel/:withdrawalId', auth, async (req, res) => {
+router.post('/cancel/:withdrawalId', authMiddleware, async (req, res) => {
   try {
     const { withdrawalId } = req.params;
     const agentId = req.user._id;
@@ -231,7 +231,7 @@ router.post('/cancel/:withdrawalId', auth, async (req, res) => {
 });
 
 // Get withdrawal methods
-router.get('/methods', auth, async (req, res) => {
+router.get('/methods', authMiddleware, async (req, res) => {
   try {
     const withdrawalMethods = [
       {
@@ -278,7 +278,7 @@ router.get('/methods', auth, async (req, res) => {
 });
 
 // Update bank details
-router.put('/bank-details', auth, async (req, res) => {
+router.put('/bank-details', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { bankDetails } = req.body;
@@ -315,7 +315,7 @@ router.put('/bank-details', auth, async (req, res) => {
 });
 
 // Get bank details
-router.get('/bank-details', auth, async (req, res) => {
+router.get('/bank-details', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
 

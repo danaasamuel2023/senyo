@@ -15,8 +15,8 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 const ConnectDB = require('./DataBaseConnection/connection.js');
 const { DataPurchase, Transaction, User } = require('./schema/schema');
-// Either import just the router or destructure it from the object
-const authRouter = require('./AuthRoutes/Auth.js').router || require('./AuthRoutes/Auth.js'); 
+// Import auth router correctly
+const { router: authRouter } = require('./AuthRoutes/Auth.js'); 
 const dataOrderRoutes = require('./orderRou/order.js');
 const Deposit = require('./DepositeRoutes/UserDeposite.js');
 const Developer = require('./ResellerApi/resellerApi.js')
@@ -46,6 +46,7 @@ const notificationSystemRoutes = require('./adminRoutes/notificationSystem.js')
 const storeRoutes = require('./storeRoutes/store.js')
 const paystackWebhookRoutes = require('./routes/paystackWebhook');
 const testDataMartRoutes = require('./test-datamart-endpoint.js');
+const monitoringRoutes = require('./routes/monitoring');
 
 // New feature routes
 const walletRoutes = require('./walletRoutes/wallet.js')
@@ -58,18 +59,15 @@ const {
   generalLimiter, 
   authLimiter,
   paymentLimiter,
-  agentLimiter,
-  adminLimiter,
-  proxyLimiter,
   securityHeaders,
-  sanitizeData 
+  sanitizeRequest 
 } = require('./middleware/security.js');
 
 // Error handling middleware
 const { errorHandler, asyncHandler } = require('./middleware/errorHandler.js');
 
 // Authentication middleware
-const { authMiddleware, adminAuth, agentAuth, optionalAuth } = require('./middleware/auth.js');
+const { authMiddleware, adminAuth, agentAuth, optionalAuth } = require('./middleware/unified-auth.js');
 
 dotenv.config();
 
@@ -144,7 +142,7 @@ app.get('/debug', (req, res) => {
 
 // Security middleware (should be first)
 app.use(securityHeaders);
-app.use(sanitizeData);
+app.use(sanitizeRequest());
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
@@ -645,6 +643,7 @@ app.use('/api/v1', HubnetAt);
 app.use('/api/v1', passreset);
 app.use('/api/v1', userStats);
 app.use('/api/v1', paystackWebhookRoutes);
+app.use('/api/v1/monitoring', monitoringRoutes);
 
 // Create a consolidated admin router to avoid conflicts
 const adminRouter = express.Router();
@@ -930,7 +929,7 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Start Server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

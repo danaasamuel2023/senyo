@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/unified-auth');
 const { User, AgentCatalog, ProductPricing } = require('../schema/schema');
 
 // ============================================
@@ -8,7 +8,7 @@ const { User, AgentCatalog, ProductPricing } = require('../schema/schema');
 // ============================================
 
 // Update agent store customization
-router.put('/customization', auth, async (req, res) => {
+router.put('/customization', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { storeName, brandColor, logoUrl, socialLinks, businessHours, welcomeMessage } = req.body;
@@ -58,7 +58,7 @@ router.put('/customization', auth, async (req, res) => {
 });
 
 // Get agent store customization
-router.get('/customization', auth, async (req, res) => {
+router.get('/customization', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     
@@ -97,7 +97,7 @@ router.get('/customization', auth, async (req, res) => {
 // ============================================
 
 // Get agent's product catalog
-router.get('/catalog', auth, async (req, res) => {
+router.get('/catalog', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { network, category, search } = req.query;
@@ -160,7 +160,7 @@ router.get('/catalog', auth, async (req, res) => {
 });
 
 // Update product in agent catalog
-router.put('/catalog/:productId', auth, async (req, res) => {
+router.put('/catalog/:productId', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { productId } = req.params;
@@ -217,7 +217,7 @@ router.put('/catalog/:productId', auth, async (req, res) => {
 });
 
 // Add product to agent catalog
-router.post('/catalog', auth, async (req, res) => {
+router.post('/catalog', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { productId, agentPrice, stock = 100 } = req.body;
@@ -279,7 +279,7 @@ router.post('/catalog', auth, async (req, res) => {
 });
 
 // Remove product from agent catalog
-router.delete('/catalog/:productId', auth, async (req, res) => {
+router.delete('/catalog/:productId', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { productId } = req.params;
@@ -316,7 +316,7 @@ router.delete('/catalog/:productId', auth, async (req, res) => {
 // ============================================
 
 // Get agent store analytics
-router.get('/analytics', auth, async (req, res) => {
+router.get('/analytics', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { period = 'month' } = req.query;
@@ -513,7 +513,7 @@ router.get('/store/:agentCode/products', async (req, res) => {
 });
 
 // Create order from agent store (public endpoint)
-router.post('/store/:agentCode/order', auth, async (req, res) => {
+router.post('/store/:agentCode/order', authMiddleware, async (req, res) => {
   try {
     const { agentCode } = req.params;
     const { items, totalAmount, customerInfo } = req.body;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/unified-auth');
 const { Order, User, ProductPricing, AgentCatalog } = require('../schema/schema');
 
 // ============================================
@@ -8,7 +8,7 @@ const { Order, User, ProductPricing, AgentCatalog } = require('../schema/schema'
 // ============================================
 
 // Create order from store
-router.post('/create', auth, async (req, res) => {
+router.post('/create', authMiddleware, async (req, res) => {
   try {
     const { items, totalAmount, customerInfo, agentCode } = req.body;
     const userId = req.user._id;
@@ -104,7 +104,7 @@ router.post('/create', auth, async (req, res) => {
 });
 
 // Process order (Admin/System)
-router.put('/:orderId/process', auth, async (req, res) => {
+router.put('/:orderId/process', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin or system
     if (req.user.role !== 'admin' && req.user.role !== 'system') {
@@ -167,7 +167,7 @@ router.put('/:orderId/process', auth, async (req, res) => {
 });
 
 // Get user orders
-router.get('/user', auth, async (req, res) => {
+router.get('/user', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
     const { page = 1, limit = 10, status } = req.query;
@@ -206,7 +206,7 @@ router.get('/user', auth, async (req, res) => {
 });
 
 // Get agent orders
-router.get('/agent', auth, async (req, res) => {
+router.get('/agent', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { page = 1, limit = 10, status } = req.query;
@@ -246,7 +246,7 @@ router.get('/agent', auth, async (req, res) => {
 });
 
 // Get order details
-router.get('/:orderId', auth, async (req, res) => {
+router.get('/:orderId', authMiddleware, async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user._id;
@@ -287,7 +287,7 @@ router.get('/:orderId', auth, async (req, res) => {
 });
 
 // Cancel order
-router.put('/:orderId/cancel', auth, async (req, res) => {
+router.put('/:orderId/cancel', authMiddleware, async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user._id;
@@ -346,7 +346,7 @@ router.put('/:orderId/cancel', auth, async (req, res) => {
 });
 
 // Get order statistics
-router.get('/stats/overview', auth, async (req, res) => {
+router.get('/stats/overview', authMiddleware, async (req, res) => {
   try {
     const { period = 'month' } = req.query;
     const userId = req.user._id;

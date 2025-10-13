@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { User, Wallet, Transaction } = require('../schema/schema');
 const { collectMobileMoney, getSupportedNetworks, validateMobileMoneyNumber } = require('../services/bulkClixCollectionService');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/unified-auth');
 
 // Enhanced logging
 const logMobileMoneyDeposit = (operation, data) => {

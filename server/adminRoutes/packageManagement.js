@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 const mongoose = require('mongoose');
 
 // Package Schema (you might want to move this to schema.js)

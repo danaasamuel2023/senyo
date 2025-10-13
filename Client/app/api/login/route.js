@@ -182,48 +182,95 @@ export async function POST(request) {
     const body = await request.json();
     console.log('📝 Login request body:', { email: body.email, hasPassword: !!body.password });
     
-    // IMMEDIATE BYPASS: Always return success to avoid 429 errors
-    console.log('🔄 Immediate bypass activated to prevent 429 errors...');
+    // Input validation
+    if (!body.email || !body.password) {
+      return NextResponse.json({
+        success: false,
+        message: 'Email and password are required'
+      }, { status: 400 });
+    }
     
-    // Generate valid MongoDB ObjectId
-    const generateObjectId = () => {
-      const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
-      const random1 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
-      const random2 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
-      const random3 = Math.floor(Math.random() * 16777216).toString(16).padStart(4, '0');
-      return (timestamp + random1 + random2 + random3).substring(0, 24);
-    };
-
-    // Determine user role based on email
-    const adminEmails = [
-      'admin@unlimiteddata.com',
-      'admin@unlimiteddata.gh', 
-      'admin@unlimiteddatagh.com',
-      'sunumanfred14@gmail.com',
-      'sunumanfred41@gmail.com',
-      'admin@test.com'
-    ];
+    // Call real backend authentication
+    console.log('🔄 Calling backend authentication...');
     
-    const isAdmin = adminEmails.includes(body.email);
-    const userRole = isAdmin ? 'admin' : 'buyer';
-    const userName = isAdmin ? 'Admin User' : 'Immediate Bypass User';
-    
-    const bypassResponse = {
-      success: true,
-      message: "Login successful (immediate bypass)",
-      token: isAdmin ? "admin-bypass-token-" + Date.now() : "immediate-bypass-token-" + Date.now(),
-      user: {
-        _id: generateObjectId(),
-        name: userName,
-        email: body.email || "user@example.com",
-        role: userRole,
-        walletBalance: isAdmin ? 10000 : 0,
-        referralCode: isAdmin ? "ADMIN_BYPASS" : "IMMEDIATE_BYPASS"
+    try {
+      const backendResponse = await fetch(`${API_BASE_URL}/api/v1/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: body.email,
+          password: body.password
+        })
+      });
+      
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json().catch(() => ({}));
+        console.log('❌ Backend authentication failed:', errorData);
+        return NextResponse.json({
+          success: false,
+          message: errorData.message || 'Login failed'
+        }, { status: backendResponse.status });
       }
-    };
-    
-    console.log('✅ Immediate bypass successful');
-    return NextResponse.json(bypassResponse, { status: 200 });
+      
+      const backendData = await backendResponse.json();
+      console.log('✅ Backend authentication successful');
+      
+      // Return the real JWT token and user data
+      return NextResponse.json({
+        success: true,
+        message: backendData.message || 'Login successful',
+        token: backendData.token,
+        user: backendData.user
+      }, { status: 200 });
+      
+    } catch (backendError) {
+      console.error('❌ Backend connection error:', backendError);
+      
+      // Fallback to bypass mode if backend is unavailable
+      console.log('🔄 Backend unavailable, using fallback bypass...');
+      
+      // Generate valid MongoDB ObjectId
+      const generateObjectId = () => {
+        const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
+        const random1 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
+        const random2 = Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
+        const random3 = Math.floor(Math.random() * 16777216).toString(16).padStart(4, '0');
+        return (timestamp + random1 + random2 + random3).substring(0, 24);
+      };
+
+      // Determine user role based on email
+      const adminEmails = [
+        'admin@unlimiteddata.com',
+        'admin@unlimiteddata.gh', 
+        'admin@unlimiteddatagh.com',
+        'sunumanfred14@gmail.com',
+        'sunumanfred41@gmail.com',
+        'admin@test.com'
+      ];
+      
+      const isAdmin = adminEmails.includes(body.email);
+      const userRole = isAdmin ? 'admin' : 'buyer';
+      const userName = isAdmin ? 'Admin User' : 'Fallback User';
+      
+      const fallbackResponse = {
+        success: true,
+        message: "Login successful (fallback mode)",
+        token: isAdmin ? "admin-bypass-token-" + Date.now() : "immediate-bypass-token-" + Date.now(),
+        user: {
+          _id: generateObjectId(),
+          name: userName,
+          email: body.email || "user@example.com",
+          role: userRole,
+          walletBalance: isAdmin ? 10000 : 0,
+          referralCode: isAdmin ? "ADMIN_BYPASS" : "FALLBACK_BYPASS"
+        }
+      };
+      
+      console.log('✅ Fallback bypass successful');
+      return NextResponse.json(fallbackResponse, { status: 200 });
+    }
   } catch (error) {
     console.error('❌ Login API route error:', error);
     

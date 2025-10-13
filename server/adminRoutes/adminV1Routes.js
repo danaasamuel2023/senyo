@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus, DataInventory, AgentCatalog, ProductPricing } = require('../schema/schema');
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 
 // Dashboard Statistics Routes
 router.get('/dashboard/statistics', authMiddleware, adminAuth, async (req, res) => {

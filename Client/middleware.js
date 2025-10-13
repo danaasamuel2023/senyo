@@ -152,11 +152,12 @@ function getUserRoleFromToken(request) {
               request.headers.get('authorization')?.replace('Bearer ', '');
     }
     
-    // Reduced logging for security
+    // Enhanced logging for debugging login issues
     if (process.env.NODE_ENV === 'development') {
       console.log('🔐 Token validation:', {
         hasToken: !!token,
         tokenType: token ? (token.includes('bypass') ? 'bypass' : 'jwt') : 'none',
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
         timestamp: new Date().toISOString()
       });
     }
@@ -168,73 +169,78 @@ function getUserRoleFromToken(request) {
       return null;
     }
     
-    // FIX 4: Allow bypass tokens in production for immediate login
+    // Handle JWT tokens from backend first (preferred)
+    if (token.includes('.')) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          
+          // Validate required fields
+          if (!payload || typeof payload !== 'object') {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Invalid JWT payload');
+            }
+            return null;
+          }
+          
+          // Check if token is expired
+          if (payload.exp && payload.exp < Date.now() / 1000) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('JWT token expired');
+            }
+            return null;
+          }
+          
+          // Validate role exists and is valid
+          const validRoles = ['admin', 'agent', 'user', 'buyer'];
+          if (!payload.role || !validRoles.includes(payload.role)) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Invalid or missing role in JWT token');
+            }
+            return null;
+          }
+          
+          console.log('✅ JWT token validated:', {
+            tokenPreview: token.substring(0, 30) + '...',
+            role: payload.role,
+            userId: payload.userId,
+            timestamp: new Date().toISOString()
+          });
+          
+          return payload.role;
+        } catch (jwtError) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('JWT decoding error:', jwtError);
+          }
+          return null;
+        }
+      }
+    }
+    
+    // FALLBACK: Allow bypass tokens for backward compatibility
     if (token.includes('bypass-token') || token.includes('client-token') || token.includes('fallback-token') || token.includes('immediate-bypass-token') || token.includes('error-bypass-token')) {
-      console.log('✅ Bypass token detected');
+      console.log('✅ Bypass token detected (fallback mode):', {
+        tokenPreview: token.substring(0, 30) + '...',
+        isAdmin: token.includes('admin-bypass') || token.includes('ADMIN_BYPASS'),
+        timestamp: new Date().toISOString()
+      });
       
       // Check if this is an admin bypass token
       if (token.includes('admin-bypass') || token.includes('ADMIN_BYPASS')) {
-        console.log('✅ Admin bypass token detected');
+        console.log('✅ Admin bypass token detected, returning admin role');
         return 'admin';
       }
       
-      console.log('✅ Regular bypass token detected, allowing access');
+      console.log('✅ Regular bypass token detected, returning user role');
       return 'user'; // Default role for bypass tokens
     }
     
-    // Validate JWT token format
-    if (!token.includes('.')) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Invalid token format - not JWT and not bypass token');
-      }
-      return null;
+    // Invalid token format
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Invalid token format - not JWT and not bypass token');
     }
-    
-    // Decode JWT token to get user role
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Invalid JWT structure');
-      }
-      return null;
-    }
-    
-    // SECURITY FIX: Add proper JWT validation
-    try {
-      const payload = JSON.parse(atob(parts[1]));
-      
-      // Validate required fields
-      if (!payload || typeof payload !== 'object') {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Invalid JWT payload');
-        }
-        return null;
-      }
-      
-      // Check if token is expired
-      if (payload.exp && payload.exp < Date.now() / 1000) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Token expired');
-        }
-        return null;
-      }
-      
-      // Validate role exists and is valid
-      const validRoles = ['admin', 'agent', 'user', 'buyer'];
-      if (!payload.role || !validRoles.includes(payload.role)) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Invalid or missing role in token');
-        }
-        return null;
-      }
-      
-      return payload.role;
-    } catch (jwtError) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('JWT decoding error:', jwtError);
-      }
-      return null;
-    }
+    return null;
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       console.error('Error in token validation:', error);

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 
 // Third-party Integrations routes
 router.get('/integrations', authMiddleware, adminAuth, async (req, res) => {

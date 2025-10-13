@@ -30,10 +30,8 @@ class SecureStorage {
     try {
       localStorage.setItem(key, value);
       
-      // Also set as HTTP-only cookie for middleware access
-      if (key === AUTH_TOKEN_KEY) {
-        document.cookie = `authToken=${value}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      }
+      // Cookie setting is handled by setAuthToken/saveAuthData to avoid duplication
+      // Removed duplicate cookie setting here to prevent conflicts
     } catch (error) {
       console.error(`Error setting localStorage for key ${key}:`, error);
     }
@@ -88,13 +86,41 @@ export const getRefreshToken = () => {
  * @returns {boolean} True if token is expired
  */
 export const isTokenExpired = () => {
-  const expiry = SecureStorage.getItem(TOKEN_EXPIRY_KEY);
-  if (!expiry) return true;
+  if (typeof window === 'undefined') return true;
   
-  const expiryTime = parseInt(expiry);
-  const currentTime = Date.now();
-  
-  return currentTime > expiryTime;
+  try {
+    const token = getAuthToken();
+    if (!token) return true;
+    
+    // Check JWT token expiration first
+    if (token.includes('.')) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.exp && payload.exp < Date.now() / 1000) {
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Error parsing JWT token:', error);
+          return true;
+        }
+      }
+    }
+    
+    // Fallback to stored expiry time for bypass tokens
+    const expiry = SecureStorage.getItem(TOKEN_EXPIRY_KEY);
+    if (!expiry) return true;
+    
+    const expiryTime = parseInt(expiry);
+    const currentTime = Date.now();
+    
+    return currentTime > expiryTime;
+  } catch (error) {
+    console.error('Error checking token expiry:', error);
+    return true;
+  }
 };
 
 /**
@@ -236,9 +262,9 @@ export const saveAuthData = (data, rememberMe = false) => {
       // FIX 2: Better cookie setting for production
       const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
       const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
-      const domainFlag = process.env.NODE_ENV === 'production' ? '; Domain=' + window.location.hostname : '';
       
-      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}${domainFlag}`;
+      // Simplified cookie setting to avoid domain issues
+      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
       console.log('🔐 saveAuthData: Cookie set immediately for middleware access');
     }
     
@@ -389,7 +415,14 @@ export const authenticatedFetch = async (url, options = {}) => {
   };
   
   if (token) {
-    headers['x-auth-token'] = token;
+    // Use appropriate header based on URL
+    if (url.includes('/auth/') || url.includes('/api/backend/')) {
+      // Backend API calls use Authorization Bearer
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      // Frontend middleware uses x-auth-token
+      headers['x-auth-token'] = token;
+    }
   }
   
   try {
@@ -402,14 +435,18 @@ export const authenticatedFetch = async (url, options = {}) => {
     if (response.status === 401) {
       const data = await response.json().catch(() => ({}));
       
-      if (data.message === 'Token expired') {
+      if (data.message === 'Token expired' || data.message === 'TokenExpiredError') {
         // Try to refresh token
         const refreshed = await refreshAuthToken();
         
         if (refreshed) {
-        // Retry the original request with new token
-        const newToken = getAuthToken();
-        headers['x-auth-token'] = newToken;
+          // Retry the original request with new token
+          const newToken = getAuthToken();
+          if (url.includes('/auth/') || url.includes('/api/backend/')) {
+            headers['Authorization'] = `Bearer ${newToken}`;
+          } else {
+            headers['x-auth-token'] = newToken;
+          }
           
           return fetch(url, {
             ...options,
@@ -681,9 +718,9 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
     // FIX 2: Better cookie setting for production
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
-    const domainFlag = process.env.NODE_ENV === 'production' ? '; Domain=' + window.location.hostname : '';
     
-    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}${domainFlag}`;
+    // Simplified cookie setting to avoid domain issues
+    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
     console.log('🔐 setAuthToken: Cookie set immediately for middleware access');
   }
   

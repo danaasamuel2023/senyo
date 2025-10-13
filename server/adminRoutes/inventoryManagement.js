@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 
 // Advanced Inventory Management routes
 router.get('/products', authMiddleware, adminAuth, async (req, res) => {

@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { User, ReferralBonus, AgentCatalog } = require("../schema/schema");
+const authMonitor = require("../monitoring/auth-monitor");
 
 dotenv.config();
 const router = express.Router();
@@ -128,14 +129,23 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Log login attempt
+    authMonitor.logAuthEvent('login_attempt', { email, ip: req.ip, userAgent: req.get('User-Agent') });
 
     // Find user by email
     const user = await User.findOne({ email }).select('+password');
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      authMonitor.logAuthEvent('login_failure', { email, reason: 'user_not_found', ip: req.ip });
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      authMonitor.logAuthEvent('login_failure', { email, reason: 'invalid_password', ip: req.ip });
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     // Generate JWT Token with user role for authorization
     const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
@@ -162,6 +172,14 @@ router.post("/login", async (req, res) => {
       ...(user.role === 'agent' ? { agentMetadata: user.agentMetadata } : {})
     };
 
+    // Log successful login
+    authMonitor.logAuthEvent('login_success', { 
+      email, 
+      userId: user._id, 
+      role: user.role, 
+      ip: req.ip 
+    });
+
     res.json({ 
       message: "Login successful", 
       token,
@@ -180,8 +198,19 @@ const authMiddleware = (req, res, next) => {
     const token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
+      authMonitor.logAuthEvent('unauthorized_access', { 
+        reason: 'no_token', 
+        ip: req.ip, 
+        path: req.path 
+      });
       return res.status(401).json({ message: 'Authorization denied' });
     }
+    
+    // Log token validation attempt
+    authMonitor.logAuthEvent('token_validation', { 
+      ip: req.ip, 
+      path: req.path 
+    });
     
     // Verify token
     const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
@@ -198,12 +227,31 @@ const authMiddleware = (req, res, next) => {
     req.userId = decoded.userId;
     req.userRole = decoded.role;
     
+    // Log successful token validation
+    authMonitor.logAuthEvent('token_validation_success', { 
+      userId: decoded.userId, 
+      role: decoded.role, 
+      ip: req.ip, 
+      path: req.path 
+    });
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
+    
     if (error.name === 'TokenExpiredError') {
+      authMonitor.logAuthEvent('token_expiration', { 
+        ip: req.ip, 
+        path: req.path 
+      });
       return res.status(401).json({ message: 'Token expired' });
     }
+    
+    authMonitor.logAuthEvent('token_validation_failure', { 
+      reason: error.name, 
+      ip: req.ip, 
+      path: req.path 
+    });
     return res.status(401).json({ message: 'Invalid token' });
   }
 };

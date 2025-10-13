@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus, DataInventory } = require('../schema/schema');
 const mongoose = require('mongoose');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/unified-auth');
 const adminAuth = require('../adminMiddleware/middleware');
 const axios = require('axios');
 

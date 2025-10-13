@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 const { ProductPricing, DataInventory, PriceHistory, User } = require('../schema/schema');
 const axios = require('axios');
 

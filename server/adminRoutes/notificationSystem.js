@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import middleware and models
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 const { User, Announcement, NotificationSystem, UserAnnouncementInteraction } = require('../schema/schema');
 
 // Validate imports

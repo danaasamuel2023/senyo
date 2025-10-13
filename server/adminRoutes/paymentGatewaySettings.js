@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { Settings, Transactiondataunlimited } = require('../schema/schema');
-const { authMiddleware, adminAuth } = require('../middleware/auth');
+const { authMiddleware, adminAuth } = require('../middleware/unified-auth');
 const paymentGatewayService = require('../services/paymentGatewayService');
 
 // Get payment gateway settings

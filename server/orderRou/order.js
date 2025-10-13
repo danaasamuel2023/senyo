@@ -8,7 +8,7 @@ const { handleFallbackPurchase } = require('../fallback-purchase-handler');
 const fallbackPricing = require('../fallback-pricing.json');
 
 const dotenv = require('dotenv');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/unified-auth');
 
 dotenv.config();
 

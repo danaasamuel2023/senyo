@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { User, Wallet } = require('../schema/schema');
 const { sendToBank, sendToMobileMoney, getBanksList, verifyBankAccount } = require('../services/bulkClixService');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/unified-auth');
 
 // Enhanced logging
 const logWithdrawalOperation = (operation, data) => {
