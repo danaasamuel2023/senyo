@@ -4,47 +4,54 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, ArrowLeft, Home, AlertTriangle } from 'lucide-react';
 
-const UnauthorizedPage = () => {
+export default function UnauthorizedPage() {
   const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4">
-      {/* Background Elements */}
+      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-500/20 to-black/40 blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-red-500/10 to-red-600/10 blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-400/20 to-red-500/20 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-red-400/20 to-black/40 blur-3xl animate-pulse"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-red-500/30 overflow-hidden shadow-2xl">
+        {/* Main Card */}
+        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-red-400/30 overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
-                <Shield className="w-8 h-8" />
+          <div className="bg-red-500 p-6 relative overflow-hidden">
+            <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-black" />
+            </div>
+            
+            <div className="relative z-10 text-center">
+              {/* Icon */}
+              <div className="flex justify-center mb-3">
+                <div className="w-16 h-16 rounded-xl bg-black flex items-center justify-center shadow-xl">
+                  <AlertTriangle className="w-8 h-8 text-red-400" strokeWidth={2} />
+                </div>
               </div>
-              <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-              <p className="text-red-100">You don't have permission to access this page</p>
+              
+              <h1 className="text-2xl font-bold text-white mb-1">Access Denied</h1>
+              <p className="text-white text-sm font-medium">Insufficient Permissions</p>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-                <AlertTriangle className="w-10 h-10 text-red-400" />
-              </div>
+          <div className="p-6 text-center">
+            <div className="mb-6">
               <h2 className="text-xl font-bold text-white mb-2">Unauthorized Access</h2>
-              <p className="text-gray-400 text-sm">
-                This page requires special permissions that your account doesn't have.
+              <p className="text-gray-300 text-sm leading-relaxed">
+                You don't have the required permissions to access this page. 
+                Please contact an administrator if you believe this is an error.
               </p>
             </div>
 
+            {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={() => router.back()}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl bg-gray-800 text-white hover:bg-gray-700 transition-colors font-medium"
+                className="w-full flex items-center justify-center py-3 px-4 rounded-xl bg-gray-700 hover:bg-gray-600 text-white transition-all duration-300 font-medium"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Go Back
@@ -52,21 +59,26 @@ const UnauthorizedPage = () => {
               
               <button
                 onClick={() => router.push('/')}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl bg-gradient-to-r from-[#FFCC08] to-yellow-600 text-black hover:from-yellow-500 hover:to-yellow-700 transition-all font-bold shadow-lg"
+                className="w-full flex items-center justify-center py-3 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-black transition-all duration-300 font-bold"
               >
                 <Home className="w-4 h-4 mr-2" />
-                Go Home
+                Go to Dashboard
               </button>
             </div>
 
-            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            {/* Additional Info */}
+            <div className="mt-6 p-4 bg-red-500/20 border border-red-500/40 rounded-xl backdrop-blur-sm">
               <div className="flex items-start">
-                <AlertTriangle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" />
+                <div className="w-6 h-6 rounded-lg bg-red-500/30 flex items-center justify-center mr-3 flex-shrink-0 mt-0.5">
+                  <Shield className="w-4 h-4 text-red-400" />
+                </div>
                 <div>
-                  <h4 className="text-sm font-bold text-red-400 mb-1">Need Help?</h4>
-                  <p className="text-gray-400 text-xs">
-                    If you believe this is an error, please contact support or check your account permissions.
-                  </p>
+                  <h4 className="text-sm font-bold text-red-400 mb-2">Security Notice</h4>
+                  <div className="space-y-1 text-white text-xs font-medium">
+                    <p>• This page is protected by role-based access control</p>
+                    <p>• Only authorized users can access this content</p>
+                    <p>• Contact support if you need access</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -75,6 +87,4 @@ const UnauthorizedPage = () => {
       </div>
     </div>
   );
-};
-
-export default UnauthorizedPage;
+}

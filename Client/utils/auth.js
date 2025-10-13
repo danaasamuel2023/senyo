@@ -28,12 +28,21 @@ class SecureStorage {
   static setItem(key, value) {
     if (typeof window === 'undefined') return;
     try {
+      console.log(`🔐 SecureStorage.setItem: Setting ${key} = ${value ? value.substring(0, 50) + '...' : 'null'}`);
       localStorage.setItem(key, value);
+      
+      // Verify the value was actually set
+      const retrieved = localStorage.getItem(key);
+      if (retrieved !== value) {
+        console.error(`🔐 SecureStorage.setItem: Verification failed for ${key}. Expected: ${value}, Got: ${retrieved}`);
+      } else {
+        console.log(`🔐 SecureStorage.setItem: Successfully set ${key}`);
+      }
       
       // Cookie setting is handled by setAuthToken/saveAuthData to avoid duplication
       // Removed duplicate cookie setting here to prevent conflicts
     } catch (error) {
-      console.error(`Error setting localStorage for key ${key}:`, error);
+      console.error(`🔐 SecureStorage.setItem: Error setting localStorage for key ${key}:`, error);
     }
   }
 
@@ -54,13 +63,17 @@ class SecureStorage {
   static clear() {
     if (typeof window === 'undefined') return;
     try {
+      console.log('🔐 SecureStorage.clear: Clearing all storage');
       localStorage.clear();
-      sessionStorage.clear();
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
       
       // Also clear auth cookies
       document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      console.log('🔐 SecureStorage.clear: Storage cleared successfully');
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      console.error('🔐 SecureStorage.clear: Error clearing storage:', error);
     }
   }
 }
@@ -132,7 +145,7 @@ export const isAuthenticated = () => {
   
   const token = getAuthToken();
   const user = getCurrentUser();
-  const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
+  const sessionAuth = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_AUTH_KEY) : null;
   const tokenValid = !isTokenExpired();
   
   // More lenient check - if we have token and user, consider authenticated
@@ -195,16 +208,21 @@ export const getUserRole = () => {
  * @returns {Object} Normalized user data
  */
 export const normalizeUserData = (userData) => {
-  if (!userData) return null;
+  console.log('🔐 normalizeUserData: Starting normalization:', userData);
+  
+  if (!userData) {
+    console.error('🔐 normalizeUserData: No user data provided');
+    return null;
+  }
   
   // Ensure we have a valid user ID
   const userId = userData._id || userData.id;
   if (!userId) {
-    console.error('normalizeUserData: No valid user ID found', userData);
+    console.error('🔐 normalizeUserData: No valid user ID found', userData);
     return null;
   }
   
-  return {
+  const normalizedUser = {
     ...userData,
     id: userId, // Ensure id field exists
     _id: userId, // Keep original _id
@@ -215,6 +233,16 @@ export const normalizeUserData = (userData) => {
     walletBalance: userData.walletBalance || 0,
     referralCode: userData.referralCode || 'USER'
   };
+  
+  console.log('🔐 normalizeUserData: Normalization successful:', {
+    userId: normalizedUser.id,
+    userRole: normalizedUser.role,
+    userEmail: normalizedUser.email,
+    hasName: !!normalizedUser.name,
+    walletBalance: normalizedUser.walletBalance
+  });
+  
+  return normalizedUser;
 };
 
 /**
@@ -253,56 +281,89 @@ export const saveAuthData = (data, rememberMe = false) => {
     timestamp: new Date().toISOString()
   });
   
-  if (token) {
-    // Set cookie FIRST for immediate middleware access
-    if (typeof document !== 'undefined') {
-      const expires = new Date();
-      expires.setTime(expires.getTime() + (expiresIn * 1000));
+  try {
+    if (token) {
+      // Set cookie FIRST for immediate middleware access
+      if (typeof document !== 'undefined') {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (expiresIn * 1000));
+        
+        // FIX 2: Better cookie setting for production
+        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+        const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
+        
+        // Simplified cookie setting to avoid domain issues
+        document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+        console.log('🔐 saveAuthData: Cookie set immediately for middleware access');
+      }
       
-      // FIX 2: Better cookie setting for production
-      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-      const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
-      
-      // Simplified cookie setting to avoid domain issues
-      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-      console.log('🔐 saveAuthData: Cookie set immediately for middleware access');
+      // Then save to localStorage
+      SecureStorage.setItem(AUTH_TOKEN_KEY, token);
+      console.log('🔐 saveAuthData: Token saved to localStorage');
     }
     
-    // Then save to localStorage
-    SecureStorage.setItem(AUTH_TOKEN_KEY, token);
-  }
-  
-  if (refreshToken) {
-    SecureStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  }
-  
-  if (user) {
-    // Ensure user data is properly normalized before storing
-    const normalizedUser = normalizeUserData(user);
-    if (normalizedUser) {
-      SecureStorage.setItem(USER_DATA_KEY, JSON.stringify(normalizedUser));
-    } else {
-      console.error('🔐 saveAuthData: Failed to normalize user data');
-      return false;
+    if (refreshToken) {
+      SecureStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      console.log('🔐 saveAuthData: Refresh token saved to localStorage');
     }
-  }
-  
-  if (expiresIn) {
-    const expiryTime = Date.now() + (expiresIn * 1000);
-    SecureStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
-  }
-  
-  SecureStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
-  
-  // Set session auth flag with a small delay to ensure it's set after other operations
-  setTimeout(() => {
+    
+    if (user) {
+      // Ensure user data is properly normalized before storing
+      console.log('🔐 saveAuthData: Normalizing user data:', user);
+      const normalizedUser = normalizeUserData(user);
+      if (normalizedUser) {
+        const userDataString = JSON.stringify(normalizedUser);
+        SecureStorage.setItem(USER_DATA_KEY, userDataString);
+        console.log('🔐 saveAuthData: User data saved to localStorage:', {
+          userDataLength: userDataString.length,
+          userId: normalizedUser.id,
+          userRole: normalizedUser.role
+        });
+      } else {
+        console.error('🔐 saveAuthData: Failed to normalize user data');
+        return false;
+      }
+    }
+    
+    if (expiresIn) {
+      const expiryTime = Date.now() + (expiresIn * 1000);
+      SecureStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+      console.log('🔐 saveAuthData: Token expiry saved to localStorage');
+    }
+    
+    SecureStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
+    console.log('🔐 saveAuthData: Remember me flag saved to localStorage');
+    
+    // Set session auth flag with a small delay to ensure it's set after other operations
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+        try {
+          sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
+          console.log('🔐 Session auth flag set successfully');
+        } catch (error) {
+          console.warn('🔐 Session storage not available:', error.message);
+        }
+      }
+    }, 100);
+    
+    // Final verification
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
-      console.log('🔐 Session auth flag set successfully');
+      const finalToken = localStorage.getItem(AUTH_TOKEN_KEY);
+      const finalUser = localStorage.getItem(USER_DATA_KEY);
+      console.log('🔐 saveAuthData: Final verification:', {
+        hasToken: !!finalToken,
+        hasUser: !!finalUser,
+        tokenLength: finalToken ? finalToken.length : 0,
+        userDataLength: finalUser ? finalUser.length : 0
+      });
     }
-  }, 100);
-  
-  return true;
+    
+    return true;
+    
+  } catch (error) {
+    console.error('🔐 saveAuthData: Error saving authentication data:', error);
+    return false;
+  }
 };
 
 /**
@@ -325,7 +386,9 @@ export const clearAuthData = () => {
   
   // Clear session storage
   if (typeof window !== 'undefined') {
-    sessionStorage.removeItem(SESSION_AUTH_KEY);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(SESSION_AUTH_KEY);
+    }
     
     // Clear cookie for middleware access
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax';
@@ -710,28 +773,56 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
     timestamp: new Date().toISOString()
   });
   
-  // Set cookie FIRST for immediate middleware access
-  if (typeof document !== 'undefined' && token) {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + (expiresIn * 1000));
+  try {
+    // Set cookie FIRST for immediate middleware access
+    if (typeof document !== 'undefined' && token) {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + (expiresIn * 1000));
+      
+      // FIX 2: Better cookie setting for production
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
+      
+      // Simplified cookie setting to avoid domain issues
+      document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+      console.log('🔐 setAuthToken: Cookie set immediately for middleware access');
+    }
     
-    // FIX 2: Better cookie setting for production
-    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-    const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
+    // Then save to localStorage
+    const saveResult = saveAuthData({
+      token,
+      user,
+      expiresIn
+    }, rememberMe);
     
-    // Simplified cookie setting to avoid domain issues
-    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-    console.log('🔐 setAuthToken: Cookie set immediately for middleware access');
+    console.log('🔐 setAuthToken: saveAuthData result:', saveResult);
+    
+    // Verify storage immediately
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+      const storedUser = localStorage.getItem(USER_DATA_KEY);
+      
+      console.log('🔐 setAuthToken: Storage verification:', {
+        hasStoredToken: !!storedToken,
+        hasStoredUser: !!storedUser,
+        tokenLength: storedToken ? storedToken.length : 0,
+        userDataLength: storedUser ? storedUser.length : 0,
+        allKeys: Object.keys(localStorage)
+      });
+      
+      if (!storedToken || !storedUser) {
+        console.error('🔐 setAuthToken: Storage verification failed');
+        throw new Error('Failed to store authentication data');
+      }
+    }
+    
+    console.log('🔐 setAuthToken: Authentication data saved successfully');
+    return true;
+    
+  } catch (error) {
+    console.error('🔐 setAuthToken: Error saving authentication data:', error);
+    throw error;
   }
-  
-  // Then save to localStorage
-  saveAuthData({
-    token,
-    user,
-    expiresIn
-  }, rememberMe);
-  
-  console.log('🔐 setAuthToken: Authentication data saved successfully');
 };
 
 /**
@@ -746,17 +837,23 @@ export const verifyAuthState = async () => {
     const checkAuthState = (attempt = 1) => {
       const token = getAuthToken();
       const user = getCurrentUser();
-      const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
+      const sessionAuth = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(SESSION_AUTH_KEY) : null;
       const tokenValid = !isTokenExpired();
       
-      const isAuth = !!token && !!user && tokenValid;
+      // Enhanced validation: check if user has required fields
+      const hasValidUser = user && (user.id || user._id) && user.email && user.role;
+      
+      const isAuth = !!token && hasValidUser && tokenValid;
       
       console.log(`🔐 Auth verification attempt ${attempt}:`, {
         hasToken: !!token,
         hasUser: !!user,
+        hasValidUser,
         sessionAuth,
         tokenValid,
         isAuth,
+        userRole: user?.role,
+        userId: user?.id || user?._id,
         timestamp: new Date().toISOString()
       });
       

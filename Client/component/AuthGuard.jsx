@@ -9,10 +9,22 @@ const AuthGuard = ({ children }) => {
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   
   // List of paths that should bypass authentication
   const publicPaths = ['/SignIn', '/SignUp'];
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/agent-store/');
+  
+  // Role-based route protection
+  const checkRoleAccess = (userRole, currentPath) => {
+    if (currentPath.startsWith('/admin/') && userRole !== 'admin') {
+      return false;
+    }
+    if (currentPath.startsWith('/agent/') && !['admin', 'agent'].includes(userRole)) {
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     // If current path is public, don't check auth
@@ -32,7 +44,25 @@ const AuthGuard = ({ children }) => {
         const user = getCurrentUser();
         
         if (authenticated && user) {
+          // Check role-based access
+          if (!checkRoleAccess(user.role, pathname)) {
+            console.log('🔐 AuthGuard: Role access denied', {
+              userRole: user.role,
+              pathname,
+              requiredRole: pathname.startsWith('/admin/') ? 'admin' : 'agent'
+            });
+            router.push('/unauthorized');
+            setLoading(false);
+            return;
+          }
+          
           // AuthGuard: User authenticated successfully
+          console.log('🔐 AuthGuard: User authenticated successfully', {
+            userId: user.id || user._id,
+            role: user.role,
+            pathname
+          });
+          setUser(user);
           setIsAuthenticated(true);
           setLoading(false);
         } else {
@@ -41,6 +71,26 @@ const AuthGuard = ({ children }) => {
           const authVerified = await verifyAuthState();
           
           if (authVerified) {
+            const verifiedUser = getCurrentUser();
+            
+            // Check role-based access for verified user
+            if (!checkRoleAccess(verifiedUser.role, pathname)) {
+              console.log('🔐 AuthGuard: Role access denied for verified user', {
+                userRole: verifiedUser.role,
+                pathname,
+                requiredRole: pathname.startsWith('/admin/') ? 'admin' : 'agent'
+              });
+              router.push('/unauthorized');
+              setLoading(false);
+              return;
+            }
+            
+            console.log('🔐 AuthGuard: Authentication verification successful', {
+              userId: verifiedUser?.id || verifiedUser?._id,
+              role: verifiedUser?.role,
+              pathname
+            });
+            setUser(verifiedUser);
             setIsAuthenticated(true);
             setLoading(false);
           } else {
