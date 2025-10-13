@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddlewareMiddleware, adminAuth } = require('../middleware/authMiddleware');
 const { User, DataPurchase, AgentCatalog } = require('../schema/schema');
 
 // ============================================
@@ -8,7 +8,7 @@ const { User, DataPurchase, AgentCatalog } = require('../schema/schema');
 // ============================================
 
 // Get all agents (Admin only)
-router.get('/agents', auth, async (req, res) => {
+router.get('/agents', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -85,7 +85,7 @@ router.get('/agents', auth, async (req, res) => {
 });
 
 // Get agent details (Admin only)
-router.get('/agents/:agentId', auth, async (req, res) => {
+router.get('/agents/:agentId', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -149,7 +149,7 @@ router.get('/agents/:agentId', auth, async (req, res) => {
 });
 
 // Approve agent (Admin only)
-router.put('/agents/:agentId/approve', auth, async (req, res) => {
+router.put('/agents/:agentId/approve', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -212,7 +212,7 @@ router.put('/agents/:agentId/approve', auth, async (req, res) => {
 });
 
 // Update agent commission (Admin only)
-router.put('/agents/:agentId/commission', auth, async (req, res) => {
+router.put('/agents/:agentId/commission', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -271,7 +271,7 @@ router.put('/agents/:agentId/commission', auth, async (req, res) => {
 });
 
 // Suspend/Activate agent (Admin only)
-router.put('/agents/:agentId/status', auth, async (req, res) => {
+router.put('/agents/:agentId/status', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -332,7 +332,7 @@ router.put('/agents/:agentId/status', auth, async (req, res) => {
 });
 
 // Get agent analytics (Admin only)
-router.get('/agents/:agentId/analytics', auth, async (req, res) => {
+router.get('/agents/:agentId/analytics', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -431,7 +431,7 @@ router.get('/agents/:agentId/analytics', auth, async (req, res) => {
 });
 
 // Get all agent applications (Admin only)
-router.get('/applications', auth, async (req, res) => {
+router.get('/applications', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {

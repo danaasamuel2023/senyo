@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
-const adminAuth = require('../adminMiddleware/middleware');
+const { authMiddleware, adminAuth } = require('../middleware/auth');
 const { ProductPricing, DataInventory, PriceHistory, User } = require('../schema/schema');
 const axios = require('axios');
 
@@ -132,7 +131,7 @@ const getUserInfo = async (req) => {
 // ============================================
 
 // Get all prices with filtering and pagination
-router.get('/prices', auth, adminAuth, async (req, res) => {
+router.get('/prices', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { 
       network, 
@@ -199,7 +198,7 @@ router.get('/prices', auth, adminAuth, async (req, res) => {
 });
 
 // Get single price by ID
-router.get('/prices/:id', auth, adminAuth, async (req, res) => {
+router.get('/prices/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     const price = await ProductPricing.findById(req.params.id);
     if (!price) {
@@ -223,7 +222,7 @@ router.get('/prices/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Create new price
-router.post('/prices', auth, adminAuth, async (req, res) => {
+router.post('/prices', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { network, capacity, price, description, enabled = true } = req.body;
 
@@ -276,7 +275,7 @@ router.post('/prices', auth, adminAuth, async (req, res) => {
 });
 
 // Update price
-router.put('/prices/:id', auth, adminAuth, async (req, res) => {
+router.put('/prices/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { price, description, enabled } = req.body;
     const priceDoc = await ProductPricing.findById(req.params.id);
@@ -324,7 +323,7 @@ router.put('/prices/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Bulk update prices
-router.put('/prices/bulk', auth, adminAuth, async (req, res) => {
+router.put('/prices/bulk', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { updates } = req.body; // Array of { id, price, enabled, description }
 
@@ -379,7 +378,7 @@ router.put('/prices/bulk', auth, adminAuth, async (req, res) => {
 });
 
 // Delete price
-router.delete('/prices/:id', auth, adminAuth, async (req, res) => {
+router.delete('/prices/:id', authMiddleware, adminAuth, async (req, res) => {
   try {
     const price = await ProductPricing.findById(req.params.id);
     if (!price) {
@@ -399,7 +398,7 @@ router.delete('/prices/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Toggle price enabled/disabled
-router.patch('/prices/:id/toggle', auth, adminAuth, async (req, res) => {
+router.patch('/prices/:id/toggle', authMiddleware, adminAuth, async (req, res) => {
   try {
     const price = await ProductPricing.findById(req.params.id);
     if (!price) {
@@ -435,7 +434,7 @@ router.patch('/prices/:id/toggle', auth, adminAuth, async (req, res) => {
  * @desc    Get all inventory items with current status
  * @access  Admin
  */
-router.get('/inventory', auth, adminAuth, async (req, res) => {
+router.get('/inventory', authMiddleware, adminAuth, async (req, res) => {
   try {
     const inventoryItems = await DataInventory.find({}).sort({ network: 1 });
     
@@ -482,7 +481,7 @@ router.get('/inventory', auth, adminAuth, async (req, res) => {
  * @desc    Get specific network inventory status
  * @access  Admin
  */
-router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
+router.get('/inventory/:network', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -515,7 +514,7 @@ router.get('/inventory/:network', auth, adminAuth, async (req, res) => {
  * @desc    Toggle inventory status for specific network
  * @access  Admin
  */
-router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -554,7 +553,7 @@ router.put('/inventory/:network/toggle', auth, adminAuth, async (req, res) => {
  * @desc    Toggle Geonettech API for specific network
  * @access  Admin
  */
-router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req, res) => {
+router.put('/inventory/:network/toggle-geonettech', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { network } = req.params;
     
@@ -593,7 +592,7 @@ router.put('/inventory/:network/toggle-geonettech', auth, adminAuth, async (req,
 // ============================================
 
 // Sync prices from DataMart API
-router.post('/sync-datamart', auth, adminAuth, async (req, res) => {
+router.post('/sync-datamart', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { network } = req.body; // Optional: sync specific network
 
@@ -726,7 +725,7 @@ router.post('/sync-datamart', auth, adminAuth, async (req, res) => {
 });
 
 // Get DataMart API status and test connection
-router.get('/datamart-status', auth, adminAuth, async (req, res) => {
+router.get('/datamart-status', authMiddleware, adminAuth, async (req, res) => {
   try {
     const testResponse = await datamartClient.get('/api/data-packages', {
       params: { network: 'MTN' },
@@ -761,7 +760,7 @@ router.get('/datamart-status', auth, adminAuth, async (req, res) => {
 // ============================================
 
 // Get price statistics
-router.get('/prices/stats', auth, adminAuth, async (req, res) => {
+router.get('/prices/stats', authMiddleware, adminAuth, async (req, res) => {
   try {
     const stats = await ProductPricing.aggregate([
       {
@@ -818,7 +817,7 @@ router.get('/prices/stats', auth, adminAuth, async (req, res) => {
 // ============================================
 
 // Get price history
-router.get('/prices/:id/history', auth, adminAuth, async (req, res) => {
+router.get('/prices/:id/history', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { page = 1, limit = 20 } = req.query;
@@ -851,7 +850,7 @@ router.get('/prices/:id/history', auth, adminAuth, async (req, res) => {
 });
 
 // Get all price history with filtering
-router.get('/price-history', auth, adminAuth, async (req, res) => {
+router.get('/price-history', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { 
       network, 
@@ -904,7 +903,7 @@ router.get('/price-history', auth, adminAuth, async (req, res) => {
 });
 
 // Get price history statistics
-router.get('/price-history/stats', auth, adminAuth, async (req, res) => {
+router.get('/price-history/stats', authMiddleware, adminAuth, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
