@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuthToken } from '../../../utils/auth';
+import { getAuthToken, useAuth, withAuth } from '../../../utils/auth';
 
 const PriceManagementPage = ({ user }) => {
   const router = useRouter();
