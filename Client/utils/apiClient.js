@@ -1,6 +1,7 @@
 // Comprehensive API Client with Authentication and CORS Handling
 import { getAuthToken, logout, isTokenExpired, refreshAuthToken } from './auth.js';
 import { getApiUrl } from './envConfig.js';
+import { makeRateLimitedRequest, getRateLimitConfig } from './rateLimitHandler.js';
 
 class ApiClient {
   constructor() {
@@ -48,30 +49,20 @@ class ApiClient {
       }
       
       if (response.status === 429) {
-        // Skip rate limiting retry logic in development
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Rate limit encountered in development - using fallback data');
-          // Return a mock response instead of throwing an error
-          return {
-            success: true,
-            data: [],
-            error: 'Rate limit bypassed in development',
-            isRateLimited: true
-          };
-        }
-        
-        // Wait and retry for rate limit errors (max 2 retries)
-        if (retryCount < 2) {
+        // Handle rate limiting with exponential backoff
+        if (retryCount < 3) {
           const retryAfter = response.headers.get('Retry-After') || '5';
-          const waitTime = parseInt(retryAfter) * 1000;
+          const waitTime = parseInt(retryAfter) * 1000 * Math.pow(2, retryCount); // Exponential backoff
           
-          console.warn(`Rate limited. Retrying after ${retryAfter} seconds... (attempt ${retryCount + 1}/2)`);
+          console.warn(`Rate limited. Retrying after ${waitTime/1000} seconds... (attempt ${retryCount + 1}/3)`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           
-          // Retry the request
+          // Retry the request with updated endpoint if needed
           return this.request(endpoint, options, retryCount + 1);
         } else {
-          throw new Error('Too many requests. Please try again later.');
+          // After max retries, throw a user-friendly error
+          const errorMessage = 'Too many requests. Please wait a moment and try again.';
+          throw new Error(errorMessage);
         }
       }
 
@@ -97,7 +88,7 @@ class ApiClient {
     return this.handleResponse(response, retryCount + 1);
   }
 
-  // Make authenticated API request
+  // Make authenticated API request with rate limit handling
   async request(endpoint, options = {}, retryCount = 0) {
     try {
       // Check if token is expired
@@ -123,15 +114,32 @@ class ApiClient {
         });
       }
       
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...this.getAuthHeaders(),
-          ...options.headers
-        }
-      });
-
-      return await this.handleResponse(response, retryCount);
+      // Use rate-limited request for sensitive endpoints
+      const rateLimitConfig = getRateLimitConfig(endpoint);
+      const isSensitiveEndpoint = endpoint.includes('login') || endpoint.includes('auth') || endpoint.includes('payment');
+      
+      if (isSensitiveEndpoint) {
+        const response = await makeRateLimitedRequest(endpoint, () => 
+          fetch(url, {
+            ...options,
+            headers: {
+              ...this.getAuthHeaders(),
+              ...options.headers
+            }
+          })
+        );
+        return await this.handleResponse(response, retryCount);
+      } else {
+        // Regular request for non-sensitive endpoints
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            ...this.getAuthHeaders(),
+            ...options.headers
+          }
+        });
+        return await this.handleResponse(response, retryCount);
+      }
     } catch (error) {
       console.error('API Request Error:', error);
       throw error;
