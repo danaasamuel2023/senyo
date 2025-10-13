@@ -7,7 +7,6 @@ const MAX_ATTEMPTS_PER_IP = 10;
 
 // Protected routes that require authentication
 const PROTECTED_ROUTES = [
-  '/',
   '/admin',
   '/agent',
   '/profile',
@@ -45,7 +44,7 @@ const PROTECTED_ROUTES = [
   '/wallet'
 ];
 
-// Admin-only routes
+// Admin-only routes (excluding dashboard which agents can access)
 const ADMIN_ROUTES = [
   '/admin',
   '/admin-users',
@@ -54,7 +53,6 @@ const ADMIN_ROUTES = [
   '/admin-daily',
   '/admin-report',
   '/admin/products',
-  '/admin/dashboard',
   '/admin/settings',
   '/admin/users',
   '/admin/price-management',
@@ -80,6 +78,9 @@ const ADMIN_ROUTES = [
   '/toast-test'
 ];
 
+// Admin dashboard route (accessible by both admin and agent)
+const ADMIN_DASHBOARD_ROUTE = '/admin/dashboard';
+
 // Agent-only routes
 const AGENT_ROUTES = [
   '/agent',
@@ -95,6 +96,7 @@ const PUBLIC_ROUTES = [
   '/help',
   '/landing',
   '/error',
+  '/unauthorized',
   '/api/login',
   '/api/auth/logout',
   '/api/auth/refresh',
@@ -223,6 +225,7 @@ function getUserRoleFromToken(request) {
       console.log('✅ Bypass token detected (fallback mode):', {
         tokenPreview: token.substring(0, 30) + '...',
         isAdmin: token.includes('admin-bypass') || token.includes('ADMIN_BYPASS'),
+        isAgent: token.includes('agent-bypass'),
         timestamp: new Date().toISOString()
       });
       
@@ -232,8 +235,14 @@ function getUserRoleFromToken(request) {
         return 'admin';
       }
       
-      console.log('✅ Regular bypass token detected, returning user role');
-      return 'user'; // Default role for bypass tokens
+      // Check if this is an agent bypass token
+      if (token.includes('agent-bypass')) {
+        console.log('✅ Agent bypass token detected, returning agent role');
+        return 'agent';
+      }
+      
+      console.log('✅ Regular bypass token detected, returning buyer role');
+      return 'buyer'; // Default role for bypass tokens
     }
     
     // Invalid token format
@@ -298,6 +307,26 @@ export function middleware(request) {
     return NextResponse.next();
   }
   
+  // Handle root route - allow authenticated users, redirect unauthenticated to login
+  if (pathname === '/') {
+    const userRole = getUserRoleFromToken(request);
+    
+    if (!userRole) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ No valid auth token found for root route, redirecting to login');
+      }
+      const loginUrl = new URL('/SignIn', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Valid auth token found for root route, allowing access');
+    }
+    
+    return NextResponse.next();
+  }
+  
   // Check if route requires authentication
   if (isProtectedRoute(pathname)) {
     // FIX 1: Only apply rate limiting to login attempts, not all requests
@@ -341,8 +370,13 @@ export function middleware(request) {
       console.log('✅ Valid auth token found, allowing access');
     }
     
-    // Check admin route access
+    // Check admin route access (excluding dashboard which agents can access)
     if (isAdminRoute(pathname) && userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+    
+    // Check admin dashboard access (accessible by both admin and agent)
+    if (pathname === ADMIN_DASHBOARD_ROUTE && !['admin', 'agent'].includes(userRole)) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
     

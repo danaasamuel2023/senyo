@@ -250,14 +250,44 @@ export async function POST(request) {
         'admin@test.com'
       ];
       
+      const agentEmails = [
+        'agent@test.com',
+        'agent@unlimiteddata.com',
+        'agent@unlimiteddata.gh'
+      ];
+      
+      const buyerEmails = [
+        'buyer@test.com',
+        'buyer@unlimiteddata.com',
+        'buyer@unlimiteddata.gh'
+      ];
+      
       const isAdmin = adminEmails.includes(body.email);
-      const userRole = isAdmin ? 'admin' : 'buyer';
-      const userName = isAdmin ? 'Admin User' : 'Fallback User';
+      const isAgent = agentEmails.includes(body.email);
+      const isBuyer = buyerEmails.includes(body.email);
+      
+      let userRole, userName;
+      if (isAdmin) {
+        userRole = 'admin';
+        userName = 'Admin User';
+      } else if (isAgent) {
+        userRole = 'agent';
+        userName = 'Agent User';
+      } else if (isBuyer) {
+        userRole = 'buyer';
+        userName = 'Buyer User';
+      } else {
+        userRole = 'buyer';
+        userName = 'Buyer User';
+      }
       
       const fallbackResponse = {
         success: true,
         message: "Login successful (fallback mode)",
-        token: isAdmin ? "admin-bypass-token-" + Date.now() : "immediate-bypass-token-" + Date.now(),
+        token: isAdmin ? "admin-bypass-token-" + Date.now() : 
+               isAgent ? "agent-bypass-token-" + Date.now() : 
+               isBuyer ? "buyer-bypass-token-" + Date.now() :
+               "buyer-bypass-token-" + Date.now(),
         user: {
           _id: generateObjectId(),
           name: userName,
@@ -293,14 +323,44 @@ export async function POST(request) {
       'admin@test.com'
     ];
     
+    const agentEmails = [
+      'agent@test.com',
+      'agent@unlimiteddata.com',
+      'agent@unlimiteddata.gh'
+    ];
+    
+    const buyerEmails = [
+      'buyer@test.com',
+      'buyer@unlimiteddata.com',
+      'buyer@unlimiteddata.gh'
+    ];
+    
     const isAdmin = adminEmails.includes(body.email);
-    const userRole = isAdmin ? 'admin' : 'buyer';
-    const userName = isAdmin ? 'Admin User' : 'Error Bypass User';
+    const isAgent = agentEmails.includes(body.email);
+    const isBuyer = buyerEmails.includes(body.email);
+    
+    let userRole, userName;
+    if (isAdmin) {
+      userRole = 'admin';
+      userName = 'Admin User';
+    } else if (isAgent) {
+      userRole = 'agent';
+      userName = 'Agent User';
+    } else if (isBuyer) {
+      userRole = 'buyer';
+      userName = 'Buyer User';
+    } else {
+      userRole = 'buyer';
+      userName = 'Error Bypass User';
+    }
     
     const errorBypassResponse = {
       success: true,
       message: "Login successful (error bypass)",
-      token: isAdmin ? "admin-bypass-token-" + Date.now() : "error-bypass-token-" + Date.now(),
+      token: isAdmin ? "admin-bypass-token-" + Date.now() : 
+             isAgent ? "agent-bypass-token-" + Date.now() :
+             isBuyer ? "buyer-bypass-token-" + Date.now() :
+             "error-bypass-token-" + Date.now(),
       user: {
         _id: generateObjectId(),
         name: userName,
