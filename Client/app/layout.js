@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { BottomNavProvider } from "@/app/providers/BottomNavProvider";
 import { ToastProvider } from "@/component/ToastNotification";
 import ErrorBoundary from "@/component/ErrorBoundary";
+import DailyUsageTracker from "@/component/DailyUsageTracker";
 // Temporarily disabled to fix webpack errors
 // import errorMonitor from "@/utils/errorMonitor";
 // import performanceMonitor from "@/utils/performanceMonitor";
@@ -555,6 +556,9 @@ export default function RootLayout({ children }) {
             
             {/* PWA Install Prompt and Push Notifications */}
             <PWAInstaller />
+            
+            {/* Daily Usage Tracker */}
+            <DailyUsageTracker />
             </ToastProvider>
           </BottomNavProvider>
         </ThemeProvider>

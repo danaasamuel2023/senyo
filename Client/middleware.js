@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { trackDailyUser, isDailyLimitReached, getDailyUsageStats } from './utils/dailyUsageLimiter';
 
 // Rate limiting for token validation attempts
 const tokenValidationAttempts = new Map();
@@ -275,32 +274,12 @@ export function middleware(request) {
   
   // DAILY USAGE LIMIT CHECK (10M users per day)
   // Only check for main page visits, not API calls or static assets
+  // Note: Daily usage tracking is handled client-side to avoid localStorage issues in middleware
   if (pathname === '/' || pathname === '/SignIn' || pathname === '/SignUp') {
-    try {
-      // Track user visit and check daily limit
-      const userTracking = trackDailyUser();
-      
-      if (userTracking.isLimitReached) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('🚫 Daily user limit reached (10M users)');
-        }
-        
-        // Redirect to maintenance page when limit is reached
-        const maintenanceUrl = new URL('/maintenance', request.url);
-        maintenanceUrl.searchParams.set('reason', 'daily_limit_reached');
-        return NextResponse.redirect(maintenanceUrl);
-      }
-      
-      // Log usage in development
-      if (process.env.NODE_ENV === 'development' && userTracking.isNewUser) {
-        console.log(`👤 Daily users: ${userTracking.dailyCount}/${10000000} (${userTracking.remainingUsers} remaining)`);
-      }
-    } catch (error) {
-      // If tracking fails, allow the request to proceed
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Daily usage tracking error:', error);
-      }
-    }
+    // Add a header to indicate this request should be tracked client-side
+    const response = NextResponse.next();
+    response.headers.set('x-track-daily-usage', 'true');
+    return response;
   }
   
   // Skip authentication check for public routes
