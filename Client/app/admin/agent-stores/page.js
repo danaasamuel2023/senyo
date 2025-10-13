@@ -27,7 +27,7 @@ const AdminAgentStores = () => {
   }, []);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     const userDataStr = localStorage.getItem('userData');
     
     if (!token) {
@@ -52,7 +52,7 @@ const AdminAgentStores = () => {
   const loadAgentStores = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       const API_URL = getApiEndpoint('');
 
       const response = await fetch(`${API_URL}/api/v1/admin/agents`, {
@@ -83,7 +83,7 @@ const AdminAgentStores = () => {
 
   const updateAgentStatus = async (agentId, status) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       const API_URL = getApiEndpoint('');
 
       const response = await fetch(`${API_URL}/api/v1/admin/agents/${agentId}/status`, {
@@ -109,7 +109,7 @@ const AdminAgentStores = () => {
 
   const updateAgentLevel = async (agentId, level) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       const API_URL = getApiEndpoint('');
 
       const response = await fetch(`${API_URL}/api/v1/admin/agents/${agentId}/level`, {

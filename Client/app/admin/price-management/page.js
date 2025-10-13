@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, withAuth } from '../../../utils/auth';
+import { getAuthToken } from '../../../utils/auth';
 
 const PriceManagementPage = ({ user }) => {
   const router = useRouter();
@@ -34,7 +34,7 @@ const PriceManagementPage = ({ user }) => {
         return;
       }
 
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       if (!token) {
         setError('Authentication token not found. Please log in.');
         router.push('/SignIn?redirect=/admin/price-management');
@@ -75,7 +75,7 @@ const PriceManagementPage = ({ user }) => {
         return;
       }
 
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       if (!token) {
         console.log('⚠️ No auth token found, skipping API test');
         return;
@@ -116,7 +116,7 @@ const PriceManagementPage = ({ user }) => {
         return;
       }
 
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       if (!token) {
         setError('Authentication token not found. Please log in.');
         return;

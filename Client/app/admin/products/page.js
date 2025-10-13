@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
-import { withAuth } from '../../../utils/auth';
+import { withAuth, getAuthToken } from '../../../utils/auth';
 import {
   Package2, Plus, Edit, Trash2, Search, Filter, Download, Upload,
   ArrowLeft, Save, X, AlertCircle, CheckCircle, RefreshCw, Eye,
@@ -61,7 +61,7 @@ const ProductsPage = ({ user }) => {
         fetch(`${API_URL}/api/products`, {
           headers: {
             'Content-Type': 'application/json',
-            'x-auth-token': localStorage.getItem('authToken')
+            'x-auth-token': getAuthToken()
           }
         }).then(r => r.json())
       ]);
@@ -139,7 +139,7 @@ const ProductsPage = ({ user }) => {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              'x-auth-token': localStorage.getItem('authToken')
+              'x-auth-token': getAuthToken()
             },
             body: JSON.stringify({ price: parseFloat(newPrice) })
           });
@@ -148,7 +148,7 @@ const ProductsPage = ({ user }) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-auth-token': localStorage.getItem('authToken')
+              'x-auth-token': getAuthToken()
             },
             body: JSON.stringify({
               network: product.network,
@@ -178,7 +178,7 @@ const ProductsPage = ({ user }) => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'x-auth-token': localStorage.getItem('authToken')
+            'x-auth-token': getAuthToken()
           },
           body: JSON.stringify({ enabled: !product.enabled })
         });
@@ -188,7 +188,7 @@ const ProductsPage = ({ user }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-auth-token': localStorage.getItem('authToken')
+            'x-auth-token': getAuthToken()
           },
           body: JSON.stringify({
             network: product.network,

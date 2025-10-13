@@ -64,13 +64,13 @@ const AdminNotifications = () => {
       setLoading(true);
       const [settingsRes, announcementsRes, analyticsRes] = await Promise.all([
         fetch('/api/backend?path=/api/v1/admin/notifications/settings', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
         }),
         fetch('/api/backend?path=/api/v1/admin/notifications/announcements', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
         }),
         fetch('/api/backend?path=/api/v1/admin/notifications/analytics', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
         })
       ]);
 
@@ -100,7 +100,7 @@ const AdminNotifications = () => {
       const response = await fetch('/api/backend?path=/api/v1/admin/notifications/toggle', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ enabled: !systemSettings.isEnabled })
@@ -120,7 +120,7 @@ const AdminNotifications = () => {
       const response = await fetch('/api/backend?path=/api/v1/admin/notifications/settings', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(newSettings)
@@ -142,7 +142,7 @@ const AdminNotifications = () => {
       const response = await fetch(`/api/backend?path=/api/v1/admin/notifications/announcements/${announcementId}/toggle`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
 
@@ -166,7 +166,7 @@ const AdminNotifications = () => {
       const response = await fetch(`/api/backend?path=/api/v1/admin/notifications/announcements/${announcementId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${getAuthToken()}`
         }
       });
 
@@ -741,7 +741,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)

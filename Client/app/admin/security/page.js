@@ -62,7 +62,7 @@ const SecurityCompliancePage = () => {
   }, [currentPage, itemsPerPage]);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     if (!token || user.role !== 'admin') {

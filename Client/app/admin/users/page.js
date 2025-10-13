@@ -58,7 +58,7 @@ const AdminUsersPage = () => {
 
   // Check authentication
   const checkAuth = useCallback(() => {
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     const userDataStr = localStorage.getItem('userData');
     
     if (!token) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
-import { withAuth } from '../../../utils/auth';
+import { withAuth, getAuthToken, getCurrentUser } from '../../../utils/auth';
 import {
   FileText, Download, Calendar, Filter, RefreshCw, ArrowLeft,
   TrendingUp, Users, Package, DollarSign, BarChart3, PieChart,
@@ -28,8 +28,8 @@ const ReportsPage = ({ user }) => {
   }, [reportType, dateRange]);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    const token = getAuthToken();
+    const user = getCurrentUser();
     
     if (!token || user.role !== 'admin') {
       router.push('/SignIn');
