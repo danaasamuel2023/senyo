@@ -4,8 +4,8 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { User, DataPurchase, Transaction, DataInventory, Wallet } = require('../schema/schema');
-const { handleFallbackPurchase } = require('../../../fallback-purchase-handler');
-const fallbackPricing = require('../../../fallback-pricing.json');
+const { handleFallbackPurchase } = require('../fallback-purchase-handler');
+const fallbackPricing = require('../fallback-pricing.json');
 
 const dotenv = require('dotenv');
 const { authMiddleware } = require('../middleware/auth');
