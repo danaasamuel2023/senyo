@@ -145,7 +145,7 @@ function isRateLimited(ip) {
 // Helper function to get user role from token
 function getUserRoleFromToken(request) {
   try {
-    // Try to get token from cookies first (set by auth.js)
+    // Try to get token from cookies first (set by unified auth)
     let token = request.cookies.get('authToken')?.value;
     
     // If no token in cookies, try headers as fallback (for API calls)

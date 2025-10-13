@@ -434,28 +434,36 @@ useEffect(() => {
     // Check if we're on the client side
     if (typeof window === 'undefined') return;
     
-    const userDataString = localStorage.getItem('userData');
-    const authToken = localStorage.getItem('authToken');
+    // Use unified auth system
+    const { isAuthenticated, getCurrentUser } = await import('../utils/unified-auth.js');
     
-    console.log('🔐 UserDashboard Auth Check:', {
-      hasUserData: !!userDataString,
-      hasAuthToken: !!authToken,
-      userDataPreview: userDataString ? userDataString.substring(0, 100) + '...' : 'null'
-    });
-    
-    if (!userDataString) {
-      console.warn('❌ No userData found in localStorage');
+    if (!isAuthenticated()) {
+      console.warn('❌ User not authenticated');
       if (isMounted) {
         setError('Please login to access your dashboard');
         router.push('/SignIn');
       }
       return;
     }
+    
+    const userData = getCurrentUser();
+    console.log('🔐 UserDashboard Auth Check:', {
+      isAuthenticated: true,
+      hasUserData: !!userData,
+      userDataPreview: userData ? JSON.stringify(userData).substring(0, 100) + '...' : 'null'
+    });
+    
+    if (!userData) {
+      console.warn('❌ No user data found');
+      if (isMounted) {
+        setError('Invalid user data. Please login again.');
+        router.push('/SignIn');
+      }
+      return;
+    }
 
     try {
-      const userData = JSON.parse(userDataString);
-      
-      console.log('📊 Parsed userData:', {
+      console.log('📊 UserData:', {
         hasId: !!userData?.id,
         has_id: !!userData?._id,
         userId: userData?.id || userData?._id,
@@ -466,8 +474,8 @@ useEffect(() => {
         console.warn('❌ Invalid user data - missing ID');
         if (isMounted) {
           setError('Invalid user data. Please login again.');
-          localStorage.removeItem('userData');
-          localStorage.removeItem('authToken');
+          const { clearAuthData } = await import('../utils/unified-auth.js');
+          clearAuthData();
           router.push('/SignIn');
         }
         return;

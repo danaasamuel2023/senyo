@@ -10,8 +10,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from header
-    const token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
+    // Get token from header or cookies
+    let token = req.header('x-auth-token') || req.header('Authorization')?.replace('Bearer ', '');
+    
+    // If no token in header, check cookies (for frontend requests)
+    if (!token && req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
     
     if (!token) {
       return res.status(401).json({

@@ -33,6 +33,11 @@ const authMiddleware = async (req, res, next) => {
         token = authHeader.split(' ')[1];
       }
     }
+    
+    // If no token in header, check cookies (for frontend requests)
+    if (!token && req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
 
     // Check if no token
     if (!token) {

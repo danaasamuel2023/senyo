@@ -389,31 +389,21 @@ export default function LoginPage() {
         timestamp: new Date().toISOString()
       });
 
-      // Store authentication token
+      // Store authentication token using unified auth system
       console.log('🔐 handleLogin: Setting auth token...');
       try {
-        setAuthToken(
-          data.token, 
-          normalizedUser, 
-          7 * 24 * 60 * 60, // 7 days
-          formData.rememberMe
-        );
-        console.log('🔐 handleLogin: Auth token set successfully');
+        const { saveAuthData } = await import('../../utils/unified-auth.js');
+        const success = saveAuthData({
+          token: data.token,
+          user: normalizedUser,
+          expiresIn: 7 * 24 * 60 * 60 // 7 days
+        }, formData.rememberMe);
         
-        // Verify storage immediately after setting
-        const storedToken = localStorage.getItem('authToken');
-        const storedUser = localStorage.getItem('userData');
-        console.log('🔐 handleLogin: Storage verification:', {
-          hasStoredToken: !!storedToken,
-          hasStoredUser: !!storedUser,
-          tokenLength: storedToken ? storedToken.length : 0,
-          userDataLength: storedUser ? storedUser.length : 0
-        });
-        
-        if (!storedToken || !storedUser) {
-          console.error('🔐 handleLogin: Storage verification failed - data not saved');
-          throw new Error('Authentication data not saved to storage');
+        if (!success) {
+          throw new Error('Failed to save authentication data');
         }
+        
+        console.log('🔐 handleLogin: Auth token set successfully');
         
       } catch (authError) {
         console.error('🔐 handleLogin: Error setting auth token:', authError);
