@@ -32,13 +32,23 @@ export default function PWAInstaller() {
     // Register service worker only once
     if ('serviceWorker' in navigator && !window.serviceWorkerRegistered) {
       navigator.serviceWorker
-        .register('/sw.js')
+        .register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none'
+        })
         .then((registration) => {
           console.log('Service Worker registered:', registration);
           window.serviceWorkerRegistered = true;
         })
         .catch((error) => {
           console.error('Service Worker registration failed:', error);
+          // Don't fail silently - log the specific error
+          if (error.message.includes('redirect')) {
+            console.warn('Service Worker registration failed due to redirect. This is often caused by server configuration.');
+            console.warn('The app will continue to work without Service Worker features.');
+          }
+          // Mark as registered to prevent retry loops
+          window.serviceWorkerRegistered = true;
         });
     }
 

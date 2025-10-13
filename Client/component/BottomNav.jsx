@@ -25,8 +25,9 @@ export default function BottomNav() {
     // Check if user is authenticated with multiple checks
     const checkAuth = () => {
       try {
-        const token = localStorage.getItem('authToken');
-        const userData = localStorage.getItem('userData');
+        // Check multiple possible token keys
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken');
+        const userData = localStorage.getItem('userData') || localStorage.getItem('user') || sessionStorage.getItem('userData');
         
         // Check if both token and user data exist
         const hasToken = !!token;
@@ -37,9 +38,9 @@ export default function BottomNav() {
         if (userData) {
           try {
             const parsed = JSON.parse(userData);
-            validUserData = !!(parsed.id || parsed._id);
+            validUserData = !!(parsed.id || parsed._id || parsed.email);
           } catch (e) {
-            console.warn('Invalid user data in localStorage');
+            console.warn('Invalid user data in localStorage:', e);
           }
         }
         
