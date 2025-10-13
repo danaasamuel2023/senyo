@@ -61,7 +61,7 @@ const authMiddleware = async (req, res, next) => {
     // Add user to request object
     req.user = user;
     req.userId = decoded.userId;
-    req.userRole = decoded.role;
+    req.userRole = decoded.role || user.role;
     
     next();
   } catch (error) {

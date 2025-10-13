@@ -105,14 +105,16 @@ export const isAuthenticated = () => {
   if (typeof window === 'undefined') return false;
   
   const token = getAuthToken();
+  const user = getCurrentUser();
   const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
   const tokenValid = !isTokenExpired();
   
-  const result = !!token && sessionAuth === 'true' && tokenValid;
+  const result = !!token && !!user && sessionAuth === 'true' && tokenValid;
   
   // Debug logging for authentication issues
   console.log('🔐 isAuthenticated check:', { 
     hasToken: !!token, 
+    hasUser: !!user,
     sessionAuth, 
     tokenValid, 
     result,
@@ -167,10 +169,23 @@ export const getUserRole = () => {
 export const normalizeUserData = (userData) => {
   if (!userData) return null;
   
+  // Ensure we have a valid user ID
+  const userId = userData._id || userData.id;
+  if (!userId) {
+    console.error('normalizeUserData: No valid user ID found', userData);
+    return null;
+  }
+  
   return {
     ...userData,
-    id: userData._id || userData.id, // Ensure id field exists
-    _id: userData._id // Keep original _id
+    id: userId, // Ensure id field exists
+    _id: userId, // Keep original _id
+    // Ensure required fields exist with defaults
+    name: userData.name || 'User',
+    email: userData.email || '',
+    role: userData.role || 'buyer',
+    walletBalance: userData.walletBalance || 0,
+    referralCode: userData.referralCode || 'USER'
   };
 };
 
@@ -228,7 +243,14 @@ export const saveAuthData = (data, rememberMe = false) => {
   }
   
   if (user) {
-    SecureStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
+    // Ensure user data is properly normalized before storing
+    const normalizedUser = normalizeUserData(user);
+    if (normalizedUser) {
+      SecureStorage.setItem(USER_DATA_KEY, JSON.stringify(normalizedUser));
+    } else {
+      console.error('🔐 saveAuthData: Failed to normalize user data');
+      return false;
+    }
   }
   
   if (expiresIn) {
@@ -238,6 +260,8 @@ export const saveAuthData = (data, rememberMe = false) => {
   
   SecureStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
   sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
+  
+  return true;
 };
 
 /**

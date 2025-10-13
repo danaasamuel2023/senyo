@@ -129,6 +129,21 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    // Basic validation
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      showToast('Please enter both email and password.', 'error');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.');
+      showToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
     // Skip all rate limiting checks in development
     if (process.env.NODE_ENV === 'development') {
       setError('');
@@ -145,7 +160,7 @@ export default function LoginPage() {
       // Check for rapid successive attempts (client-side rate limiting)
       const now = Date.now();
       const timeSinceLastAttempt = now - lastLoginAttempt;
-      if (timeSinceLastAttempt < 3000) { // 3 seconds minimum between attempts
+      if (timeSinceLastAttempt < 2000) { // 2 seconds minimum between attempts
         setError('Please wait a moment before trying again.');
         showToast('Please wait a moment before trying again.', 'error');
         return;
@@ -228,6 +243,10 @@ export default function LoginPage() {
         // Normalize user data to include both id and _id for compatibility
         const { setAuthToken, normalizeUserData } = await import('../../utils/auth.js');
         const normalizedUser = normalizeUserData(data.user);
+        
+        if (!normalizedUser) {
+          throw new Error('Failed to normalize user data');
+        }
         
         console.log('🔐 Login successful - User data normalized:', {
           originalId: data.user._id,

@@ -90,7 +90,7 @@ router.post("/register", async (req, res) => {
     }
 
     // Generate initial token for auto-login after registration
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-deployment-only';
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     if (!process.env.JWT_SECRET) {
       console.warn('WARNING: JWT_SECRET environment variable is not set, using fallback');
     }
@@ -138,7 +138,7 @@ router.post("/login", async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate JWT Token with user role for authorization
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-deployment-only';
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     if (!process.env.JWT_SECRET) {
       console.warn('WARNING: JWT_SECRET environment variable is not set, using fallback');
     }
@@ -184,7 +184,7 @@ const authMiddleware = (req, res, next) => {
     }
     
     // Verify token
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-deployment-only';
+    const jwtSecret = process.env.JWT_SECRET || 'DatAmArt';
     if (!process.env.JWT_SECRET) {
       console.warn('WARNING: JWT_SECRET environment variable is not set, using fallback');
     }
