@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddlewareMiddleware, adminAuth } = require('../middleware/authMiddleware');
+const { authMiddleware, adminAuth } = require('../middleware/auth');
 const { User, DataPurchase, AgentCatalog } = require('../schema/schema');
 
 // ============================================
