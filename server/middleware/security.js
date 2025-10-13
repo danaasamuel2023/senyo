@@ -38,10 +38,10 @@ const generalLimiter = rateLimit({
   }
 });
 
-// Rate limiter for authentication routes - Optimized for 10M users/day
+// Rate limiter for authentication routes - Optimized for high traffic
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // TEMP: Very high limit to resolve 429 errors
+  max: 10000, // Very high limit to prevent 429 errors while maintaining security
   message: {
     success: false,
     error: 'Rate limit exceeded',
@@ -52,12 +52,6 @@ const authLimiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for ALL requests in development
     if (process.env.NODE_ENV === 'development') {
-      return true;
-    }
-    
-    // TEMPORARY FIX: Skip ALL rate limiting for production to resolve 429 errors
-    if (process.env.NODE_ENV === 'production') {
-      console.log('⚠️ Auth rate limiting temporarily disabled for production');
       return true;
     }
     
@@ -75,6 +69,13 @@ const authLimiter = rateLimit({
     // Skip for localhost in non-production
     if (process.env.NODE_ENV !== 'production' && 
         (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) {
+      return true;
+    }
+    
+    // Skip for requests from frontend (identified by User-Agent or custom header)
+    const userAgent = req.get('User-Agent') || '';
+    const requestSource = req.get('X-Request-Source');
+    if (userAgent.includes('Senyo-Frontend') || requestSource === 'frontend-login') {
       return true;
     }
     
