@@ -1,6 +1,9 @@
+/* Tailwind CSS directives - safe to ignore linter warnings */
+/* eslint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* eslint-enable */
 
 @import "./mobile-optimizations.css";
 
@@ -151,4 +154,43 @@ body {
 
 .h-full {
   height: 100%;
+}
+
+/* Scrollbar hiding utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Smooth scrolling for navigation */
+.nav-scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Additional scrollbar utilities for better compatibility */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }

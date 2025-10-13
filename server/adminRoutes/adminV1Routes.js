@@ -249,8 +249,42 @@ router.put('/users/:id', auth, adminAuth, async (req, res) => {
     if (email) userFields.email = email;
     if (phoneNumber) userFields.phoneNumber = phoneNumber;
     if (role) userFields.role = role;
-    if (walletBalance !== undefined) userFields.walletBalance = walletBalance;
     if (referralCode) userFields.referralCode = referralCode;
+    
+    // Handle wallet balance update separately to ensure sync
+    if (walletBalance !== undefined) {
+      const WalletService = require('../services/walletService');
+      const currentUser = await User.findById(req.params.id);
+      
+      if (!currentUser) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
+      
+      const balanceDifference = walletBalance - currentUser.walletBalance;
+      
+      if (balanceDifference !== 0) {
+        const result = await WalletService.updateWalletBalance(
+          req.params.id,
+          balanceDifference,
+          'admin-adjustment',
+          {
+            description: 'Admin wallet balance adjustment',
+            adminId: req.user._id,
+            adminName: req.user.name,
+            oldBalance: currentUser.walletBalance,
+            newBalance: walletBalance
+          }
+        );
+        
+        if (!result.success) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Failed to update wallet balance',
+            error: result.error 
+          });
+        }
+      }
+    }
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -295,29 +329,29 @@ router.put('/users/:id/add-money', auth, adminAuth, async (req, res) => {
     
     const amountToAdd = parseFloat(amount);
     const oldBalance = user.walletBalance || 0;
-    const newBalance = oldBalance + amountToAdd;
     
-    // Update user wallet balance
-    user.walletBalance = newBalance;
-    await user.save();
-    
-    // Create transaction record
-    const Transaction = require('../schema/schema').Transaction;
-    const transaction = new Transaction({
-      userId: userId,
-      type: 'admin-deposit',
-      amount: amountToAdd,
-      status: 'completed',
-      description: `Admin credit: ${reason || 'Manual credit by admin'}`,
-      metadata: {
+    // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+    const WalletService = require('../services/walletService');
+    const result = await WalletService.updateWalletBalance(
+      userId,
+      amountToAdd,
+      'admin-deposit',
+      {
+        description: `Admin credit: ${reason || 'Manual credit by admin'}`,
         adminId: req.user._id,
         adminName: req.user.name,
         reason: reason || 'Manual credit by admin',
-        oldBalance: oldBalance,
-        newBalance: newBalance
+        oldBalance: oldBalance
       }
-    });
-    await transaction.save();
+    );
+    
+    if (!result.success) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to add money to user wallet',
+        error: result.error 
+      });
+    }
     
     res.json({
       success: true,
@@ -326,9 +360,8 @@ router.put('/users/:id/add-money', auth, adminAuth, async (req, res) => {
         userId: userId,
         userName: user.name,
         oldBalance: oldBalance,
-        newBalance: newBalance,
-        amountAdded: amountToAdd,
-        transactionId: transaction._id
+        newBalance: result.newBalance,
+        amountAdded: amountToAdd
       }
     });
   } catch (err) {
@@ -378,11 +411,28 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
       });
     }
     
-    const newBalance = currentBalance - amountToDeduct;
+    // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+    const WalletService = require('../services/walletService');
+    const result = await WalletService.updateWalletBalance(
+      userId,
+      -amountToDeduct, // Negative amount for deduction
+      'admin-debit',
+      {
+        description: `Admin debit: ${reason}`,
+        adminId: req.user._id,
+        adminName: req.user.name,
+        reason: reason,
+        oldBalance: currentBalance
+      }
+    );
     
-    // Update user wallet balance
-    user.walletBalance = newBalance;
-    await user.save();
+    if (!result.success) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to deduct money from user wallet',
+        error: result.error 
+      });
+    }
     
     // Create transaction record
     const Transaction = require('../schema/schema').Transaction;
@@ -397,7 +447,7 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
         adminName: req.user.name,
         reason: reason,
         oldBalance: currentBalance,
-        newBalance: newBalance
+        newBalance: result.newBalance
       }
     });
     await transaction.save();
@@ -409,7 +459,7 @@ router.put('/users/:id/deduct-money', auth, adminAuth, async (req, res) => {
         userId: userId,
         userName: user.name,
         oldBalance: currentBalance,
-        newBalance: newBalance,
+        newBalance: result.newBalance,
         amountDeducted: amountToDeduct,
         transactionId: transaction._id
       }
@@ -718,6 +768,137 @@ router.get('/transactions/:id', auth, adminAuth, async (req, res) => {
       return res.status(404).json({ msg: 'Transaction not found' });
     }
     res.status(500).send('Server Error');
+  }
+});
+
+// Verify Paystack transaction
+router.post('/transactions/:id/verify', auth, adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const transaction = await Transaction.findById(id)
+      .populate('userId', 'name email phoneNumber');
+    
+    if (!transaction) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Transaction not found' 
+      });
+    }
+    
+    // Only verify Paystack transactions
+    if (transaction.gateway !== 'paystack') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'This transaction was not processed through Paystack',
+        transaction
+      });
+    }
+    
+    // Verify with Paystack API
+    try {
+      const axios = require('axios');
+      const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+      
+      const paystackResponse = await axios.get(
+        `https://api.paystack.co/transaction/verify/${transaction.reference}`,
+        {
+          headers: {
+            Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`
+          }
+        }
+      );
+      
+      if (paystackResponse.data.status) {
+        // Update transaction status
+        transaction.status = 'completed';
+        transaction.metadata = {
+          ...transaction.metadata,
+          paystackVerification: paystackResponse.data.data,
+          verifiedAt: new Date()
+        };
+        await transaction.save();
+        
+        res.json({
+          success: true,
+          verified: true,
+          message: 'Transaction verified successfully',
+          transaction,
+          paystackData: paystackResponse.data.data
+        });
+      } else {
+        res.json({
+          success: false,
+          verified: false,
+          message: 'Transaction verification failed',
+          paystackData: paystackResponse.data
+        });
+      }
+    } catch (paystackError) {
+      console.error('Paystack verification error:', paystackError.message);
+      res.status(500).json({
+        success: false,
+        error: 'Paystack verification failed',
+        details: paystackError.message
+      });
+    }
+  } catch (err) {
+    console.error('Transaction verification error:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during verification'
+    });
+  }
+});
+
+// Update transaction status
+router.put('/transactions/:id/status', auth, adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['pending', 'completed', 'failed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Must be pending, completed, or failed'
+      });
+    }
+    
+    const transaction = await Transaction.findById(id)
+      .populate('userId', 'name email phoneNumber');
+    
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transaction not found'
+      });
+    }
+    
+    // Update transaction status
+    const oldStatus = transaction.status;
+    transaction.status = status;
+    transaction.metadata = {
+      ...transaction.metadata,
+      statusUpdatedAt: new Date(),
+      statusUpdatedBy: req.user._id,
+      previousStatus: oldStatus
+    };
+    
+    await transaction.save();
+    
+    res.json({
+      success: true,
+      message: 'Transaction status updated successfully',
+      transaction,
+      oldStatus,
+      newStatus: status
+    });
+  } catch (err) {
+    console.error('Transaction status update error:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during status update'
+    });
   }
 });
 

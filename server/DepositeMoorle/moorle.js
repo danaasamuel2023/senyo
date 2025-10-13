@@ -281,9 +281,25 @@ router.post('/moolre/webhook', async (req, res) => {
       // Update user's wallet balance
       const user = await User.findById(transaction.userId);
       if (user) {
-        user.walletBalance += transaction.amount;
-        await user.save();
-        console.log(`User ${user._id} wallet updated, new balance: ${user.walletBalance}`);
+        // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+        const WalletService = require('../services/walletService');
+        const result = await WalletService.updateWalletBalance(
+          transaction.userId,
+          transaction.amount,
+          'deposit',
+          {
+            description: 'Wallet deposit via MoMo',
+            reference: transaction.reference,
+            gateway: 'momo',
+            legacyTransaction: true
+          }
+        );
+        
+        if (result.success) {
+          console.log(`User ${user._id} wallet updated, new balance: ${result.newBalance}`);
+        } else {
+          console.error(`Failed to update wallet for user ${user._id}:`, result.error);
+        }
       } else {
         console.error(`User not found for transaction ${externalref}`);
       }

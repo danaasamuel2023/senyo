@@ -3,8 +3,10 @@
 ## Issues Fixed
 
 ### 1. MongoDB Connection Issue ✅ FIXED
+
 **Problem**: `Cannot call userdataunlimiteds.findOne() before initial connection is complete`
 **Solution**: Added proper MongoDB environment variables to `start-server.sh`:
+
 ```bash
 export MONGODB_USERNAME=dajounimarket
 export MONGODB_PASSWORD=0246783840Sa
@@ -13,15 +15,19 @@ export MONGODB_URI="mongodb+srv://dajounimarket:0246783840Sa@cluster0.kp8c2.mong
 ```
 
 ### 2. Admin Token Issue ✅ FIXED
+
 **Problem**: Invalid/expired admin JWT token
 **Solution**: Generated new admin token using `server/generate-admin-token.js`:
-```
+
+```text
 Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5YWJjYTQ2NDEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjAwMTM0MDIsImV4cCI6MTc2MDYxODIwMn0.iC2UlRI0hKv4ofsP8St-mwh6p8bB2Ty_zPvHfCuo0-Y
 ```
 
 ### 3. Server Configuration ✅ FIXED
+
 **Problem**: Missing environment variables causing server startup issues
 **Solution**: Created comprehensive `start-server.sh` script with all required variables:
+
 - NODE_ENV=development
 - PORT=5001
 - JWT_SECRET=DatAmArt
@@ -30,12 +36,14 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5
 - Support contact information
 
 ### 4. Test File Update ✅ FIXED
+
 **Problem**: Test file using old admin token
 **Solution**: Updated `test-admin-verification.html` with new admin token
 
 ## Current Status
 
 ### ✅ Working Components
+
 - Server starts successfully on port 5001
 - MongoDB connection established
 - Admin authentication working
@@ -45,18 +53,22 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5
 ### ⚠️ Remaining Issues
 
 #### 1. Paystack API Key Validation ❌ NEEDS ATTENTION
+
 **Problem**: Getting 401 Unauthorized from Paystack API
 **Current Keys**:
+
 - Secret: `sk_live_0fba72fb9c4fc71200d2e0cdbb4f2b37c1de396c`
 - Public: `pk_live_6c2f71cb00f87a32fb593bc0c679cfd28f5ab2d`
 
 **Possible Solutions**:
+
 1. Verify keys are correct in Paystack dashboard
 2. Check if account is active and has sufficient permissions
 3. Ensure keys haven't expired
 4. Test with Paystack test keys first
 
 #### 2. MongoDB Metadata Validation Error ❌ NEEDS ATTENTION
+
 **Problem**: `Cast to Map failed for value` error when updating transaction metadata
 **Solution Needed**: Fix metadata handling in transaction update logic
 
@@ -83,17 +95,20 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRjNjJmZTUyM2FiZGI5
 ## Usage Instructions
 
 ### Start Server
+
 ```bash
 cd /Users/samtech/Senyo1/senyo
 ./start-server.sh
 ```
 
 ### Test Payment Verification
+
 1. Open `test-admin-verification.html` in browser
 2. Click "Test Successful Transaction"
 3. Verify payment verification works
 
 ### Generate New Admin Token (if needed)
+
 ```bash
 cd /Users/samtech/Senyo1/senyo/server
 export JWT_SECRET=DatAmArt

@@ -16,8 +16,9 @@ async function testMemoryCache() {
     console.log('🧪 Testing In-Memory Cache Implementation\n');
 
     // Connect to database
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/unlimiteddata');
-    console.log('✅ Connected to MongoDB\n');
+    const MONGODB_URI = 'mongodb+srv://dajounimarket:0246783840Sa@cluster0.kp8c2.mongodb.net/unlimiteddata?retryWrites=true&w=majority&appName=Cluster0';
+    await mongoose.connect(MONGODB_URI);
+    console.log('✅ Connected to MongoDB Atlas\n');
 
     // Test 1: Cache Miss (First Request)
     console.log('📊 Test 1: Cache Miss (First Request)');

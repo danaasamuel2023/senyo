@@ -696,21 +696,61 @@ router.post('/purchase', async (req, res, next) => {
                 skipGeonettech: shouldSkipApi // Track if API was skipped
             });
 
-            // Deduct wallet balance
+            // Deduct wallet balance - FIXED: Update both User.walletBalance and Wallet.balance
             const previousBalance = req.user.walletBalance;
             req.user.walletBalance -= price;
+
+            // Also update Wallet collection for consistency
+            const { Wallet } = require('../schema/schema');
+            let wallet = await Wallet.findOne({ userId: req.user._id }).session(session);
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId: req.user._id,
+                    balance: 0,
+                    currency: 'GHS',
+                    frozen: false,
+                    transactions: []
+                });
+            }
+            
+            const walletBalanceBefore = wallet.balance;
+            wallet.balance -= price;
+            wallet.lastTransaction = new Date();
+            
+            // Add transaction record to wallet
+            wallet.transactions.push({
+                type: 'purchase',
+                amount: -price,
+                balanceBefore: walletBalanceBefore,
+                balanceAfter: wallet.balance,
+                description: `Data purchase: ${capacity}GB ${network} for ${phoneNumber}`,
+                reference: transactionReference,
+                status: 'completed',
+                metadata: {
+                    gateway: 'wallet',
+                    orderId: dataPurchase._id,
+                    phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX',
+                    network,
+                    capacity,
+                    hubnetReference: orderReference
+                },
+                createdAt: new Date()
+            });
 
             logOperation('USER_WALLET_UPDATE', {
                 userId: req.user._id,
                 previousBalance,
                 newBalance: req.user.walletBalance,
-                deduction: price
+                deduction: price,
+                walletBalanceBefore,
+                walletBalanceAfter: wallet.balance
             });
 
             // Save entities to database
             await dataPurchase.save({ session });
             await transaction.save({ session });
             await req.user.save({ session });
+            await wallet.save({ session });
 
             // Commit transaction
             await session.commitTransaction();
@@ -824,21 +864,61 @@ router.post('/purchase', async (req, res, next) => {
                 skipGeonettech: false // Never skip for TELECEL
             });
 
-            // Deduct wallet balance
+            // Deduct wallet balance - FIXED: Update both User.walletBalance and Wallet.balance
             const previousBalance = req.user.walletBalance;
             req.user.walletBalance -= price;
+
+            // Also update Wallet collection for consistency
+            const { Wallet } = require('../schema/schema');
+            let wallet = await Wallet.findOne({ userId: req.user._id }).session(session);
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId: req.user._id,
+                    balance: 0,
+                    currency: 'GHS',
+                    frozen: false,
+                    transactions: []
+                });
+            }
+            
+            const walletBalanceBefore = wallet.balance;
+            wallet.balance -= price;
+            wallet.lastTransaction = new Date();
+            
+            // Add transaction record to wallet
+            wallet.transactions.push({
+                type: 'purchase',
+                amount: -price,
+                balanceBefore: walletBalanceBefore,
+                balanceAfter: wallet.balance,
+                description: `Data purchase: ${capacity}GB ${network} for ${phoneNumber}`,
+                reference: transactionReference,
+                status: 'completed',
+                metadata: {
+                    gateway: 'wallet',
+                    orderId: dataPurchase._id,
+                    phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX',
+                    network,
+                    capacity,
+                    hubnetReference: orderReference
+                },
+                createdAt: new Date()
+            });
 
             logOperation('USER_WALLET_UPDATE', {
                 userId: req.user._id,
                 previousBalance,
                 newBalance: req.user.walletBalance,
-                deduction: price
+                deduction: price,
+                walletBalanceBefore,
+                walletBalanceAfter: wallet.balance
             });
 
             // Save entities to database
             await dataPurchase.save({ session });
             await transaction.save({ session });
             await req.user.save({ session });
+            await wallet.save({ session });
 
             // Commit transaction
             await session.commitTransaction();
@@ -903,21 +983,61 @@ router.post('/purchase', async (req, res, next) => {
                 skipGeonettech: true // Track that API was skipped
             });
 
-            // Deduct wallet balance
+            // Deduct wallet balance - FIXED: Update both User.walletBalance and Wallet.balance
             const previousBalance = req.user.walletBalance;
             req.user.walletBalance -= price;
+
+            // Also update Wallet collection for consistency
+            const { Wallet } = require('../schema/schema');
+            let wallet = await Wallet.findOne({ userId: req.user._id }).session(session);
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId: req.user._id,
+                    balance: 0,
+                    currency: 'GHS',
+                    frozen: false,
+                    transactions: []
+                });
+            }
+            
+            const walletBalanceBefore = wallet.balance;
+            wallet.balance -= price;
+            wallet.lastTransaction = new Date();
+            
+            // Add transaction record to wallet
+            wallet.transactions.push({
+                type: 'purchase',
+                amount: -price,
+                balanceBefore: walletBalanceBefore,
+                balanceAfter: wallet.balance,
+                description: `Data purchase: ${capacity}GB ${network} for ${phoneNumber}`,
+                reference: transactionReference,
+                status: 'completed',
+                metadata: {
+                    gateway: 'wallet',
+                    orderId: dataPurchase._id,
+                    phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX',
+                    network,
+                    capacity,
+                    hubnetReference: orderReference
+                },
+                createdAt: new Date()
+            });
 
             logOperation('USER_WALLET_UPDATE', {
                 userId: req.user._id,
                 previousBalance,
                 newBalance: req.user.walletBalance,
-                deduction: price
+                deduction: price,
+                walletBalanceBefore,
+                walletBalanceAfter: wallet.balance
             });
 
             // Save entities to database
             await dataPurchase.save({ session });
             await transaction.save({ session });
             await req.user.save({ session });
+            await wallet.save({ session });
 
             // Commit transaction
             await session.commitTransaction();
@@ -1085,21 +1205,61 @@ router.post('/purchase', async (req, res, next) => {
                 skipGeonettech: false // Normal API processing
             });
 
-            // Deduct wallet balance
+            // Deduct wallet balance - FIXED: Update both User.walletBalance and Wallet.balance
             const previousBalance = req.user.walletBalance;
             req.user.walletBalance -= price;
+
+            // Also update Wallet collection for consistency
+            const { Wallet } = require('../schema/schema');
+            let wallet = await Wallet.findOne({ userId: req.user._id }).session(session);
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId: req.user._id,
+                    balance: 0,
+                    currency: 'GHS',
+                    frozen: false,
+                    transactions: []
+                });
+            }
+            
+            const walletBalanceBefore = wallet.balance;
+            wallet.balance -= price;
+            wallet.lastTransaction = new Date();
+            
+            // Add transaction record to wallet
+            wallet.transactions.push({
+                type: 'purchase',
+                amount: -price,
+                balanceBefore: walletBalanceBefore,
+                balanceAfter: wallet.balance,
+                description: `Data purchase: ${capacity}GB ${network} for ${phoneNumber}`,
+                reference: transactionReference,
+                status: 'completed',
+                metadata: {
+                    gateway: 'wallet',
+                    orderId: dataPurchase._id,
+                    phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX',
+                    network,
+                    capacity,
+                    hubnetReference: orderReference
+                },
+                createdAt: new Date()
+            });
 
             logOperation('USER_WALLET_UPDATE', {
                 userId: req.user._id,
                 previousBalance,
                 newBalance: req.user.walletBalance,
-                deduction: price
+                deduction: price,
+                walletBalanceBefore,
+                walletBalanceAfter: wallet.balance
             });
 
             // Save entities to database
             await dataPurchase.save({ session });
             await transaction.save({ session });
             await req.user.save({ session });
+            await wallet.save({ session });
 
             // Commit transaction
             await session.commitTransaction();

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { getAuthToken, getCurrentUser, isAuthenticated } from '../../../utils/auth';
 import {
   CreditCard, Search, Filter, Download, RefreshCw, ArrowLeft,
   CheckCircle, XCircle, Clock, AlertCircle, DollarSign,
@@ -35,10 +36,10 @@ const TransactionsPage = () => {
   }, [filterType, filterStatus, filterGateway, dateRange]);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    const token = getAuthToken();
+    const user = getCurrentUser();
     
-    if (!token || user.role !== 'admin') {
+    if (!isAuthenticated() || !user || user.role !== 'admin') {
       router.push('/SignIn');
       return false;
     }

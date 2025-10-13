@@ -139,7 +139,7 @@ function getUserRoleFromToken(request) {
       return null;
     }
     
-    return payload.role || payload.user?.role || 'user';
+    return payload.role || 'user';
   } catch (error) {
     console.error('Error decoding token:', error);
     return null;

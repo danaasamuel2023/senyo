@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI, { userAPI } from '../../../utils/adminApi';
 import { getApiUrl } from '../../../utils/envConfig';
@@ -14,13 +14,10 @@ import {
   ArrowDown, Bell, HelpCircle, Save, XCircle, Home, ShoppingCart, Wallet,
   UserCheck, UserX, Package2, Truck, AlertTriangle, ChevronDown, MoreVertical,
   Copy, ExternalLink, Mail, Phone, MapPin, Building, Hash, Star, Zap, Briefcase, Store, MessageSquare,
-  // Phase 1 & 2 & 3 Features
   Monitor, TrendingDown, Headphones, Megaphone, FileImage, Warehouse, 
-  Workflow, Trigger, Template, Target, Smartphone, Globe, Cpu, HardDrive,
-  Lock, UserCog, DollarSign as Money, BarChart as Analytics, ShoppingBag
+  Workflow, Target, Smartphone, Globe, Cpu, HardDrive,
+  Lock, UserCog, ShoppingBag, ChevronLeft, Sparkles, Layers, BarChart2
 } from 'lucide-react';
-// Temporarily disabled Recharts due to D3 import issues
-// import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { SkeletonDashboard, SkeletonTable, SkeletonList } from '../../../component/SkeletonLoaders';
 import { EmptyOrders, EmptyUsers, EmptyError } from '../../../component/EmptyStates';
 
@@ -33,12 +30,15 @@ const AdminDashboard = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [notification, setNotification] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [animatedStats, setAnimatedStats] = useState({});
 
-  // Notification system
+  // Notification system with queue
   const showNotification = useCallback((message, type = 'success') => {
-    setNotification({ message, type });
+    setNotification({ message, type, id: Date.now() });
     setTimeout(() => setNotification(null), 5000);
   }, []);
+
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -76,25 +76,25 @@ const AdminDashboard = () => {
 
   // API Configuration
   const API_BASE_URL = getApiUrl();
-  
-  // Debug mode for development
   const DEBUG_MODE = process.env.NODE_ENV === 'development';
   
   // Cache for performance
   const [dataCache, setDataCache] = useState({});
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000;
+
+  // Animation state
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [pulseAnimation, setPulseAnimation] = useState(false);
 
   // Initialize sidebar state based on screen size with better mobile detection
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== 'undefined') {
-        // Better mobile detection using multiple methods
         const width = window.innerWidth;
         const isMobile = width < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isDesktopView = !isMobile;
         
         setIsDesktop(isDesktopView);
-        // Only auto-open sidebar on desktop, keep mobile closed by default
         if (isDesktopView) {
           setSidebarOpen(true);
         } else {
@@ -103,10 +103,8 @@ const AdminDashboard = () => {
       }
     };
     
-    // Set initial state
     handleResize();
     
-    // Add event listener with debouncing for better performance
     let timeoutId;
     const debouncedResize = () => {
       clearTimeout(timeoutId);
@@ -115,11 +113,9 @@ const AdminDashboard = () => {
     
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', debouncedResize);
-      // Also listen for orientation changes on mobile
       window.addEventListener('orientationchange', debouncedResize);
     }
     
-    // Cleanup
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('resize', debouncedResize);
@@ -139,14 +135,41 @@ const AdminDashboard = () => {
       setCurrentTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
     };
 
-    // Update immediately
     updateTime();
-    
-    // Update every 10 seconds for faster time updates
     const interval = setInterval(updateTime, 10000);
     
     return () => clearInterval(interval);
   }, []);
+
+  // Animated counter effect for stats
+  useEffect(() => {
+    const animateValue = (key, start, end, duration = 1000) => {
+      const startTime = performance.now();
+      
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(start + (end - start) * easeOutQuart);
+        
+        setAnimatedStats(prev => ({ ...prev, [key]: current }));
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      requestAnimationFrame(animate);
+    };
+
+    Object.keys(stats).forEach(key => {
+      if (typeof stats[key] === 'number' && stats[key] > 0) {
+        animateValue(key, 0, stats[key]);
+      }
+    });
+  }, [stats]);
 
   // Check authentication using centralized auth hook
   const checkAuth = useCallback(() => {
@@ -160,40 +183,24 @@ const AdminDashboard = () => {
         });
       }
       
-      if (authLoading) {
-        return false; // Still loading
-      }
+      if (authLoading) return false;
       
-      // Check if user is authenticated and has admin role
       if (!isAuthenticated || !user || !['admin', 'superadmin'].includes(user.role)) {
         if (process.env.NODE_ENV === 'development') {
           console.warn('Authentication failed or user is not admin - redirecting to login');
-          console.log('Auth failure details:', {
-            isAuthenticated,
-            hasUser: !!user,
-            userRole: user?.role,
-            allowedRoles: ['admin', 'superadmin']
-          });
         }
         logout('/SignIn');
         return false;
       }
       
       setUserData(user);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Admin authentication successful');
-      }
-      
       return true;
       
     } catch (error) {
       console.error('Authentication check failed:', error);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
       logout('/SignIn');
     }
-  }, [isAuthenticated, user, authLoading, logout]);
+  }, [isAuthenticated, user, authLoading]);
 
   // Retry function with exponential backoff
   const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
@@ -201,7 +208,6 @@ const AdminDashboard = () => {
       try {
         return await fn();
       } catch (error) {
-        // Handle rate limiting errors (including development bypass)
         if ((error.message.includes('Too many requests') || 
              error.message.includes('Rate limit bypassed in development') ||
              (error.isRateLimited && error.error === 'Rate limit bypassed in development')) && 
@@ -216,19 +222,17 @@ const AdminDashboard = () => {
     }
   };
 
-  // Load statistics with enhanced caching and reduced API calls
+  // Load statistics with enhanced caching
   const loadStats = useCallback(async () => {
     try {
       const cacheKey = 'dashboard_stats';
       const now = Date.now();
       
-      // Check cache first - extend cache duration to 10 minutes
       if (dataCache[cacheKey] && (now - dataCache[cacheKey].timestamp < (CACHE_DURATION * 2))) {
         setStats(dataCache[cacheKey].data);
         return;
       }
 
-      // Check if we have a valid token before making API calls
       const token = getAuthToken();
       if (!token) {
         console.warn('No authentication token found, redirecting to login');
@@ -238,16 +242,12 @@ const AdminDashboard = () => {
 
       if (DEBUG_MODE) {
         console.log('Loading dashboard statistics...');
-        console.log('API Base URL:', API_BASE_URL);
-        console.log('Auth Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
       }
       
-      // Only fetch dashboard statistics, skip daily summary to reduce API calls
       const dashboardStats = await retryWithBackoff(() => adminAPI.dashboard.getStatistics()).catch(err => {
         console.error('Dashboard stats API error:', err.message);
         if (err.message.includes('Authentication required') || err.message.includes('Failed to fetch')) {
           if (err.message.includes('Failed to fetch') || err.message.includes('404')) {
-            console.warn('Server connection failed, using fallback data');
             showNotification('Admin server not available. Using demo data.', 'warning');
           } else {
             showNotification('Please sign in again', 'error');
@@ -257,7 +257,6 @@ const AdminDashboard = () => {
         } else {
           showNotification(`Failed to load dashboard statistics: ${err.message}`, 'error');
         }
-        // Return empty data structure instead of mock data
         return {
           success: false,
           data: {
@@ -271,53 +270,45 @@ const AdminDashboard = () => {
         };
       });
       
-      // Check if authentication failed
       if (dashboardStats.data === null) {
         console.warn('Authentication failed, redirecting to login');
         return;
       }
 
-      // Process real API data with mock data for missing fields
       const statsData = {
         totalUsers: dashboardStats.success ? (dashboardStats.data?.totalUsers || 0) : 0,
         activeUsers: dashboardStats.success ? Math.floor((dashboardStats.data?.totalUsers || 0) * 0.6) : 0,
         totalOrders: dashboardStats.success ? (dashboardStats.data?.totalOrders || 0) : 0,
         totalRevenue: dashboardStats.success ? (dashboardStats.data?.todayRevenue || 0) : 0,
-        growthRate: 12.5, // Mock growth rate
-        pendingOrders: Math.floor(Math.random() * 20) + 5, // Mock pending orders
-        completedOrders: Math.floor(Math.random() * 100) + 50, // Mock completed orders
-        totalProducts: 4, // Mock network count (MTN, Airtel, Glo, 9mobile)
-        totalAgents: Math.floor(Math.random() * 50) + 10, // Mock agent count
-        activeAgents: Math.floor(Math.random() * 30) + 5, // Mock active agents
-        totalCommissions: Math.floor(Math.random() * 5000) + 1000, // Mock commissions
+        growthRate: 12.5,
+        pendingOrders: Math.floor(Math.random() * 20) + 5,
+        completedOrders: Math.floor(Math.random() * 100) + 50,
+        totalProducts: 4,
+        totalAgents: Math.floor(Math.random() * 50) + 10,
+        activeAgents: Math.floor(Math.random() * 30) + 5,
+        totalCommissions: Math.floor(Math.random() * 5000) + 1000,
         todayOrders: dashboardStats.success ? (dashboardStats.data?.todayOrders || 0) : 0,
         todayRevenue: dashboardStats.success ? (dashboardStats.data?.todayRevenue || 0) : 0,
         systemHealth: dashboardStats.success ? 'excellent' : 'error'
       };
       
-      console.log('Dashboard stats loaded:', statsData);
       setStats(statsData);
       
-      // Cache the data
       setDataCache(prev => ({
         ...prev,
         [cacheKey]: { data: statsData, timestamp: now }
       }));
       
-      // Show success notification if data was loaded successfully
       if (dashboardStats.success) {
         showNotification('Dashboard data refreshed successfully', 'success');
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
       
-      // Handle development rate limit bypass gracefully
       if (error.message.includes('Rate limit bypassed in development') || 
           (error.isRateLimited && error.error === 'Rate limit bypassed in development')) {
-        console.warn('Rate limit bypassed in development - using fallback data');
         showNotification('Using demo data (rate limit bypassed in development)', 'warning');
         
-        // Set demo stats for development
         setStats({
           totalUsers: 150,
           activeUsers: 89,
@@ -338,8 +329,6 @@ const AdminDashboard = () => {
       }
       
       showNotification('Failed to load dashboard statistics', 'error');
-      
-      // Set empty stats on error
       setStats({
         totalUsers: 0,
         activeUsers: 0,
@@ -357,7 +346,7 @@ const AdminDashboard = () => {
         systemHealth: 'error'
       });
     }
-  }, [dataCache, CACHE_DURATION, router, showNotification]);
+  }, [dataCache, router, showNotification]);
 
   // Helper function to get time ago
   const getTimeAgo = useCallback((date) => {
@@ -382,27 +371,15 @@ const AdminDashboard = () => {
 
   // Load recent activities
   const loadRecentActivities = useCallback(async () => {
-    // Don't load activities if not authenticated
-    if (!isAuthenticated || !user) {
-      console.log('🔐 Skipping activities load - not authenticated');
-      return;
-    }
+    if (!isAuthenticated || !user) return;
     
     try {
       const [ordersData, transactionsData] = await Promise.all([
         adminAPI.order.getOrders({ limit: 5 }).catch(error => {
-          if (error.message.includes('429') || error.message.includes('Too many') || error.message.includes('Rate limit bypassed')) {
-            console.warn('Rate limited on orders API - using empty data');
-            return { orders: [] };
-          }
           console.error('Orders API error:', error);
           return { orders: [] };
         }),
         adminAPI.transaction.getTransactions({ limit: 5 }).catch(error => {
-          if (error.message.includes('429') || error.message.includes('Too many') || error.message.includes('Rate limit bypassed')) {
-            console.warn('Rate limited on transactions API - using empty data');
-            return { transactions: [] };
-          }
           console.error('Transactions API error:', error);
           return { transactions: [] };
         })
@@ -410,7 +387,6 @@ const AdminDashboard = () => {
 
       const activities = [];
       
-      // Add order activities
       if (ordersData.orders) {
         ordersData.orders.forEach(order => {
           const timeAgo = getTimeAgo(new Date(order.createdAt));
@@ -424,7 +400,6 @@ const AdminDashboard = () => {
         });
       }
 
-      // Add transaction activities
       if (transactionsData.transactions) {
         transactionsData.transactions.forEach(transaction => {
           const timeAgo = getTimeAgo(new Date(transaction.createdAt));
@@ -447,31 +422,22 @@ const AdminDashboard = () => {
     }
   }, [getTimeAgo, isAuthenticated, user]);
 
-  // Load chart data with batch API call and caching
+  // Load chart data
   const loadChartData = useCallback(async () => {
-    // Don't load chart data if not authenticated
-    if (!isAuthenticated || !user) {
-      console.log('🔐 Skipping chart data load - not authenticated');
-      return;
-    }
+    if (!isAuthenticated || !user) return;
     
     try {
       const cacheKey = 'chart_data_7days';
       const cached = dataCache[cacheKey];
       
-      // Use cached data if available and not expired
       if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
         setChartData(cached.data);
         return;
       }
       
-      // Use batch API to get 7 days of data in one request
-      console.log('🔍 Loading chart data with apiClient...');
       const batchData = await apiClient.getAdminBatchDailySummary(7);
-      console.log('📊 Chart data response:', batchData);
       
       if (batchData.success && batchData.data) {
-        // Handle both array format and object with summaries property
         const dataArray = Array.isArray(batchData.data) ? batchData.data : batchData.data.summaries || [];
         const chartData = dataArray.map(item => ({
           date: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -481,7 +447,6 @@ const AdminDashboard = () => {
         
         setChartData(chartData);
         
-        // Cache the results
         setDataCache(prev => ({
           ...prev,
           [cacheKey]: {
@@ -490,7 +455,6 @@ const AdminDashboard = () => {
           }
         }));
       } else {
-        // Fallback to mock data if API fails
         const mockData = [];
         for (let i = 6; i >= 0; i--) {
           const date = new Date();
@@ -506,16 +470,6 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Failed to load chart data:', error);
       
-      // Handle development rate limit bypass gracefully
-      if (error.message.includes('Rate limit bypassed in development') || 
-          (error.isRateLimited && error.error === 'Rate limit bypassed in development')) {
-        console.warn('Rate limit bypassed in development - using demo chart data');
-        showNotification('Using demo chart data (rate limit bypassed in development)', 'warning');
-      } else if (error.message.includes('Failed to fetch') || error.message.includes('404')) {
-        showNotification('Admin server not available. Using demo data.', 'warning');
-      }
-      
-      // Fallback to mock data
       const mockData = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
@@ -528,22 +482,25 @@ const AdminDashboard = () => {
       }
       setChartData(mockData);
     }
-  }, [dataCache, CACHE_DURATION, isAuthenticated, user, showNotification]);
+  }, [dataCache, isAuthenticated, user]);
 
-  // Debounce mechanism to prevent rapid successive calls
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastAutoRefresh, setLastAutoRefresh] = useState(Date.now());
   const [lastRefreshDisplay, setLastRefreshDisplay] = useState('');
   const [navigationLoading, setNavigationLoading] = useState(false);
   const [prefetchedRoutes, setPrefetchedRoutes] = useState(new Set());
-  const REFRESH_DEBOUNCE_DELAY = 1000; // 1 second for faster refresh
+  const REFRESH_DEBOUNCE_DELAY = 1000;
+  
+  const [navScrollPosition, setNavScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const navScrollRef = useRef(null);
 
-  // Load dashboard data (Ultra-fast parallel loading)
+  // Load dashboard data
   const loadDashboardData = useCallback(async () => {
     if (!isAuthenticated || !user) return;
     
-    // Check debounce to prevent rapid successive requests
     const now = Date.now();
     if (now - lastRefreshTime < REFRESH_DEBOUNCE_DELAY) {
       const remainingTime = Math.ceil((REFRESH_DEBOUNCE_DELAY - (now - lastRefreshTime)) / 1000);
@@ -552,13 +509,13 @@ const AdminDashboard = () => {
     }
     
     setIsRefreshing(true);
+    setPulseAnimation(true);
     setLastRefreshTime(now);
     setLastAutoRefresh(now);
     setLastRefreshDisplay(new Date().toLocaleTimeString());
     
     setLoading(true);
     try {
-      // Load ALL data in parallel for maximum speed
       await Promise.allSettled([
         loadStats(),
         loadRecentActivities(),
@@ -569,6 +526,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+      setTimeout(() => setPulseAnimation(false), 1000);
     }
   }, [isAuthenticated, user, loadStats, loadRecentActivities, loadChartData, lastRefreshTime, showNotification]);
 
@@ -605,26 +563,18 @@ const AdminDashboard = () => {
     if (!isAuthenticated || !user) return;
     
     try {
-      // Debug authentication using auth utilities
       const token = getAuthToken();
       const userData = getCurrentUser();
       
       if (process.env.NODE_ENV === 'development') {
         console.log('🔐 Admin Dashboard - Loading users with auth:', {
           hasToken: !!token,
-          tokenPreview: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
           hasUserData: !!userData,
-          userData: userData,
-          isAuthenticated,
-          user
+          isAuthenticated
         });
       }
       
       const response = await userAPI.getUsers(1, 50, userSearchTerm);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('👥 Users API Response:', response);
-      }
       
       const formattedUsers = response.users?.map(user => ({
         id: user._id,
@@ -652,16 +602,13 @@ const AdminDashboard = () => {
   // Load dashboard data when authenticated with auto-refresh
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Add a small delay to ensure authentication is fully processed
       const timer = setTimeout(() => {
         loadDashboardData();
         
-        // Auto-refresh dashboard data every 30 seconds
         const refreshInterval = setInterval(() => {
           loadDashboardData();
         }, 30000);
         
-        // Store interval ID for cleanup
         window.dashboardRefreshInterval = refreshInterval;
       }, 100);
       
@@ -674,12 +621,11 @@ const AdminDashboard = () => {
     }
   }, [isAuthenticated, user, loadDashboardData]);
 
-  // Load orders when filterStatus changes or when orders tab is active with auto-refresh
+  // Load orders
   useEffect(() => {
     if (activeTab === 'orders' && isAuthenticated && user) {
       loadOrders();
       
-      // Auto-refresh orders every 20 seconds when orders tab is active
       const ordersRefreshInterval = setInterval(() => {
         if (activeTab === 'orders') {
           loadOrders();
@@ -690,12 +636,11 @@ const AdminDashboard = () => {
     }
   }, [filterStatus, activeTab, loadOrders, isAuthenticated, user]);
 
-  // Load users when users tab is active with auto-refresh
+  // Load users
   useEffect(() => {
     if (activeTab === 'users' && isAuthenticated && user) {
       loadUsers();
       
-      // Auto-refresh users every 25 seconds when users tab is active
       const usersRefreshInterval = setInterval(() => {
         if (activeTab === 'users') {
           loadUsers();
@@ -706,21 +651,19 @@ const AdminDashboard = () => {
     }
   }, [activeTab, loadUsers, isAuthenticated, user]);
 
-  // Route prefetching for ultra-fast navigation
+  // Route prefetching
   const prefetchRoute = useCallback(async (route) => {
     if (prefetchedRoutes.has(route)) return;
     
     try {
-      // Prefetch the route using Next.js router
       await router.prefetch(route);
       setPrefetchedRoutes(prev => new Set([...prev, route]));
-      console.log(`Route prefetched: ${route}`);
     } catch (error) {
       console.warn(`Failed to prefetch route ${route}:`, error);
     }
   }, [router, prefetchedRoutes]);
 
-  // Prefetch all admin routes on component mount
+  // Prefetch routes
   useEffect(() => {
     if (isAuthenticated && user) {
       const routesToPrefetch = [
@@ -736,22 +679,19 @@ const AdminDashboard = () => {
         '/admin/settings'
       ];
       
-      // Prefetch routes with a small delay to avoid blocking initial load
       setTimeout(() => {
         routesToPrefetch.forEach(route => prefetchRoute(route));
       }, 1000);
     }
   }, [isAuthenticated, user, prefetchRoute]);
 
-  // Keyboard shortcuts for faster refresh
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (event) => {
-      // Ctrl/Cmd + R for refresh dashboard
       if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
         event.preventDefault();
         loadDashboardData();
       }
-      // F5 for refresh dashboard
       if (event.key === 'F5') {
         event.preventDefault();
         loadDashboardData();
@@ -762,7 +702,7 @@ const AdminDashboard = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [loadDashboardData]);
 
-  // Listen for pull-to-refresh events
+  // Pull-to-refresh
   useEffect(() => {
     const handleRefreshAdminDashboard = () => {
       try {
@@ -775,6 +715,62 @@ const AdminDashboard = () => {
     window.addEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
     return () => window.removeEventListener('refreshAdminDashboard', handleRefreshAdminDashboard);
   }, [loadDashboardData]);
+
+  // Navigation scroll
+  const updateScrollButtons = useCallback(() => {
+    if (navScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = navScrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  }, []);
+
+  const scrollNav = useCallback((direction) => {
+    if (navScrollRef.current) {
+      const scrollAmount = 200;
+      const currentScroll = navScrollRef.current.scrollLeft;
+      const newScroll = direction === 'left' 
+        ? Math.max(0, currentScroll - scrollAmount)
+        : currentScroll + scrollAmount;
+      
+      navScrollRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  const handleNavScroll = useCallback(() => {
+    if (navScrollRef.current) {
+      setNavScrollPosition(navScrollRef.current.scrollLeft);
+      updateScrollButtons();
+    }
+  }, [updateScrollButtons]);
+
+  useEffect(() => {
+    const initializeNavScroll = () => {
+      if (navScrollRef.current) {
+        updateScrollButtons();
+        navScrollRef.current.addEventListener('scroll', handleNavScroll);
+        
+        const handleResize = () => {
+          setTimeout(updateScrollButtons, 100);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        
+        return () => {
+          if (navScrollRef.current) {
+            navScrollRef.current.removeEventListener('scroll', handleNavScroll);
+          }
+          window.removeEventListener('resize', handleResize);
+        };
+      }
+    };
+
+    const timer = setTimeout(initializeNavScroll, 100);
+    return () => clearTimeout(timer);
+  }, [handleNavScroll, updateScrollButtons]);
 
   // Logout
   const handleLogout = useCallback(() => {
@@ -789,42 +785,32 @@ const AdminDashboard = () => {
   const sidebarItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: Home, badge: null },
     { id: 'control-center', label: 'Control Center', icon: Zap, badge: null, highlight: true },
-    
-    // Core Management
     { id: 'users', label: 'Users', icon: Users, badge: stats.activeUsers || null },
     { id: 'user-management', label: 'Advanced Users', icon: UserCog, badge: null },
     { id: 'agents', label: 'Agents', icon: Briefcase, badge: null },
     { id: 'agent-stores', label: 'Agent Stores', icon: Store, badge: null },
     { id: 'orders', label: 'Orders', icon: Package, badge: stats.pendingOrders || null },
     { id: 'products', label: 'Products', icon: Package2, badge: null },
-    
-    // Phase 1: Performance & Monitoring
     { id: 'performance', label: 'Performance', icon: Monitor, badge: null },
-    { id: 'financial', label: 'Financial', icon: Money, badge: null },
+    { id: 'financial', label: 'Financial', icon: DollarSign, badge: null },
     { id: 'security', label: 'Security', icon: Lock, badge: null },
-    
-    // Phase 2: Customer Support & Content
     { id: 'support', label: 'Support', icon: Headphones, badge: null },
     { id: 'content', label: 'Content', icon: FileImage, badge: null },
     { id: 'marketing', label: 'Marketing', icon: Megaphone, badge: null },
-    
-    // Phase 3: Advanced Features
     { id: 'inventory', label: 'Inventory', icon: Warehouse, badge: null },
     { id: 'automation', label: 'Automation', icon: Workflow, badge: null },
     { id: 'integrations', label: 'Integrations', icon: Globe, badge: null },
     { id: 'mobile', label: 'Mobile App', icon: Smartphone, badge: null },
-    
-    // Communication & Analytics
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: null },
     { id: 'bulk-messaging', label: 'Bulk Messaging', icon: MessageSquare, badge: null },
     { id: 'package-management', label: 'Package Management', icon: Package2, badge: null },
-    { id: 'analytics', label: 'Analytics', icon: Analytics, badge: null },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: null },
     { id: 'transactions', label: 'Transactions', icon: CreditCard, badge: null },
     { id: 'reports', label: 'Reports', icon: FileText, badge: null },
     { id: 'settings', label: 'Settings', icon: Settings, badge: null }
   ], [stats.activeUsers, stats.pendingOrders]);
 
-  // Handle navigation for tabs that go to separate pages
+  // Handle navigation
   const handleTabClick = useCallback(async (tabId) => {
     const navigationTabs = {
       'control-center': '/admin/control-center',
@@ -834,24 +820,16 @@ const AdminDashboard = () => {
       'agent-stores': '/admin/agent-stores',
       'orders': '/admin/orders',
       'products': '/admin/products',
-      
-      // Phase 1: Performance & Monitoring
       'performance': '/admin/performance',
       'financial': '/admin/financial',
       'security': '/admin/security',
-      
-      // Phase 2: Customer Support & Content
       'support': '/admin/support',
       'content': '/admin/content',
       'marketing': '/admin/marketing',
-      
-      // Phase 3: Advanced Features
       'inventory': '/admin/inventory',
       'automation': '/admin/automation',
       'integrations': '/admin/integrations',
       'mobile': '/admin/mobile',
-      
-      // Communication & Analytics
       'notifications': '/admin/notifications',
       'bulk-messaging': '/admin/bulk-messaging',
       'package-management': '/admin/package-management',
@@ -863,90 +841,156 @@ const AdminDashboard = () => {
 
     if (navigationTabs[tabId]) {
       setNavigationLoading(true);
+      setIsAnimating(true);
       try {
-        // Prefetch the route if not already prefetched
         if (!prefetchedRoutes.has(navigationTabs[tabId])) {
           await prefetchRoute(navigationTabs[tabId]);
         }
-        
-        // Navigate with optimized transition
         await router.push(navigationTabs[tabId]);
       } catch (error) {
         console.error('Navigation error:', error);
         showNotification('Failed to navigate to page', 'error');
       } finally {
         setNavigationLoading(false);
+        setIsAnimating(false);
       }
     } else {
-      // Instant tab switching for dashboard tabs
       setActiveTab(tabId);
     }
   }, [router, prefetchedRoutes, prefetchRoute]);
 
-  // Components
-  const StatCard = ({ title, value, change, icon: Icon, color, loading = false }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl bg-gradient-to-r ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        {change !== undefined && !loading && (
-          <div className={`flex items-center text-sm font-medium ${
-            change >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {change >= 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-            <span>{Math.abs(change)}%</span>
-          </div>
-        )}
-        {loading && (
-          <div className="animate-spin">
-            <RefreshCw className="w-4 h-4 text-gray-400" />
-          </div>
-        )}
-      </div>
-      <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-        {loading ? 'Loading...' : value}
-      </p>
-    </div>
-  );
+  // Enhanced StatCard with animations
+  const StatCard = ({ title, value, change, icon: Icon, color, loading = false }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const displayValue = animatedStats[title.toLowerCase().replace(/[^a-z]/g, '')] || value;
 
+    return (
+      <div 
+        className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer overflow-hidden group ${
+          isHovered ? 'scale-105' : ''
+        }`}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          setHoveredCard(title);
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setHoveredCard(null);
+        }}
+      >
+        {/* Animated background gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+        
+        {/* Sparkle effect on hover */}
+        {isHovered && (
+          <div className="absolute top-2 right-2 animate-ping">
+            <Sparkles className="w-4 h-4 text-yellow-500" />
+          </div>
+        )}
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl bg-gradient-to-r ${color} transform transition-transform duration-300 ${
+              isHovered ? 'scale-110 rotate-6' : ''
+            }`}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            {change !== undefined && !loading && (
+              <div className={`flex items-center text-sm font-medium px-2.5 py-1 rounded-full ${
+                change >= 0 
+                  ? 'text-green-600 bg-green-100 dark:bg-green-900/20' 
+                  : 'text-red-600 bg-red-100 dark:bg-red-900/20'
+              } transition-all duration-300 ${isHovered ? 'scale-110' : ''}`}>
+                {change >= 0 ? <ArrowUp className="w-3 h-3 mr-1" /> : <ArrowDown className="w-3 h-3 mr-1" />}
+                <span>{Math.abs(change)}%</span>
+              </div>
+            )}
+            {loading && (
+              <div className="animate-spin">
+                <RefreshCw className="w-4 h-4 text-gray-400" />
+              </div>
+            )}
+          </div>
+          <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium transition-colors duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+            {title}
+          </h3>
+          <p className={`text-2xl font-bold text-gray-900 dark:text-white mt-1 transition-all duration-300 ${
+            isHovered ? 'text-3xl' : ''
+          }`}>
+            {loading ? (
+              <span className="inline-block animate-pulse">Loading...</span>
+            ) : (
+              <span className="inline-block">{displayValue}</span>
+            )}
+          </p>
+        </div>
+
+        {/* Bottom accent line */}
+        <div className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${color} transition-all duration-500 ${
+          isHovered ? 'w-full' : 'w-0'
+        }`} />
+      </div>
+    );
+  };
+
+  // Enhanced ActivityItem
   const ActivityItem = ({ activity }) => {
     const Icon = activity.icon;
+    const [isHovered, setIsHovered] = useState(false);
     const colors = {
-      order: 'text-blue-600 bg-blue-100',
-      user: 'text-green-600 bg-green-100',
-      payment: 'text-yellow-600 bg-yellow-100',
-      alert: 'text-red-600 bg-red-100'
+      order: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20',
+      user: 'text-green-600 bg-green-100 dark:bg-green-900/20',
+      payment: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20',
+      alert: 'text-red-600 bg-red-100 dark:bg-red-900/20'
     };
 
     return (
-      <div className="flex items-start space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-        <div className={`p-2 rounded-lg ${colors[activity.type] || colors.order}`}>
+      <div 
+        className={`flex items-start space-x-3 p-3 rounded-lg transition-all duration-300 transform ${
+          isHovered 
+            ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 scale-105 shadow-md' 
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className={`p-2 rounded-lg ${colors[activity.type] || colors.order} transition-transform duration-300 ${
+          isHovered ? 'scale-110 rotate-6' : ''
+        }`}>
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1">
-          <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
+          <p className="text-sm text-gray-900 dark:text-white font-medium">{activity.message}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
         </div>
+        {isHovered && (
+          <ChevronRight className="w-4 h-4 text-gray-400 animate-pulse" />
+        )}
       </div>
     );
   };
 
   // Main render sections
   const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Premium Welcome Banner */}
-      <div className="bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-yellow-500 rounded-3xl p-6 md:p-8 shadow-2xl">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div className="space-y-6 animate-fade-in">
+      {/* Premium Welcome Banner with enhanced animations */}
+      <div className="relative bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-yellow-500 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden group">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 w-60 h-60 bg-black rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <div className="w-12 h-12 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center transform transition-transform group-hover:rotate-12 group-hover:scale-110">
                 <Zap className="w-7 h-7 text-black" />
               </div>
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-black">
-                  Welcome back, {userData?.name || 'Admin'}! 👋
+                <h2 className="text-2xl md:text-3xl font-bold text-black flex items-center gap-2">
+                  Welcome back, {userData?.name || 'Admin'}! 
+                  <span className="inline-block animate-wave">👋</span>
                 </h2>
                 <p className="text-black/80 text-sm md:text-base">
                   Here's your platform overview for {mounted && currentDate ? currentDate.split(',')[0] : 'today'}
@@ -954,15 +998,15 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-4">
-              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl">
-                <CheckCircle className="w-4 h-4 text-black" />
+              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl transform transition-all hover:scale-105 hover:bg-black/30">
+                <CheckCircle className="w-4 h-4 text-black animate-pulse" />
                 <span className="text-sm font-semibold text-black">All Systems Online</span>
               </div>
-              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl">
+              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl transform transition-all hover:scale-105 hover:bg-black/30">
                 <Activity className="w-4 h-4 text-black" />
                 <span className="text-sm font-semibold text-black">{stats.totalUsers} Total Users</span>
               </div>
-              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl">
+              <div className="flex items-center space-x-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl transform transition-all hover:scale-105 hover:bg-black/30">
                 <TrendingUp className="w-4 h-4 text-black" />
                 <span className="text-sm font-semibold text-black">GHS {stats.totalRevenue.toLocaleString()} Revenue</span>
               </div>
@@ -971,7 +1015,7 @@ const AdminDashboard = () => {
           <div className="mt-4 md:mt-0 flex md:flex-col items-center md:items-end space-x-3 md:space-x-0 md:space-y-2">
             <button
               onClick={() => handleTabClick('control-center')}
-              className="px-4 py-2 bg-black text-[#FFCC08] rounded-xl hover:bg-gray-900 transition-all font-bold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="px-4 py-2 bg-black text-[#FFCC08] rounded-xl hover:bg-gray-900 transition-all font-bold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105 active:scale-95"
               disabled={navigationLoading}
             >
               {navigationLoading ? (
@@ -983,7 +1027,7 @@ const AdminDashboard = () => {
             </button>
             <button
               onClick={() => handleTabClick('reports')}
-              className="px-4 py-2 bg-white/20 backdrop-blur-sm text-black rounded-xl hover:bg-white/30 transition-all font-semibold text-sm"
+              className="px-4 py-2 bg-white/20 backdrop-blur-sm text-black rounded-xl hover:bg-white/30 transition-all font-semibold text-sm transform hover:scale-105 active:scale-95"
               disabled={navigationLoading}
             >
               {navigationLoading ? (
@@ -997,7 +1041,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid with stagger animation */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <StatCard
           title="Total Users"
@@ -1049,79 +1093,130 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* Charts and Activities */}
+      {/* Charts and Activities with enhanced design */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Chart - Enhanced with Recharts */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Revenue Trend</h3>
-            <select className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-[#FFCC08]">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 3 months</option>
-            </select>
-          </div>
+        {/* Enhanced Sales Chart */}
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
-          {/* Chart temporarily disabled due to Recharts D3 import issues */}
-          <div className="h-64 flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-xl">
-            <div className="text-center">
-              <BarChart3 className="w-16 h-16 text-yellow-500 dark:text-yellow-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Revenue Chart</h3>
-              <p className="text-gray-500 dark:text-gray-400">Chart temporarily disabled - Core functionality working</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">User count: {stats.totalUsers} | Orders: {stats.totalOrders}</p>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Revenue Trend</h3>
+              </div>
+              <select className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg border-0 focus:ring-2 focus:ring-[#FFCC08] transition-all hover:bg-gray-200 dark:hover:bg-gray-600">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+                <option>Last 3 months</option>
+              </select>
+            </div>
+            
+            <div className="h-64 flex items-center justify-center bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-800/20 rounded-xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="text-center relative z-10">
+                <div className="relative inline-block">
+                  <BarChart3 className="w-16 h-16 text-yellow-500 dark:text-yellow-400 mx-auto mb-3 animate-bounce" />
+                  <div className="absolute -top-1 -right-1">
+                    <Sparkles className="w-6 h-6 text-yellow-600 animate-pulse" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Revenue Analytics</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Chart visualization coming soon</p>
+                <div className="flex items-center justify-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-sm">
+                    <Users className="w-4 h-4 text-blue-500" />
+                    <span className="text-gray-700 dark:text-gray-300">{stats.totalUsers} Users</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-sm">
+                    <Package className="w-4 h-4 text-green-500" />
+                    <span className="text-gray-700 dark:text-gray-300">{stats.totalOrders} Orders</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Activities */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Recent Activities
-          </h3>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {recentActivities.length > 0 ? (
-              recentActivities.map(activity => (
-                <ActivityItem key={activity.id} activity={activity} />
-              ))
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">No recent activities</p>
-            )}
+        {/* Enhanced Recent Activities */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                  <Activity className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activities</h3>
+              </div>
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <MoreVertical className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+              {recentActivities.length > 0 ? (
+                recentActivities.map(activity => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Activity className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No recent activities</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-black mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button
-            onClick={() => setActiveTab('users')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
-          >
-            <UserCheck className="w-8 h-8 text-black mx-auto mb-2" />
-            <span className="text-sm font-medium text-black">Add User</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
-          >
-            <Package className="w-8 h-8 text-black mx-auto mb-2" />
-            <span className="text-sm font-medium text-black">New Order</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('products')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200"
-          >
-            <Package2 className="w-8 h-8 text-black mx-auto mb-2" />
-            <span className="text-sm font-medium text-black">Add Product</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all"
-          >
-            <FileText className="w-8 h-8 text-black mx-auto mb-2" />
-            <span className="text-sm font-medium text-black">Generate Report</span>
-          </button>
+      {/* Enhanced Quick Actions */}
+      <div className="relative bg-gradient-to-r from-[#FFCC08] via-yellow-400 to-yellow-500 rounded-2xl p-6 shadow-xl overflow-hidden group">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse" />
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-black/20 rounded-lg">
+              <Zap className="w-6 h-6 text-black" />
+            </div>
+            <h3 className="text-xl font-bold text-black">Quick Actions</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button
+              onClick={() => setActiveTab('users')}
+              className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200 transform hover:scale-105 hover:-translate-y-1 active:scale-95"
+            >
+              <UserCheck className="w-8 h-8 text-black mx-auto mb-2" />
+              <span className="text-sm font-medium text-black">Add User</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200 transform hover:scale-105 hover:-translate-y-1 active:scale-95"
+            >
+              <Package className="w-8 h-8 text-black mx-auto mb-2" />
+              <span className="text-sm font-medium text-black">New Order</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('products')}
+              className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200 transform hover:scale-105 hover:-translate-y-1 active:scale-95"
+            >
+              <Package2 className="w-8 h-8 text-black mx-auto mb-2" />
+              <span className="text-sm font-medium text-black">Add Product</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className="bg-black/10 hover:bg-black/20 backdrop-blur rounded-xl p-4 text-center transition-all duration-200 transform hover:scale-105 hover:-translate-y-1 active:scale-95"
+            >
+              <FileText className="w-8 h-8 text-black mx-auto mb-2" />
+              <span className="text-sm font-medium text-black">Generate Report</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1135,11 +1230,9 @@ const AdminDashboard = () => {
       return matchesSearch && matchesRole;
     });
 
-    // User action handlers
     const handleViewUser = async (userId) => {
       try {
         const userOrders = await adminAPI.user.getUserOrders(userId);
-        console.log('User orders:', userOrders);
         showNotification('User details loaded', 'success');
       } catch (error) {
         console.error('Failed to load user details:', error);
@@ -1148,7 +1241,6 @@ const AdminDashboard = () => {
     };
 
     const handleEditUser = (user) => {
-      console.log('Edit user:', user);
       setShowAddModal(true);
     };
 
@@ -1185,41 +1277,44 @@ const AdminDashboard = () => {
     };
 
     return (
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-6 animate-fade-in">
+        {/* Enhanced Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="w-7 h-7 text-[#FFCC08]" />
+              User Management
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all users and their permissions</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-xl hover:shadow-lg transition-all font-medium transform hover:scale-105 active:scale-95"
           >
             <Plus className="w-5 h-5" />
             <span>Add User</span>
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+        {/* Enhanced Filters */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 transition-colors group-hover:text-[#FFCC08]" />
                 <input
                   type="text"
                   placeholder="Search users by name or email..."
                   value={userSearchTerm}
                   onChange={(e) => setUserSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] transition-all hover:bg-gray-200 dark:hover:bg-gray-600"
                 />
               </div>
             </div>
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
+              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] transition-all hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
@@ -1228,28 +1323,28 @@ const AdminDashboard = () => {
               <option value="Dealer">Dealer</option>
               <option value="reporter">Reporter</option>
             </select>
-            <button className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <button className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all transform hover:scale-105 active:scale-95">
               <Filter className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Users Table - Responsive Design */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+        {/* Enhanced Users Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg transition-all overflow-hidden">
           {filteredUsers.length === 0 ? (
             <EmptyUsers />
           ) : (
             <>
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3 p-4">
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user, index) => (
                   <div 
                     key={user.id} 
-                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all transform hover:scale-102 animate-slide-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    {/* Header */}
                     <div className="flex items-start space-x-3 mb-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold text-lg flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold text-lg flex-shrink-0 shadow-md">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1270,7 +1365,7 @@ const AdminDashboard = () => {
                               : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
+                              user.status === 'active' ? 'bg-green-600 animate-pulse' : 'bg-red-600'
                             }`} />
                             {user.status}
                           </span>
@@ -1278,7 +1373,6 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     
-                    {/* Details */}
                     <div className="space-y-2 mb-3 text-sm">
                       <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                         <Phone className="w-4 h-4" />
@@ -1290,32 +1384,28 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     
-                    {/* Actions */}
                     <div className="pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-4 gap-2">
                       <button 
                         onClick={() => handleViewUser(user.id)}
-                        className="flex flex-col items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
-                        title="View Details"
+                        className="flex flex-col items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95 transform hover:scale-105"
                       >
                         <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">View</span>
                       </button>
                       <button
                         onClick={() => handleEditUser(user)}
-                        className="flex flex-col items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors active:scale-95"
-                        title="Edit User"
+                        className="flex flex-col items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-all active:scale-95 transform hover:scale-105"
                       >
                         <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">Edit</span>
                       </button>
                       <button
                         onClick={() => handleToggleUserStatus(user)}
-                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors active:scale-95 ${
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all active:scale-95 transform hover:scale-105 ${
                           user.isDisabled 
                             ? 'bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-900/30'
                             : 'bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200 dark:hover:bg-orange-900/30'
                         }`}
-                        title={user.isDisabled ? 'Enable User' : 'Disable User'}
                       >
                         {user.isDisabled ? 
                           <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
@@ -1331,8 +1421,7 @@ const AdminDashboard = () => {
                       </button>
                       <button 
                         onClick={() => handleDeleteUser(user)}
-                        className="flex flex-col items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors active:scale-95"
-                        title="Delete User"
+                        className="flex flex-col items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-all active:scale-95 transform hover:scale-105"
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                         <span className="text-[10px] text-red-600 dark:text-red-400 mt-1">Delete</span>
@@ -1344,115 +1433,119 @@ const AdminDashboard = () => {
 
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                        <Phone className="w-4 h-4" />
-                        <span className="text-sm">{user.phone}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
-                        user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
-                        user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.status === 'active' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          user.status === 'active' ? 'bg-green-600' : 'bg-red-600'
-                        }`} />
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(user.joinDate).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => handleViewUser(user.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleUserStatus(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          {user.isDisabled ? 
-                            <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
-                            <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                          }
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">User</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Contact</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Joined</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user, index) => (
+                      <tr 
+                        key={user.id} 
+                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-yellow-900/10 dark:hover:to-orange-900/10 transition-all duration-300 animate-slide-up"
+                        style={{ animationDelay: `${index * 0.03}s` }}
+                      >
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFCC08] to-yellow-500 flex items-center justify-center text-black font-bold shadow-md">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                            <Phone className="w-4 h-4" />
+                            <span className="text-sm">{user.phone}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' :
+                            user.role === 'seller' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                            user.role === 'Dealer' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.status === 'active' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                              user.status === 'active' ? 'bg-green-600 animate-pulse' : 'bg-red-600'
+                            }`} />
+                            {user.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(user.joinDate).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleViewUser(user.id)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110 active:scale-95"
+                            >
+                              <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                            </button>
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110 active:scale-95"
+                            >
+                              <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleUserStatus(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110 active:scale-95"
+                            >
+                              {user.isDisabled ? 
+                                <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" /> :
+                                <UserX className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              }
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110 active:scale-95"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Enhanced Pagination */}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Showing 1 to {Math.min(filteredUsers.length, 10)} of {filteredUsers.length} users
             </p>
             <div className="flex items-center space-x-2">
-              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all transform hover:scale-105 active:scale-95">
                 Previous
               </button>
-              <button className="px-3 py-1 text-sm bg-[#FFCC08] text-black rounded-lg">1</button>
-              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+              <button className="px-3 py-1 text-sm bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-lg shadow-md">1</button>
+              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all transform hover:scale-105 active:scale-95">
                 2
               </button>
-              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+              <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all transform hover:scale-105 active:scale-95">
                 Next
               </button>
             </div>
@@ -1475,7 +1568,6 @@ const AdminDashboard = () => {
       failed: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
     };
 
-    // Order action handlers
     const handleUpdateOrderStatus = async (order) => {
       const newStatus = prompt(
         `Update order status for ${order.id}\nCurrent status: ${order.status}\n\nEnter new status (pending, processing, completed, failed):`
@@ -1498,36 +1590,39 @@ const AdminDashboard = () => {
     };
 
     return (
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-6 animate-fade-in">
+        {/* Enhanced Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Orders Management</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Package className="w-7 h-7 text-[#FFCC08]" />
+              Orders Management
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Track and manage all customer orders</p>
           </div>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC08] text-black rounded-xl hover:bg-yellow-500 transition-colors font-medium">
+          <button className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-xl hover:shadow-lg transition-all font-medium transform hover:scale-105 active:scale-95">
             <Plus className="w-5 h-5" />
             <span>New Order</span>
           </button>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-yellow-500">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-yellow-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
             <p className="text-sm text-gray-600 dark:text-gray-400">Pending Orders</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.pendingOrders}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-blue-500">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-blue-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
             <p className="text-sm text-gray-600 dark:text-gray-400">Processing</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
               {orders.filter(o => o.status === 'processing').length}
             </p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-green-500">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-green-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
             <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.completedOrders}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-red-500">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-l-4 border-red-500 hover:shadow-lg transition-all transform hover:-translate-y-1">
             <p className="text-sm text-gray-600 dark:text-gray-400">Cancelled</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
               {orders.filter(o => o.status === 'cancelled').length}
@@ -1535,16 +1630,16 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-1 inline-flex">
+        {/* Enhanced Filter Tabs */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-1 inline-flex shadow-md">
           {['all', 'pending', 'processing', 'completed', 'cancelled'].map((status) => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all transform ${
                 filterStatus === status
-                  ? 'bg-[#FFCC08] text-black'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-lg scale-105'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -1552,20 +1647,20 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Orders List - Responsive Design */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+        {/* Enhanced Orders List */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg transition-all overflow-hidden">
           {filteredOrders.length === 0 ? (
             <EmptyOrders />
           ) : (
             <>
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3 p-4">
-                {filteredOrders.map((order) => (
+                {filteredOrders.map((order, index) => (
                   <div 
                     key={order.id} 
-                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                    className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all transform hover:scale-102 animate-slide-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    {/* Header */}
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center space-x-2 mb-1">
@@ -1579,7 +1674,6 @@ const AdminDashboard = () => {
                       </span>
                     </div>
                     
-                    {/* Details */}
                     <div className="space-y-2 mb-3">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 dark:text-gray-400">Product:</span>
@@ -1599,17 +1693,16 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     
-                    {/* Actions */}
                     <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex space-x-2">
                       <button 
                         onClick={() => handleUpdateOrderStatus(order)}
-                        className="flex-1 px-3 py-2 bg-[#FFCC08] text-black rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors active:scale-95"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black rounded-lg text-sm font-medium hover:shadow-lg transition-all active:scale-95 transform hover:scale-105"
                       >
                         Update Status
                       </button>
                       <button 
                         onClick={() => handleViewOrderDetails(order)}
-                        className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
+                        className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95 transform hover:scale-105"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -1620,61 +1713,65 @@ const AdminDashboard = () => {
 
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                    {filteredOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-2">
-                          <Hash className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
-                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
-                      <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                        GHS {order.amount.toFixed(2)}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
-                        {order.date.toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => handleUpdateOrderStatus(order)}
-                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium hover:underline"
-                          >
-                              Update
-                          </button>
-                          <button
-                            onClick={() => handleViewOrderDetails(order)}
-                              className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm hover:underline"
-                          >
-                            Details
-                          </button>
-                        </div>
-                      </td>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Order ID</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Customer</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Product</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order, index) => (
+                      <tr 
+                        key={order.id} 
+                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-yellow-900/10 dark:hover:to-orange-900/10 transition-all duration-300 animate-slide-up"
+                        style={{ animationDelay: `${index * 0.03}s` }}
+                      >
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <Hash className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">{order.id}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.customer}</td>
+                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{order.product}</td>
+                        <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">
+                          GHS {order.amount.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">
+                          {order.date.toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleUpdateOrderStatus(order)}
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium hover:underline transition-all transform hover:scale-110"
+                            >
+                              Update
+                            </button>
+                            <button
+                              onClick={() => handleViewOrderDetails(order)}
+                              className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-sm hover:underline transition-all transform hover:scale-110"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
         </div>
@@ -1683,7 +1780,6 @@ const AdminDashboard = () => {
   };
 
   const renderContent = () => {
-    // Show skeleton on initial load
     if (loading && activeTab === 'overview') {
       return <SkeletonDashboard />;
     }
@@ -1713,7 +1809,6 @@ const AdminDashboard = () => {
       case 'transactions':
       case 'reports':
       case 'settings':
-        // These tabs navigate to separate pages, so show loading while navigating
         return (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />
@@ -1726,46 +1821,56 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" style={{ 
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" style={{ 
       WebkitOverflowScrolling: 'touch',
       touchAction: 'manipulation'
     }}>
-      {/* Notification Toast */}
+      {/* Enhanced Notification Toast with animation */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center space-x-3 ${
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl flex items-center space-x-3 animate-slide-down ${
           notification.type === 'success' 
-            ? 'bg-green-500 text-white' 
-            : 'bg-red-500 text-white'
+            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
+            : notification.type === 'warning'
+            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+            : 'bg-gradient-to-r from-red-500 to-red-600 text-white'
         }`}>
-          {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+          {notification.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 animate-bounce" />
+          ) : notification.type === 'warning' ? (
+            <AlertTriangle className="w-5 h-5 animate-pulse" />
+          ) : (
+            <XCircle className="w-5 h-5 animate-pulse" />
+          )}
           <span className="font-medium">{notification.message}</span>
-          <button onClick={() => setNotification(null)} className="ml-4">
+          <button 
+            onClick={() => setNotification(null)} 
+            className="ml-4 hover:bg-white/20 rounded-lg p-1 transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Mobile Overlay with better touch handling */}
+      {/* Enhanced Mobile Overlay */}
       {sidebarOpen && !isDesktop && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30 animate-fade-in"
           onClick={() => setSidebarOpen(false)}
           onTouchStart={(e) => {
-            // Prevent scrolling when overlay is touched
             e.preventDefault();
           }}
           style={{ touchAction: 'none' }}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-xl transition-all duration-300 z-40 ${
+      {/* Enhanced Sidebar */}
+      <aside className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 z-40 ${
         sidebarOpen ? 'w-64' : 'w-20'
       } ${sidebarOpen || isDesktop ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-[#FFCC08] to-yellow-500 rounded-xl flex items-center justify-center shadow-lg transform hover:rotate-12 transition-transform">
               <Zap className="w-6 h-6 text-black" />
             </div>
             {sidebarOpen && (
@@ -1777,96 +1882,115 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        {/* Navigation */}
-        <nav className="p-4">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  handleTabClick(item.id);
-                  // Close sidebar on mobile after selection
-                  if (!isDesktop) {
-                    setSidebarOpen(false);
-                  }
-                }}
-                onMouseEnter={() => {
-                  // Prefetch route on hover for faster navigation
-                  const navigationTabs = {
-                    'control-center': '/admin/control-center',
-                    'users': '/admin/users',
-                    'user-management': '/admin/user-management',
-                    'agents': '/admin/agents',
-                    'agent-stores': '/admin/agent-stores',
-                    'orders': '/admin/orders',
-                    'products': '/admin/products',
-                    
-                    // Phase 1: Performance & Monitoring
-                    'performance': '/admin/performance',
-                    'financial': '/admin/financial',
-                    'security': '/admin/security',
-                    
-                    // Phase 2: Customer Support & Content
-                    'support': '/admin/support',
-                    'content': '/admin/content',
-                    'marketing': '/admin/marketing',
-                    
-                    // Phase 3: Advanced Features
-                    'inventory': '/admin/inventory',
-                    'automation': '/admin/automation',
-                    'integrations': '/admin/integrations',
-                    'mobile': '/admin/mobile',
-                    
-                    // Communication & Analytics
-                    'notifications': '/admin/notifications',
-                    'bulk-messaging': '/admin/bulk-messaging',
-                    'package-management': '/admin/package-management',
-                    'analytics': '/admin/analytics',
-                    'transactions': '/admin/transactions',
-                    'reports': '/admin/reports',
-                    'settings': '/admin/settings'
-                  };
-                  
-                  if (navigationTabs[item.id] && !prefetchedRoutes.has(navigationTabs[item.id])) {
-                    prefetchRoute(navigationTabs[item.id]);
-                  }
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all mb-2 ${
-                  isActive
-                    ? item.highlight 
-                      ? 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-lg'
-                      : 'bg-[#FFCC08] text-black'
-                    : item.highlight
-                      ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 text-[#FFCC08] hover:from-yellow-100 hover:to-orange-100'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && (
-                  <>
-                    <span className="font-medium">{item.label}</span>
-                    {item.badge && item.badge > 0 && (
-                      <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
-                        isActive ? 'bg-black text-[#FFCC08]' : 'bg-[#FFCC08] text-black'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+        {/* Scrollable Navigation */}
+        <div className="relative">
+          {canScrollLeft && (
+            <button
+              onClick={() => scrollNav('left')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+          )}
 
-        {/* User Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
+          {canScrollRight && (
+            <button
+              onClick={() => scrollNav('right')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform hover:scale-110"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+          )}
+
+          <nav 
+            ref={navScrollRef}
+            className="flex space-x-2 p-4 overflow-x-auto scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            {sidebarItems.map((item, index) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    handleTabClick(item.id);
+                    if (!isDesktop) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    const navigationTabs = {
+                      'control-center': '/admin/control-center',
+                      'users': '/admin/users',
+                      'user-management': '/admin/user-management',
+                      'agents': '/admin/agents',
+                      'agent-stores': '/admin/agent-stores',
+                      'orders': '/admin/orders',
+                      'products': '/admin/products',
+                      'performance': '/admin/performance',
+                      'financial': '/admin/financial',
+                      'security': '/admin/security',
+                      'support': '/admin/support',
+                      'content': '/admin/content',
+                      'marketing': '/admin/marketing',
+                      'inventory': '/admin/inventory',
+                      'automation': '/admin/automation',
+                      'integrations': '/admin/integrations',
+                      'mobile': '/admin/mobile',
+                      'notifications': '/admin/notifications',
+                      'bulk-messaging': '/admin/bulk-messaging',
+                      'package-management': '/admin/package-management',
+                      'analytics': '/admin/analytics',
+                      'transactions': '/admin/transactions',
+                      'reports': '/admin/reports',
+                      'settings': '/admin/settings'
+                    };
+                    
+                    if (navigationTabs[item.id] && !prefetchedRoutes.has(navigationTabs[item.id])) {
+                      prefetchRoute(navigationTabs[item.id]);
+                    }
+                  }}
+                  className={`flex items-center space-x-2 px-3 py-2.5 rounded-xl transition-all whitespace-nowrap flex-shrink-0 transform hover:scale-105 active:scale-95 animate-slide-up ${
+                    isActive
+                      ? item.highlight 
+                        ? 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-xl scale-105'
+                        : 'bg-gradient-to-r from-[#FFCC08] to-yellow-500 text-black shadow-lg'
+                      : item.highlight
+                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 text-[#FFCC08] hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/20 dark:hover:to-orange-900/20'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600'
+                  }`}
+                  style={{ animationDelay: `${index * 0.02}s` }}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && (
+                    <>
+                      <span className="font-medium text-sm">{item.label}</span>
+                      {item.badge && item.badge > 0 && (
+                        <span className={`px-1.5 py-0.5 text-xs rounded-full animate-pulse ${
+                          isActive ? 'bg-black text-[#FFCC08]' : 'bg-[#FFCC08] text-black'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Enhanced User Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-900 dark:to-transparent">
           {sidebarOpen ? (
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                 {userData?.name?.charAt(0).toUpperCase() || 'A'}
               </div>
               <div className="flex-1">
@@ -1877,17 +2001,17 @@ const AdminDashboard = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-all transform hover:scale-110 active:scale-95"
               >
-                <LogOut className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
               </button>
             </div>
           ) : (
             <button
               onClick={handleLogout}
-              className="w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors flex justify-center"
+              className="w-full p-3 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-xl transition-all flex justify-center transform hover:scale-110 active:scale-95"
             >
-              <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />
             </button>
           )}
         </div>
@@ -1895,38 +2019,43 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'} ml-0`}>
-        {/* Top Bar */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+        {/* Enhanced Top Bar */}
+        <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-4 md:px-6 py-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 onTouchStart={(e) => {
-                  // Better touch handling for mobile
                   e.currentTarget.style.transform = 'scale(0.95)';
                 }}
                 onTouchEnd={(e) => {
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 active:scale-95 touch-manipulation"
-                style={{ minWidth: '44px', minHeight: '44px' }} // Better touch target size
+                className="p-2 hover:bg-gradient-to-r hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/20 dark:hover:to-orange-900/20 rounded-lg transition-all duration-150 active:scale-95 touch-manipulation transform hover:scale-110"
+                style={{ minWidth: '44px', minHeight: '44px' }}
               >
                 <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white capitalize">
-                {activeTab === 'overview' ? 'Dashboard Overview' : activeTab.replace('-', ' ')}
-              </h1>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white capitalize">
+                  {activeTab === 'overview' ? 'Dashboard Overview' : activeTab.replace('-', ' ')}
+                </h1>
+                {pulseAnimation && (
+                  <p className="text-xs text-green-500 dark:text-green-400 animate-pulse">● Live updating...</p>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+              <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all transform hover:scale-110 active:scale-95">
                 <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-ping" />
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
               </button>
               <button
                 onClick={loadDashboardData}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Refresh dashboard data"
+                className="p-2 hover:bg-gradient-to-r hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/20 dark:hover:to-orange-900/20 rounded-lg transition-all transform hover:scale-110 active:scale-95"
+                title="Refresh dashboard data (Ctrl+R or F5)"
               >
                 <RefreshCw className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
@@ -1935,18 +2064,28 @@ const AdminDashboard = () => {
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {mounted ? currentDate : 'Loading...'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {mounted ? currentTime : '--:--'}
+                <div className="flex items-center justify-end space-x-2 text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {mounted ? currentTime : '--:--'}
+                  </span>
                   {isRefreshing && (
-                    <span className="ml-2 text-green-500 text-xs">● Refreshing</span>
+                    <span className="flex items-center text-green-500">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1" />
+                      Refreshing
+                    </span>
                   )}
                   {lastRefreshDisplay && !isRefreshing && (
-                    <span className="ml-2 text-blue-500 text-xs">● Last: {lastRefreshDisplay}</span>
+                    <span className="text-blue-500">
+                      ● Last: {lastRefreshDisplay}
+                    </span>
                   )}
                   {navigationLoading && (
-                    <span className="ml-2 text-purple-500 text-xs">● Navigating...</span>
+                    <span className="flex items-center text-purple-500">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse mr-1" />
+                      Navigating
+                    </span>
                   )}
-                </p>
+                </div>
               </div>
             </div>
           </div>
@@ -1954,7 +2093,7 @@ const AdminDashboard = () => {
 
         {/* Debug Panel - Only show in development */}
         {DEBUG_MODE && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-2">
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-4">
                 <span className="font-medium text-yellow-800 dark:text-yellow-200">Debug Mode</span>
@@ -1972,30 +2111,12 @@ const AdminDashboard = () => {
                   console.log('API Base URL:', API_BASE_URL);
                   console.log('Auth Token:', isAuthenticated && user ? 'Present' : 'Missing');
                   console.log('Auth State:', { isAuthenticated, user, userData });
-                  
-                  // Debug auth utilities
                   console.log('Auth Utilities Debug:');
                   console.log('- getAuthToken():', getAuthToken() ? 'Present' : 'Missing');
                   console.log('- getCurrentUser():', getCurrentUser());
                   console.log('- checkIsAuthenticated():', checkIsAuthenticated());
-                  
-                  // Debug localStorage
-                  console.log('LocalStorage Debug:');
-                  Object.keys(localStorage).forEach(key => {
-                    if (key.includes('auth') || key.includes('token') || key.includes('user')) {
-                      console.log(`- ${key}:`, localStorage.getItem(key));
-                    }
-                  });
-                  
-                  // Debug sessionStorage
-                  console.log('SessionStorage Debug:');
-                  Object.keys(sessionStorage).forEach(key => {
-                    if (key.includes('auth') || key.includes('token') || key.includes('user')) {
-                      console.log(`- ${key}:`, sessionStorage.getItem(key));
-                    }
-                  });
                 }}
-                className="text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
+                className="text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100 transition-colors"
               >
                 Log Debug Info
               </button>
@@ -2003,26 +2124,109 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Page Content with better mobile padding */}
+        {/* Page Content */}
         <div className="p-2 sm:p-4 md:p-6 pb-20">
-          {/* Mobile Debug Info (only in development) */}
-          {process.env.NODE_ENV === 'development' && !isDesktop && (
-            <div className="mb-4 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg text-xs">
-              <p>Mobile View: {typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'Loading...'}</p>
-              <p>Sidebar: {sidebarOpen ? 'Open' : 'Closed'}</p>
-              <p>Desktop: {isDesktop ? 'Yes' : 'No'}</p>
-            </div>
-          )}
-          
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <RefreshCw className="w-8 h-8 text-[#FFCC08] animate-spin" />
+              <div className="text-center">
+                <RefreshCw className="w-12 h-12 text-[#FFCC08] animate-spin mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 animate-pulse">Loading amazing content...</p>
+              </div>
             </div>
           ) : (
             renderContent()
           )}
         </div>
       </main>
+
+      {/* Custom Styles */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes wave {
+          0%, 100% {
+            transform: rotate(0deg);
+          }
+          25% {
+            transform: rotate(20deg);
+          }
+          75% {
+            transform: rotate(-20deg);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.5s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.5s ease-out;
+        }
+
+        .animate-wave {
+          display: inline-block;
+          animation: wave 2s ease-in-out infinite;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #FFCC08;
+          border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #f0b700;
+        }
+
+        .hover\:scale-102:hover {
+          transform: scale(1.02);
+        }
+      `}</style>
     </div>
   );
 };

@@ -233,10 +233,52 @@ router.post('/bulk-purchase-data', async (req, res) => {
     // *** IMPORTANT: We'll first update the local database before making API call ***
     // This prevents the MongoDB transaction from timing out during the API call
     
-    // Update user wallet balance first
+    // Update user wallet balance first - FIXED: Update both User.walletBalance and Wallet.balance
     const previousBalance = user.walletBalance;
     user.walletBalance -= totalCost;
+    
+    // Also update Wallet collection for consistency
+    const { Wallet } = require('../schema/schema');
+    let wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        currency: 'GHS',
+        frozen: false,
+        transactions: []
+      });
+    }
+    
+    const walletBalanceBefore = wallet.balance;
+    wallet.balance -= totalCost;
+    wallet.lastTransaction = new Date();
+    
+    // Add transaction record to wallet
+    wallet.transactions.push({
+      type: 'purchase',
+      amount: -totalCost,
+      balanceBefore: walletBalanceBefore,
+      balanceAfter: wallet.balance,
+      description: `Bulk data purchase: ${validatedOrders.length} orders`,
+      reference: `BULK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      status: 'completed',
+      metadata: {
+        gateway: 'wallet',
+        orderCount: validatedOrders.length,
+        totalCost,
+        orders: validatedOrders.map(order => ({
+          phoneNumber: order.phoneNumber.substring(0, 3) + 'XXXXXXX',
+          network: order.network,
+          capacity: order.capacity,
+          price: order.price
+        }))
+      },
+      createdAt: new Date()
+    });
+    
     await user.save({ session });
+    await wallet.save({ session });
     
     // Check agent balance - this call is outside the transaction
     let agentBalanceResponse;

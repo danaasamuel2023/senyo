@@ -3,7 +3,10 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
-const { User, DataPurchase, Transaction, DataInventory } = require('../schema/schema');
+const { User, DataPurchase, Transaction, DataInventory, Wallet } = require('../schema/schema');
+const { handleFallbackPurchase } = require('../../../fallback-purchase-handler');
+const fallbackPricing = require('../../../fallback-pricing.json');
+
 const dotenv = require('dotenv');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -565,6 +568,7 @@ router.post('/purchase-data', async (req, res) => {
     }
 
     // Find user
+    console.log(`[PURCHASE_DEBUG] Fetching user: ${userId}`);
     const user = await User.findById(userId).session(session);
     if (!user) {
       logOperation('DATA_PURCHASE_USER_NOT_FOUND', { userId });
@@ -576,6 +580,16 @@ router.post('/purchase-data', async (req, res) => {
         status: 'error',
         message: 'User not found'
       });
+    }
+    console.log(`[PURCHASE_DEBUG] User found: ${user.email}, walletBalance: ${user.walletBalance}`);
+
+    // Sync User.walletBalance with Wallet.balance if they differ
+    let syncWallet = await Wallet.findOne({ userId }).session(session);
+    console.log(`[PURCHASE_DEBUG] User.walletBalance: ${user.walletBalance}, Wallet.balance: ${syncWallet?.balance || 'N/A'}`);
+    if (syncWallet && user.walletBalance !== syncWallet.balance) {
+      console.log(`[PURCHASE_SYNC] Syncing User.walletBalance (${user.walletBalance}) with Wallet.balance (${syncWallet.balance})`);
+      user.walletBalance = syncWallet.balance;
+      await user.save({ session });
     }
 
     const validatedPrice = priceValidation.validatedPrice;
@@ -931,6 +945,49 @@ router.post('/purchase-data', async (req, res) => {
         processingMethod: 'manual',
         skipReason: 'API disabled for network'
       };
+    
+    // Check if DataMart API is available, otherwise use fallback
+    let shouldUseFallback = false;
+    try {
+      // Quick API health check
+      await datamartClient.get('/api/data-packages', { timeout: 2000 });
+    } catch (error) {
+      shouldUseFallback = true;
+      logOperation('DATAMART_API_UNAVAILABLE', {
+        error: error.message,
+        fallbackMode: true,
+        orderReference
+      });
+    }
+    
+    if (shouldUseFallback) {
+      // Use fallback purchase handler
+      const fallbackResult = await handleFallbackPurchase(userId, phoneNumber, network, capacity, validatedPrice);
+      
+      if (fallbackResult.status === 'success') {
+        orderStatus = 'pending';
+        apiOrderId = fallbackResult.data.orderReference;
+        orderResponse = fallbackResult.data;
+        processingMethod = 'fallback';
+        shouldSkipGeonet = true;
+        
+        logOperation('FALLBACK_PURCHASE_SUCCESS', {
+          orderReference: fallbackResult.data.orderReference,
+          network,
+          capacity,
+          price: validatedPrice,
+          processingMethod: 'fallback'
+        });
+      } else {
+        await session.abortTransaction();
+        session.endSession();
+        
+        return res.status(400).json({
+          status: 'error',
+          message: fallbackResult.message,
+          processingMethod: 'fallback'
+        });
+      }
     } else {
       // Use DataMart API for other networks (YELLO, at)
       processingMethod = 'datamart_api';
@@ -1043,9 +1100,44 @@ router.post('/purchase-data', async (req, res) => {
       originalReference: (network === 'TELECEL' && inventory?.skipGeonettech) ? originalInternalReference : null
     });
 
-    // Update user wallet
+    // Update user wallet - FIXED: Update both User.walletBalance and Wallet.balance
     const previousBalance = user.walletBalance;
     user.walletBalance -= validatedPrice;
+
+    // Also update Wallet collection for consistency
+    let wallet = await Wallet.findOne({ userId }).session(session);
+    if (!wallet) {
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        currency: 'GHS',
+        frozen: false,
+        transactions: []
+      });
+    }
+    
+    const walletBalanceBefore = wallet.balance;
+    wallet.balance -= validatedPrice;
+    wallet.lastTransaction = new Date();
+    
+    // Add transaction record to wallet
+    wallet.transactions.push({
+      type: 'purchase',
+      amount: -validatedPrice,
+      balanceBefore: walletBalanceBefore,
+      balanceAfter: wallet.balance,
+      description: `Data purchase: ${capacity}GB ${network} for ${phoneNumber}`,
+      reference: transactionReference,
+      status: 'completed',
+      metadata: {
+        gateway: 'wallet',
+        orderId: dataPurchase._id,
+        phoneNumber: phoneNumber.substring(0, 3) + 'XXXXXXX',
+        network,
+        capacity
+      },
+      createdAt: new Date()
+    });
 
     // Link transaction to purchase
     transaction.relatedPurchaseId = dataPurchase._id;
@@ -1054,6 +1146,7 @@ router.post('/purchase-data', async (req, res) => {
     await transaction.save({ session });
     await dataPurchase.save({ session });
     await user.save({ session });
+    await wallet.save({ session });
 
     // Commit transaction
     await session.commitTransaction();
@@ -1102,7 +1195,7 @@ router.post('/purchase-data', async (req, res) => {
         usedTelecelAPI: processingMethod === 'telecel_api'
       }
     });
-
+  }
   } catch (error) {
     if (session) {
       await session.abortTransaction();
@@ -1124,12 +1217,12 @@ router.post('/purchase-data', async (req, res) => {
       message: 'Could not complete your purchase. Please try again later.'
     });
   }
-});
+  });
 
-// Check Order Status (Updated to handle DataMart API)
-router.get('/order-status/:orderId', async (req, res) => {
-  try {
-    // Ensure database connection is ready
+  // Check Order Status (Updated to handle DataMart API)
+  router.get('/order-status/:orderId', async (req, res) => {
+    try {
+      // Ensure database connection is ready
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
@@ -1572,7 +1665,6 @@ router.get('/user-dashboard/:userId', authMiddleware, async (req, res) => {
     }
 
     // Get actual wallet balance from Wallet collection
-    const { Wallet } = require('../schema/schema');
     let wallet = await Wallet.findOne({ userId: userId });
     
     // Create wallet if it doesn't exist

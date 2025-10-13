@@ -420,13 +420,20 @@ router.post('/add-funds', verifyAuth, async (req, res) => {
     wallet.lastTransaction = new Date();
     await wallet.save();
 
+    // Update User.walletBalance to sync with Wallet.balance
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.walletBalance = wallet.balance;
+      await user.save();
+    }
+
     // Send email notification if user has email
     try {
-      const user = await User.findById(req.user._id).select('email firstName lastName');
-      if (user && user.email) {
+      const userForEmail = await User.findById(req.user._id).select('email firstName lastName');
+      if (userForEmail && userForEmail.email) {
         await sendTransactionReceipt({
-          to: user.email,
-          name: `${user.firstName} ${user.lastName}`,
+          to: userForEmail.email,
+          name: `${userForEmail.firstName} ${userForEmail.lastName}`,
           transaction,
           type: 'deposit'
         });
@@ -556,13 +563,20 @@ router.post('/deduct', verifyAuth, async (req, res) => {
     wallet.lastTransaction = new Date();
     await wallet.save();
 
+    // Update User.walletBalance to sync with Wallet.balance
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.walletBalance = wallet.balance;
+      await user.save();
+    }
+
     // Send email notification if user has email
     try {
-      const user = await User.findById(req.user._id).select('email firstName lastName');
-      if (user && user.email) {
+      const userForEmail = await User.findById(req.user._id).select('email firstName lastName');
+      if (userForEmail && userForEmail.email) {
         await sendTransactionReceipt({
-          to: user.email,
-          name: `${user.firstName} ${user.lastName}`,
+          to: userForEmail.email,
+          name: `${userForEmail.firstName} ${userForEmail.lastName}`,
           transaction,
           type: 'purchase',
           productDetails

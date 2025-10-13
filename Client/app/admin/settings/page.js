@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import adminAPI from '../../../utils/adminApi';
+import { getAuthToken, getCurrentUser, isAuthenticated } from '../../../utils/auth';
 import {
   Settings, Save, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, X,
   DollarSign, Wallet, TrendingUp, TrendingDown, Package, Wifi,
@@ -55,25 +56,11 @@ const AdminSettingsPage = () => {
 
   const checkAuth = () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const userDataString = localStorage.getItem('userData');
+      const token = getAuthToken();
+      const user = getCurrentUser();
       
-      if (!token) {
-        console.error('No auth token found');
-        router.push('/SignIn');
-        return false;
-      }
-
-      if (!userDataString) {
-        console.error('No user data found');
-        router.push('/SignIn');
-        return false;
-      }
-
-      const user = JSON.parse(userDataString);
-      
-      if (user.role !== 'admin') {
-        console.error('User is not an admin');
+      if (!isAuthenticated() || !user || user.role !== 'admin') {
+        console.error('Authentication failed or user is not admin');
         router.push('/SignIn');
         return false;
       }

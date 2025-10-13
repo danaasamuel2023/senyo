@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuthToken, getCurrentUser, isAuthenticated } from '../../../utils/auth';
 import { 
   Package, Plus, Edit, Save, X, Trash2, ToggleLeft, ToggleRight,
   RefreshCw, Search, Filter, Eye, EyeOff, DollarSign, Zap,
@@ -62,30 +63,17 @@ const AdminPackageManagement = () => {
 
   // Check authentication
   const checkAuth = useCallback(() => {
-    const token = localStorage.getItem('authToken');
-    const userDataStr = localStorage.getItem('userData');
+    const token = getAuthToken();
+    const user = getCurrentUser();
     
-    if (!token) {
+    if (!isAuthenticated() || !user || user.role !== 'admin') {
+      showNotification('Access denied. Admin privileges required.', 'error');
       router.push('/SignIn');
       return false;
     }
     
-    try {
-      const user = JSON.parse(userDataStr || '{}');
-      
-      if (user.role !== 'admin') {
-        showNotification('Access denied. Admin privileges required.', 'error');
-        router.push('/SignIn');
-        return false;
-      }
-      
-      setUserData(user);
-      return true;
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/SignIn');
-      return false;
-    }
+    setUserData(user);
+    return true;
   }, [router]);
 
   // Show notification

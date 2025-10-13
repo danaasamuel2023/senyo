@@ -276,8 +276,42 @@ router.put('/users/:id',auth, adminAuth, async (req, res) => {
     if (email) userFields.email = email;
     if (phoneNumber) userFields.phoneNumber = phoneNumber;
     if (role) userFields.role = role;
-    if (walletBalance !== undefined) userFields.walletBalance = walletBalance;
     if (referralCode) userFields.referralCode = referralCode;
+    
+    // Handle wallet balance update separately to ensure sync
+    if (walletBalance !== undefined) {
+      const WalletService = require('../services/walletService');
+      const currentUser = await User.findById(req.params.id);
+      
+      if (!currentUser) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
+      
+      const balanceDifference = walletBalance - currentUser.walletBalance;
+      
+      if (balanceDifference !== 0) {
+        const result = await WalletService.updateWalletBalance(
+          req.params.id,
+          balanceDifference,
+          'admin-adjustment',
+          {
+            description: 'Admin wallet balance adjustment',
+            adminId: req.user._id,
+            adminName: req.user.name,
+            oldBalance: currentUser.walletBalance,
+            newBalance: walletBalance
+          }
+        );
+        
+        if (!result.success) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Failed to update wallet balance',
+            error: result.error 
+          });
+        }
+      }
+    }
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -620,9 +654,25 @@ router.put('/admin/orders/:id/status', auth, adminAuth, async (req, res) => {
         const user = await User.findById(order.userId._id).session(session);
         
         if (user) {
-          // Add the refund amount to the user's wallet balance
-          user.walletBalance += order.price;
-          await user.save({ session });
+          // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+          const WalletService = require('../services/walletService');
+          const result = await WalletService.updateWalletBalance(
+            user._id,
+            order.price,
+            'refund',
+            {
+              description: 'Order refund',
+              orderId: order._id,
+              geonetReference: order.geonetReference,
+              previousStatus,
+              adminId: req.user.id
+            }
+          );
+          
+          if (!result.success) {
+            console.error(`Failed to refund ${order.price} to user ${user._id}:`, result.error);
+            // Continue with transaction record creation even if wallet update fails
+          }
           
           // Create refund transaction record
           const transaction = new Transaction({
@@ -792,9 +842,25 @@ router.post('/admin/orders/bulk-status-update', auth, adminAuth, async (req, res
               const user = await User.findById(order.userId).session(session);
               
               if (user) {
-                // Add the refund amount to the user's wallet balance
-                user.walletBalance += order.price;
-                await user.save({ session });
+                // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+                const WalletService = require('../services/walletService');
+                const result = await WalletService.updateWalletBalance(
+                  user._id,
+                  order.price,
+                  'refund',
+                  {
+                    description: 'Order refund',
+                    orderId: order._id,
+                    geonetReference: order.geonetReference,
+                    previousStatus,
+                    adminId: req.user.id
+                  }
+                );
+                
+                if (!result.success) {
+                  console.error(`Failed to refund ${order.price} to user ${user._id}:`, result.error);
+                  // Continue with transaction record creation even if wallet update fails
+                }
                 
                 // Create refund transaction record
                 const transaction = new Transaction({
@@ -1259,14 +1325,33 @@ router.get('/verify-paystack/:reference', auth, adminAuth, async (req, res) => {
           // Update user's wallet balance for successful payment
           const user = await User.findById(transaction.userId);
           if (user) {
-            const previousBalance = user.walletBalance;
-            user.walletBalance += transaction.amount;
-            await user.save();
+            // Use WalletService to ensure both User.walletBalance and Wallet.balance are updated
+            const WalletService = require('../services/walletService');
+            const result = await WalletService.updateWalletBalance(
+              user._id,
+              transaction.amount,
+              'manual-deposit',
+              {
+                description: 'Manual deposit by admin',
+                adminId: req.user._id,
+                adminName: req.user.name,
+                transactionId: transaction._id
+              }
+            );
+            
+            if (!result.success) {
+              console.error(`Failed to update wallet for user ${user._id}:`, result.error);
+              return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to update user wallet',
+                error: result.error 
+              });
+            }
             
             console.log(`[ADMIN_VERIFY] ✅ User ${user._id} wallet updated via admin verification`);
-            console.log(`[ADMIN_VERIFY]    Previous balance: GHS ${previousBalance}`);
+            console.log(`[ADMIN_VERIFY]    Previous balance: GHS ${user.walletBalance - transaction.amount}`);
             console.log(`[ADMIN_VERIFY]    Deposit amount: GHS ${transaction.amount}`);
-            console.log(`[ADMIN_VERIFY]    New balance: GHS ${user.walletBalance}`);
+            console.log(`[ADMIN_VERIFY]    New balance: GHS ${result.newBalance}`);
           }
         }
         
