@@ -142,7 +142,15 @@ function getUserRoleFromToken(request) {
     
     // Check if token is a bypass token (simple format)
     if (token.includes('bypass-token') || token.includes('client-token') || token.includes('fallback-token') || token.includes('immediate-bypass-token') || token.includes('error-bypass-token')) {
-      console.log('✅ Bypass token detected, allowing access');
+      console.log('✅ Bypass token detected, checking for admin role');
+      
+      // Check if this is an admin bypass token by looking at the token type
+      if (token.includes('admin-bypass') || token.includes('ADMIN_BYPASS')) {
+        console.log('✅ Admin bypass token detected');
+        return 'admin';
+      }
+      
+      console.log('✅ Regular bypass token detected, allowing access');
       return 'user'; // Default role for bypass tokens
     }
     

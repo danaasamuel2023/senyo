@@ -65,7 +65,7 @@ const checkAdminUser = async () => {
       
       // Test password for the specific admin we just created
       if (admin.email === 'sunumanfred14@gmail.com') {
-        const testPassword = 'Kingfred4190$';
+        const testPassword = 'admin123'; // Updated password after reset
         const isValid = await bcrypt.compare(testPassword, admin.password);
         console.log(`\n🔐 Password test for ${admin.email}:`);
         console.log(`   Password is ${isValid ? '✅ VALID' : '❌ INVALID'}`);

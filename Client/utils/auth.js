@@ -228,16 +228,17 @@ export const saveAuthData = (data, rememberMe = false) => {
   });
   
   if (token) {
-    SecureStorage.setItem(AUTH_TOKEN_KEY, token);
-    
-    // Also set cookie for middleware access
+    // Set cookie FIRST for immediate middleware access
     if (typeof document !== 'undefined') {
       const expires = new Date();
       expires.setTime(expires.getTime() + (expiresIn * 1000));
       const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
       document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-      console.log('🔐 saveAuthData: Cookie set successfully');
+      console.log('🔐 saveAuthData: Cookie set immediately for middleware access');
     }
+    
+    // Then save to localStorage
+    SecureStorage.setItem(AUTH_TOKEN_KEY, token);
   }
   
   if (refreshToken) {
@@ -667,20 +668,23 @@ export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
     timestamp: new Date().toISOString()
   });
   
+  // Set cookie FIRST for immediate middleware access
+  if (typeof document !== 'undefined' && token) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (expiresIn * 1000));
+    const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+    console.log('🔐 setAuthToken: Cookie set immediately for middleware access');
+  }
+  
+  // Then save to localStorage
   saveAuthData({
     token,
     user,
     expiresIn
   }, rememberMe);
   
-  // Also set cookie for middleware access
-  if (typeof document !== 'undefined' && token) {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + (expiresIn * 1000));
-    const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-    document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-    console.log('🔐 setAuthToken: Cookie set successfully');
-  }
+  console.log('🔐 setAuthToken: Authentication data saved successfully');
 };
 
 /**

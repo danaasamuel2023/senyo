@@ -275,6 +275,7 @@ export default function LoginPage() {
         showToast('Authentication verified! Redirecting...', 'success');
         
         // Redirect based on user role and redirect parameter
+        // Increased delay to ensure cookie is properly set for middleware
         setTimeout(() => {
           try {
             let redirectUrl = '/';
@@ -293,13 +294,14 @@ export default function LoginPage() {
               }
             }
             
+            console.log('🔐 Redirecting to:', redirectUrl);
             // Use router.push for better navigation
             router.push(redirectUrl);
           } catch (err) {
             console.error("Navigation error:", err);
             showToast('Login successful. Please navigate to the dashboard.', 'success');
           }
-        }, 500);
+        }, 1500); // Increased from 500ms to 1500ms
       } else {
         setError(data.message || 'Login failed');
         showToast(data.message || 'Login failed', 'error');

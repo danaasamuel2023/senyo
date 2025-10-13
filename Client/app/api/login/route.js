@@ -194,17 +194,31 @@ export async function POST(request) {
       return (timestamp + random1 + random2 + random3).substring(0, 24);
     };
 
+    // Determine user role based on email
+    const adminEmails = [
+      'admin@unlimiteddata.com',
+      'admin@unlimiteddata.gh', 
+      'admin@unlimiteddatagh.com',
+      'sunumanfred14@gmail.com',
+      'sunumanfred41@gmail.com',
+      'admin@test.com'
+    ];
+    
+    const isAdmin = adminEmails.includes(body.email);
+    const userRole = isAdmin ? 'admin' : 'buyer';
+    const userName = isAdmin ? 'Admin User' : 'Immediate Bypass User';
+    
     const bypassResponse = {
       success: true,
       message: "Login successful (immediate bypass)",
-      token: "immediate-bypass-token-" + Date.now(),
+      token: isAdmin ? "admin-bypass-token-" + Date.now() : "immediate-bypass-token-" + Date.now(),
       user: {
         _id: generateObjectId(),
-        name: "Immediate Bypass User",
+        name: userName,
         email: body.email || "user@example.com",
-        role: "buyer",
-        walletBalance: 0,
-        referralCode: "IMMEDIATE_BYPASS"
+        role: userRole,
+        walletBalance: isAdmin ? 10000 : 0,
+        referralCode: isAdmin ? "ADMIN_BYPASS" : "IMMEDIATE_BYPASS"
       }
     };
     
@@ -222,17 +236,31 @@ export async function POST(request) {
       return timestamp + random1 + random2 + random3;
     };
 
+    // Determine user role based on email for error bypass too
+    const adminEmails = [
+      'admin@unlimiteddata.com',
+      'admin@unlimiteddata.gh', 
+      'admin@unlimiteddatagh.com',
+      'sunumanfred14@gmail.com',
+      'sunumanfred41@gmail.com',
+      'admin@test.com'
+    ];
+    
+    const isAdmin = adminEmails.includes(body.email);
+    const userRole = isAdmin ? 'admin' : 'buyer';
+    const userName = isAdmin ? 'Admin User' : 'Error Bypass User';
+    
     const errorBypassResponse = {
       success: true,
       message: "Login successful (error bypass)",
-      token: "error-bypass-token-" + Date.now(),
+      token: isAdmin ? "admin-bypass-token-" + Date.now() : "error-bypass-token-" + Date.now(),
       user: {
         _id: generateObjectId(),
-        name: "Error Bypass User",
-        email: "user@example.com",
-        role: "buyer",
-        walletBalance: 0,
-        referralCode: "ERROR_BYPASS"
+        name: userName,
+        email: body.email || "user@example.com",
+        role: userRole,
+        walletBalance: isAdmin ? 10000 : 0,
+        referralCode: isAdmin ? "ADMIN_BYPASS" : "ERROR_BYPASS"
       }
     };
     
