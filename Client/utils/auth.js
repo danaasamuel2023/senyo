@@ -590,6 +590,14 @@ export const withAuth = (Component, options = {}) => {
  * @param {string|string[]} allowedRoles - Allowed roles
  */
 export const useRoleAccess = (allowedRoles) => {
+  // Check if we're in a browser environment with React
+  if (typeof window === 'undefined' || typeof React === 'undefined') {
+    return {
+      hasAccess: false,
+      userRole: null
+    };
+  }
+  
   const { user } = useAuth();
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   
