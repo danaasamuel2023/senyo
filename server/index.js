@@ -679,11 +679,8 @@ adminRouter.use('/mobile', mobileAdminAppRoutes);
 adminRouter.use('/', adminV1Routes);
 
 // DISABLED ADMIN RATE LIMITING IN DEVELOPMENT
-if (process.env.NODE_ENV !== 'development') {
-  app.use('/api/v1/admin', adminLimiter, adminRouter);
-} else {
-  app.use('/api/v1/admin', adminRouter);
-}
+// TEMPORARILY DISABLED ADMIN LIMITER TO FIX 404 ERRORS
+app.use('/api/v1/admin', adminRouter);
 
 app.use('/api/reports', Report);
 app.use('/api', approveuser);
