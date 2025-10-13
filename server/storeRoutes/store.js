@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/auth');
 const { ProductPricing, Order } = require('../schema/schema');
 
 // ============================================
@@ -241,7 +241,7 @@ router.post('/order', auth, async (req, res) => {
 });
 
 // Get user's store orders
-router.get('/orders', auth, async (req, res) => {
+router.get('/orders', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
     const { page = 1, limit = 10, status } = req.query;
@@ -290,7 +290,7 @@ router.get('/orders', auth, async (req, res) => {
 // ============================================
 
 // Get store analytics
-router.get('/analytics', auth, async (req, res) => {
+router.get('/analytics', authMiddleware, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user.role !== 'admin') {

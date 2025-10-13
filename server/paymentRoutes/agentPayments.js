@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/auth');
 const { User, Order, Transaction } = require('../schema/schema');
 
 // ============================================
@@ -167,7 +167,7 @@ router.post('/verify', auth, async (req, res) => {
 });
 
 // Get agent earnings
-router.get('/earnings', auth, async (req, res) => {
+router.get('/earnings', authMiddleware, async (req, res) => {
   try {
     const agentId = req.user._id;
 

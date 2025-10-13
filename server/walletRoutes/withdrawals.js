@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { User, Wallet } = require('../schema/schema');
 const { sendToBank, sendToMobileMoney, getBanksList, verifyBankAccount } = require('../services/bulkClixService');
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/auth');
 
 // Enhanced logging
 const logWithdrawalOperation = (operation, data) => {
@@ -451,7 +451,7 @@ router.post('/verify-account', auth, async (req, res) => {
 });
 
 // Get withdrawal history
-router.get('/withdrawals', auth, async (req, res) => {
+router.get('/withdrawals', authMiddleware, async (req, res) => {
   try {
     const { page = 1, limit = 20, status, type } = req.query;
     const userId = req.user._id;

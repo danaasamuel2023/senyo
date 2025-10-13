@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { User, DataPurchase, Transaction, ReferralBonus, DataInventory } = require('../schema/schema');
 const mongoose = require('mongoose');
-const auth = require('../blockMiddleware/middle');
+const { authMiddleware } = require('../middleware/auth');
 const adminAuth = require('../adminMiddleware/middleware');
 const axios = require('axios');
 
@@ -51,7 +51,7 @@ const ensureDeviceSchema = async (req, res, next) => {
  * @desc    Get a user's blocked devices
  * @access  Admin
  */
-router.get('/users/:id/blocked-devices', auth, adminAuth, ensureDeviceSchema, async (req, res) => {
+router.get('/users/:id/blocked-devices', authMiddleware, adminAuth, ensureDeviceSchema, async (req, res) => {
   try {
     // Find user with populated admin names for blocked devices
     const user = await User.findById(req.params.id)

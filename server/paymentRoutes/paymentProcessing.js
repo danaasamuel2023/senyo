@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewareUser/middleware');
+const { authMiddleware } = require('../middleware/auth');
 const { Order, User } = require('../schema/schema');
 
 // ============================================
@@ -159,7 +159,7 @@ router.post('/verify', async (req, res) => {
 });
 
 // Get payment status
-router.get('/status/:orderId', auth, async (req, res) => {
+router.get('/status/:orderId', authMiddleware, async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user._id;
