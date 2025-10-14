@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { User, ReferralBonus, AgentCatalog } = require("../schema/schema");
 const authMonitor = require("../monitoring/auth-monitor");
-const { auth } = require("../middleware/auth");
+const { auth, authorize: authorizeMiddleware } = require("../middleware/auth");
 
 dotenv.config();
 const router = express.Router();

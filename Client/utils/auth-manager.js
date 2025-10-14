@@ -471,6 +471,12 @@ class AuthManager {
 // Create singleton instance
 const authManager = new AuthManager();
 
+// Expose AuthManager to window for debugging (development only)
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  window.authManager = authManager;
+  console.log('🔐 AuthManager exposed to window for debugging');
+}
+
 // UNIFIED EXPORTS - Backward compatibility with utils/auth.js
 export const saveAuthData = (data, rememberMe = false) => {
   return authManager.saveAuth(data, rememberMe);

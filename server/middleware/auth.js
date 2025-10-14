@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../schema/schema').User;
 
 // JWT Secret - use environment variable for security
-const JWT_SECRET = process.env.JWT_SECRET || 'DatAmArt';
+const JWT_SECRET = process.env.JWT_SECRET || 'DatAmMart';
 
 /**
  * Standardized error response format
@@ -243,6 +243,7 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+// Export all middleware functions
 module.exports = {
   auth,
   adminAuth,
