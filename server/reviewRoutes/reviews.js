@@ -138,7 +138,7 @@ router.get('/product/:productId', async (req, res) => {
 });
 
 // Submit a review
-router.post('/', auth, async (req, res) => {
+router.post('/', verifyAuth, async (req, res) => {
   try {
     const customerId = req.user._id;
     const { agentId, orderId, productId, rating, title, comment, images } = req.body;
@@ -214,7 +214,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update a review
-router.put('/:reviewId', auth, async (req, res) => {
+router.put('/:reviewId', verifyAuth, async (req, res) => {
   try {
     const customerId = req.user._id;
     const { reviewId } = req.params;
@@ -267,7 +267,7 @@ router.put('/:reviewId', auth, async (req, res) => {
 });
 
 // Delete a review
-router.delete('/:reviewId', auth, async (req, res) => {
+router.delete('/:reviewId', verifyAuth, async (req, res) => {
   try {
     const customerId = req.user._id;
     const { reviewId } = req.params;
@@ -297,7 +297,7 @@ router.delete('/:reviewId', auth, async (req, res) => {
 });
 
 // Mark review as helpful
-router.post('/:reviewId/helpful', auth, async (req, res) => {
+router.post('/:reviewId/helpful', verifyAuth, async (req, res) => {
   try {
     const { reviewId } = req.params;
     const { helpful } = req.body; // true or false
@@ -330,7 +330,7 @@ router.post('/:reviewId/helpful', auth, async (req, res) => {
 });
 
 // Agent response to review
-router.post('/:reviewId/response', auth, async (req, res) => {
+router.post('/:reviewId/response', verifyAuth, async (req, res) => {
   try {
     const agentId = req.user._id;
     const { reviewId } = req.params;
@@ -375,7 +375,7 @@ router.post('/:reviewId/response', auth, async (req, res) => {
 });
 
 // Report a review
-router.post('/:reviewId/report', auth, async (req, res) => {
+router.post('/:reviewId/report', verifyAuth, async (req, res) => {
   try {
     const { reviewId } = req.params;
     const { reason } = req.body;

@@ -46,7 +46,7 @@ const PAYMENT_METHODS = {
 };
 
 // Get available payment methods
-router.get('/methods', auth, async (req, res) => {
+router.get('/methods', verifyAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     
@@ -77,7 +77,7 @@ router.get('/methods', auth, async (req, res) => {
 });
 
 // Initialize PayStack transaction
-router.post('/initialize', auth, async (req, res) => {
+router.post('/initialize', verifyAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     const { 
@@ -226,7 +226,7 @@ router.post('/initialize', auth, async (req, res) => {
 });
 
 // Verify PayStack payment
-router.post('/verify', auth, async (req, res) => {
+router.post('/verify', verifyAuth, async (req, res) => {
   try {
     const { reference } = req.body;
 
@@ -440,7 +440,7 @@ async function handleFailedTransfer(transfer) {
 }
 
 // Get payment history
-router.get('/history', auth, async (req, res) => {
+router.get('/history', verifyAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     const { page = 1, limit = 20, method, status } = req.query;
@@ -489,7 +489,7 @@ router.get('/history', auth, async (req, res) => {
 });
 
 // Verify payment status
-router.get('/verify/:reference', auth, async (req, res) => {
+router.get('/verify/:reference', verifyAuth, async (req, res) => {
   try {
     const { reference } = req.params;
     
@@ -524,7 +524,7 @@ router.get('/verify/:reference', auth, async (req, res) => {
 });
 
 // Refund payment
-router.post('/refund/:orderId', auth, async (req, res) => {
+router.post('/refund/:orderId', verifyAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
