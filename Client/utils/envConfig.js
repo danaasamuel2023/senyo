@@ -67,7 +67,7 @@ export const getApiEndpoint = (endpoint) => {
 // CORS configuration for backend
 export const getCorsOrigins = () => {
   return [
-    'http://localhost:3000',
+    'http://localhost:5001',
     'http://localhost:5001',
     'https://unlimitedata.onrender.com',
     'https://unlimitedatagh.com',
