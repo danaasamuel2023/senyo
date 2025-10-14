@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const verifyAuth = require('../middlewareUser/middleware');
+const { auth: verifyAuth } = require('../middleware/auth');
 const { Review, User } = require('../schema/schema');
 
 // Get reviews for an agent store

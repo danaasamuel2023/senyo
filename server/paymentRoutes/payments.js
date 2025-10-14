@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const verifyAuth = require('../middlewareUser/middleware');
+const { auth: verifyAuth } = require('../middleware/auth');
 const { DataPurchase, User, Wallet } = require('../schema/schema');
 const axios = require('axios');
 

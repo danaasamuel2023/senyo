@@ -8,7 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const paymentGatewayService = require('./server/services/paymentGatewayService');
-const authMiddleware = require('./server/middlewareUser/middleware');
+const { auth: authMiddleware } = require('./server/middleware/auth');
 const adminAuth = require('./server/adminMiddleware/middleware');
 
 // Test payment processing endpoint

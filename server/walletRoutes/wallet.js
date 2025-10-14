@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Wallet, Referral, PromoCode, User } = require('../schema/schema.js');
-const verifyAuth = require('../middlewareUser/middleware.js');
+const { auth: verifyAuth } = require('../middleware/auth');
 const { sendTransactionReceipt } = require('../services/emailService.js');
 const WalletService = require('../services/walletService');
 
