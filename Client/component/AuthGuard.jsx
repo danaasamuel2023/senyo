@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Zap, Sparkles } from 'lucide-react';
-import { authManager, isAuthenticated, getUserRole } from '../utils/auth-manager';
+import { authManager, isAuthenticated, getUserRole, syncAuthState } from '../utils/auth-manager';
 
 const AuthGuard = ({ children }) => {
   const router = useRouter();
@@ -30,22 +30,151 @@ const AuthGuard = ({ children }) => {
           return;
         }
         
-        // Use the unified auth manager to check authentication
-        const authenticated = isAuthenticated();
-        const userRole = getUserRole();
+        // Enhanced authentication check with retry logic
+        let authenticated = false;
+        let userRole = null;
+        let attempts = 0;
+        const maxAttempts = 5;
         
-        console.log('🔐 AuthGuard: Authentication check:', {
-          authenticated,
-          userRole,
-          pathname
-        });
+        console.log('🔐 AuthGuard: Starting authentication check for path:', pathname);
+        
+        // Force global auth state synchronization first
+        try {
+          await syncAuthState();
+          console.log('🔐 AuthGuard: Auth state synchronized');
+        } catch (error) {
+          console.error('🔐 AuthGuard: Error synchronizing auth state:', error);
+        }
+        
+        // Retry authentication check to handle timing issues
+        while (!authenticated && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔐 AuthGuard: Authentication check attempt ${attempts}/${maxAttempts}`);
+          
+          // Force refresh auth state from storage
+          authManager.refreshAuthState();
+          
+          // Check authentication with multiple methods
+          authenticated = isAuthenticated();
+          userRole = getUserRole();
+          
+          // Additional verification: check localStorage directly
+          const directToken = localStorage.getItem('authToken');
+          const directUserData = localStorage.getItem('userData');
+          const directExpiry = localStorage.getItem('tokenExpiry');
+          
+          const directAuth = !!(directToken && directUserData && directExpiry && 
+                               Date.now() < parseInt(directExpiry));
+          
+          console.log('🔐 AuthGuard: Authentication check result:', {
+            authenticated,
+            directAuth,
+            userRole,
+            pathname,
+            attempt: attempts,
+            hasToken: !!authManager.getToken(),
+            hasUser: !!authManager.getUser(),
+            directToken: !!directToken,
+            directUserData: !!directUserData,
+            directExpiry: !!directExpiry,
+            localStorage: {
+              authToken: directToken ? 'exists' : 'missing',
+              userData: directUserData ? 'exists' : 'missing',
+              tokenExpiry: directExpiry ? 'exists' : 'missing'
+            },
+            tokenExpired: directExpiry ? Date.now() > parseInt(directExpiry) : true
+          });
+          
+          // If auth manager says not authenticated but localStorage has valid data, 
+          // force authentication
+          if (!authenticated && directAuth) {
+            console.log('🔐 AuthGuard: Forcing authentication from localStorage data');
+            try {
+              const user = JSON.parse(directUserData);
+              authManager.authState = {
+                isAuthenticated: true,
+                user,
+                token: directToken,
+                loading: false
+              };
+              authenticated = true;
+              userRole = user.role;
+            } catch (error) {
+              console.error('🔐 AuthGuard: Error parsing user data from localStorage:', error);
+            }
+          }
+          
+          if (!authenticated && attempts < maxAttempts) {
+            console.log(`🔐 AuthGuard: Not authenticated, waiting 100ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
         
         if (!authenticated) {
-          // Redirect to sign in with current path as redirect parameter
-          const redirectUrl = `/SignIn?redirect=${encodeURIComponent(pathname)}`;
-          console.log('🔐 AuthGuard: Not authenticated, redirecting to:', redirectUrl);
-          router.push(redirectUrl);
-          return;
+          // Final check - look for auth data in localStorage directly
+          const token = localStorage.getItem('authToken');
+          const userData = localStorage.getItem('userData');
+          const expiryTime = localStorage.getItem('tokenExpiry');
+          
+          if (token && userData && expiryTime) {
+            const isExpired = Date.now() > parseInt(expiryTime);
+            if (!isExpired) {
+              try {
+                const user = JSON.parse(userData);
+                console.log('🔐 AuthGuard: Found valid auth data in localStorage, forcing authentication');
+                authenticated = true;
+                userRole = user.role;
+                
+                // Update auth manager state
+                authManager.authState = {
+                  isAuthenticated: true,
+                  user,
+                  token,
+                  loading: false
+                };
+              } catch (error) {
+                console.error('🔐 AuthGuard: Error parsing user data from localStorage:', error);
+              }
+            }
+          }
+        }
+        
+        if (!authenticated) {
+          // Final safety check - prevent redirect if we just came from SignIn
+          const isFromSignIn = pathname === '/SignIn' || 
+                              (typeof window !== 'undefined' && 
+                               document.referrer.includes('/SignIn'));
+          
+          if (isFromSignIn) {
+            console.log('🔐 AuthGuard: Preventing redirect loop - user just came from SignIn');
+            // Wait a bit more and try one more time
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // One final check
+            authManager.refreshAuthState();
+            const finalCheck = isAuthenticated();
+            
+            if (finalCheck) {
+              console.log('🔐 AuthGuard: Final check successful, user is authenticated');
+              authenticated = true;
+              userRole = getUserRole();
+            } else {
+              console.log('🔐 AuthGuard: Final check failed, but preventing redirect loop');
+              // Set a temporary auth state to prevent redirect loop
+              setAuthState({
+                isAuthenticated: false,
+                loading: false,
+                userRole: null
+              });
+              return;
+            }
+          } else {
+            // Redirect to sign in with current path as redirect parameter
+            const redirectUrl = `/SignIn?redirect=${encodeURIComponent(pathname)}`;
+            console.log('🔐 AuthGuard: Not authenticated after all attempts, redirecting to:', redirectUrl);
+            router.push(redirectUrl);
+            return;
+          }
         }
         
         // User is authenticated - check if they should be redirected to their dashboard
@@ -66,6 +195,7 @@ const AuthGuard = ({ children }) => {
         }
         
         // User is authenticated and on appropriate page
+        console.log('🔐 AuthGuard: Authentication successful, setting auth state');
         setAuthState({
           isAuthenticated: true,
           loading: false,

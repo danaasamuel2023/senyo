@@ -18,7 +18,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 console.log('🔐 React imports loaded');
 
-import { normalizeUserData, authManager } from '../../utils/auth-manager.js';
+import { normalizeUserData, authManager, syncAuthState } from '../../utils/auth-manager.js';
 
 console.log('🔐 Auth manager imported');
 import { 
@@ -434,7 +434,7 @@ export default function LoginPage() {
       // Store authentication token using unified auth manager
       console.log('🔐 UNIFIED: Setting auth token...');
       try {
-        const success = authManager.saveAuth(
+        const success = await authManager.saveAuth(
           data.token,
           normalizedUser,
           7 * 24 * 60 * 60, // 7 days
@@ -497,6 +497,15 @@ export default function LoginPage() {
         }
         
         console.log('✅ UNIFIED: Authentication verified successfully');
+        
+        // Force global auth state synchronization
+        try {
+          await syncAuthState();
+          console.log('✅ UNIFIED: Auth state synchronized globally');
+        } catch (error) {
+          console.error('❌ UNIFIED: Error synchronizing auth state:', error);
+        }
+        
         showToast('Login successful! Redirecting...', 'success');
         
       } catch (authError) {
@@ -504,10 +513,11 @@ export default function LoginPage() {
         throw authError;
       }
 
-      // Determine redirect URL based on user role
+      // Determine redirect URL based on user role with enhanced logic
       let redirectUrl = redirectPath !== '/' ? redirectPath : '/';
       
-      if (redirectUrl === '/') {
+      // Only redirect to role-specific dashboard if no specific redirect path was provided
+      if (redirectUrl === '/' || redirectUrl === '/SignIn') {
         if (data.user?.role === 'admin') {
           redirectUrl = '/admin/dashboard';
         } else if (data.user?.role === 'agent') {
@@ -519,8 +529,8 @@ export default function LoginPage() {
 
       console.log('🔐 Redirecting to:', redirectUrl, 'for role:', data.user?.role);
 
-      // Use Next.js router for better navigation - increased delay to ensure auth is saved
-      console.log('🔐 UNIFIED: About to redirect in 500ms to:', redirectUrl);
+      // Use Next.js router for better navigation - ensure auth is fully synchronized
+      console.log('🔐 UNIFIED: About to redirect to:', redirectUrl);
       console.log('🔐 UNIFIED: Current auth state before redirect:', {
         isAuthenticated: authManager.isAuthenticated(),
         hasUser: !!authManager.getUser(),
@@ -528,25 +538,94 @@ export default function LoginPage() {
         userRole: authManager.getUser()?.role
       });
       
-      setTimeout(() => {
-        console.log('🔐 UNIFIED: Executing redirect to:', redirectUrl);
-        console.log('🔐 UNIFIED: Final auth check before redirect:', {
-          isAuthenticated: authManager.isAuthenticated(),
-          hasUser: !!authManager.getUser(),
-          hasToken: !!authManager.getToken()
-        });
+      // Force auth state refresh and wait for it to be ready
+      const ensureAuthReady = async () => {
+        let attempts = 0;
+        const maxAttempts = 10;
         
-        // Force cookie to be set before redirect
-        const token = authManager.getToken();
-        if (token && typeof document !== 'undefined') {
-          const expires = new Date();
-          expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
-          document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-          console.log('🔐 UNIFIED: Cookie force-set before redirect');
+        while (attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔐 UNIFIED: Ensuring auth ready, attempt ${attempts}/${maxAttempts}`);
+          
+          // Force refresh auth state
+          authManager.refreshAuthState();
+          
+          const isAuth = authManager.isAuthenticated();
+          const hasUser = !!authManager.getUser();
+          const hasToken = !!authManager.getToken();
+          
+          console.log('🔐 UNIFIED: Auth readiness check:', {
+            isAuthenticated: isAuth,
+            hasUser,
+            hasToken,
+            attempt: attempts
+          });
+          
+          if (isAuth && hasUser && hasToken) {
+            console.log('✅ UNIFIED: Auth is ready for redirect');
+            break;
+          }
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
         
-        router.push(redirectUrl);
-      }, 1000); // Increased delay to ensure auth state is fully saved
+        // Final verification with comprehensive checks
+        const finalAuth = authManager.isAuthenticated();
+        const finalToken = authManager.getToken();
+        const finalUser = authManager.getUser();
+        
+        console.log('🔐 UNIFIED: Final auth verification before redirect:', {
+          isAuthenticated: finalAuth,
+          hasToken: !!finalToken,
+          hasUser: !!finalUser,
+          userRole: finalUser?.role,
+          userId: finalUser?.id || finalUser?._id,
+          localStorage: {
+            authToken: localStorage.getItem('authToken') ? 'exists' : 'missing',
+            userData: localStorage.getItem('userData') ? 'exists' : 'missing',
+            tokenExpiry: localStorage.getItem('tokenExpiry') ? 'exists' : 'missing'
+          }
+        });
+        
+        // Force cookie to be set before redirect with verification
+        if (finalToken && typeof document !== 'undefined') {
+          const expires = new Date();
+          expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+          document.cookie = `authToken=${finalToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+          
+          // Verify cookie was set
+          const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('authToken='))
+            ?.split('=')[1];
+          
+          if (cookieValue === finalToken) {
+            console.log('✅ UNIFIED: Cookie verified before redirect');
+          } else {
+            console.warn('⚠️ UNIFIED: Cookie verification failed before redirect');
+          }
+        }
+        
+        // Final auth state check before redirect
+        if (!finalAuth) {
+          console.error('❌ UNIFIED: Authentication failed final check, aborting redirect');
+          throw new Error('Authentication verification failed');
+        }
+        
+        console.log('🔐 UNIFIED: Executing redirect to:', redirectUrl);
+        
+        // Use window.location.href for more reliable redirect
+        if (typeof window !== 'undefined') {
+          window.location.href = redirectUrl;
+        } else {
+          router.push(redirectUrl);
+        }
+      };
+      
+      // Start the auth readiness process
+      ensureAuthReady();
 
     } catch (err) {
       console.error('Login error:', {

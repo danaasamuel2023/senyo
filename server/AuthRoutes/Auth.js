@@ -173,18 +173,33 @@ router.post("/login", async (req, res) => {
       ...(user.role === 'agent' ? { agentMetadata: user.agentMetadata } : {})
     };
 
-    // Log successful login
+    // Log successful login with enhanced details
     authMonitor.logAuthEvent('login_success', { 
       email, 
       userId: user._id, 
       role: user.role, 
-      ip: req.ip 
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+      userAgent: req.get('User-Agent'),
+      tokenGenerated: !!token,
+      tokenLength: token ? token.length : 0
+    });
+
+    console.log('✅ Login successful:', {
+      email,
+      userId: user._id,
+      role: user.role,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+      tokenGenerated: !!token
     });
 
     res.json({ 
       message: "Login successful", 
       token,
-      user: userResponse
+      user: userResponse,
+      success: true,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("Login Error:", error);

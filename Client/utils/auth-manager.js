@@ -102,12 +102,33 @@ class AuthManager {
     const userData = AuthStorage.getItem(USER_DATA_KEY);
     const expiryTime = AuthStorage.getItem(TOKEN_EXPIRY_KEY);
     
+    console.log('🔐 AuthManager initialization check:', {
+      hasToken: !!token,
+      hasUserData: !!userData,
+      hasExpiryTime: !!expiryTime,
+      tokenLength: token ? token.length : 0,
+      userDataLength: userData ? userData.length : 0
+    });
+    
     if (token && userData && expiryTime) {
       const isExpired = Date.now() > parseInt(expiryTime);
+      
+      console.log('🔐 AuthManager token expiry check:', {
+        expiryTime: parseInt(expiryTime),
+        currentTime: Date.now(),
+        isExpired,
+        timeUntilExpiry: parseInt(expiryTime) - Date.now()
+      });
       
       if (!isExpired) {
         try {
           const user = JSON.parse(userData);
+          
+          // Validate user data structure
+          if (!user || !user.id && !user._id) {
+            throw new Error('Invalid user data structure');
+          }
+          
           this.authState = {
             isAuthenticated: true,
             user,
@@ -120,7 +141,11 @@ class AuthManager {
             sessionStorage.setItem(SESSION_AUTH_KEY, 'true');
           }
           
-          console.log('✅ AuthManager initialized with existing session');
+          console.log('✅ AuthManager initialized with existing session:', {
+            userId: user.id || user._id,
+            userRole: user.role,
+            userEmail: user.email
+          });
         } catch (error) {
           console.error('❌ Error parsing user data:', error);
           this.clearAuth();
@@ -141,7 +166,7 @@ class AuthManager {
    * Save authentication data - UNIFIED METHOD
    * Handles both new format (token, user, expiresIn) and legacy format (data object)
    */
-  saveAuth(tokenOrData, userOrRememberMe, expiresInOrUndefined, rememberMeOrUndefined) {
+  async saveAuth(tokenOrData, userOrRememberMe, expiresInOrUndefined, rememberMeOrUndefined) {
     let token, user, expiresIn, rememberMe;
     
     // Handle both new and legacy call formats
@@ -185,27 +210,84 @@ class AuthManager {
         const isHttps = window.location.protocol === 'https:';
         const secureFlag = (process.env.NODE_ENV === 'production' && isHttps) ? '; Secure' : '';
         
-        // Use consistent cookie format
-        document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
-        console.log('✅ UNIFIED: Cookie set for middleware access');
+        // Use consistent cookie format with multiple attempts
+        let cookieSet = false;
+        let attempts = 0;
+        const maxCookieAttempts = 3;
+        
+        while (!cookieSet && attempts < maxCookieAttempts) {
+          attempts++;
+          try {
+            document.cookie = `authToken=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+            
+            // Verify cookie was set
+            const cookieValue = document.cookie
+              .split('; ')
+              .find(row => row.startsWith('authToken='))
+              ?.split('=')[1];
+            
+            if (cookieValue === token) {
+              cookieSet = true;
+              console.log(`✅ UNIFIED: Cookie set successfully on attempt ${attempts}`);
+            } else {
+              console.warn(`⚠️ UNIFIED: Cookie verification failed on attempt ${attempts}`);
+              if (attempts < maxCookieAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+            }
+          } catch (error) {
+            console.error(`❌ UNIFIED: Cookie set error on attempt ${attempts}:`, error);
+            if (attempts < maxCookieAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+          }
+        }
+        
+        if (!cookieSet) {
+          console.error('❌ UNIFIED: Failed to set cookie after all attempts');
+        }
       }
 
-      // Store in localStorage with verification
-      if (!AuthStorage.setItem(AUTH_TOKEN_KEY, token)) {
-        throw new Error('Failed to store token');
-      }
+      // Store in localStorage with enhanced verification
+      const storageItems = [
+        { key: AUTH_TOKEN_KEY, value: token, name: 'token' },
+        { key: USER_DATA_KEY, value: JSON.stringify(user), name: 'user data' },
+        { key: TOKEN_EXPIRY_KEY, value: (Date.now() + (expiresIn * 1000)).toString(), name: 'expiry time' },
+        { key: REMEMBER_ME_KEY, value: rememberMe.toString(), name: 'remember me flag' }
+      ];
 
-      if (!AuthStorage.setItem(USER_DATA_KEY, JSON.stringify(user))) {
-        throw new Error('Failed to store user data');
-      }
-
-      const expiryTime = Date.now() + (expiresIn * 1000);
-      if (!AuthStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())) {
-        throw new Error('Failed to store expiry time');
-      }
-
-      if (!AuthStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString())) {
-        throw new Error('Failed to store remember me flag');
+      for (const item of storageItems) {
+        let stored = false;
+        let attempts = 0;
+        const maxStorageAttempts = 3;
+        
+        while (!stored && attempts < maxStorageAttempts) {
+          attempts++;
+          console.log(`🔐 UNIFIED: Storing ${item.name}, attempt ${attempts}/${maxStorageAttempts}`);
+          
+          if (AuthStorage.setItem(item.key, item.value)) {
+            // Verify storage
+            const retrieved = AuthStorage.getItem(item.key);
+            if (retrieved === item.value) {
+              stored = true;
+              console.log(`✅ UNIFIED: ${item.name} stored and verified successfully`);
+            } else {
+              console.warn(`⚠️ UNIFIED: ${item.name} storage verification failed`);
+              if (attempts < maxStorageAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+            }
+          } else {
+            console.error(`❌ UNIFIED: Failed to store ${item.name} on attempt ${attempts}`);
+            if (attempts < maxStorageAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+          }
+        }
+        
+        if (!stored) {
+          throw new Error(`Failed to store ${item.name} after all attempts`);
+        }
       }
 
       // Update auth state immediately
@@ -321,7 +403,17 @@ class AuthManager {
     
     // More lenient check - if we have token and user, consider authenticated
     // Don't require sessionAuth to be 'true' as it might not be set immediately
-    const result = !!(token && hasValidUser && !isExpired);
+    let result = !!(token && hasValidUser && !isExpired);
+    
+    // If auth state says not authenticated but we have valid data in storage, 
+    // try to refresh the state
+    if (!result && token && !isExpired) {
+      console.log('🔐 UNIFIED: Auth state inconsistent, attempting to refresh from storage');
+      const refreshed = this.refreshAuthState();
+      if (refreshed) {
+        result = true;
+      }
+    }
     
     console.log('🔐 UNIFIED: Authentication check:', {
       hasToken: !!token,
@@ -333,7 +425,10 @@ class AuthManager {
       userRole: user?.role,
       userId: user?.id || user?._id,
       isInitialized: this.isInitialized,
-      authStateLoading: this.authState.loading
+      authStateLoading: this.authState.loading,
+      tokenLength: token ? token.length : 0,
+      expiryTime: expiryTime ? parseInt(expiryTime) : null,
+      currentTime: Date.now()
     });
     
     return result;
@@ -471,6 +566,80 @@ class AuthManager {
 // Create singleton instance
 const authManager = new AuthManager();
 
+// Global auth state synchronization
+let authStateListeners = [];
+let isAuthStateSyncing = false;
+
+/**
+ * Add listener for auth state changes
+ */
+export const addAuthStateListener = (listener) => {
+  authStateListeners.push(listener);
+  return () => {
+    authStateListeners = authStateListeners.filter(l => l !== listener);
+  };
+};
+
+/**
+ * Notify all listeners of auth state changes
+ */
+const notifyAuthStateChange = (authState) => {
+  authStateListeners.forEach(listener => {
+    try {
+      listener(authState);
+    } catch (error) {
+      console.error('Error in auth state listener:', error);
+    }
+  });
+};
+
+/**
+ * Force synchronization of auth state across all components
+ */
+export const syncAuthState = async () => {
+  if (isAuthStateSyncing) {
+    console.log('🔐 Auth state sync already in progress, waiting...');
+    return new Promise((resolve) => {
+      const checkSync = () => {
+        if (!isAuthStateSyncing) {
+          resolve();
+        } else {
+          setTimeout(checkSync, 50);
+        }
+      };
+      checkSync();
+    });
+  }
+  
+  isAuthStateSyncing = true;
+  console.log('🔐 Starting auth state synchronization...');
+  
+  try {
+    // Force refresh auth state
+    authManager.refreshAuthState();
+    
+    // Get current auth state
+    const currentState = authManager.getAuthState();
+    
+    // Notify all listeners
+    notifyAuthStateChange(currentState);
+    
+    console.log('✅ Auth state synchronized:', {
+      isAuthenticated: currentState.isAuthenticated,
+      hasUser: !!currentState.user,
+      hasToken: !!currentState.token,
+      userRole: currentState.user?.role
+    });
+    
+    return currentState;
+  } catch (error) {
+    console.error('❌ Error synchronizing auth state:', error);
+    throw error;
+  } finally {
+    isAuthStateSyncing = false;
+  }
+};
+
 // Expose AuthManager to window for debugging (development only)
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   window.authManager = authManager;
@@ -478,12 +647,12 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
 }
 
 // UNIFIED EXPORTS - Backward compatibility with utils/auth.js
-export const saveAuthData = (data, rememberMe = false) => {
-  return authManager.saveAuth(data, rememberMe);
+export const saveAuthData = async (data, rememberMe = false) => {
+  return await authManager.saveAuth(data, rememberMe);
 };
 
-export const setAuthToken = (token, user, expiresIn, rememberMe = false) => {
-  return authManager.saveAuth(token, user, expiresIn, rememberMe);
+export const setAuthToken = async (token, user, expiresIn, rememberMe = false) => {
+  return await authManager.saveAuth(token, user, expiresIn, rememberMe);
 };
 
 export const getAuthToken = () => authManager.getToken();
