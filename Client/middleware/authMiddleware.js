@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, createContext } from 'react';
-import { isAuthenticated, getCurrentUser, getAuthToken } from '../utils/auth.js';
+import { isAuthenticated, getCurrentUser, getAuthToken } from '../utils/auth-manager.js';
 
 /**
  * Middleware to protect routes that require authentication

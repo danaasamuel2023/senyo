@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import adminAPI, { userAPI } from '../../../utils/adminApi';
 import { getApiUrl } from '../../../utils/envConfig';
 import apiClient from '../../../utils/apiClient.js';
-import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth.js';
+import { getAuthToken, getCurrentUser, isAuthenticated as checkIsAuthenticated, logout, withAuth, useAuth } from '../../../utils/auth-manager.js';
 import { useBottomNav } from '../../providers/BottomNavProvider.jsx';
 import { 
   User, Users, BarChart3, Package, Clock, CreditCard, FileText, Settings, UserCog, 

@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Copy, AlertCircle, Check, Moon, Sun } from 'lucide-react';
-import { getAuthToken, authenticatedFetch, getCurrentUser } from '../utils/auth.js';
+import { getAuthToken, authenticatedFetch, getCurrentUser } from '../utils/auth-manager.js';
 import { getNextPublicApiUrl } from '../utils/envConfig.js';
 
 // Use centralized API configuration

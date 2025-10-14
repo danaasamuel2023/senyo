@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../utils/auth.js';
+import { useAuth } from '../../../utils/auth-manager.js';
 import { 
   Bell, 
   Settings, 

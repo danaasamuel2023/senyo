@@ -1,5 +1,5 @@
 // Comprehensive API Client with Authentication and CORS Handling
-import { getAuthToken, logout, isTokenExpired, refreshAuthToken } from './auth.js';
+import { getAuthToken, logout, isTokenExpired, refreshAuthToken } from './auth-manager.js';
 import { getApiUrl } from './envConfig.js';
 import { makeRateLimitedRequest, getRateLimitConfig } from './rateLimitHandler.js';
 
