@@ -291,8 +291,7 @@ const AgentWithdraw = () => {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <DollarSign className="w-4 h-4 text-gray-400" />
                   </div>
-                  <input
-                    type="number"
+                  <input id="amount" type="number"
                     name="amount"
                     value={withdrawalData.amount}
                     onChange={handleInputChange}
@@ -316,8 +315,7 @@ const AgentWithdraw = () => {
                 </label>
                 <div className="space-y-3">
                   <label className="flex items-center space-x-3 p-3 bg-gray-800 rounded-xl border border-gray-700 hover:border-green-600/50 transition-colors cursor-pointer">
-                    <input
-                      type="radio"
+                    <input id="withdrawalMethod" type="radio"
                       name="withdrawalMethod"
                       value="bank"
                       checked={withdrawalData.withdrawalMethod === 'bank'}
@@ -331,8 +329,7 @@ const AgentWithdraw = () => {
                   </label>
 
                   <label className="flex items-center space-x-3 p-3 bg-gray-800 rounded-xl border border-gray-700 hover:border-green-600/50 transition-colors cursor-pointer">
-                    <input
-                      type="radio"
+                    <input id="withdrawalMethod" type="radio"
                       name="withdrawalMethod"
                       value="momo"
                       checked={withdrawalData.withdrawalMethod === 'momo'}
@@ -356,8 +353,7 @@ const AgentWithdraw = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Bank Name
                     </label>
-                    <input
-                      type="text"
+                    <input id="accountDetails.bankName" type="text"
                       name="accountDetails.bankName"
                       value={withdrawalData.accountDetails.bankName}
                       onChange={handleInputChange}
@@ -371,8 +367,7 @@ const AgentWithdraw = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Account Name
                     </label>
-                    <input
-                      type="text"
+                    <input id="accountDetails.accountName" type="text"
                       name="accountDetails.accountName"
                       value={withdrawalData.accountDetails.accountName}
                       onChange={handleInputChange}
@@ -386,8 +381,7 @@ const AgentWithdraw = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Account Number
                     </label>
-                    <input
-                      type="text"
+                    <input id="accountDetails.accountNumber" type="text"
                       name="accountDetails.accountNumber"
                       value={withdrawalData.accountDetails.accountNumber}
                       onChange={handleInputChange}
@@ -406,8 +400,7 @@ const AgentWithdraw = () => {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Phone className="w-4 h-4 text-gray-400" />
                     </div>
-                    <input
-                      type="tel"
+                    <input id="accountDetails.momoNumber" type="tel"
                       name="accountDetails.momoNumber"
                       value={withdrawalData.accountDetails.momoNumber}
                       onChange={handleInputChange}

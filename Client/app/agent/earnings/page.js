@@ -280,8 +280,7 @@ const AgentEarnings = () => {
             <div className="flex items-center space-x-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                <input
-                  type="date"
+                <input id="input" name="input" type="date"
                   value={dateRange.startDate}
                   onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                   className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-600"
@@ -290,8 +289,7 @@ const AgentEarnings = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
-                <input
-                  type="date"
+                <input id="input" name="input" type="date"
                   value={dateRange.endDate}
                   onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                   className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-600"

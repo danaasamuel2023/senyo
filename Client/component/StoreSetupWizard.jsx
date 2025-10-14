@@ -72,8 +72,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Store Name *
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeData.storeName}
                   onChange={(e) => setStoreData({...storeData, storeName: e.target.value})}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 dark:text-white"
@@ -127,15 +126,13 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
                   Brand Color
                 </label>
                 <div className="flex items-center space-x-4">
-                  <input
-                    type="color"
+                  <input id="input" name="input" type="color"
                     value={storeData.brandColor}
                     onChange={(e) => setStoreData({...storeData, brandColor: e.target.value})}
                     className="w-16 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
                   />
                   <div className="flex-1">
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       value={storeData.brandColor}
                       onChange={(e) => setStoreData({...storeData, brandColor: e.target.value})}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 dark:text-white font-mono"
@@ -153,8 +150,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
                   <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 dark:text-gray-400 mb-2">Upload your store logo</p>
                   <p className="text-sm text-gray-500">PNG, JPG up to 2MB</p>
-                  <input
-                    type="file"
+                  <input id="input" name="input" type="file"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files[0];
@@ -208,8 +204,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <MessageCircle className="w-5 h-5 text-green-500" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeData.socialLinks.whatsapp}
                   onChange={(e) => setStoreData({
                     ...storeData, 
@@ -222,8 +217,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
 
               <div className="flex items-center space-x-3">
                 <Facebook className="w-5 h-5 text-blue-600" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeData.socialLinks.facebook}
                   onChange={(e) => setStoreData({
                     ...storeData, 
@@ -236,8 +230,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
 
               <div className="flex items-center space-x-3">
                 <Twitter className="w-5 h-5 text-sky-500" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeData.socialLinks.twitter}
                   onChange={(e) => setStoreData({
                     ...storeData, 
@@ -250,8 +243,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
 
               <div className="flex items-center space-x-3">
                 <Instagram className="w-5 h-5 text-pink-500" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeData.socialLinks.instagram}
                   onChange={(e) => setStoreData({
                     ...storeData, 
@@ -280,8 +272,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
               {Object.entries(storeData.businessHours).map(([day, hours]) => (
                 <div key={day} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                   <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
+                    <input id="input" name="input" type="checkbox"
                       checked={hours.isOpen}
                       onChange={(e) => setStoreData({
                         ...storeData,
@@ -299,8 +290,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
                   
                   {hours.isOpen && (
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="time"
+                      <input id="input" name="input" type="time"
                         value={hours.open}
                         onChange={(e) => setStoreData({
                           ...storeData,
@@ -312,8 +302,7 @@ const StoreSetupWizard = ({ isOpen, onClose, onComplete, agentData }) => {
                         className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 dark:text-white"
                       />
                       <span className="text-gray-500">to</span>
-                      <input
-                        type="time"
+                      <input id="input" name="input" type="time"
                         value={hours.close}
                         onChange={(e) => setStoreData({
                           ...storeData,

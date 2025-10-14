@@ -443,8 +443,7 @@ const AdminPackageManagement = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   placeholder="Search packages..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -772,8 +771,7 @@ const AdminPackageManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Package Name *
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={newPackage.name}
                     onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g., MTN 5GB Bundle"
@@ -800,8 +798,7 @@ const AdminPackageManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Capacity *
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={newPackage.capacity}
                     onChange={(e) => setNewPackage(prev => ({ ...prev, capacity: e.target.value }))}
                     placeholder="e.g., 5GB, 10GB"
@@ -828,8 +825,7 @@ const AdminPackageManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Price (₵) *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={newPackage.price}
                     onChange={(e) => setNewPackage(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                     placeholder="0.00"
@@ -843,8 +839,7 @@ const AdminPackageManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Agent Price (₵)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={newPackage.agentPrice}
                     onChange={(e) => setNewPackage(prev => ({ ...prev, agentPrice: parseFloat(e.target.value) || 0 }))}
                     placeholder="0.00"
@@ -858,8 +853,7 @@ const AdminPackageManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Stock Quantity
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={newPackage.stock}
                     onChange={(e) => setNewPackage(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
                     placeholder="0"

@@ -152,8 +152,7 @@ const ApiKeyManagement = () => {
           <form onSubmit={generateApiKey} className="space-y-4">
             <div>
               <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Key Name</label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 className={`w-full p-2 border rounded transition-colors ${
                   darkMode 
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 

@@ -401,8 +401,7 @@ const SettingsPage = () => {
             <Icon size={18} />
           </div>
         )}
-        <input
-          type={type}
+        <input id="input" name="input" type={type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
@@ -544,8 +543,7 @@ const SettingsPage = () => {
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
-                            type={showPasswords.current ? 'text' : 'password'}
+                          <input id="input" name="input" type={showPasswords.current ? 'text' : 'password'}
                             value={accountForm.currentPassword}
                             onChange={(e) => setAccountForm(prev => ({ ...prev, currentPassword: e.target.value }))}
                             placeholder="Enter current password"
@@ -568,8 +566,7 @@ const SettingsPage = () => {
                           </label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                              type={showPasswords.new ? 'text' : 'password'}
+                            <input id="input" name="input" type={showPasswords.new ? 'text' : 'password'}
                               value={accountForm.newPassword}
                               onChange={(e) => setAccountForm(prev => ({ ...prev, newPassword: e.target.value }))}
                               placeholder="Enter new password"
@@ -591,8 +588,7 @@ const SettingsPage = () => {
                           </label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                              type={showPasswords.confirm ? 'text' : 'password'}
+                            <input id="input" name="input" type={showPasswords.confirm ? 'text' : 'password'}
                               value={accountForm.confirmPassword}
                               onChange={(e) => setAccountForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                               placeholder="Confirm new password"
@@ -855,8 +851,7 @@ const SettingsPage = () => {
                           {notifications.channels.push.enabled && (
                             <div className="ml-8 flex items-center space-x-4">
                               <label className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
+                                <input id="input" name="input" type="checkbox"
                                   checked={notifications.channels.push.sound}
                                   onChange={(e) => setNotifications(prev => ({
                                     ...prev,
@@ -901,8 +896,7 @@ const SettingsPage = () => {
                           {notifications.channels.sms.enabled && (
                             <div className="ml-8">
                               <label className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
+                                <input id="input" name="input" type="checkbox"
                                   checked={notifications.channels.sms.onlyUrgent}
                                   onChange={(e) => setNotifications(prev => ({
                                     ...prev,
@@ -989,8 +983,7 @@ const SettingsPage = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Time</label>
-                              <input
-                                type="time"
+                              <input id="input" name="input" type="time"
                                 value={notifications.quietHours.startTime}
                                 onChange={(e) => setNotifications(prev => ({
                                   ...prev,
@@ -1001,8 +994,7 @@ const SettingsPage = () => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Time</label>
-                              <input
-                                type="time"
+                              <input id="input" name="input" type="time"
                                 value={notifications.quietHours.endTime}
                                 onChange={(e) => setNotifications(prev => ({
                                   ...prev,

@@ -509,8 +509,7 @@ const AdvancedUserManagementPage = () => {
                 <div className="lg:col-span-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       placeholder="Search users..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -583,8 +582,7 @@ const AdvancedUserManagementPage = () => {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={selectedUsers.length === filteredUsers.length}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -620,8 +618,7 @@ const AdvancedUserManagementPage = () => {
                     {filteredUsers.map((user) => (
                       <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
+                          <input id="input" name="input" type="checkbox"
                             checked={selectedUsers.includes(user._id)}
                             onChange={(e) => {
                               if (e.target.checked) {

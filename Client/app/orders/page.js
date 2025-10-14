@@ -632,8 +632,7 @@ function DataPurchases() {
               <div className="flex flex-col gap-2 sm:gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={state.searchTerm}
                     onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
                     placeholder="Search purchases..."

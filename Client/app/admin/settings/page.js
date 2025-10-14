@@ -484,8 +484,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Amount (GHS) *
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 placeholder="0.00"
@@ -549,8 +548,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Amount (GHS) *
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 value={walletAmount}
                 onChange={(e) => setWalletAmount(e.target.value)}
                 placeholder="0.00"
@@ -565,8 +563,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Reason *
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={walletReason}
                 onChange={(e) => setWalletReason(e.target.value)}
                 placeholder="Reason for deduction"
@@ -796,8 +793,7 @@ const AdminSettingsPage = () => {
                 <p className="font-medium text-gray-900 dark:text-white">Maintenance Mode</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Disable customer access temporarily</p>
               </div>
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={systemSettings.maintenanceMode}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, maintenanceMode: e.target.checked }))}
                 className="w-5 h-5 text-[#FFCC08] focus:ring-[#FFCC08] rounded"
@@ -809,8 +805,7 @@ const AdminSettingsPage = () => {
                 <p className="font-medium text-gray-900 dark:text-white">User Registration</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Allow new user signups</p>
               </div>
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={systemSettings.registrationEnabled}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, registrationEnabled: e.target.checked }))}
                 className="w-5 h-5 text-[#FFCC08] focus:ring-[#FFCC08] rounded"
@@ -822,8 +817,7 @@ const AdminSettingsPage = () => {
                 <p className="font-medium text-gray-900 dark:text-white">Agent Registration</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Allow new agent applications</p>
               </div>
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={systemSettings.agentRegistrationEnabled}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, agentRegistrationEnabled: e.target.checked }))}
                 className="w-5 h-5 text-[#FFCC08] focus:ring-[#FFCC08] rounded"
@@ -840,8 +834,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Minimum Deposit (GHS)
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 value={systemSettings.minimumDeposit}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, minimumDeposit: parseFloat(e.target.value) || 0 }))}
                 min="0"
@@ -854,8 +847,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Maximum Deposit (GHS)
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 value={systemSettings.maximumDeposit}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, maximumDeposit: parseFloat(e.target.value) || 0 }))}
                 min="0"
@@ -868,8 +860,7 @@ const AdminSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Referral Bonus (GHS)
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 value={systemSettings.referralBonus}
                 onChange={(e) => setSystemSettings(prev => ({ ...prev, referralBonus: parseFloat(e.target.value) || 0 }))}
                 min="0"
@@ -909,8 +900,7 @@ const AdminSettingsPage = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Public Key
             </label>
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               value={paymentGatewaySettings.paystackPublicKey}
               onChange={(e) => setPaymentGatewaySettings(prev => ({ ...prev, paystackPublicKey: e.target.value }))}
               placeholder="pk_live_..."
@@ -922,8 +912,7 @@ const AdminSettingsPage = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Secret Key
             </label>
-            <input
-              type="password"
+            <input id="password" name="password" type="password"
               value={paymentGatewaySettings.paystackSecretKey}
               onChange={(e) => setPaymentGatewaySettings(prev => ({ ...prev, paystackSecretKey: e.target.value }))}
               placeholder="sk_live_..."

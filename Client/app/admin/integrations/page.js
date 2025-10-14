@@ -365,8 +365,7 @@ const ThirdPartyIntegrationsPage = () => {
                   <div className="flex-1 min-w-64">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         placeholder="Search integrations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -583,8 +582,7 @@ const ThirdPartyIntegrationsPage = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Integration Name</label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={integrationForm.name}
                   onChange={(e) => setIntegrationForm({ ...integrationForm, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -606,8 +604,7 @@ const ThirdPartyIntegrationsPage = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={integrationForm.provider}
                     onChange={(e) => setIntegrationForm({ ...integrationForm, provider: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -625,8 +622,7 @@ const ThirdPartyIntegrationsPage = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                <input
-                  type="password"
+                <input id="password" name="password" type="password"
                   value={integrationForm.apiKey}
                   onChange={(e) => setIntegrationForm({ ...integrationForm, apiKey: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

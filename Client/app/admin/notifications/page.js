@@ -477,8 +477,7 @@ const SettingsTab = ({ settings, onUpdate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="flex items-center">
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={localSettings.globalSettings?.showOnLogin || false}
                 onChange={(e) => setLocalSettings(prev => ({
                   ...prev,
@@ -495,8 +494,7 @@ const SettingsTab = ({ settings, onUpdate }) => {
           
           <div>
             <label className="flex items-center">
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={localSettings.globalSettings?.allowUserDismiss || false}
                 onChange={(e) => setLocalSettings(prev => ({
                   ...prev,
@@ -515,8 +513,7 @@ const SettingsTab = ({ settings, onUpdate }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Auto-dismiss delay (seconds)
             </label>
-            <input
-              type="number"
+            <input id="input" name="input" type="number"
               value={(localSettings.globalSettings?.autoDismissDelay || 10000) / 1000}
               onChange={(e) => setLocalSettings(prev => ({
                 ...prev,
@@ -533,8 +530,7 @@ const SettingsTab = ({ settings, onUpdate }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Max announcements per user
             </label>
-            <input
-              type="number"
+            <input id="input" name="input" type="number"
               value={localSettings.globalSettings?.maxAnnouncementsPerUser || 5}
               onChange={(e) => setLocalSettings(prev => ({
                 ...prev,
@@ -778,8 +774,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Title *
             </label>
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -884,8 +879,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Expires At (Optional)
             </label>
-            <input
-              type="datetime-local"
+            <input id="input" name="input" type="datetime-local"
               value={formData.expiresAt}
               onChange={(e) => setFormData({...formData, expiresAt: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -902,8 +896,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Dismiss Button Text
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={formData.actionButton?.text || "I've Read This - Dismiss Forever"}
                     onChange={(e) => setFormData({
                       ...formData,
@@ -921,8 +914,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Auto Dismiss Delay (ms)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={formData.displaySettings?.autoDismissDelay || 15000}
                     onChange={(e) => setFormData({
                       ...formData,
@@ -939,8 +931,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
               
               <div className="mt-3">
                 <label className="flex items-center">
-                  <input
-                    type="checkbox"
+                  <input id="input" name="input" type="checkbox"
                     checked={formData.displaySettings?.autoDismiss || false}
                     onChange={(e) => setFormData({
                       ...formData,
@@ -959,8 +950,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
           
           <div className="flex items-center space-x-6">
             <label className="flex items-center">
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={formData.displaySettings.showOnLogin}
                 onChange={(e) => setFormData({
                   ...formData,
@@ -975,8 +965,7 @@ const CreateAnnouncementModal = ({ announcement, onClose, onSuccess }) => {
             </label>
             
             <label className="flex items-center">
-              <input
-                type="checkbox"
+              <input id="input" name="input" type="checkbox"
                 checked={formData.displaySettings.dismissible}
                 onChange={(e) => setFormData({
                   ...formData,

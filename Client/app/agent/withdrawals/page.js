@@ -493,8 +493,7 @@ const AgentWithdrawals = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount (₵)
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   step="0.01"
                   min={walletData.minWithdrawal}
                   max={walletData.available}
@@ -517,8 +516,7 @@ const AgentWithdrawals = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Account Details
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter phone number or account number"
                 />

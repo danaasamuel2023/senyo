@@ -179,8 +179,7 @@ const AmountInput = ({ value, onChange, quickAmounts, selectedAmount, onQuickSel
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="text-[#FFCC08] text-xl font-bold">₵</span>
             </div>
-            <input
-              type="number"
+            <input id="input" name="input" type="number"
               value={value}
               onChange={onChange}
               placeholder="Enter amount"
@@ -802,9 +801,8 @@ const UnlimitedDataDeposit = () => {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Phone size={20} className="text-[#FFCC08]" />
                   </div>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
+                  <input type="tel"
+                    id="phoneNumber" name="phoneNumber"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="02XXXXXXXX"
@@ -869,9 +867,8 @@ const UnlimitedDataDeposit = () => {
                   <label htmlFor="otpCode" className="block text-lg font-bold mb-3 text-white">
                     Enter 6-digit OTP Code
                   </label>
-                  <input
-                    type="text"
-                    id="otpCode"
+                  <input type="text"
+                    id="otpCode" name="otpCode"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                     placeholder="XXXXXX"

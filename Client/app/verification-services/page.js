@@ -554,8 +554,7 @@ export default function VerificationServicesPage() {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} className="text-slate-400 dark:text-slate-500" />
             </div>
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Search services..."

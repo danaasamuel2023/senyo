@@ -85,9 +85,8 @@ export default function ClientLoginForm() {
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email Address
           </label>
-          <input
-            type="email"
-            id="email"
+          <input type="email"
+            id="email" name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -100,9 +99,8 @@ export default function ClientLoginForm() {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             Password
           </label>
-          <input
-            type="password"
-            id="password"
+          <input type="password"
+            id="password" name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

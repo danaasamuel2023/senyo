@@ -441,8 +441,7 @@ const AgentStorePage = () => {
 
                     {/* Phone Number Input */}
                     <div className="mb-2">
-                      <input
-                        type="tel"
+                      <input id="phone" name="phone" type="tel"
                         placeholder="Enter phone number"
                         value={item.phoneNumber}
                         onChange={(e) => updatePhoneNumber(item.id, e.target.value)}

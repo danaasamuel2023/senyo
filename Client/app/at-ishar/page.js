@@ -258,8 +258,7 @@ const ATBundleCards = () => {
                       Airtel Tigo Phone Number
                     </label>
                     <div className="relative">
-                      <input
-                        type="tel"
+                      <input id="phone" name="phone" type="tel"
                         className="w-full px-4 py-3 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-400 border-2 border-gray-200 focus:outline-none focus:border-[#ED1C24] focus:bg-white transition-all"
                         placeholder="024XXXXXXX or 054XXXXXXX"
                         value={phoneNumber}

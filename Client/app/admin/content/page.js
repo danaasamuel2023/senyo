@@ -490,8 +490,7 @@ const ContentManagementPage = ({ user }) => {
                 <div className="md:col-span-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       placeholder="Search pages..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -747,8 +746,7 @@ const ContentManagementPage = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Site Title
                     </label>
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       defaultValue={contentData.settings.siteTitle}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
@@ -769,8 +767,7 @@ const ContentManagementPage = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Site Keywords
                     </label>
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       defaultValue={contentData.settings.siteKeywords}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
@@ -842,8 +839,7 @@ const ContentManagementPage = ({ user }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Title
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={contentTitle}
                     onChange={(e) => setContentTitle(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"

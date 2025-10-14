@@ -257,8 +257,7 @@ const BulkDataPurchase = () => {
                       {file ? file.name : "Drop files or click to upload"}
                     </span>
                     <span className="text-sm text-gray-500 mt-2">Excel files only (.xlsx, .xls)</span>
-                    <input 
-                      type="file" 
+                    <input id="input" name="input" type="file" 
                       accept=".xlsx,.xls" 
                       onChange={handleFileChange} 
                       className="hidden"

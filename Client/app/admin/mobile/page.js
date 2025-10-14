@@ -397,8 +397,7 @@ const MobileAdminAppPage = () => {
                   <div className="flex-1 min-w-64">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         placeholder="Search notifications..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -590,8 +589,7 @@ const MobileAdminAppPage = () => {
                 <div className="space-y-2">
                   {Object.entries(settingsForm.notifications).map(([key, value]) => (
                     <label key={key} className="flex items-center">
-                      <input
-                        type="checkbox"
+                      <input id="input" name="input" type="checkbox"
                         checked={value}
                         onChange={(e) => setSettingsForm({
                           ...settingsForm,
@@ -648,8 +646,7 @@ const MobileAdminAppPage = () => {
                 <div className="space-y-2">
                   {Object.entries(settingsForm.security).map(([key, value]) => (
                     <label key={key} className="flex items-center">
-                      <input
-                        type="checkbox"
+                      <input id="input" name="input" type="checkbox"
                         checked={value}
                         onChange={(e) => setSettingsForm({
                           ...settingsForm,

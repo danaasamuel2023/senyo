@@ -461,8 +461,7 @@ const fetchTransactions = async () => {
                     <IconPhone />
                   </button>
                 </span>
-                <input
-                  type="text"
+                <input id="search" type="text"
                   name="search"
                   value={filters.search}
                   onChange={handleFilterChange}
@@ -550,15 +549,13 @@ const fetchTransactions = async () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
                 <div className="flex space-x-2">
-                  <input
-                    type="date"
+                  <input id="startDate" type="date"
                     name="startDate"
                     value={filters.startDate}
                     onChange={handleFilterChange}
                     className="w-full px-3 py-2 border rounded"
                   />
-                  <input
-                    type="date"
+                  <input id="endDate" type="date"
                     name="endDate"
                     value={filters.endDate}
                     onChange={handleFilterChange}

@@ -106,8 +106,7 @@ export default function PhoneNumbersPage() {
           {/* Email Input Form */}
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="flex gap-4">
-              <input
-                type="email"
+              <input id="email" name="email" type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email to fetch phone numbers"

@@ -369,8 +369,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, onWithdrawalSuccess 
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={formData.amount}
                     onChange={(e) => handleInputChange('amount', e.target.value)}
                     placeholder="Enter amount (GHS 10 - 50,000)"
@@ -416,8 +415,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, onWithdrawalSuccess 
                       Account Number
                     </label>
                     <div className="flex space-x-2">
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={formData.accountNumber}
                         onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                         placeholder="Enter account number"
@@ -497,8 +495,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, onWithdrawalSuccess 
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Phone Number
                     </label>
-                    <input
-                      type="tel"
+                    <input id="phone" name="phone" type="tel"
                       value={formData.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                       placeholder="0XXXXXXXXX"
@@ -516,8 +513,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, onWithdrawalSuccess 
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Account Name (Optional)
                     </label>
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       value={formData.accountName}
                       onChange={(e) => handleInputChange('accountName', e.target.value)}
                       placeholder="Enter account holder name"

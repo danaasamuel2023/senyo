@@ -233,8 +233,7 @@ export default function Leaderboard() {
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 rounded-b-lg shadow-md border-t-0 border`}>
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <div className="relative w-full md:w-auto">
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 placeholder="Search users..."
                 className={`pl-10 pr-4 py-2 border rounded-lg w-full md:w-64 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-700'

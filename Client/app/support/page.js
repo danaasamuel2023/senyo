@@ -175,8 +175,7 @@ const SupportPage = () => {
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
+                  <input id="name" type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -193,8 +192,7 @@ const SupportPage = () => {
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
+                  <input id="email" type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
@@ -209,8 +207,7 @@ const SupportPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Subject
                 </label>
-                <input
-                  type="text"
+                <input id="subject" type="text"
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}

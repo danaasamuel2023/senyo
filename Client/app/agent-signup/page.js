@@ -241,8 +241,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="name" type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
@@ -261,8 +260,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="email"
+                <input id="email" type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
@@ -281,8 +279,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="tel"
+                <input id="phoneNumber" type="tel"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
@@ -301,8 +298,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type={showPassword ? "text" : "password"}
+                <input id="password" type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
@@ -332,8 +328,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
+                <input id="confirmPassword" type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
@@ -370,8 +365,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MapPin className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="territory" type="text"
                   name="territory"
                   value={formData.territory}
                   onChange={handleInputChange}
@@ -414,8 +408,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Shield className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="idNumber" type="text"
                   name="idNumber"
                   value={formData.idNumber}
                   onChange={handleInputChange}
@@ -441,8 +434,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Building className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="bankName" type="text"
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleInputChange}
@@ -461,8 +453,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="accountName" type="text"
                   name="accountName"
                   value={formData.accountName}
                   onChange={handleInputChange}
@@ -481,8 +472,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <CreditCard className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="text"
+                <input id="accountNumber" type="text"
                   name="accountNumber"
                   value={formData.accountNumber}
                   onChange={handleInputChange}
@@ -501,8 +491,7 @@ export default function AgentSignUpPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input
-                  type="tel"
+                <input id="momoNumber" type="tel"
                   name="momoNumber"
                   value={formData.momoNumber}
                   onChange={handleInputChange}
@@ -524,8 +513,7 @@ export default function AgentSignUpPage() {
               </div>
               
               <label className="flex items-start space-x-3 bg-gray-100 dark:bg-gray-700 p-4 rounded-xl">
-                <input
-                  type="checkbox"
+                <input id="input" name="input" type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
                   className="mt-1 h-4 w-4 text-[#FFCC08] focus:ring-[#FFCC08] border-[#FFCC08]/30 rounded bg-white/10 backdrop-blur-sm"

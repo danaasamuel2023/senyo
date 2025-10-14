@@ -223,8 +223,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
         </label>
         <div className="relative">
           <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="tel"
+          <input id="phone" name="phone" type="tel"
             value={paymentForm.phoneNumber}
             onChange={(e) => setPaymentForm({...paymentForm, phoneNumber: e.target.value})}
             className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -259,8 +258,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
         </label>
         <div className="relative">
           <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
+          <input id="text-input" name="text-input" type="text"
             value={paymentForm.cardNumber}
             onChange={(e) => setPaymentForm({...paymentForm, cardNumber: e.target.value})}
             className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -275,8 +273,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Expiry Date
           </label>
-          <input
-            type="text"
+          <input id="text-input" name="text-input" type="text"
             value={paymentForm.expiryDate}
             onChange={(e) => setPaymentForm({...paymentForm, expiryDate: e.target.value})}
             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -289,8 +286,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
             CVV
           </label>
           <div className="relative">
-            <input
-              type={showCardDetails ? "text" : "password"}
+            <input id="input" name="input" type={showCardDetails ? "text" : "password"}
               value={paymentForm.cvv}
               onChange={(e) => setPaymentForm({...paymentForm, cvv: e.target.value})}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -312,8 +308,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Cardholder Name
         </label>
-        <input
-          type="text"
+        <input id="text-input" name="text-input" type="text"
           value={paymentForm.cardName}
           onChange={(e) => setPaymentForm({...paymentForm, cardName: e.target.value})}
           className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -343,8 +338,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Account Number
         </label>
-        <input
-          type="text"
+        <input id="text-input" name="text-input" type="text"
           value={paymentForm.bankAccount}
           onChange={(e) => setPaymentForm({...paymentForm, bankAccount: e.target.value})}
           className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -373,8 +367,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Account Name
         </label>
-        <input
-          type="text"
+        <input id="text-input" name="text-input" type="text"
           value={paymentForm.accountName}
           onChange={(e) => setPaymentForm({...paymentForm, accountName: e.target.value})}
           className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -511,8 +504,7 @@ const PaymentModal = ({ isOpen, onClose, order, onPaymentSuccess }) => {
                     </label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="tel"
+                      <input id="phone" name="phone" type="tel"
                         value={paymentForm.phoneNumber}
                         onChange={(e) => setPaymentForm({...paymentForm, phoneNumber: e.target.value})}
                         className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"

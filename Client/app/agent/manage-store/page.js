@@ -593,8 +593,7 @@ const AgentStoreManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
-                    <input
-                      type="number"
+                    <input id="input" name="input" type="number"
                       placeholder="Enter amount"
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
                     />
@@ -638,8 +637,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Store Name
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={storeCustomization.storeName}
                     onChange={(e) => setStoreCustomization({...storeCustomization, storeName: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -652,8 +650,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Welcome Message
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={storeCustomization.welcomeMessage}
                     onChange={(e) => setStoreCustomization({...storeCustomization, welcomeMessage: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -681,14 +678,12 @@ const AgentStoreManagement = () => {
                     Brand Color
                   </label>
                   <div className="flex items-center space-x-3">
-                    <input
-                      type="color"
+                    <input id="input" name="input" type="color"
                       value={storeCustomization.brandColor}
                       onChange={(e) => setStoreCustomization({...storeCustomization, brandColor: e.target.value})}
                       className="w-12 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
                     />
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       value={storeCustomization.brandColor}
                       onChange={(e) => setStoreCustomization({...storeCustomization, brandColor: e.target.value})}
                       className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -705,8 +700,7 @@ const AgentStoreManagement = () => {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <MessageCircle className="w-5 h-5 text-green-500" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={storeCustomization.socialLinks.whatsapp}
                         onChange={(e) => setStoreCustomization({
                           ...storeCustomization, 
@@ -718,8 +712,7 @@ const AgentStoreManagement = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <Facebook className="w-5 h-5 text-blue-600" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={storeCustomization.socialLinks.facebook}
                         onChange={(e) => setStoreCustomization({
                           ...storeCustomization, 
@@ -731,8 +724,7 @@ const AgentStoreManagement = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <Twitter className="w-5 h-5 text-sky-500" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={storeCustomization.socialLinks.twitter}
                         onChange={(e) => setStoreCustomization({
                           ...storeCustomization, 
@@ -744,8 +736,7 @@ const AgentStoreManagement = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <Instagram className="w-5 h-5 text-pink-500" />
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={storeCustomization.socialLinks.instagram}
                         onChange={(e) => setStoreCustomization({
                           ...storeCustomization, 
@@ -808,8 +799,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Product Name
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -836,8 +826,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Capacity (GB)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={newProduct.capacity}
                     onChange={(e) => setNewProduct({...newProduct, capacity: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -849,8 +838,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Base Price (₵)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={newProduct.basePrice}
                     onChange={(e) => setNewProduct({...newProduct, basePrice: parseFloat(e.target.value) || 0})}
@@ -863,8 +851,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Your Price (₵)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={newProduct.agentPrice}
                     onChange={(e) => setNewProduct({...newProduct, agentPrice: parseFloat(e.target.value) || 0})}
@@ -877,8 +864,7 @@ const AgentStoreManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Stock Quantity
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={newProduct.stock}
                     onChange={(e) => setNewProduct({...newProduct, stock: parseInt(e.target.value) || 0})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"

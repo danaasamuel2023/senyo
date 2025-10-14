@@ -127,8 +127,7 @@ const AmountInput = ({ value, onChange, onQuickSelect, selectedAmount, quickAmou
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="text-[#FFCC08] text-xl font-bold">₵</span>
             </div>
-            <input
-              type="number"
+            <input id="input" name="input" type="number"
               value={value}
               onChange={onChange}
               placeholder="Enter amount"

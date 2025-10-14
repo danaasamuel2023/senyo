@@ -623,8 +623,7 @@ const OrderHistoryPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   placeholder="Search orders..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -655,15 +654,13 @@ const OrderHistoryPage = () => {
                 <option value="at">AirtelTigo</option>
               </select>
 
-              <input
-                type="date"
+              <input id="input" name="input" type="date"
                 value={dateRange.start}
                 onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
                 className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"
               />
 
-              <input
-                type="date"
+              <input id="input" name="input" type="date"
                 value={dateRange.end}
                 onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                 className="px-4 py-2.5 bg-gray-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08] text-white"

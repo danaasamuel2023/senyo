@@ -330,8 +330,7 @@ const WalletTransactionsPage = () => {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Start Date</label>
-                <input
-                  type="date"
+                <input id="input" name="input" type="date"
                   value={filters.startDate}
                   onChange={(e) => handleFilterChange('startDate', e.target.value)}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
@@ -340,8 +339,7 @@ const WalletTransactionsPage = () => {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">End Date</label>
-                <input
-                  type="date"
+                <input id="input" name="input" type="date"
                   value={filters.endDate}
                   onChange={(e) => handleFilterChange('endDate', e.target.value)}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
@@ -362,8 +360,7 @@ const WalletTransactionsPage = () => {
           <div className="mt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 placeholder="Search transactions..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}

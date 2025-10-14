@@ -589,8 +589,7 @@ export default function OrderManagementPage() {
                 
                 <div>
                   <label className="block text-sm font-medium mb-1">Start Date</label>
-                  <input
-                    type="date"
+                  <input id="input" name="input" type="date"
                     value={filters.startDate}
                     onChange={e => setFilters({...filters, startDate: e.target.value})}
                     className="w-full p-2 rounded border bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white transition-colors"
@@ -599,8 +598,7 @@ export default function OrderManagementPage() {
                 
                 <div>
                   <label className="block text-sm font-medium mb-1">End Date</label>
-                  <input
-                    type="date"
+                  <input id="input" name="input" type="date"
                     value={filters.endDate}
                     onChange={e => setFilters({...filters, endDate: e.target.value})}
                     className="w-full p-2 rounded border bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white transition-colors"
@@ -645,8 +643,7 @@ export default function OrderManagementPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Custom page size</label>
                   <div className="flex space-x-2">
-                    <input
-                      type="number"
+                    <input id="input" name="input" type="number"
                       min="1"
                       placeholder="Custom size"
                       value={customPageSize}
@@ -704,8 +701,7 @@ export default function OrderManagementPage() {
                   ))}
                 </select>
                 
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   placeholder="Admin Notes (Optional)"
                   value={statusNotes}
                   onChange={e => setStatusNotes(e.target.value)}
@@ -790,8 +786,7 @@ export default function OrderManagementPage() {
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       <div className="flex items-center">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={selectAll}
                           onChange={toggleSelectAll}
                           className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
@@ -841,8 +836,7 @@ export default function OrderManagementPage() {
                       } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={selectedOrders.includes(order._id)}
                           onChange={() => toggleOrderSelection(order._id)}
                           className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"

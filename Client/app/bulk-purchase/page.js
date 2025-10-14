@@ -576,8 +576,7 @@ export default function BulkPurchase() {
                       {index + 1}.
                     </span>
                     <div className="flex-1">
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         placeholder="Phone number (e.g., 0241234567)"
                         value={order.recipient}
                         onChange={(e) => handleOrderChange(index, 'recipient', e.target.value)}
@@ -639,12 +638,11 @@ export default function BulkPurchase() {
                 <p className="text-gray-400 mb-4">
                   Drop your CSV file here or click to browse
                 </p>
-                <input
-                  type="file"
+                <input type="file"
                   accept=".csv"
                   onChange={handleCSVUpload}
                   className="hidden"
-                  id="csv-upload"
+                  id="csv-upload" name="csv-upload"
                 />
                 <label
                   htmlFor="csv-upload"

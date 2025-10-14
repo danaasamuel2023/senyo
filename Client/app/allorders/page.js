@@ -522,9 +522,8 @@ const AdminOrders = () => {
             {/* Phone Number Search */}
             <div className="flex items-center relative">
               <label htmlFor="phoneSearch" className="mr-2 text-gray-700">Phone Search:</label>
-              <input
-                type="text"
-                id="phoneSearch"
+              <input type="text"
+                id="phoneSearch" name="phoneSearch"
                 value={phoneSearch}
                 onChange={(e) => setPhoneSearch(e.target.value)}
                 placeholder="Search by phone"
@@ -544,9 +543,8 @@ const AdminOrders = () => {
             {/* Reference Search (New) */}
             <div className="flex items-center relative">
               <label htmlFor="referenceSearch" className="mr-2 text-gray-700">Reference:</label>
-              <input
-                type="text"
-                id="referenceSearch"
+              <input type="text"
+                id="referenceSearch" name="referenceSearch"
                 value={referenceSearch}
                 onChange={(e) => setReferenceSearch(e.target.value)}
                 placeholder="Search by order reference"
@@ -641,9 +639,8 @@ const AdminOrders = () => {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center">
               <label htmlFor="startDate" className="mr-2 text-gray-700">From:</label>
-              <input
-                type="date"
-                id="startDate"
+              <input type="date"
+                id="startDate" name="startDate"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -652,9 +649,8 @@ const AdminOrders = () => {
             
             <div className="flex items-center">
               <label htmlFor="endDate" className="mr-2 text-gray-700">To:</label>
-              <input
-                type="date"
-                id="endDate"
+              <input type="date"
+                id="endDate" name="endDate"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -750,8 +746,7 @@ const AdminOrders = () => {
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           onChange={(e) => {
                             if (e.target.checked) {
                               // Use the appropriate ID (geonetReference or id)
@@ -807,8 +802,7 @@ const AdminOrders = () => {
                           ref={isLastElement ? lastOrderElementRef : null}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
+                            <input id="input" name="input" type="checkbox"
                               checked={selectedOrders.includes(orderId)}
                               onChange={() => toggleOrderSelection(orderId)}
                               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"

@@ -558,8 +558,7 @@ const AdminUsersPage = () => {
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 placeholder="Search users by name, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -868,8 +867,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Amount (GHS)
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 step="0.01"
                 min="0.01"
                 value={addMoneyAmount}
@@ -948,8 +946,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Amount (GHS)
               </label>
-              <input
-                type="number"
+              <input id="input" name="input" type="number"
                 step="0.01"
                 min="0.01"
                 max={selectedUser.walletBalance || 0}
@@ -1018,8 +1015,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={editUserData.name}
                 onChange={(e) => setEditUserData({...editUserData, name: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1031,8 +1027,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
-              <input
-                type="email"
+              <input id="email" name="email" type="email"
                 value={editUserData.email}
                 onChange={(e) => setEditUserData({...editUserData, email: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1044,8 +1039,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </label>
-              <input
-                type="tel"
+              <input id="phone" name="phone" type="tel"
                 value={editUserData.phone}
                 onChange={(e) => setEditUserData({...editUserData, phone: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1124,8 +1118,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 New Password
               </label>
-              <input
-                type="password"
+              <input id="password" name="password" type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1137,8 +1130,7 @@ const AdminUsersPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
+              <input id="password" name="password" type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

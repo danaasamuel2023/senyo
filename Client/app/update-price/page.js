@@ -87,8 +87,7 @@ const BundlePriceList = () => {
         
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <div className="relative flex-grow sm:flex-grow-0">
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               placeholder="Search bundles..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

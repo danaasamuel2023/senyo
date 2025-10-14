@@ -109,8 +109,7 @@ export default function OtpInput({ length = 6, value, onChange }) {
   return (
     <div className="flex justify-center gap-2">
       {[...Array(length)].map((_, index) => (
-        <input
-          key={index}
+        <input id="input" name="input" key={index}
           ref={el => inputRefs.current[index] = el}
           type="text"
           inputMode="numeric"

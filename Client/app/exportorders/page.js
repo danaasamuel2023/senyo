@@ -417,8 +417,7 @@ export default function OrdersAdmin() {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search across all orders..."
@@ -443,9 +442,8 @@ export default function OrdersAdmin() {
               <label htmlFor="orderId" className="block text-sm font-medium text-gray-700">
                 Order ID
               </label>
-              <input
-                type="text"
-                id="orderId"
+              <input type="text"
+                id="orderId" name="orderId"
                 value={filters.orderId}
                 onChange={(e) => setFilters({...filters, orderId: e.target.value})}
                 placeholder="Search by Order ID"
@@ -502,9 +500,8 @@ export default function OrdersAdmin() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Calendar className="h-4 w-4 text-gray-400" />
                 </div>
-                <input
-                  type="datetime-local"
-                  id="startDate"
+                <input type="datetime-local"
+                  id="startDate" name="startDate"
                   value={filters.startDate}
                   onChange={(e) => setFilters({...filters, startDate: e.target.value})}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
@@ -521,9 +518,8 @@ export default function OrdersAdmin() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Calendar className="h-4 w-4 text-gray-400" />
                 </div>
-                <input
-                  type="datetime-local"
-                  id="endDate"
+                <input type="datetime-local"
+                  id="endDate" name="endDate"
                   value={filters.endDate}
                   onChange={(e) => setFilters({...filters, endDate: e.target.value})}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
@@ -653,8 +649,7 @@ export default function OrdersAdmin() {
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={selectAll}
                           onChange={() => setSelectAll(!selectAll)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -685,8 +680,7 @@ export default function OrdersAdmin() {
                   {orders.map(order => (
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={selectedIds.includes(order._id)}
                           onChange={() => toggleOrderSelection(order._id)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -894,9 +888,8 @@ export default function OrdersAdmin() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Calendar className="h-4 w-4 text-gray-400" />
                         </div>
-                        <input
-                          type="datetime-local"
-                          id="startTime"
+                        <input type="datetime-local"
+                          id="startTime" name="startTime"
                           value={timeUpdateForm.startTime}
                           onChange={(e) => setTimeUpdateForm({...timeUpdateForm, startTime: e.target.value})}
                           className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
@@ -921,9 +914,8 @@ export default function OrdersAdmin() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Calendar className="h-4 w-4 text-gray-400" />
                         </div>
-                        <input
-                          type="datetime-local"
-                          id="endTime"
+                        <input type="datetime-local"
+                          id="endTime" name="endTime"
                           value={timeUpdateForm.endTime}
                           onChange={(e) => setTimeUpdateForm({...timeUpdateForm, endTime: e.target.value})}
                           className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"

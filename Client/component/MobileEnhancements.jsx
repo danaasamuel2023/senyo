@@ -174,8 +174,7 @@ export const MobileOptimizedInput = ({
   ...props 
 }) => {
   return (
-    <input
-      type={type}
+    <input id="input" name="input" type={type}
       placeholder={placeholder}
       value={value}
       onChange={onChange}

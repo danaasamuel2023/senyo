@@ -362,8 +362,7 @@ const MomoDepositPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number
                 </label>
-                <input
-                  type="tel"
+                <input id="phone" name="phone" type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder={`Enter ${networks.find(n => n.id === selectedNetwork)?.shortName} number`}
@@ -425,8 +424,7 @@ const MomoDepositPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount (GHS)
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Enter amount"

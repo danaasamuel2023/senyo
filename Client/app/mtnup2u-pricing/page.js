@@ -152,9 +152,8 @@ const MTNUp2UPricing = () => {
             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
-            <input
-              type="tel"
-              id="phoneNumber"
+            <input type="tel"
+              id="phoneNumber" name="phoneNumber"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="Enter your phone number (e.g., 0241234567)"

@@ -643,6 +643,8 @@ export default function LoginPage() {
                   <Mail className="w-4 h-4 text-yellow-400" />
                 </div>
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   placeholder="Email Address"
                   value={formData.email}
@@ -661,6 +663,8 @@ export default function LoginPage() {
                   <Lock className="w-4 h-4 text-yellow-400" />
                 </div>
                 <input
+                  id="password"
+                  name="password"
                   type={formData.showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={formData.password}

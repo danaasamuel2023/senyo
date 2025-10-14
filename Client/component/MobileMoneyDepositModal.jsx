@@ -254,8 +254,7 @@ const MobileMoneyDepositModal = ({ isOpen, onClose, currentBalance, onDepositSuc
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={formData.amount}
                     onChange={(e) => handleInputChange('amount', e.target.value)}
                     placeholder="Enter amount (GHS 5 - 10,000)"
@@ -334,8 +333,7 @@ const MobileMoneyDepositModal = ({ isOpen, onClose, currentBalance, onDepositSuc
                 </label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="tel"
+                  <input id="phone" name="phone" type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                     placeholder="0XXXXXXXXX"

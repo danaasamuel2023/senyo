@@ -261,8 +261,7 @@ const CustomizeStorePage = () => {
               </label>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">.../agent-store/</span>
-                <input
-                  type="text"
+                <input id="customSlug" type="text"
                   name="customSlug"
                   value={customization.customSlug}
                   onChange={handleInputChange}
@@ -279,8 +278,7 @@ const CustomizeStorePage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Store Name
               </label>
-              <input
-                type="text"
+              <input id="storeName" type="text"
                 name="storeName"
                 value={customization.storeName}
                 onChange={handleInputChange}
@@ -334,15 +332,13 @@ const CustomizeStorePage = () => {
                 Brand Color
               </label>
               <div className="flex items-center space-x-3">
-                <input
-                  type="color"
+                <input id="brandColor" type="color"
                   name="brandColor"
                   value={customization.brandColor}
                   onChange={handleInputChange}
                   className="w-16 h-12 rounded-xl cursor-pointer"
                 />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={customization.brandColor}
                   onChange={(e) => setCustomization(prev => ({ ...prev, brandColor: e.target.value }))}
                   className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFCC08]"
@@ -354,8 +350,7 @@ const CustomizeStorePage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Logo URL (Optional)
               </label>
-              <input
-                type="url"
+              <input id="logoUrl" type="url"
                 name="logoUrl"
                 value={customization.logoUrl}
                 onChange={handleInputChange}
@@ -368,8 +363,7 @@ const CustomizeStorePage = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Banner URL (Optional)
               </label>
-              <input
-                type="url"
+              <input id="bannerUrl" type="url"
                 name="bannerUrl"
                 value={customization.bannerUrl}
                 onChange={handleInputChange}
@@ -380,8 +374,7 @@ const CustomizeStorePage = () => {
 
             <div className="space-y-2">
               <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
+                <input id="showAgentInfo" type="checkbox"
                   name="showAgentInfo"
                   checked={customization.showAgentInfo}
                   onChange={handleInputChange}
@@ -391,8 +384,7 @@ const CustomizeStorePage = () => {
               </label>
 
               <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
+                <input id="showContactButton" type="checkbox"
                   name="showContactButton"
                   checked={customization.showContactButton}
                   onChange={handleInputChange}
@@ -419,8 +411,7 @@ const CustomizeStorePage = () => {
                 <MessageCircle className="w-4 h-4 text-green-600" />
                 <span>WhatsApp Number</span>
               </label>
-              <input
-                type="tel"
+              <input id="social.whatsapp" type="tel"
                 name="social.whatsapp"
                 value={customization.socialLinks.whatsapp}
                 onChange={handleInputChange}
@@ -434,8 +425,7 @@ const CustomizeStorePage = () => {
                 <Facebook className="w-4 h-4 text-blue-600" />
                 <span>Facebook</span>
               </label>
-              <input
-                type="url"
+              <input id="social.facebook" type="url"
                 name="social.facebook"
                 value={customization.socialLinks.facebook}
                 onChange={handleInputChange}
@@ -449,8 +439,7 @@ const CustomizeStorePage = () => {
                 <Twitter className="w-4 h-4 text-sky-600" />
                 <span>Twitter</span>
               </label>
-              <input
-                type="url"
+              <input id="social.twitter" type="url"
                 name="social.twitter"
                 value={customization.socialLinks.twitter}
                 onChange={handleInputChange}
@@ -464,8 +453,7 @@ const CustomizeStorePage = () => {
                 <Instagram className="w-4 h-4 text-pink-600" />
                 <span>Instagram</span>
               </label>
-              <input
-                type="url"
+              <input id="social.instagram" type="url"
                 name="social.instagram"
                 value={customization.socialLinks.instagram}
                 onChange={handleInputChange}

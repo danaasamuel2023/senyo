@@ -290,8 +290,7 @@ const YelloOrders = () => {
                   <thead className="bg-yellow-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           onChange={(e) => {
                             if (e.target.checked) {
                               setSelectedOrders(orders.map(order => order.id));
@@ -330,8 +329,7 @@ const YelloOrders = () => {
                     {orders.map((order) => (
                       <tr key={order.id} className="hover:bg-yellow-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
+                          <input id="input" name="input" type="checkbox"
                             checked={selectedOrders.includes(order.id)}
                             onChange={() => toggleOrderSelection(order.id)}
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"

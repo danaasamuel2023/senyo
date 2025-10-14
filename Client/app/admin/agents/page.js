@@ -621,8 +621,7 @@ const AgentManagementPage = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Capacity (GB) *
                     </label>
-                    <input
-                      type="number"
+                    <input id="capacity" type="number"
                       name="capacity"
                       required
                       min="1"
@@ -635,8 +634,7 @@ const AgentManagementPage = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Price (GHS) *
                     </label>
-                    <input
-                      type="number"
+                    <input id="price" type="number"
                       name="price"
                       required
                       min="0"
@@ -763,8 +761,7 @@ const AgentManagementPage = ({ user }) => {
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   placeholder="Search agents by name, email, or code..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

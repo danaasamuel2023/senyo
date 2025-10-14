@@ -551,8 +551,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Campaign Name *
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={campaignForm.name}
                     onChange={(e) => setCampaignForm({...campaignForm, name: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -581,8 +580,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Start Date
                   </label>
-                  <input
-                    type="datetime-local"
+                  <input id="input" name="input" type="datetime-local"
                     value={campaignForm.startDate}
                     onChange={(e) => setCampaignForm({...campaignForm, startDate: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -593,8 +591,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     End Date
                   </label>
-                  <input
-                    type="datetime-local"
+                  <input id="input" name="input" type="datetime-local"
                     value={campaignForm.endDate}
                     onChange={(e) => setCampaignForm({...campaignForm, endDate: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -620,8 +617,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email Subject
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={campaignForm.subject}
                     onChange={(e) => setCampaignForm({...campaignForm, subject: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -702,8 +698,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Promotion Name *
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={promotionForm.name}
                     onChange={(e) => setPromotionForm({...promotionForm, name: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -731,8 +726,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Discount Value *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={promotionForm.value}
                     onChange={(e) => setPromotionForm({...promotionForm, value: parseFloat(e.target.value) || 0})}
@@ -746,8 +740,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Minimum Order Amount (₵)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={promotionForm.minOrderAmount}
                     onChange={(e) => setPromotionForm({...promotionForm, minOrderAmount: parseFloat(e.target.value) || 0})}
@@ -760,8 +753,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Start Date
                   </label>
-                  <input
-                    type="datetime-local"
+                  <input id="input" name="input" type="datetime-local"
                     value={promotionForm.startDate}
                     onChange={(e) => setPromotionForm({...promotionForm, startDate: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -772,8 +764,7 @@ const MarketingTools = ({ agentId }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     End Date
                   </label>
-                  <input
-                    type="datetime-local"
+                  <input id="input" name="input" type="datetime-local"
                     value={promotionForm.endDate}
                     onChange={(e) => setPromotionForm({...promotionForm, endDate: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"

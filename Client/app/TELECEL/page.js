@@ -239,8 +239,7 @@ const PurchaseModal = ({ isOpen, onClose, bundle, phoneNumber, setPhoneNumber, o
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Phone className="w-5 h-5 text-red-600" />
               </div>
-              <input
-                type="tel"
+              <input id="phone" name="phone" type="tel"
                 value={phoneNumber}
                 onChange={handlePhoneNumberChange}
                 className="pl-12 pr-4 py-4 block w-full rounded-2xl bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-3 focus:ring-red-400 focus:border-red-400 font-semibold text-lg transition-all"
@@ -620,8 +619,7 @@ const TelecelBundleSelect = () => {
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   placeholder="Search bundles..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

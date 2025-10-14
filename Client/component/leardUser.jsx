@@ -161,8 +161,7 @@ export default function Leaderboard() {
       <div className="bg-white p-4 rounded-b-lg shadow-md">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full md:w-auto">
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               placeholder="Search users..."
               className="pl-10 pr-4 py-2 border rounded-lg w-full md:w-64"
               value={searchTerm}

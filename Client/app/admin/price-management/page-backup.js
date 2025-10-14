@@ -513,8 +513,7 @@ const PriceManagementPage = () => {
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                   placeholder="Search prices..."
@@ -567,8 +566,7 @@ const PriceManagementPage = () => {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
+                    <input id="input" name="input" type="checkbox"
                       checked={selectedPrices.length === prices.length && prices.length > 0}
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-[#FFCC08] focus:ring-[#FFCC08]"
@@ -622,8 +620,7 @@ const PriceManagementPage = () => {
                     return (
                       <tr key={price._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4">
-                          <input
-                            type="checkbox"
+                          <input id="input" name="input" type="checkbox"
                             checked={selectedPrices.includes(price._id)}
                             onChange={() => handleSelectPrice(price._id)}
                             className="rounded border-gray-300 text-[#FFCC08] focus:ring-[#FFCC08]"
@@ -818,8 +815,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Capacity (GB) *
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   value={newPrice.capacity}
                   onChange={(e) => setNewPrice(prev => ({ ...prev, capacity: e.target.value }))}
                   placeholder="e.g., 5"
@@ -832,8 +828,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Price (₵) *
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   value={newPrice.price}
                   onChange={(e) => setNewPrice(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="e.g., 25.00"
@@ -847,8 +842,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={newPrice.description}
                   onChange={(e) => setNewPrice(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Optional description"
@@ -911,8 +905,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Price (₵) *
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   value={selectedPrice.price}
                   onChange={(e) => setSelectedPrice(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
                   placeholder="e.g., 25.00"
@@ -926,8 +919,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={selectedPrice.description || ''}
                   onChange={(e) => setSelectedPrice(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Optional description"
@@ -987,8 +979,7 @@ const PriceManagementPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Price Adjustment (₵)
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   placeholder="e.g., 2.50 (add) or -1.00 (subtract)"
                   step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent dark:bg-gray-700 dark:text-white"

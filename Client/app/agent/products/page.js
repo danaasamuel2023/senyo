@@ -355,8 +355,7 @@ const AgentProducts = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Product Name
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   defaultValue={editingProduct?.name || ''}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., MTN 1GB Bundle"
@@ -382,8 +381,7 @@ const AgentProducts = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Capacity
                 </label>
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   defaultValue={editingProduct?.capacity || ''}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., 1GB"
@@ -394,8 +392,7 @@ const AgentProducts = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Base Price (₵)
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   step="0.01"
                   defaultValue={editingProduct?.basePrice || ''}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -407,8 +404,7 @@ const AgentProducts = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Your Price (₵)
                 </label>
-                <input
-                  type="number"
+                <input id="input" name="input" type="number"
                   step="0.01"
                   defaultValue={editingProduct?.agentPrice || ''}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"

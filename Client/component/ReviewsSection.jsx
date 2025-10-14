@@ -309,8 +309,7 @@ const ReviewsSection = ({ agentId, productId, showAddReview = true }) => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Title (Optional)
           </label>
-          <input
-            type="text"
+          <input id="text-input" name="text-input" type="text"
             value={reviewForm.title}
             onChange={(e) => setReviewForm({...reviewForm, title: e.target.value})}
             className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"

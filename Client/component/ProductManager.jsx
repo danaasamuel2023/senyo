@@ -340,8 +340,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
+            <input id="text-input" name="text-input" type="text"
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -528,8 +527,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Product Name *
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={productForm.name}
                     onChange={(e) => setProductForm({...productForm, name: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -557,8 +555,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Capacity (GB) *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={productForm.capacity}
                     onChange={(e) => setProductForm({...productForm, capacity: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -571,8 +568,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Validity (Days) *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={productForm.validity}
                     onChange={(e) => setProductForm({...productForm, validity: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -588,8 +584,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Base Price (₵) *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={productForm.basePrice}
                     onChange={(e) => setProductForm({...productForm, basePrice: parseFloat(e.target.value) || 0})}
@@ -603,8 +598,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Your Price (₵) *
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={productForm.agentPrice}
                     onChange={(e) => setProductForm({...productForm, agentPrice: parseFloat(e.target.value) || 0})}
@@ -618,8 +612,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Retail Price (₵)
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     step="0.01"
                     value={productForm.retailPrice}
                     onChange={(e) => setProductForm({...productForm, retailPrice: parseFloat(e.target.value) || 0})}
@@ -635,8 +628,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Stock Quantity
                   </label>
-                  <input
-                    type="number"
+                  <input id="input" name="input" type="number"
                     value={productForm.stock}
                     onChange={(e) => setProductForm({...productForm, stock: parseInt(e.target.value) || 0})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -683,8 +675,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                 <div className="space-y-2">
                   {productForm.tags.map((tag, index) => (
                     <div key={index} className="flex items-center space-x-2">
-                      <input
-                        type="text"
+                      <input id="text-input" name="text-input" type="text"
                         value={tag}
                         onChange={(e) => updateTag(index, e.target.value)}
                         className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -716,15 +707,13 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                 <div className="space-y-2">
                   {productForm.bulkDiscounts.map((discount, index) => (
                     <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                      <input
-                        type="number"
+                      <input id="input" name="input" type="number"
                         value={discount.minQty}
                         onChange={(e) => updateBulkDiscount(index, 'minQty', e.target.value)}
                         className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
                         placeholder="Min Qty"
                       />
-                      <input
-                        type="number"
+                      <input id="input" name="input" type="number"
                         step="0.01"
                         value={discount.discount}
                         onChange={(e) => updateBulkDiscount(index, 'discount', e.target.value)}
@@ -757,8 +746,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     SEO Title
                   </label>
-                  <input
-                    type="text"
+                  <input id="text-input" name="text-input" type="text"
                     value={productForm.seoTitle}
                     onChange={(e) => setProductForm({...productForm, seoTitle: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"
@@ -786,8 +774,7 @@ const ProductManager = ({ agentId, onProductUpdate }) => {
                   <div className="space-y-2">
                     {productForm.metaKeywords.map((keyword, index) => (
                       <div key={index} className="flex items-center space-x-2">
-                        <input
-                          type="text"
+                        <input id="text-input" name="text-input" type="text"
                           value={keyword}
                           onChange={(e) => updateKeyword(index, e.target.value)}
                           className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-[#FFCC08] focus:border-transparent text-gray-900 dark:text-white"

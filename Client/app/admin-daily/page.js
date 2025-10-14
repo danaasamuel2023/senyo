@@ -249,8 +249,7 @@ const DailyDashboard = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-2">
             <Calendar className="h-5 w-5 text-gray-500 mr-2" />
-            <input
-              type="date"
+            <input id="input" name="input" type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="text-sm focus:outline-none"

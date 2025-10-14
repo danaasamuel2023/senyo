@@ -161,8 +161,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Store Name
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={storeSettings.basic.storeName}
                 onChange={(e) => updateSetting('basic', 'storeName', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -185,8 +184,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Store Logo URL
               </label>
-              <input
-                type="url"
+              <input id="input" name="input" type="url"
                 value={storeSettings.basic.storeLogoUrl}
                 onChange={(e) => updateSetting('basic', 'storeLogoUrl', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -197,8 +195,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Store Banner URL
               </label>
-              <input
-                type="url"
+              <input id="input" name="input" type="url"
                 value={storeSettings.basic.storeBannerUrl}
                 onChange={(e) => updateSetting('basic', 'storeBannerUrl', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -214,8 +211,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Phone Number
               </label>
-              <input
-                type="tel"
+              <input id="phone" name="phone" type="tel"
                 value={storeSettings.contact.phone}
                 onChange={(e) => updateSetting('contact', 'phone', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -226,8 +222,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
               </label>
-              <input
-                type="email"
+              <input id="email" name="email" type="email"
                 value={storeSettings.contact.email}
                 onChange={(e) => updateSetting('contact', 'email', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -238,8 +233,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Address
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={storeSettings.contact.address}
                 onChange={(e) => updateSetting('contact', 'address', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -271,8 +265,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 WhatsApp Number
               </label>
-              <input
-                type="tel"
+              <input id="phone" name="phone" type="tel"
                 value={storeSettings.whatsapp.number}
                 onChange={(e) => updateSetting('whatsapp', 'number', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -315,15 +308,13 @@ const AgentSettings = () => {
                 </div>
                 {hours.isOpen && (
                   <div className="flex items-center space-x-2">
-                    <input
-                      type="time"
+                    <input id="input" name="input" type="time"
                       value={hours.open}
                       onChange={(e) => updateHoursSetting(day, 'open', e.target.value)}
                       className="px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
                     />
                     <span className="text-gray-400">to</span>
-                    <input
-                      type="time"
+                    <input id="input" name="input" type="time"
                       value={hours.close}
                       onChange={(e) => updateHoursSetting(day, 'close', e.target.value)}
                       className="px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
@@ -399,14 +390,12 @@ const AgentSettings = () => {
                 Primary Color
               </label>
               <div className="flex items-center space-x-3">
-                <input
-                  type="color"
+                <input id="input" name="input" type="color"
                   value={storeSettings.theme.primaryColor}
                   onChange={(e) => updateSetting('theme', 'primaryColor', e.target.value)}
                   className="w-12 h-10 rounded border border-gray-600"
                 />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeSettings.theme.primaryColor}
                   onChange={(e) => updateSetting('theme', 'primaryColor', e.target.value)}
                   className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -419,14 +408,12 @@ const AgentSettings = () => {
                 Secondary Color
               </label>
               <div className="flex items-center space-x-3">
-                <input
-                  type="color"
+                <input id="input" name="input" type="color"
                   value={storeSettings.theme.secondaryColor}
                   onChange={(e) => updateSetting('theme', 'secondaryColor', e.target.value)}
                   className="w-12 h-10 rounded border border-gray-600"
                 />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeSettings.theme.secondaryColor}
                   onChange={(e) => updateSetting('theme', 'secondaryColor', e.target.value)}
                   className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -439,14 +426,12 @@ const AgentSettings = () => {
                 Accent Color
               </label>
               <div className="flex items-center space-x-3">
-                <input
-                  type="color"
+                <input id="input" name="input" type="color"
                   value={storeSettings.theme.accentColor}
                   onChange={(e) => updateSetting('theme', 'accentColor', e.target.value)}
                   className="w-12 h-10 rounded border border-gray-600"
                 />
-                <input
-                  type="text"
+                <input id="text-input" name="text-input" type="text"
                   value={storeSettings.theme.accentColor}
                   onChange={(e) => updateSetting('theme', 'accentColor', e.target.value)}
                   className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -504,8 +489,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Meta Title
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={storeSettings.seo.metaTitle}
                 onChange={(e) => updateSetting('seo', 'metaTitle', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -528,8 +512,7 @@ const AgentSettings = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Keywords
               </label>
-              <input
-                type="text"
+              <input id="text-input" name="text-input" type="text"
                 value={storeSettings.seo.keywords}
                 onChange={(e) => updateSetting('seo', 'keywords', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"

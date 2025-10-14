@@ -334,6 +334,7 @@ export default function SignupPage() {
                   <User className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
+                  id="name"
                   type="text" 
                   name="name"
                   placeholder="Full Name" 
@@ -351,6 +352,7 @@ export default function SignupPage() {
                   <Mail className="w-4 h-4 text-[#FFCC08]" />
                 </div>
                 <input 
+                  id="email"
                   type="email" 
                   name="email"
                   placeholder="Email Address" 
@@ -367,8 +369,7 @@ export default function SignupPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input 
-                  type="tel" 
+                <input id="phoneNumber" type="tel" 
                   name="phoneNumber"
                   placeholder="Phone Number" 
                   value={formData.phoneNumber}
@@ -384,8 +385,7 @@ export default function SignupPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input 
-                  type="password" 
+                <input id="password" type="password" 
                   name="password"
                   placeholder="Password" 
                   value={formData.password}
@@ -401,8 +401,7 @@ export default function SignupPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input 
-                  type="password" 
+                <input id="confirmPassword" type="password" 
                   name="confirmPassword"
                   placeholder="Confirm Password" 
                   value={formData.confirmPassword}
@@ -418,8 +417,7 @@ export default function SignupPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <RefreshCw className="w-4 h-4 text-[#FFCC08]" />
                 </div>
-                <input 
-                  type="text" 
+                <input id="referralCode" type="text" 
                   name="referralCode"
                   placeholder="Referral Code (Optional)" 
                   value={formData.referralCode}

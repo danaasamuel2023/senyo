@@ -578,8 +578,7 @@ const AdminUsers = () => {
                 <div className="flex-1 max-w-md">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="text"
+                    <input id="text-input" name="text-input" type="text"
                       value={state.searchTerm}
                       onChange={(e) => updateState({ searchTerm: e.target.value })}
                       placeholder="Search by name, email, or phone..."
@@ -828,8 +827,7 @@ const AdminUsers = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left">
-                        <input
-                          type="checkbox"
+                        <input id="input" name="input" type="checkbox"
                           checked={isAllPendingSelected}
                           onChange={handleSelectAllPending}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -856,8 +854,7 @@ const AdminUsers = () => {
                     {state.pendingUsers.map((user) => (
                       <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
-                          <input
-                            type="checkbox"
+                          <input id="input" name="input" type="checkbox"
                             checked={state.selectedPendingUsers.includes(user._id)}
                             onChange={() => handleSelectPendingUser(user._id)}
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -934,8 +931,7 @@ const AdminUsers = () => {
                 <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
                   Reason for disabling (optional)
                 </label>
-                <input
-                  id="reason"
+                <input id="reason" name="reason"
                   type="text"
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}

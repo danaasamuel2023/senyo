@@ -349,9 +349,8 @@ const DataMartDocumentation = () => {
               <form onSubmit={handleSimulation} className="space-y-4">
                 <div>
                   <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">Your API Key</label>
-                  <input
-                    type="text"
-                    id="apiKey"
+                  <input type="text"
+                    id="apiKey" name="apiKey"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Enter your API key"
@@ -363,9 +362,8 @@ const DataMartDocumentation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                    <input
-                      type="text"
-                      id="phoneNumber"
+                    <input type="text"
+                      id="phoneNumber" name="phoneNumber"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="e.g. 0551234567"
